@@ -22,6 +22,7 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/",
+            "DemoVuexy\\": "app/DemoVuexy/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
         }
@@ -38,7 +39,8 @@
             "@php artisan key:generate",
             "@php artisan migrate --force",
             "npm install --ignore-scripts",
-            "npm run build"
+            "npm run build",
+            "npm run build:panels"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",

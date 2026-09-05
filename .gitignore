@@ -15,6 +15,10 @@
 /auth.json
 /node_modules
 /public/build
+/public/static/demo-vuexy/build
+/public/static/demo-vuexy.hot
+/public/static/admin/build
+/public/static/admin.hot
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage
