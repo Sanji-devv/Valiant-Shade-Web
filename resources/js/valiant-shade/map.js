@@ -1,5 +1,6 @@
 import { MapEngine } from './engine/MapEngine.js';
 import { EditorPanel } from './engine/EditorPanel.js';
+import { BuildingTypeModal } from './engine/BuildingTypeModal.js';
 
 const viewport = document.getElementById('valiant-shade-viewport');
 const world = document.getElementById('valiant-shade-world');
@@ -43,6 +44,7 @@ if (!viewport || !world) {
 }
 
 let editorPanel = null;
+let buildingModal = null;
 
 const engine = new MapEngine({
     viewport,
@@ -77,9 +79,23 @@ engine.onBuildingSelected = () => {
     editorPanel?.renderBuildingList();
 };
 
+engine.onTerrainToolChange = (tool, tileId) => {
+    editorPanel?.setTerrainTool(tool, tileId);
+};
+
 if (canEdit && editorRoot) {
+    buildingModal = new BuildingTypeModal({
+        onSubmit: async (payload) => {
+            const type = await engine.createBuildingType(payload);
+            editorPanel?.setBuildingTypes(engine.state.building_types);
+            editorPanel?.onPlaceBuilding?.(type.id);
+            return type;
+        },
+    });
+
     editorPanel = new EditorPanel(editorRoot, {
         onModeChange: (mode) => engine.setEditMode(mode),
+        onTerrainPanSelect: () => engine.selectTerrainPan(),
         onTileSelect: (id) => engine.selectTileType(id),
         onTileColorsSave: async (id, fill, stroke) => {
             await engine.changeTileTypeColors(id, fill, stroke);
@@ -97,6 +113,7 @@ if (canEdit && editorRoot) {
         onCreateBuildingType: (payload) => engine.createBuildingType(payload),
         onUploadSprite: (typeId, file) => engine.uploadSpriteForBuildingType(typeId, file),
         onDeleteBuilding: () => engine.removeSelectedBuilding(),
+        onOpenBuildingModal: () => buildingModal.open(),
     });
     editorPanel.onBuildingSelect = (building) => {
         engine.selectedBuildingId = building.id;

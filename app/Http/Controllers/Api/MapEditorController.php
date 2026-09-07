@@ -22,7 +22,7 @@ class MapEditorController extends Controller
 
         $validated = $request->validate([
             'terrain_data' => ['required', 'array'],
-            'terrain_data.*' => ['integer'],
+            'terrain_data.*' => ['integer', 'min:0'],
             'buildings' => ['required', 'array'],
             'buildings.*.id' => ['nullable', 'integer'],
             'buildings.*.building_type_id' => ['required', 'integer', 'exists:building_types,id'],

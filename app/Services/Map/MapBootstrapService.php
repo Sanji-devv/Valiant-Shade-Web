@@ -49,7 +49,9 @@ class MapBootstrapService
         }
 
         $validIds = $tileTypes->pluck('id')->all();
-        $needsRemap = collect($data)->contains(fn (int $id) => ! in_array($id, $validIds, true));
+        $needsRemap = collect($data)->contains(
+            fn (int $id) => $id !== 0 && ! in_array($id, $validIds, true),
+        );
 
         if (! $needsRemap) {
             return $data;
@@ -62,7 +64,7 @@ class MapBootstrapService
         }
 
         return array_map(
-            fn (int $id) => $builderToDb[$id] ?? $tileTypes->first()->id,
+            fn (int $id) => $id === 0 ? 0 : ($builderToDb[$id] ?? $tileTypes->first()->id),
             $data,
         );
     }

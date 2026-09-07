@@ -3,6 +3,7 @@ import { TileLayer } from './TileLayer.js';
 import { BuildingLayer } from './BuildingLayer.js';
 import { BuildingContextMenu } from './BuildingContextMenu.js';
 import { HistoryManager } from './HistoryManager.js';
+import { TERRAIN_PAN_TOOL, VOID_TILE_ID } from './tiles.js';
 import {
     fetchMap,
     saveMap,
@@ -27,6 +28,7 @@ export class MapEngine {
         this.state = null;
         this.panzoom = null;
         this.editMode = 'building';
+        this.terrainTool = TERRAIN_PAN_TOOL;
         this.selectedTileTypeId = null;
         this.placementTypeId = null;
         this.selectedBuildingId = null;
@@ -194,6 +196,7 @@ export class MapEngine {
         });
 
         this.buildingLayer.setMapSize(map.width_tiles, map.height_tiles);
+        this.buildingLayer.setTerrainData(terrain_data, map.width_tiles);
         this.buildingLayer.setBuildings(buildings);
         this.buildingLayer.mount(this.world);
     }
@@ -215,6 +218,9 @@ export class MapEngine {
             return true;
         }
         if (this.editMode === 'terrain') {
+            if (this.terrainTool === TERRAIN_PAN_TOOL) {
+                return true;
+            }
             return !event.target.closest('.vs-tile-interaction');
         }
         if (this.editMode === 'place-building') {
@@ -225,10 +231,15 @@ export class MapEngine {
 
     setEditMode(mode) {
         this.editMode = mode;
+        if (mode === 'terrain') {
+            this.terrainTool = TERRAIN_PAN_TOOL;
+        }
         this.placementTypeId = mode === 'place-building' ? this.placementTypeId : null;
         this.applyEditMode();
         const labels = {
-            terrain: 'Zemin boyama — yapılar silüet olarak görünür',
+            terrain: this.terrainTool === TERRAIN_PAN_TOOL
+                ? 'Haritayı kaydırmak için sürükleyin — zemin boyamak için paletten seçin'
+                : 'Zemin boyama — yapılar silüet olarak görünür',
             building: 'Bina taşıma — sağ tık menüsü · sürükleyerek taşıyın',
             'place-building': 'Haritaya tıklayarak bina yerleştirin',
         };
@@ -254,18 +265,25 @@ export class MapEngine {
             return;
         }
 
-        this.viewport.classList.remove('vs-viewport--paint', 'vs-viewport--buildings', 'vs-viewport--place');
+        this.viewport.classList.remove('vs-viewport--paint', 'vs-viewport--pan', 'vs-viewport--buildings', 'vs-viewport--place');
 
         if (this.editMode === 'terrain') {
             this.buildingLayer.layoutMode = false;
             this.buildingLayer.setSilhouetteMode(true);
             this.buildingLayer.root.style.pointerEvents = 'none';
-            this.tileLayer.enablePaintMode({
-                selectedTileTypeId: this.selectedTileTypeId,
-                onPaint: (tile) => this.queuePaint(tile),
-            });
+
+            if (this.terrainTool === TERRAIN_PAN_TOOL) {
+                this.tileLayer.disablePaintMode();
+                this.viewport.classList.add('vs-viewport--pan');
+            } else {
+                this.tileLayer.enablePaintMode({
+                    selectedTileTypeId: this.selectedTileTypeId,
+                    onPaint: (tile) => this.queuePaint(tile),
+                });
+                this.viewport.classList.add('vs-viewport--paint');
+            }
+
             this.tileLayer.disableCellClick();
-            this.viewport.classList.add('vs-viewport--paint');
         } else if (this.editMode === 'place-building') {
             this.buildingLayer.setSilhouetteMode(false);
             this.tileLayer.disablePaintMode();
@@ -361,6 +379,17 @@ export class MapEngine {
                 return false;
             }
         }
+
+        const { terrain_data } = this.state;
+        for (let dy = 0; dy < height; dy += 1) {
+            for (let dx = 0; dx < width; dx += 1) {
+                const index = ((grid_y + dy) * map.width_tiles) + (grid_x + dx);
+                if (terrain_data[index] === VOID_TILE_ID) {
+                    return false;
+                }
+            }
+        }
+
         return true;
     }
 
@@ -443,6 +472,7 @@ export class MapEngine {
         this.tileLayer.resize(snapshot.map.width_tiles, snapshot.map.height_tiles);
         this.tileLayer.setData(this.state.terrain_data);
         this.buildingLayer.setMapSize(snapshot.map.width_tiles, snapshot.map.height_tiles);
+        this.buildingLayer.setTerrainData(this.state.terrain_data, snapshot.map.width_tiles);
         this.buildingLayer.setBuildings(this.state.buildings);
         this.applyEditMode();
         this.onBuildingsChange?.(this.state.buildings);
@@ -450,6 +480,7 @@ export class MapEngine {
 
     syncLayers() {
         this.buildingLayer.setBuildings(this.state.buildings);
+        this.buildingLayer.setTerrainData(this.state.terrain_data, this.state.map.width_tiles);
         this.tileLayer.setData(this.state.terrain_data);
         this.applyEditMode();
     }
@@ -519,6 +550,7 @@ export class MapEngine {
         this.tileLayer.resize(result.map.width_tiles, result.map.height_tiles);
         this.tileLayer.setData(result.terrain_data);
         this.buildingLayer.setMapSize(result.map.width_tiles, result.map.height_tiles);
+        this.buildingLayer.setTerrainData(result.terrain_data, result.map.width_tiles);
         this.buildingLayer.setBuildings(result.buildings);
         this.applyEditMode();
 
@@ -528,9 +560,24 @@ export class MapEngine {
         this.onStatus?.('Harita kaydedildi');
     }
 
+    selectTerrainPan() {
+        this.terrainTool = TERRAIN_PAN_TOOL;
+        if (this.editMode === 'terrain') {
+            this.applyEditMode();
+            this.onStatus?.('Haritayı kaydırmak için sürükleyin — zemin boyamak için paletten seçin');
+        }
+        this.onTerrainToolChange?.(TERRAIN_PAN_TOOL);
+    }
+
     selectTileType(id) {
+        this.terrainTool = 'paint';
         this.selectedTileTypeId = id;
         this.tileLayer?.setSelectedTileType(id);
+        if (this.editMode === 'terrain') {
+            this.applyEditMode();
+            this.onStatus?.('Zemin boyama — yapılar silüet olarak görünür');
+        }
+        this.onTerrainToolChange?.('paint', id);
     }
 
     queuePaint(tile) {
@@ -541,6 +588,7 @@ export class MapEngine {
 
         const index = (tile.y * this.state.map.width_tiles) + tile.x;
         this.state.terrain_data[index] = tile.tile_type_id;
+        this.buildingLayer.setTerrainData(this.state.terrain_data, this.state.map.width_tiles);
 
         clearTimeout(this.paintResetTimer);
         this.paintResetTimer = setTimeout(() => {
@@ -575,6 +623,8 @@ export class MapEngine {
         this.tileLayer.resize(newW, newH);
         this.tileLayer.setData(newData);
         this.buildingLayer.setMapSize(newW, newH);
+        this.buildingLayer.setTerrainData(newData, newW);
+        this.buildingLayer.setBuildings(this.state.buildings);
         this.applyEditMode();
         this.scheduleResetView();
         this.onStatus?.(`Harita ${newW}×${newH} karoya genişletildi`);

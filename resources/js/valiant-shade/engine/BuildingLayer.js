@@ -22,6 +22,7 @@ export class BuildingLayer {
         this.buildings = [];
         this.mapWidth = 0;
         this.mapHeight = 0;
+        this.terrainData = null;
         this.root = el('svg', { class: 'vs-building-layer' });
         this.dragState = null;
     }
@@ -36,6 +37,11 @@ export class BuildingLayer {
         this.mapWidth = width;
         this.mapHeight = height;
         this.root.setAttribute('viewBox', `0 0 ${width * this.tileSize} ${height * this.tileSize}`);
+    }
+
+    setTerrainData(data, mapWidth) {
+        this.terrainData = data;
+        this.mapWidth = mapWidth;
     }
 
     setBuildings(buildings) {
@@ -210,6 +216,7 @@ export class BuildingLayer {
                 building.type.width_tiles,
                 building.type.height_tiles,
                 building.id,
+                this.terrainData,
             );
 
             group.classList.toggle('vs-building--invalid', !valid);
@@ -233,6 +240,7 @@ export class BuildingLayer {
                 building.type.width_tiles,
                 building.type.height_tiles,
                 building.id,
+                this.terrainData,
             );
 
             if (!valid) {

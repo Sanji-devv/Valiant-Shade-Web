@@ -1,3 +1,5 @@
+@import './vuexy-icons.css';
+
 :root {
     --vs-bg: #1a1410;
     --vs-panel-bg: rgba(26, 20, 16, 0.96);
@@ -191,7 +193,7 @@ body {
 
 /* ── Editor panel ── */
 .vs-editor {
-    width: 20rem;
+    width: clamp(20rem, 26vw, 30rem);
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
@@ -243,8 +245,9 @@ body {
 }
 
 .vs-editor-tab-icon {
-    font-size: 1.25rem;
+    font-size: 1.375rem;
     line-height: 1;
+    color: inherit;
 }
 
 .vs-editor-tab--active {
@@ -320,55 +323,136 @@ body {
 
 .vs-type-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fill, minmax(6.75rem, 1fr));
+    gap: 0.5rem;
+}
+
+.vs-btn-flat {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     gap: 0.45rem;
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    margin-bottom: 0.65rem;
+    border: 1px dashed rgba(201, 168, 76, 0.45);
+    border-radius: 0.5rem;
+    background: transparent;
+    color: var(--vs-gold);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.vs-btn-flat:hover {
+    background: rgba(201, 168, 76, 0.1);
+    border-color: var(--vs-gold);
+}
+
+/* Vuexy-inspired icon buttons (dark theme) */
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    border: none;
+    border-radius: 0.375rem;
+    background: rgba(201, 168, 76, 0.12);
+    color: var(--vs-gold);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.btn-icon:hover {
+    background: rgba(201, 168, 76, 0.22);
+}
+
+.btn-icon--success {
+    background: rgba(40, 199, 111, 0.15);
+    color: #5dd39e;
+}
+
+.btn-icon--success:hover {
+    background: rgba(40, 199, 111, 0.28);
+}
+
+.btn-icon--danger {
+    background: rgba(224, 82, 82, 0.15);
+    color: #f0a0a0;
+}
+
+.btn-icon--danger:hover {
+    background: rgba(224, 82, 82, 0.28);
+}
+
+.btn-icon--label {
+    background: rgba(168, 152, 120, 0.12);
+    color: var(--vs-muted);
+}
+
+.btn-icon--label:hover {
+    background: rgba(168, 152, 120, 0.22);
+    color: var(--vs-text);
+}
+
+label.btn-icon {
+    cursor: pointer;
 }
 
 .vs-type-card {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
-    padding: 0.4rem;
-    border: 1px solid rgba(201, 168, 76, 0.2);
-    border-radius: 0.375rem;
-    background: rgba(26, 20, 16, 0.5);
+    gap: 0.3rem;
+    padding: 0.35rem;
+    border: 1px solid rgba(201, 168, 76, 0.18);
+    border-radius: 0.5rem;
+    background: rgba(26, 20, 16, 0.55);
     min-width: 0;
 }
 
-.vs-type-card--active {
-    border-color: var(--vs-gold);
-}
-
-.vs-type-card--placed {
-    background: rgba(201, 168, 76, 0.08);
+.vs-type-card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.35rem;
 }
 
 .vs-type-card-shape {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
     aspect-ratio: var(--shape-w) / var(--shape-h);
-    max-height: 4.5rem;
-    border: 1px dashed rgba(201, 168, 76, 0.35);
-    border-radius: 0.25rem;
-    background: rgba(0, 0, 0, 0.25);
+    max-height: 3.25rem;
+    border: 1px dashed rgba(201, 168, 76, 0.3);
+    border-radius: 0.35rem;
+    background: rgba(0, 0, 0, 0.28);
     display: grid;
     place-items: center;
     overflow: hidden;
 }
 
-.vs-type-card-shape-inner {
-    width: 100%;
-    height: 100%;
-    display: grid;
-    place-items: center;
+.vs-type-card-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex-shrink: 0;
+}
+
+.vs-type-card-toolbar .btn-icon,
+.vs-type-card-toolbar label.btn-icon {
+    margin: 0;
 }
 
 .vs-type-card-meta {
     min-width: 0;
+    padding: 0 0.1rem;
 }
 
 .vs-type-card-meta strong {
     display: block;
     font-size: 0.6875rem;
+    line-height: 1.25;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -379,6 +463,25 @@ body {
     font-size: 0.625rem;
 }
 
+.vs-type-card-actions {
+    display: none;
+}
+
+.vs-type-card--active {
+    border-color: var(--vs-gold);
+}
+
+.vs-type-card--placed {
+    background: rgba(201, 168, 76, 0.08);
+}
+
+.vs-type-card-shape-inner {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    place-items: center;
+}
+
 .vs-type-card-icon {
     font-size: 1.25rem;
 }
@@ -387,21 +490,6 @@ body {
     width: 100%;
     height: 100%;
     object-fit: contain;
-}
-
-.vs-type-card-actions {
-    display: flex;
-    gap: 0.25rem;
-}
-
-.vs-type-card-actions .vs-btn--sm {
-    flex: 1;
-}
-
-.vs-type-card-actions .vs-upload-label {
-    flex: 0 0 auto;
-    min-width: 2rem;
-    text-align: center;
 }
 
 .vs-collapse {
@@ -432,6 +520,11 @@ body {
 .vs-collapse-icon {
     color: var(--vs-muted);
     transition: transform 0.15s;
+    display: inline-flex;
+}
+
+.vs-collapse-icon .ti {
+    font-size: 1rem;
 }
 
 .vs-collapse--closed .vs-collapse-body {
@@ -528,6 +621,27 @@ body {
     height: 2.25rem;
 }
 
+.vs-palette-swatch--pan {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(201, 168, 76, 0.12);
+    border-color: rgba(201, 168, 76, 0.45);
+    color: var(--vs-gold);
+}
+
+.vs-palette-swatch--void {
+    background: #0c0a09;
+    border-color: #2a2420;
+    background-image: linear-gradient(
+        to top right,
+        transparent calc(50% - 1px),
+        rgba(255, 255, 255, 0.12) calc(50% - 1px),
+        rgba(255, 255, 255, 0.12) calc(50% + 1px),
+        transparent calc(50% + 1px)
+    );
+}
+
 .vs-palette-card-name {
     line-height: 1.2;
 }
@@ -606,6 +720,23 @@ body {
 
 .vs-viewport--paint:active {
     cursor: crosshair;
+}
+
+.vs-viewport--pan {
+    cursor: grab;
+}
+
+.vs-viewport--pan:active {
+    cursor: grabbing;
+}
+
+.vs-tile--void {
+    fill: #0c0a09;
+    stroke: #2a2420;
+}
+
+.vs-tile-void-mark {
+    pointer-events: none;
 }
 
 .vs-viewport--buildings .vs-building--draggable {
@@ -844,6 +975,283 @@ body {
 .vs-status--error {
     color: #f0a0a0;
     border-color: rgba(224, 82, 82, 0.45);
+}
+
+/* ── Modal (Vuexy modal-simple inspired) ── */
+body.vs-modal-open {
+    overflow: hidden;
+}
+
+.vs-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(2px);
+}
+
+.vs-modal-backdrop[hidden] {
+    display: none;
+}
+
+.vs-modal {
+    width: min(32rem, 100%);
+    max-height: calc(100vh - 2rem);
+    overflow: auto;
+}
+
+.vs-modal-content {
+    position: relative;
+    border: 1px solid rgba(201, 168, 76, 0.35);
+    border-radius: 0.75rem;
+    background: rgba(18, 14, 11, 0.98);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+}
+
+.vs-modal-close.btn-pinned {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: none;
+    border-radius: 0.375rem;
+    background: rgba(26, 20, 16, 0.9);
+    color: var(--vs-muted);
+    cursor: pointer;
+}
+
+.vs-modal-close.btn-pinned:hover {
+    color: var(--vs-text);
+    background: rgba(201, 168, 76, 0.15);
+}
+
+.vs-modal-body {
+    padding: 1.25rem 1.25rem 1rem;
+}
+
+.vs-modal-head h3 {
+    margin: 0 0 0.35rem;
+    font-size: 1.125rem;
+}
+
+.vs-modal-head p {
+    margin: 0 0 1rem;
+    font-size: 0.8125rem;
+    color: var(--vs-muted);
+}
+
+.vs-modal-section {
+    margin-bottom: 1rem;
+}
+
+.vs-modal-section h4 {
+    margin: 0 0 0.5rem;
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--vs-muted);
+}
+
+.vs-preset-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(4.25rem, 1fr));
+    gap: 0.45rem;
+}
+
+.vs-preset-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.45rem 0.35rem;
+    border: 1px solid rgba(201, 168, 76, 0.2);
+    border-radius: 0.375rem;
+    background: rgba(26, 20, 16, 0.6);
+    color: var(--vs-text);
+    font-size: 0.6875rem;
+    cursor: pointer;
+}
+
+.vs-preset-card--active {
+    border-color: var(--vs-gold);
+    background: rgba(201, 168, 76, 0.12);
+}
+
+.vs-preset-shape {
+    width: 100%;
+    aspect-ratio: var(--pw) / var(--ph);
+    max-height: 2.5rem;
+    border: 1px dashed rgba(201, 168, 76, 0.4);
+    border-radius: 0.25rem;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.vs-custom-size {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.vs-custom-size label {
+    flex: 1;
+    font-size: 0.6875rem;
+    color: var(--vs-muted);
+}
+
+.vs-custom-size input {
+    display: block;
+    width: 100%;
+    margin-top: 0.25rem;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid rgba(201, 168, 76, 0.25);
+    border-radius: 0.375rem;
+    background: rgba(0, 0, 0, 0.25);
+    color: var(--vs-text);
+    font: inherit;
+}
+
+.vs-custom-size-x {
+    padding-bottom: 0.45rem;
+    color: var(--vs-muted);
+}
+
+.vs-shape-preview {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 0.375rem;
+    background: rgba(201, 168, 76, 0.06);
+    border: 1px solid rgba(201, 168, 76, 0.15);
+}
+
+.vs-shape-preview-box {
+    width: 3rem;
+    aspect-ratio: var(--shape-w) / var(--shape-h);
+    max-height: 2.5rem;
+    border: 1px solid var(--vs-gold);
+    border-radius: 0.25rem;
+    background: rgba(201, 168, 76, 0.15);
+}
+
+.vs-shape-preview span {
+    font-size: 0.8125rem;
+    color: var(--vs-muted);
+}
+
+.vs-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.65rem;
+}
+
+.vs-form-field {
+    display: block;
+    margin-bottom: 0.65rem;
+    font-size: 0.6875rem;
+    color: var(--vs-muted);
+}
+
+.vs-form-field span {
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.vs-form-field--required span::after {
+    content: ' *';
+    color: #f0a0a0;
+}
+
+.vs-form-field input,
+.vs-form-field select,
+.vs-form-field textarea {
+    width: 100%;
+    padding: 0.45rem 0.55rem;
+    border: 1px solid rgba(201, 168, 76, 0.25);
+    border-radius: 0.375rem;
+    background: rgba(0, 0, 0, 0.25);
+    color: var(--vs-text);
+    font: inherit;
+    font-size: 0.8125rem;
+}
+
+.vs-form-checks {
+    margin-top: 0.25rem;
+}
+
+.vs-form-check {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.8125rem;
+    color: var(--vs-text);
+    cursor: pointer;
+}
+
+.vs-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(201, 168, 76, 0.12);
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.85rem;
+    border: 1px solid transparent;
+    border-radius: 0.375rem;
+    font: inherit;
+    font-size: 0.8125rem;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: rgba(201, 168, 76, 0.85);
+    color: #1a1410;
+    font-weight: 600;
+}
+
+.btn-primary:hover {
+    background: var(--vs-gold);
+}
+
+.btn-label-secondary {
+    background: rgba(168, 152, 120, 0.12);
+    border-color: rgba(201, 168, 76, 0.2);
+    color: var(--vs-text);
+}
+
+.btn-label-secondary:hover {
+    background: rgba(168, 152, 120, 0.22);
+}
+
+@media (min-width: 1400px) {
+    .vs-editor {
+        width: clamp(22rem, 22vw, 34rem);
+    }
+
+    .vs-type-grid {
+        grid-template-columns: repeat(auto-fill, minmax(7.25rem, 1fr));
+    }
+}
+
+@media (min-width: 1800px) {
+    .vs-editor {
+        width: 36rem;
+    }
 }
 
 @media (max-width: 900px) {

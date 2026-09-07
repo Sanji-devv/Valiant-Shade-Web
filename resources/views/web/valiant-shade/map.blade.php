@@ -60,11 +60,11 @@
 
                     <div class="vs-editor-tabs">
                         <button type="button" class="vs-editor-tab vs-editor-tab--active" data-editor-mode="building">
-                            <span class="vs-editor-tab-icon">🏠</span>
+                            <i class="vs-editor-tab-icon icon-base ti tabler-building-community"></i>
                             <span>Binalar</span>
                         </button>
                         <button type="button" class="vs-editor-tab" data-editor-mode="terrain">
-                            <span class="vs-editor-tab-icon">🖌</span>
+                            <i class="vs-editor-tab-icon icon-base ti tabler-brush"></i>
                             <span>Zemin</span>
                         </button>
                     </div>
@@ -76,46 +76,21 @@
                             <div class="vs-collapse" data-collapse>
                                 <button type="button" class="vs-collapse-toggle" data-collapse-toggle>
                                     <span>Bina tipleri</span>
-                                    <span class="vs-collapse-icon">▾</span>
+                                    <span class="vs-collapse-icon"><i class="icon-base ti tabler-chevron-down"></i></span>
                                 </button>
                                 <div class="vs-collapse-body">
+                                    <button type="button" class="vs-btn-flat" data-open-building-modal>
+                                        <i class="icon-base ti tabler-plus"></i>
+                                        Yeni bina tipi
+                                    </button>
                                     <div data-building-type-list class="vs-type-grid"></div>
                                 </div>
                             </div>
 
                             <div class="vs-collapse vs-collapse--closed" data-collapse>
                                 <button type="button" class="vs-collapse-toggle" data-collapse-toggle>
-                                    <span>Yeni bina tipi</span>
-                                    <span class="vs-collapse-icon">▾</span>
-                                </button>
-                                <div class="vs-collapse-body">
-                                    <form data-new-building-form class="vs-form-block">
-                                        <input type="text" name="name" placeholder="Örn. Gözetleme kulesi" required maxlength="64">
-                                        <div class="vs-dimension-row">
-                                            <label>Genişlik <input type="number" name="width_tiles" value="2" min="1" max="20" required></label>
-                                            <label>Yükseklik <input type="number" name="height_tiles" value="2" min="1" max="20" required></label>
-                                        </div>
-                                        <div class="vs-dimension-row">
-                                            <label>Kategori
-                                                <select name="category">
-                                                    <option value="core">Merkez</option>
-                                                    <option value="training">Eğitim</option>
-                                                    <option value="residential">Konut</option>
-                                                    <option value="utility">Yardımcı</option>
-                                                    <option value="defense">Savunma</option>
-                                                </select>
-                                            </label>
-                                            <label>İkon <input type="text" name="icon" value="🏠" maxlength="8"></label>
-                                        </div>
-                                        <button type="submit" class="vs-btn vs-btn--ghost">+ Tip Oluştur ve Yerleştir</button>
-                                    </form>
-                                </div>
-                            </div>
-
-                            <div class="vs-collapse vs-collapse--closed" data-collapse>
-                                <button type="button" class="vs-collapse-toggle" data-collapse-toggle>
                                     <span>Haritadaki yapılar</span>
-                                    <span class="vs-collapse-icon">▾</span>
+                                    <span class="vs-collapse-icon"><i class="icon-base ti tabler-chevron-down"></i></span>
                                 </button>
                                 <div class="vs-collapse-body">
                                     <div data-building-list class="vs-building-list"></div>
@@ -160,7 +135,7 @@
                             <div class="vs-collapse" data-collapse>
                                 <button type="button" class="vs-collapse-toggle" data-collapse-toggle>
                                     <span>Harita boyutu</span>
-                                    <span class="vs-collapse-icon">▾</span>
+                                    <span class="vs-collapse-icon"><i class="icon-base ti tabler-chevron-down"></i></span>
                                 </button>
                                 <div class="vs-collapse-body">
                                     <div class="vs-tool-group">

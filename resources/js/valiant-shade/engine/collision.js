@@ -5,9 +5,20 @@ export function rectsIntersect(a, b) {
         && a.y + a.h > b.y;
 }
 
-export function canPlace(buildings, mapWidth, mapHeight, gridX, gridY, width, height, ignoreId = null) {
+export function canPlace(buildings, mapWidth, mapHeight, gridX, gridY, width, height, ignoreId = null, terrainData = null) {
     if (gridX < 0 || gridY < 0 || gridX + width > mapWidth || gridY + height > mapHeight) {
         return false;
+    }
+
+    if (terrainData) {
+        for (let dy = 0; dy < height; dy += 1) {
+            for (let dx = 0; dx < width; dx += 1) {
+                const index = ((gridY + dy) * mapWidth) + (gridX + dx);
+                if (terrainData[index] === 0) {
+                    return false;
+                }
+            }
+        }
     }
 
     const candidate = { x: gridX, y: gridY, w: width, h: height };

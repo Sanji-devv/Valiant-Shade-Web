@@ -1,3 +1,15 @@
+export const VOID_TILE_ID = 0;
+
+export const VOID_TILE_DEF = {
+    name: 'void',
+    fill: '#0c0a09',
+    stroke: '#2a2420',
+    label: 'Erişilemez',
+    isVoid: true,
+};
+
+export const TERRAIN_PAN_TOOL = 'pan';
+
 export const TILE_DEFS = {
     1: { name: 'grass', fill: '#5a9448', stroke: '#4a7a3a' },
     2: { name: 'grass_dark', fill: '#4a7a3a', stroke: '#3d6630' },

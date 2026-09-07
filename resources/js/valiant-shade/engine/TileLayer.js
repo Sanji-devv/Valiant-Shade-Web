@@ -1,3 +1,5 @@
+import { VOID_TILE_ID, VOID_TILE_DEF } from './tiles.js';
+
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 function el(name, attrs = {}) {
@@ -47,6 +49,9 @@ export class TileLayer {
     }
 
     getTileDef(tileId) {
+        if (tileId === VOID_TILE_ID || tileId === null || tileId === undefined) {
+            return VOID_TILE_DEF;
+        }
         return this.tileDefs[tileId] ?? this.tileDefs[Number(tileId)] ?? {
             fill: '#5a9448',
             stroke: '#4a7a3a',
@@ -93,7 +98,7 @@ export class TileLayer {
                 }
                 return;
             }
-            if (!this.paintMode || !this.selectedTileTypeId) {
+            if (!this.paintMode || this.selectedTileTypeId === null || this.selectedTileTypeId === undefined) {
                 return;
             }
             event.stopPropagation();
@@ -183,7 +188,7 @@ export class TileLayer {
             for (let x = 0; x < this.width; x += 1) {
                 const tileId = this.data[(y * this.width) + x];
                 const def = this.getTileDef(tileId);
-                this.root.appendChild(el('rect', {
+                const rect = el('rect', {
                     x: x * this.tileSize,
                     y: y * this.tileSize,
                     width: this.tileSize,
@@ -191,10 +196,22 @@ export class TileLayer {
                     fill: def.fill,
                     stroke: def.stroke,
                     'stroke-width': 0.5,
-                    class: `vs-tile vs-tile-${def.name}`,
+                    class: `vs-tile vs-tile-${def.name}${def.isVoid ? ' vs-tile--void' : ''}`,
                     'data-x': x,
                     'data-y': y,
-                }));
+                });
+                this.root.appendChild(rect);
+                if (def.isVoid) {
+                    this.root.appendChild(el('line', {
+                        x1: x * this.tileSize,
+                        y1: y * this.tileSize,
+                        x2: (x + 1) * this.tileSize,
+                        y2: (y + 1) * this.tileSize,
+                        stroke: 'rgba(255,255,255,0.08)',
+                        'stroke-width': 1,
+                        class: 'vs-tile-void-mark',
+                    }));
+                }
             }
         }
 
