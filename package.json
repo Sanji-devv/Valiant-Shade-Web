@@ -34,6 +34,7 @@
         "@iconify/tools": "4.1.2",
         "@iconify/types": "2.0.0",
         "@iconify/utils": "2.3.0",
+        "@panzoom/panzoom": "^4.6.2",
         "@popperjs/core": "2.11.8",
         "@simonwep/pickr": "1.9.1",
         "@yaireo/tagify": "4.32.2",

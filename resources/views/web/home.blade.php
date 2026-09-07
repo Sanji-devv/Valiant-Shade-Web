@@ -19,8 +19,10 @@
         <h1>Valiant Shade</h1>
         <p>Ön yüz (üye / ziyaretçi) alanı — geliştirme için hazır.</p>
         <nav>
+            <a href="{{ route('web.valiant-shade') }}">Valiant Shade Arazisi</a>
+            <a href="{{ route('web.valiant-shade.edit') }}">Harita Editörü (Yönetici)</a>
+            <a href="{{ route('web.login') }}">Editör Girişi</a>
             <a href="{{ url('/admin') }}">Yönetim Paneli</a>
-            <a href="{{ url('/demo-vuexy') }}">Vuexy Demo Referans</a>
         </nav>
     </main>
 </body>

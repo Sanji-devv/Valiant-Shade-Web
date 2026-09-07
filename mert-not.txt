@@ -1,0 +1,80 @@
+Diğer geliştirici git pull yaptıktan sonra sırasıyla şunları yapmalı:
+
+1. Ön koşullar
+Makinede bunlar kurulu olmalı:
+
+PHP 8.3+
+Composer
+Node.js 18+ ve npm
+PostgreSQL (proje .env.example’da PostgreSQL kullanıyor)
+2. Kodu çek
+git pull
+3. Ortam dosyasını hazırla
+cp .env.example .env
+.env içinde en az şunları doldur:
+
+DB_PASSWORD=...   # PostgreSQL şifresi
+Veritabanı yoksa PostgreSQL’de oluştur:
+
+# psql ile örnek
+createdb valiant-shade-web
+# veya .env'deki DB_DATABASE / DB_USERNAME değerlerine göre
+4. Tek komutla kurulum (önerilen)
+Proje kökünde:
+
+composer setup
+Bu sırayla şunları yapar:
+
+composer install
+.env yoksa oluşturur
+php artisan key:generate
+php artisan migrate
+npm install
+npm run build (ön yüz)
+npm run build:panels (admin + demo-vuexy asset’leri)
+Not: public/static/admin/build ve public/static/demo-vuexy/build git’te yok (.gitignore). Bu yüzden npm run build:panels mutlaka çalıştırılmalı; aksi halde /admin ve /demo-vuexy CSS/JS’siz veya hata verir.
+
+5. Manuel kurulum (composer setup kullanmazsa)
+composer install
+cp .env.example .env   # henüz yoksa
+php artisan key:generate
+php artisan migrate
+npm install
+npm run build
+npm run build:panels
+6. Sunucuyu başlat
+php artisan serve
+Tarayıcıda:
+
+Adres	Ne?
+http://localhost:8000
+Ön yüz (üye/ziyaretçi)
+http://localhost:8000/admin
+Yönetim paneli — burada geliştirme yapılır
+http://localhost:8000/demo-vuexy
+Vuexy referans demo — sadece bakmak için, dokunulmaz
+7. Geliştirme sırasında ne yapar?
+Panel geliştirirken:
+
+View: resources/views/admin/
+Controller: app/Http/Controllers/Admin/
+Route: routes/admin.php
+Tasarım referansı: /demo-vuexy (örnek sayfalar, component’ler)
+Ön yüz geliştirirken:
+
+View: resources/views/web/
+Route: routes/web.php
+Dokunmaması gerekenler:
+
+resources/views/demo-vuexy/ → referans demo
+app/DemoVuexy/ → demo backend
+resources/demo-vuexy/ → demo kaynak asset’leri
+8. Asset değişikliği yaparsa
+Admin panelde SCSS/JS değiştirdiyse:
+
+npm run build:admin
+Geliştirme modunda canlı derleme:
+
+npm run dev:admin
+# ayrı terminalde
+php artisan serve
