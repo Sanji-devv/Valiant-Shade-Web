@@ -1,3 +1,4 @@
+import { PortalLayer } from './PortalLayer.js';
 import Panzoom from '@panzoom/panzoom';
 import { TileLayer } from './TileLayer.js';
 import { BuildingLayer } from './BuildingLayer.js';
@@ -32,6 +33,8 @@ export class MapEngine {
         this.selectedTileTypeId = null;
         this.placementTypeId = null;
         this.selectedBuildingId = null;
+        this.selectedPortalId = null;
+        this.pendingPortalDraft = null;
         this.paintSnapshotTaken = false;
         this.paintResetTimer = null;
         this.tempIdCounter = -1;
@@ -52,6 +55,7 @@ export class MapEngine {
 
     async init() {
         this.state = await fetchMap(this.mapSlug);
+        this.state.portals = this.state.portals ?? [];
         this.initTypeSprites();
         this.setupLayers();
         this.setupPanzoom();
@@ -199,6 +203,49 @@ export class MapEngine {
         this.buildingLayer.setTerrainData(terrain_data, map.width_tiles);
         this.buildingLayer.setBuildings(buildings);
         this.buildingLayer.mount(this.world);
+
+        this.portalLayer = new PortalLayer({
+            tileSize: map.tile_size,
+            editable: this.canEdit,
+            onSelect: (portal) => {
+                if (this.canEdit) {
+                    this.selectedPortalId = portal.id;
+                    this.onPortalSelected?.(portal);
+                }
+            },
+            onMoveStart: () => this.recordHistory(),
+            onMove: (portal) => {
+                this.onPortalsChange?.(this.state.portals);
+                this.onStatus?.(`"${portal.name}" taşındı (${portal.grid_x}, ${portal.grid_y})`);
+            },
+            onMoveRejected: (portal) => {
+                this.onStatus?.(`"${portal.name}" bu konuma yerleştirilemez`);
+            },
+            onTravel: (portal) => this.travelToMap(portal),
+        });
+        this.portalLayer.resize(map.width_tiles, map.height_tiles);
+        this.portalLayer.setPortals(this.state.portals ?? []);
+        this.portalLayer.mount(this.world);
+    }
+
+    travelToMap(portal) {
+        const slug = portal.target_map_slug;
+        if (!slug) {
+            return;
+        }
+
+        const urls = {
+            'valiant-shade': '/valiant-shade',
+            'isonburg': '/isonburg/arazi',
+            'isonburg-sehir': '/isonburg/sehir',
+        };
+
+        const target = urls[slug] ?? `/${slug}`;
+        const label = portal.name ?? slug;
+        const go = window.confirm(`${label} haritasına gitmek istiyor musunuz?`);
+        if (go) {
+            window.location.href = target;
+        }
     }
 
     setupPanzoom() {
@@ -226,6 +273,9 @@ export class MapEngine {
         if (this.editMode === 'place-building') {
             return !event.target.closest('.vs-tile-interaction');
         }
+        if (this.editMode === 'portal') {
+            return !event.target.closest('.vs-portal-hit');
+        }
         return !event.target.closest('.vs-building--draggable');
     }
 
@@ -241,6 +291,7 @@ export class MapEngine {
                 ? 'Haritayı kaydırmak için sürükleyin — zemin boyamak için paletten seçin'
                 : 'Zemin boyama — yapılar silüet olarak görünür',
             building: 'Bina taşıma — sağ tık menüsü · sürükleyerek taşıyın',
+            portal: 'Geçit yerleştirme — haritaya tıklayın veya sürükleyerek taşıyın',
             'place-building': 'Haritaya tıklayarak bina yerleştirin',
         };
         this.onStatus?.(labels[mode] ?? '');
@@ -265,7 +316,7 @@ export class MapEngine {
             return;
         }
 
-        this.viewport.classList.remove('vs-viewport--paint', 'vs-viewport--pan', 'vs-viewport--buildings', 'vs-viewport--place');
+        this.viewport.classList.remove('vs-viewport--paint', 'vs-viewport--pan', 'vs-viewport--buildings', 'vs-viewport--place', 'vs-viewport--portals');
 
         if (this.editMode === 'terrain') {
             this.buildingLayer.layoutMode = false;
@@ -284,6 +335,7 @@ export class MapEngine {
             }
 
             this.tileLayer.disableCellClick();
+            this.portalLayer.editable = false;
         } else if (this.editMode === 'place-building') {
             this.buildingLayer.setSilhouetteMode(false);
             this.tileLayer.disablePaintMode();
@@ -291,8 +343,22 @@ export class MapEngine {
             this.buildingLayer.root.style.pointerEvents = 'none';
             this.buildingLayer.render();
             this.tileLayer.enableCellClick();
+            this.portalLayer.editable = false;
             this.viewport.classList.add('vs-viewport--place');
+        } else if (this.editMode === 'portal') {
+            this.buildingLayer.setSilhouetteMode(false);
+            this.tileLayer.disablePaintMode();
+            this.buildingLayer.layoutMode = false;
+            this.buildingLayer.root.style.pointerEvents = 'none';
+            this.buildingLayer.render();
+            this.tileLayer.enableCellClick();
+            this.portalLayer.editable = true;
+            this.portalLayer.setSelectedPortalId(this.selectedPortalId);
+            this.portalLayer.render();
+            this.viewport.classList.add('vs-viewport--portals');
         } else {
+            this.portalLayer.editable = false;
+            this.portalLayer.setSelectedPortalId(null);
             this.buildingLayer.setSilhouetteMode(false);
             this.tileLayer.disablePaintMode();
             this.tileLayer.disableCellClick();
@@ -302,11 +368,24 @@ export class MapEngine {
             this.viewport.classList.add('vs-viewport--buildings');
         }
 
+        if (this.portalLayer) {
+            this.portalLayer.setPortals(this.state.portals ?? []);
+        }
+
         this.panzoom?.setOptions({ handleStartEvent: (event) => this.shouldPan(event) });
     }
 
     handleCellClick({ x, y }) {
-        if (!this.canEdit || this.editMode !== 'place-building' || !this.placementTypeId) {
+        if (!this.canEdit) {
+            return;
+        }
+
+        if (this.editMode === 'portal' && this.pendingPortalDraft) {
+            this.placePendingPortal(x, y);
+            return;
+        }
+
+        if (this.editMode !== 'place-building' || !this.placementTypeId) {
             return;
         }
 
@@ -333,6 +412,103 @@ export class MapEngine {
         this.onBuildingsChange?.(this.state.buildings);
         this.onStatus?.(`${type.name} eklendi (${x}, ${y}) — kaydetmeyi unutmayın`);
         this.setEditMode('building');
+    }
+
+    placePendingPortal(grid_x, grid_y) {
+        const draft = this.pendingPortalDraft;
+        if (!draft) {
+            return;
+        }
+
+        const portal = {
+            id: this.tempIdCounter--,
+            name: draft.name,
+            target_map_slug: draft.target_map_slug,
+            grid_x,
+            grid_y,
+            width_tiles: draft.width_tiles,
+            height_tiles: draft.height_tiles,
+            description: draft.description ?? null,
+        };
+
+        if (!this.canPlacePortal(portal)) {
+            this.onStatus?.('Geçit bu konuma yerleştirilemez.');
+            return;
+        }
+
+        this.recordHistory();
+        this.state.portals.push(portal);
+        this.pendingPortalDraft = null;
+        this.selectedPortalId = portal.id;
+        this.syncPortals();
+        this.onPortalsChange?.(this.state.portals);
+        this.onPortalSelected?.(portal);
+        this.onStatus?.(`"${portal.name}" eklendi (${grid_x}, ${grid_y}) — kaydetmeyi unutmayın`);
+    }
+
+    canPlacePortal(portal) {
+        const { map } = this.state;
+        if (portal.grid_x < 0 || portal.grid_y < 0
+            || portal.grid_x + portal.width_tiles > map.width_tiles
+            || portal.grid_y + portal.height_tiles > map.height_tiles) {
+            return false;
+        }
+
+        return !this.state.portals.some((other) => {
+            if (other.id === portal.id) {
+                return false;
+            }
+            return portal.grid_x < other.grid_x + other.width_tiles
+                && portal.grid_x + portal.width_tiles > other.grid_x
+                && portal.grid_y < other.grid_y + other.height_tiles
+                && portal.grid_y + portal.height_tiles > other.grid_y;
+        });
+    }
+
+    startPortalPlacement(draft) {
+        this.pendingPortalDraft = draft;
+        this.setEditMode('portal');
+        this.onStatus?.('Haritada geçit konumuna tıklayın');
+    }
+
+    updatePortal(portalId, fields) {
+        const portal = this.state.portals.find((item) => item.id === portalId);
+        if (!portal) {
+            return null;
+        }
+
+        this.recordHistory();
+        Object.assign(portal, fields);
+
+        if (!this.canPlacePortal(portal)) {
+            this.onStatus?.('Geçit bu boyut/konuma sığmıyor.');
+        }
+
+        this.syncPortals();
+        this.onPortalsChange?.(this.state.portals);
+        return portal;
+    }
+
+    removePortal(portalId) {
+        const portal = this.state.portals.find((item) => item.id === portalId);
+        if (!portal) {
+            return;
+        }
+
+        this.recordHistory();
+        this.state.portals = this.state.portals.filter((item) => item.id !== portalId);
+        if (this.selectedPortalId === portalId) {
+            this.selectedPortalId = null;
+        }
+        this.syncPortals();
+        this.onPortalsChange?.(this.state.portals);
+        this.onStatus?.(`"${portal.name}" kaldırıldı`);
+    }
+
+    syncPortals() {
+        this.portalLayer?.setPortals(this.state.portals ?? []);
+        this.portalLayer?.setSelectedPortalId(this.selectedPortalId);
+        this.applyEditMode();
     }
 
     createLocalBuilding(type, grid_x, grid_y) {
@@ -462,6 +638,7 @@ export class MapEngine {
         this.state.buildings = snapshot.buildings
             .map((item) => this.rebuildBuilding(item))
             .filter(Boolean);
+        this.state.portals = (snapshot.portals ?? []).map((item) => ({ ...item }));
 
         if (snapshot.type_sprites) {
             this.applyTypeSprites(snapshot.type_sprites);
@@ -471,18 +648,21 @@ export class MapEngine {
         this.world.style.height = `${snapshot.map.height_tiles * this.state.map.tile_size}px`;
         this.tileLayer.resize(snapshot.map.width_tiles, snapshot.map.height_tiles);
         this.tileLayer.setData(this.state.terrain_data);
+        this.portalLayer?.resize(snapshot.map.width_tiles, snapshot.map.height_tiles);
         this.buildingLayer.setMapSize(snapshot.map.width_tiles, snapshot.map.height_tiles);
         this.buildingLayer.setTerrainData(this.state.terrain_data, snapshot.map.width_tiles);
         this.buildingLayer.setBuildings(this.state.buildings);
+        this.syncPortals();
         this.applyEditMode();
         this.onBuildingsChange?.(this.state.buildings);
+        this.onPortalsChange?.(this.state.portals);
     }
 
     syncLayers() {
         this.buildingLayer.setBuildings(this.state.buildings);
         this.buildingLayer.setTerrainData(this.state.terrain_data, this.state.map.width_tiles);
         this.tileLayer.setData(this.state.terrain_data);
-        this.applyEditMode();
+        this.syncPortals();
     }
 
     buildSavePayload() {
@@ -496,6 +676,16 @@ export class MapEngine {
                 grid_x: building.grid_x,
                 grid_y: building.grid_y,
                 label: building.label,
+            })),
+            portals: (this.state.portals ?? []).map((portal) => ({
+                id: portal.id > 0 ? portal.id : null,
+                name: portal.name,
+                target_map_slug: portal.target_map_slug,
+                grid_x: portal.grid_x,
+                grid_y: portal.grid_y,
+                width_tiles: portal.width_tiles,
+                height_tiles: portal.height_tiles,
+                description: portal.description ?? null,
             })),
         };
     }
@@ -544,19 +734,22 @@ export class MapEngine {
         this.state.map.height_tiles = result.map.height_tiles;
         this.state.terrain_data = result.terrain_data;
         this.state.buildings = result.buildings;
+        this.state.portals = result.portals ?? [];
 
         this.world.style.width = `${result.map.width_tiles * this.state.map.tile_size}px`;
         this.world.style.height = `${result.map.height_tiles * this.state.map.tile_size}px`;
         this.tileLayer.resize(result.map.width_tiles, result.map.height_tiles);
         this.tileLayer.setData(result.terrain_data);
+        this.portalLayer?.resize(result.map.width_tiles, result.map.height_tiles);
         this.buildingLayer.setMapSize(result.map.width_tiles, result.map.height_tiles);
         this.buildingLayer.setTerrainData(result.terrain_data, result.map.width_tiles);
         this.buildingLayer.setBuildings(result.buildings);
-        this.applyEditMode();
+        this.syncPortals();
 
         this.initTypeSprites();
         this.history?.clear();
         this.onBuildingsChange?.(result.buildings);
+        this.onPortalsChange?.(this.state.portals);
         this.onStatus?.('Harita kaydedildi');
     }
 
@@ -625,6 +818,8 @@ export class MapEngine {
         this.buildingLayer.setMapSize(newW, newH);
         this.buildingLayer.setTerrainData(newData, newW);
         this.buildingLayer.setBuildings(this.state.buildings);
+        this.portalLayer?.resize(newW, newH);
+        this.syncPortals();
         this.applyEditMode();
         this.scheduleResetView();
         this.onStatus?.(`Harita ${newW}×${newH} karoya genişletildi`);

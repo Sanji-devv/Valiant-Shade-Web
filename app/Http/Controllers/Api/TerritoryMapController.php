@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\BuildingTypeResource;
 use App\Http\Resources\MapBuildingResource;
+use App\Http\Resources\MapPortalResource;
 use App\Models\BuildingType;
 use App\Models\TerritoryMap;
 use App\Services\Map\MapBootstrapService;
@@ -23,7 +24,13 @@ class TerritoryMapController extends Controller
     {
         $map = TerritoryMap::query()
             ->where('slug', $slug)
-            ->with(['buildings.type'])
+            ->with([
+                'buildings.type',
+                'portals' => fn ($query) => $query
+                    ->where('is_active', true)
+                    ->with('targetMap')
+                    ->orderBy('name'),
+            ])
             ->firstOrFail();
 
         $tileTypes = $this->bootstrap->ensureTileTypes($map);
@@ -50,6 +57,13 @@ class TerritoryMapController extends Controller
                 'height_tiles' => $map->height_tiles,
                 'tile_size' => $map->tile_size,
             ],
+            'portals' => MapPortalResource::collection($map->portals),
+            'available_maps' => TerritoryMap::query()
+                ->where('slug', '!=', $slug)
+                ->orderBy('name')
+                ->get(['slug', 'name'])
+                ->map(fn ($entry) => ['slug' => $entry->slug, 'name' => $entry->name])
+                ->values(),
             'tile_types' => $tileTypes->map(fn ($type) => [
                 'id' => $type->id,
                 'slug' => $type->slug,

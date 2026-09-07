@@ -18,6 +18,16 @@ export class HistoryManager {
                 label: building.label ?? null,
                 building_type_id: building.type?.id ?? building.building_type_id,
             })),
+            portals: (state.portals ?? []).map((portal) => ({
+                id: portal.id,
+                name: portal.name,
+                target_map_slug: portal.target_map_slug,
+                grid_x: portal.grid_x,
+                grid_y: portal.grid_y,
+                width_tiles: portal.width_tiles,
+                height_tiles: portal.height_tiles,
+                description: portal.description ?? null,
+            })),
             map: {
                 width_tiles: state.map.width_tiles,
                 height_tiles: state.map.height_tiles,

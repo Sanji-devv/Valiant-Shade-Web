@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\BuildingType;
 use App\Models\MapBuilding;
+use App\Models\MapPortal;
 use App\Models\MapTileType;
 use App\Models\TerritoryMap;
 use App\Support\Map\ValiantShadeTerrainBuilder;
@@ -68,6 +69,19 @@ class ValiantShadeMapSeeder extends Seeder
         );
 
         $map->update(['terrain_data' => $terrainData]);
+
+        MapPortal::query()->where('territory_map_id', $map->id)->delete();
+        MapPortal::query()->create([
+            'territory_map_id' => $map->id,
+            'name' => 'Isonburg Krallığı',
+            'target_map_slug' => 'isonburg',
+            'grid_x' => 0,
+            'grid_y' => 12,
+            'width_tiles' => 3,
+            'height_tiles' => 5,
+            'description' => 'T kavşağından sola — Isonburg yolu',
+            'is_active' => true,
+        ]);
 
         $types = [
             ['slug' => 'kusane', 'name' => 'Kuşhane', 'description' => 'Mesaj kuşları barınağı.', 'w' => 1, 'h' => 1, 'icon' => '🕊️', 'category' => 'utility', 'unique' => true],

@@ -5,16 +5,33 @@ use App\Http\Controllers\Api\MapBuildingController;
 use App\Http\Controllers\Api\MapEditorController;
 use App\Http\Controllers\Api\MapTerrainController;
 use App\Http\Controllers\Api\TerritoryMapController;
+use App\Http\Controllers\Web\ImageMapController;
+use App\Http\Controllers\Web\IsonburgCityController;
+use App\Http\Controllers\Web\MapPageController;
+use App\Http\Controllers\Web\ValiantShadeController;
 use App\Http\Controllers\Web\MapAuthController;
-use App\Http\Controllers\Web\ValiantShadeMapController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
+Route::get('/', [ImageMapController::class, 'feldan'])->name('web.feldan');
+Route::get('/feldan', [ImageMapController::class, 'feldan']);
+
+Route::get('/isonburg', [ImageMapController::class, 'isonburgKingdom'])->name('web.isonburg');
+Route::get('/isonburg/sehir', [IsonburgCityController::class, 'show'])->name('web.isonburg.city');
+Route::get('/isonburg/sehir/edit', [IsonburgCityController::class, 'edit'])
+    ->middleware(['auth', 'map.editor'])
+    ->name('web.isonburg.city.edit');
+
+Route::get('/isonburg/arazi', fn () => app(MapPageController::class)->show('isonburg'))->name('web.isonburg.terrain');
+Route::get('/isonburg/arazi/edit', fn () => app(MapPageController::class)->edit('isonburg'))
+    ->middleware(['auth', 'map.editor'])
+    ->name('web.isonburg.terrain.edit');
+
+Route::get('/home', function () {
     return view('web.home');
 })->name('web.home');
 
-Route::get('/valiant-shade', [ValiantShadeMapController::class, 'show'])->name('web.valiant-shade');
-Route::get('/valiant-shade/edit', [ValiantShadeMapController::class, 'edit'])
+Route::get('/valiant-shade', [ValiantShadeController::class, 'show'])->name('web.valiant-shade');
+Route::get('/valiant-shade/edit', fn () => app(MapPageController::class)->edit('valiant-shade'))
     ->middleware(['auth', 'map.editor'])
     ->name('web.valiant-shade.edit');
 

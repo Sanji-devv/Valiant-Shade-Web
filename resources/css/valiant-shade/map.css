@@ -749,7 +749,8 @@ label.btn-icon {
 }
 
 .vs-tile-layer,
-.vs-building-layer {
+.vs-building-layer,
+.vs-portal-layer {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -767,6 +768,141 @@ label.btn-icon {
 
 .vs-tile-layer--click {
     pointer-events: auto;
+}
+
+.vs-portal-layer {
+    z-index: 3;
+    pointer-events: none;
+}
+
+.vs-portal-hit {
+    fill: rgba(201, 168, 76, 0.1);
+    stroke: rgba(201, 168, 76, 0.55);
+    stroke-width: 2;
+    stroke-dasharray: 6 4;
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.vs-portal-hit:hover {
+    fill: rgba(201, 168, 76, 0.22);
+}
+
+.vs-portal-label {
+    fill: #c9a84c;
+    font-size: 11px;
+    font-family: system-ui, sans-serif;
+    font-weight: 600;
+    pointer-events: none;
+}
+
+.vs-portal-hint {
+    fill: rgba(201, 168, 76, 0.75);
+    font-size: 9px;
+    font-family: system-ui, sans-serif;
+    pointer-events: none;
+}
+
+.vs-portal-hit--editable {
+    cursor: grab;
+}
+
+.vs-portal--active .vs-portal-hit {
+    stroke: #f0d890;
+    fill: rgba(201, 168, 76, 0.22);
+}
+
+.vs-portal--invalid .vs-portal-hit {
+    stroke: #e57373;
+    fill: rgba(229, 115, 115, 0.2);
+}
+
+.vs-portal--dragging .vs-portal-hit {
+    cursor: grabbing;
+}
+
+.vs-viewport--portals {
+    cursor: crosshair;
+}
+
+.vs-portal-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.vs-portal-list-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+    padding: 0.45rem 0.55rem;
+    border: 1px solid rgba(201, 168, 76, 0.2);
+    border-radius: 0.4rem;
+    background: transparent;
+    color: var(--vs-text);
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+}
+
+.vs-portal-list-item--active {
+    border-color: var(--vs-gold);
+    background: rgba(201, 168, 76, 0.12);
+}
+
+.vs-portal-list-item small {
+    color: var(--vs-muted);
+    font-size: 0.6875rem;
+}
+
+.vs-field-label {
+    display: block;
+    font-size: 0.6875rem;
+    color: var(--vs-muted);
+    margin-bottom: 0.5rem;
+}
+
+.vs-field-label select {
+    display: block;
+    width: 100%;
+    margin-top: 0.2rem;
+    padding: 0.4rem 0.55rem;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(201, 168, 76, 0.25);
+    border-radius: 0.375rem;
+    color: var(--vs-text);
+    font-size: 0.8125rem;
+}
+
+.vs-size-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.vs-size-row label {
+    flex: 1;
+    font-size: 0.6875rem;
+    color: var(--vs-muted);
+}
+
+.vs-size-row input {
+    display: block;
+    width: 100%;
+    margin-top: 0.2rem;
+    padding: 0.4rem 0.55rem;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(201, 168, 76, 0.25);
+    border-radius: 0.375rem;
+    color: var(--vs-text);
+    font-size: 0.8125rem;
+}
+
+.vs-portal-form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
 }
 
 .vs-viewport--place {

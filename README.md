@@ -202,8 +202,10 @@ php artisan serve
 | Adres | Açıklama |
 |-------|----------|
 | http://localhost:8000 | Ana sayfa |
-| http://localhost:8000/valiant-shade | Harita — ziyaretçi görünümü |
-| http://localhost:8000/valiant-shade/edit | Harita editörü (yönetici) |
+| http://localhost:8000/valiant-shade | Valiant Shade lonca arazisi |
+| http://localhost:8000/valiant-shade/edit | Valiant Shade editörü |
+| http://localhost:8000/isonburg | Isonburg krallığı haritası |
+| http://localhost:8000/isonburg/edit | Isonburg editörü |
 | http://localhost:8000/login | Yönetici girişi |
 | http://localhost:8000/admin | Yönetim paneli |
 | http://localhost:8000/demo-vuexy | Vuexy referans demo (dokunulmaz) |
@@ -224,6 +226,8 @@ php artisan serve
 - View: `resources/views/web/valiant-shade/`
 - Route: `routes/web.php`
 - API: `routes/web.php` içindeki `/api/maps/...` uçları
+- Dünya düzeni (Valiant Shade ↔ Isonburg): [`docs/world-layout.md`](docs/world-layout.md)
+- Geçitler: editörde **Geçitler** sekmesi — haritalar arası yol bağlantıları (`map_portals` tablosu)
 
 ### Yönetim paneli
 

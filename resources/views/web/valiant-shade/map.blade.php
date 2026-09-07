@@ -4,18 +4,18 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Valiant Shade Arazisi — {{ config('app.name', 'Valiant Shade') }}</title>
+    <title>{{ $mapName ?? 'Valiant Shade Arazisi' }} — {{ config('app.name', 'Valiant Shade') }}</title>
     @vite(['resources/css/valiant-shade/map.css', 'resources/js/valiant-shade/map.js'])
 </head>
 <body>
     <div class="vs-page{{ $canEdit ? ' vs-page--editor' : '' }}">
         <header class="vs-header">
             <div>
-                <h1>Valiant Shade Arazisi</h1>
+                <h1>{{ $mapName ?? 'Valiant Shade Arazisi' }}</h1>
                 @if ($canEdit)
                     <p>Harita editörü — Ctrl+Z geri al · Ctrl+Y yinele</p>
                 @else
-                    <p>Tiled arazi · Yapılara tıklayın · Tekerlek ile zoom</p>
+                    <p>Tiled arazi · Yapılara tıklayın · Yollardaki geçitlere tıklayın · Tekerlek ile zoom</p>
                 @endif
             </div>
             <nav class="vs-header-actions">
@@ -31,8 +31,19 @@
                     <button type="button" id="zoom-fit" class="vs-tool" title="Sığdır">◎</button>
                     <button type="button" id="zoom-in" class="vs-tool" title="Yakınlaş">+</button>
                 </div>
+                @php
+                    $slug = $mapSlug ?? 'valiant-shade';
+                    $mapRoutes = [
+                        'valiant-shade' => ['show' => 'web.valiant-shade', 'edit' => 'web.valiant-shade.edit'],
+                        'isonburg' => ['show' => 'web.isonburg.terrain', 'edit' => 'web.isonburg.terrain.edit'],
+                        'isonburg-sehir' => ['show' => 'web.isonburg.city', 'edit' => 'web.isonburg.city.edit'],
+                    ];
+                    $routes = $mapRoutes[$slug] ?? $mapRoutes['valiant-shade'];
+                    $mapShowRoute = $routes['show'];
+                    $mapEditRoute = $routes['edit'];
+                @endphp
                 @if ($canEdit)
-                    <a class="vs-link vs-link--active" href="{{ route('web.valiant-shade') }}">Normal Görünüm</a>
+                    <a class="vs-link vs-link--active" href="{{ route($mapShowRoute) }}">Normal Görünüm</a>
                     <form method="POST" action="{{ route('web.logout') }}" class="vs-inline-form">
                         @csrf
                         <button type="submit" class="vs-link vs-link--btn">Çıkış</button>
@@ -40,10 +51,10 @@
                 @else
                     @auth
                         @if (auth()->user()->is_admin)
-                            <a class="vs-link" href="{{ route('web.valiant-shade.edit') }}">Düzen Modu</a>
+                            <a class="vs-link" href="{{ route($mapEditRoute) }}">Düzen Modu</a>
                         @endif
                     @else
-                        <a class="vs-link" href="{{ route('web.login', ['redirect' => route('web.valiant-shade.edit')]) }}">Yönetici Girişi</a>
+                        <a class="vs-link" href="{{ route('web.login', ['redirect' => route($mapEditRoute)]) }}">Yönetici Girişi</a>
                     @endauth
                 @endif
                 <a class="vs-link" href="{{ route('web.home') }}">Ana Sayfa</a>
@@ -66,6 +77,10 @@
                         <button type="button" class="vs-editor-tab" data-editor-mode="terrain">
                             <i class="vs-editor-tab-icon icon-base ti tabler-brush"></i>
                             <span>Zemin</span>
+                        </button>
+                        <button type="button" class="vs-editor-tab" data-editor-mode="portal">
+                            <i class="vs-editor-tab-icon icon-base ti tabler-arrows-exchange"></i>
+                            <span>Geçitler</span>
                         </button>
                     </div>
 
@@ -129,6 +144,39 @@
                                 </div>
                                 <button type="submit" class="vs-btn vs-btn--ghost">+ Tip Ekle</button>
                             </form>
+                        </section>
+
+                        <section class="vs-editor-panel" data-panel="portal" hidden>
+                            <p class="vs-editor-help">Kavşak ve yol uçlarına geçit yerleştirin. Ziyaretçiler tıklayınca hedef haritaya gider.</p>
+
+                            <form data-portal-form class="vs-form-block">
+                                <h3>Geçit</h3>
+                                <input type="text" name="name" placeholder="Geçit adı (örn. Isonburg Yolu)" required maxlength="64">
+                                <label class="vs-field-label">
+                                    Hedef harita
+                                    <select name="target_map_slug" required data-portal-targets></select>
+                                </label>
+                                <input type="text" name="description" placeholder="Açıklama (isteğe bağlı)" maxlength="500">
+                                <div class="vs-size-row">
+                                    <label>Genişlik (karo) <input type="number" name="width_tiles" min="1" max="12" value="2" required></label>
+                                    <label>Yükseklik (karo) <input type="number" name="height_tiles" min="1" max="12" value="2" required></label>
+                                </div>
+                                <div class="vs-portal-form-actions">
+                                    <button type="submit" class="vs-btn" data-portal-submit>Yeni geçit yerleştir</button>
+                                    <button type="button" class="vs-btn vs-btn--ghost" data-portal-update hidden>Güncelle</button>
+                                    <button type="button" class="vs-btn vs-btn--danger" data-portal-delete hidden>Kaldır</button>
+                                </div>
+                            </form>
+
+                            <div class="vs-collapse" data-collapse>
+                                <button type="button" class="vs-collapse-toggle" data-collapse-toggle>
+                                    <span>Haritadaki geçitler</span>
+                                    <span class="vs-collapse-icon"><i class="icon-base ti tabler-chevron-down"></i></span>
+                                </button>
+                                <div class="vs-collapse-body">
+                                    <div data-portal-list class="vs-portal-list"></div>
+                                </div>
+                            </div>
                         </section>
 
                         <section class="vs-editor-panel vs-editor-panel--tools">

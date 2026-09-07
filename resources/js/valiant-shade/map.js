@@ -53,8 +53,10 @@ const engine = new MapEngine({
     canEdit,
     onSelect: openPanel,
     onStatus: (message) => {
-        statusBar.textContent = message;
-        statusBar.classList.remove('vs-status--error');
+        if (statusBar) {
+            statusBar.textContent = message;
+            statusBar.classList.remove('vs-status--error');
+        }
     },
     onHistoryChange: (flags) => {
         editorPanel?.setHistoryState(flags);
@@ -67,11 +69,17 @@ const engine = new MapEngine({
             editorPanel.setTileTypes(state.tile_types, state.tile_types[0]?.id ?? null);
             editorPanel.setBuildingTypes(state.building_types);
             editorPanel.setBuildings(state.buildings);
+            editorPanel.setAvailableMaps(state.available_maps ?? []);
+            editorPanel.setPortals(state.portals ?? []);
         }
     },
     onBuildingsChange: (buildings) => {
         editorPanel?.setBuildingTypes(engine.state.building_types);
         editorPanel?.setBuildings(buildings);
+    },
+    onPortalsChange: (portals) => {
+        editorPanel?.setAvailableMaps(engine.state.available_maps ?? []);
+        editorPanel?.setPortals(portals);
     },
 });
 
@@ -81,6 +89,10 @@ engine.onBuildingSelected = () => {
 
 engine.onTerrainToolChange = (tool, tileId) => {
     editorPanel?.setTerrainTool(tool, tileId);
+};
+
+engine.onPortalSelected = (portal) => {
+    editorPanel?.selectPortal(portal);
 };
 
 if (canEdit && editorRoot) {
@@ -114,6 +126,23 @@ if (canEdit && editorRoot) {
         onUploadSprite: (typeId, file) => engine.uploadSpriteForBuildingType(typeId, file),
         onDeleteBuilding: () => engine.removeSelectedBuilding(),
         onOpenBuildingModal: () => buildingModal.open(),
+        onCreatePortal: (payload) => engine.startPortalPlacement(payload),
+        onUpdatePortal: (id, payload) => {
+            const portal = engine.updatePortal(id, payload);
+            if (portal) {
+                editorPanel.selectPortal(portal);
+            }
+        },
+        onDeletePortal: (id) => {
+            engine.removePortal(id);
+            editorPanel.clearPortalSelection();
+        },
+        onPortalSelect: (portal) => {
+            engine.selectedPortalId = portal.id;
+            engine.syncPortals();
+            editorPanel.selectPortal(portal);
+            engine.setEditMode('portal');
+        },
     });
     editorPanel.onBuildingSelect = (building) => {
         engine.selectedBuildingId = building.id;
@@ -121,9 +150,17 @@ if (canEdit && editorRoot) {
 }
 
 engine.init().catch((error) => {
-    statusBar.textContent = error.message;
-    statusBar.classList.add('vs-status--error');
+    if (statusBar) {
+        statusBar.textContent = error.message;
+        statusBar.classList.add('vs-status--error');
+    }
     console.error(error);
+});
+
+window.addEventListener('vs-tile-map-show', () => {
+    requestAnimationFrame(() => {
+        engine.resetView();
+    });
 });
 
 document.getElementById('zoom-in')?.addEventListener('click', () => engine.zoomIn());

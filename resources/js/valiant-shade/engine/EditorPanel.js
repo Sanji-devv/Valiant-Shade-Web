@@ -12,10 +12,14 @@ export class EditorPanel {
         this.tileTypes = [];
         this.buildingTypes = [];
         this.buildings = [];
+        this.portals = [];
+        this.availableMaps = [];
+        this.selectedPortalId = null;
 
         this.modeButtons = this.root.querySelectorAll('[data-editor-mode]');
         this.terrainPanel = this.root.querySelector('[data-panel="terrain"]');
         this.buildingPanel = this.root.querySelector('[data-panel="building"]');
+        this.portalPanel = this.root.querySelector('[data-panel="portal"]');
         this.modeLabel = this.root.querySelector('[data-mode-label]');
         this.palette = this.root.querySelector('[data-tile-palette]');
         this.selectedTilePreview = this.root.querySelector('[data-selected-tile-preview]');
@@ -26,6 +30,12 @@ export class EditorPanel {
         this.buildingTypeList = this.root.querySelector('[data-building-type-list]');
         this.openBuildingModalBtn = this.root.querySelector('[data-open-building-modal]');
         this.deleteBuildingBtn = this.root.querySelector('[data-delete-building]');
+        this.portalForm = this.root.querySelector('[data-portal-form]');
+        this.portalList = this.root.querySelector('[data-portal-list]');
+        this.portalTargets = this.root.querySelector('[data-portal-targets]');
+        this.portalSubmitBtn = this.root.querySelector('[data-portal-submit]');
+        this.portalUpdateBtn = this.root.querySelector('[data-portal-update]');
+        this.portalDeleteBtn = this.root.querySelector('[data-portal-delete]');
 
         this.bindEvents();
         this.bindCollapsibles();
@@ -82,6 +92,39 @@ export class EditorPanel {
         this.root.querySelector('[data-expand-width]')?.addEventListener('click', () => this.onExpand?.(5, 0));
         this.root.querySelector('[data-expand-height]')?.addEventListener('click', () => this.onExpand?.(0, 5));
         this.root.querySelector('[data-expand-both]')?.addEventListener('click', () => this.onExpand?.(5, 5));
+
+        this.portalForm?.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const payload = this.readPortalForm();
+            if (this.selectedPortalId) {
+                this.onUpdatePortal?.(this.selectedPortalId, payload);
+            } else {
+                this.onCreatePortal?.(payload);
+            }
+        });
+
+        this.portalUpdateBtn?.addEventListener('click', () => {
+            if (!this.selectedPortalId) {
+                return;
+            }
+            this.onUpdatePortal?.(this.selectedPortalId, this.readPortalForm());
+        });
+
+        this.portalDeleteBtn?.addEventListener('click', () => {
+            if (this.selectedPortalId) {
+                this.onDeletePortal?.(this.selectedPortalId);
+            }
+        });
+    }
+
+    readPortalForm() {
+        return {
+            name: this.portalForm.name.value.trim(),
+            target_map_slug: this.portalForm.target_map_slug.value,
+            description: this.portalForm.description.value.trim() || null,
+            width_tiles: Number(this.portalForm.width_tiles.value),
+            height_tiles: Number(this.portalForm.height_tiles.value),
+        };
     }
 
     setMode(mode) {
@@ -99,12 +142,14 @@ export class EditorPanel {
         });
         this.terrainPanel?.toggleAttribute('hidden', mode !== 'terrain');
         this.buildingPanel?.toggleAttribute('hidden', mode !== 'building');
+        this.portalPanel?.toggleAttribute('hidden', mode !== 'portal');
         if (this.modeLabel) {
             const labels = {
                 terrain: this.terrainTool === TERRAIN_PAN_TOOL
                     ? 'Haritayı kaydırmak için sürükleyin — zemin boyamak için paletten seçin'
                     : 'Zemin boyama — yapılar silüet olarak görünür',
                 building: 'Bina taşıma — sağ tık menüsü · sürükleyerek taşıyın',
+                portal: 'Geçit yerleştirme — haritaya tıklayın veya sürükleyerek taşıyın',
             };
             this.modeLabel.textContent = labels[mode] ?? 'Haritada düzenleyin';
         }
@@ -163,6 +208,94 @@ export class EditorPanel {
         this.buildings = buildings;
         this.renderBuildingList();
         this.renderBuildingTypes();
+    }
+
+    setAvailableMaps(maps) {
+        this.availableMaps = maps ?? [];
+        if (!this.portalTargets) {
+            return;
+        }
+        this.portalTargets.replaceChildren();
+        this.availableMaps.forEach((map) => {
+            const option = document.createElement('option');
+            option.value = map.slug;
+            option.textContent = map.name;
+            this.portalTargets.appendChild(option);
+        });
+    }
+
+    setPortals(portals) {
+        this.portals = (portals ?? []).map((portal) => ({
+            ...portal,
+            target_map_name: portal.target_map_name
+                ?? this.availableMaps.find((map) => map.slug === portal.target_map_slug)?.name,
+        }));
+        this.renderPortalList();
+    }
+
+    selectPortal(portal) {
+        this.selectedPortalId = portal?.id ?? null;
+        this.renderPortalList();
+        this.fillPortalForm(portal);
+    }
+
+    clearPortalSelection() {
+        this.selectedPortalId = null;
+        this.portalForm?.reset();
+        if (this.portalForm) {
+            this.portalForm.width_tiles.value = 2;
+            this.portalForm.height_tiles.value = 2;
+        }
+        this.portalSubmitBtn?.toggleAttribute('hidden', false);
+        this.portalUpdateBtn?.toggleAttribute('hidden', true);
+        this.portalDeleteBtn?.toggleAttribute('hidden', true);
+        this.renderPortalList();
+    }
+
+    fillPortalForm(portal) {
+        if (!portal || !this.portalForm) {
+            this.clearPortalSelection();
+            return;
+        }
+
+        this.portalForm.name.value = portal.name;
+        this.portalForm.target_map_slug.value = portal.target_map_slug;
+        this.portalForm.description.value = portal.description ?? '';
+        this.portalForm.width_tiles.value = portal.width_tiles;
+        this.portalForm.height_tiles.value = portal.height_tiles;
+        this.portalSubmitBtn?.toggleAttribute('hidden', true);
+        this.portalUpdateBtn?.toggleAttribute('hidden', false);
+        this.portalDeleteBtn?.toggleAttribute('hidden', false);
+    }
+
+    renderPortalList() {
+        if (!this.portalList) {
+            return;
+        }
+
+        this.portalList.replaceChildren();
+
+        if (this.portals.length === 0) {
+            const empty = document.createElement('p');
+            empty.className = 'vs-empty-note';
+            empty.textContent = 'Henüz geçit yok.';
+            this.portalList.appendChild(empty);
+            return;
+        }
+
+        this.portals.forEach((portal) => {
+            const item = document.createElement('button');
+            item.type = 'button';
+            item.className = `vs-portal-list-item${portal.id === this.selectedPortalId ? ' vs-portal-list-item--active' : ''}`;
+            item.innerHTML = `
+                <strong>${portal.name}</strong>
+                <small>→ ${portal.target_map_name ?? portal.target_map_slug} · (${portal.grid_x}, ${portal.grid_y}) · ${portal.width_tiles}×${portal.height_tiles}</small>
+            `;
+            item.addEventListener('click', () => {
+                this.onPortalSelect?.(portal);
+            });
+            this.portalList.appendChild(item);
+        });
     }
 
     findPlacedBuilding(typeId) {

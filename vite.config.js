@@ -11,6 +11,8 @@ export default defineConfig({
                 'resources/js/app.js',
                 'resources/css/valiant-shade/map.css',
                 'resources/js/valiant-shade/map.js',
+                'resources/css/valiant-shade/image-map.css',
+                'resources/js/valiant-shade/image-map.js',
             ],
             refresh: true,
             fonts: [

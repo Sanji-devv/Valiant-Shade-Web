@@ -33,4 +33,9 @@ class TerritoryMap extends Model
     {
         return $this->hasMany(MapTileType::class);
     }
+
+    public function portals(): HasMany
+    {
+        return $this->hasMany(MapPortal::class);
+    }
 }

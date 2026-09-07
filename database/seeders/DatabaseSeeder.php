@@ -25,5 +25,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call(ValiantShadeMapSeeder::class);
+        $this->call(IsenburgMapSeeder::class);
+        $this->call(IsonburgCityMapSeeder::class);
     }
 }
