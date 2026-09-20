@@ -6,10 +6,12 @@
         "build": "vite build",
         "build:demo-vuexy": "vite build --config vite.demo-vuexy.config.js",
         "build:admin": "vite build --config vite.admin.config.js",
-        "build:panels": "npm run build:demo-vuexy && npm run build:admin",
+        "build:valiant-shade": "vite build --config vite.valiant-shade.config.js",
+        "build:panels": "npm run build:demo-vuexy && npm run build:admin && npm run build:valiant-shade",
         "dev": "vite",
         "dev:demo-vuexy": "vite --config vite.demo-vuexy.config.js",
-        "dev:admin": "vite --config vite.admin.config.js"
+        "dev:admin": "vite --config vite.admin.config.js",
+        "dev:valiant-shade": "vite --config vite.valiant-shade.config.js"
     },
     "dependencies": {
         "@algolia/autocomplete-js": "1.19.2",

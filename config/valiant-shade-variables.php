@@ -1,0 +1,32 @@
+<?php
+// Variables
+return [
+  "creatorName" => "Valiant Shade",
+  "creatorUrl" => "",
+  "templateName" => "Valiant Shade",
+  "templateSuffix" => "Guild Portal",
+  "templateVersion" => "1.0.0",
+  "templateFree" => false,
+  "templateDescription" => "Valiant Shade Guild Portal",
+  "templateKeyword" => "valiant shade, rpg, guild",
+  "licenseUrl" => "",
+  "livePreview" => "",
+  "productPage" => "",
+  "support" => "",
+  "moreThemes" => "",
+  "ogTitle" => "Valiant Shade Dashboard",
+  "ogImage" => "https://pixinvent.com/wp-content/uploads/2023/06/vuexy-hero-image.png",
+  "ogType" => "product",
+  "documentation" => "https://demos.pixinvent.com/vuexy-html-admin-template/documentation",
+  "generator" => "",
+  "changelog" => "https://demos.pixinvent.com/vuexy/changelog.html",
+  "repository" => "https://github.com/pixinvent/vuexy-html-laravel-admin-template",
+  "gitRepo" => "vuexy-html-laravel-admin-template",
+  "gitRepoAccess" => "https://tools.pixinvent.com/github/github-access",
+  "githubFreeUrl" => "https://github.com/pixinvent",
+  "facebookUrl" => "https://www.facebook.com/pixinvents/",
+  "twitterUrl" => "https://x.com/pixinvents",
+  "githubUrl" => "https://github.com/pixinvent",
+  "dribbbleUrl" => "https://dribbble.com/pixinvent",
+  "instagramUrl" => "https://www.instagram.com/pixinvents/"
+];

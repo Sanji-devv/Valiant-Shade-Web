@@ -1,0 +1,208 @@
+<?php
+
+namespace Tests\Feature;
+
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class ValiantShadeTest extends TestCase
+{
+    use RefreshDatabase;
+    public function test_home_page_has_valiant_shade_button(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertStatus(200);
+        $response->assertSee(url('/valiant-shade'));
+        $response->assertSee('Valiant Shade');
+    }
+
+    public function test_valiant_shade_dashboard_renders_successfully(): void
+    {
+        $response = $this->get('/valiant-shade');
+
+        $response->assertStatus(200);
+        $response->assertSee('Valiant Shade');
+    }
+
+    public function test_valiant_shade_login_renders_successfully(): void
+    {
+        $response = $this->get('/valiant-shade/auth/login-basic');
+
+        $response->assertStatus(200);
+        $response->assertSee('Valiant Shade');
+        $response->assertSee(__('Please sign-in to your account and start the adventure'));
+    }
+
+    public function test_demo_vuexy_remains_untouched(): void
+    {
+        $response = $this->get('/demo-vuexy');
+
+        $response->assertStatus(200);
+        $response->assertSee('Vuexy');
+    }
+
+    public function test_demo_vuexy_renders_for_authenticated_user(): void
+    {
+        $user = \App\Models\User::firstOrCreate(
+            ['email' => 'admin@valiantshade.com'],
+            ['name' => 'Erdem', 'password' => '123456']
+        );
+
+        $response = $this->actingAs($user)->get('/demo-vuexy');
+
+        $response->assertStatus(200);
+        $response->assertSee('Vuexy');
+    }
+
+    public function test_admin_renders_for_guest_and_authenticated_user(): void
+    {
+        $guestResponse = $this->get('/admin');
+        $guestResponse->assertStatus(200);
+
+        $user = \App\Models\User::firstOrCreate(
+            ['email' => 'admin@valiantshade.com'],
+            ['name' => 'Erdem', 'password' => '123456']
+        );
+
+        $authResponse = $this->actingAs($user)->get('/admin');
+        $authResponse->assertStatus(200);
+    }
+
+    public function test_all_active_valiant_shade_routes_render_successfully(): void
+    {
+        $user = \App\Models\User::firstOrCreate(
+            ['email' => 'admin@valiantshade.com'],
+            ['name' => 'Erdem', 'password' => '123456']
+        );
+
+        $routes = [
+            '/valiant-shade',
+            '/valiant-shade/dashboard/analytics',
+            '/valiant-shade/dashboard/crm',
+            '/valiant-shade/pages/profile-user',
+            '/valiant-shade/pages/profile-teams',
+            '/valiant-shade/pages/profile-projects',
+            '/valiant-shade/pages/profile-connections',
+            '/valiant-shade/pages/account-settings-account',
+            '/valiant-shade/pages/inventory',
+            '/valiant-shade/pages/xp-tracker',
+            '/valiant-shade/pages/adventurer-info',
+            '/valiant-shade/pages/quest-board',
+            '/valiant-shade/pages/quest-reports',
+            '/valiant-shade/auth/login-basic',
+            '/valiant-shade/auth/register-basic',
+        ];
+
+        foreach ($routes as $route) {
+            $response = $this->actingAs($user)->get($route);
+            $this->assertSame(200, $response->getStatusCode(), "Route {$route} failed with status {$response->getStatusCode()}");
+        }
+    }
+
+    public function test_removed_pages_not_in_valiant_shade_routes_or_menus(): void
+    {
+        $user = \App\Models\User::firstOrCreate(
+            ['email' => 'admin@valiantshade.com'],
+            ['name' => 'Erdem', 'password' => '123456']
+        );
+
+        // Tables and Misc Error were removed from Valiant Shade
+        $removedRoutes = [
+            '/valiant-shade/tables/basic',
+            '/valiant-shade/pages/misc-error',
+        ];
+
+        foreach ($removedRoutes as $route) {
+            $response = $this->actingAs($user)->get($route);
+            $this->assertSame(404, $response->getStatusCode(), "Route {$route} should return 404 in Valiant Shade");
+        }
+
+        // Verify removed from Valiant Shade menus
+        $verticalMenu = file_get_contents(resource_path('menu/valiant-shade/verticalMenu.json'));
+        $horizontalMenu = file_get_contents(resource_path('menu/valiant-shade/horizontalMenu.json'));
+
+        $this->assertStringNotContainsString('tables-basic', $verticalMenu);
+        $this->assertStringNotContainsString('tables/basic', $verticalMenu);
+        $this->assertStringNotContainsString('pages-misc-error', $verticalMenu);
+        $this->assertStringNotContainsString('misc-error', $verticalMenu);
+
+        $this->assertStringNotContainsString('tables-basic', $horizontalMenu);
+        $this->assertStringNotContainsString('tables/basic', $horizontalMenu);
+        $this->assertStringNotContainsString('pages-misc-error', $horizontalMenu);
+        $this->assertStringNotContainsString('misc-error', $horizontalMenu);
+    }
+
+    public function test_default_locale_is_english(): void
+    {
+        $user = \App\Models\User::firstOrCreate(
+            ['email' => 'admin@valiantshade.com'],
+            ['name' => 'Erdem', 'password' => '123456']
+        );
+
+        $response = $this->actingAs($user)->get('/valiant-shade');
+        $response->assertStatus(200);
+        $response->assertSee('Dashboards');
+        $response->assertSee('Guild Inventory');
+        $response->assertSee('Player XP Tracker');
+    }
+
+    public function test_locale_switching_to_turkish_and_back_to_english(): void
+    {
+        $user = \App\Models\User::firstOrCreate(
+            ['email' => 'admin@valiantshade.com'],
+            ['name' => 'Erdem', 'password' => '123456']
+        );
+
+        // Switch to Turkish
+        $switchTr = $this->actingAs($user)->get('/valiant-shade/lang/tr');
+        $switchTr->assertSessionHas('locale', 'tr');
+
+        // Request with session set to 'tr'
+        $responseTr = $this->actingAs($user)->withSession(['locale' => 'tr'])->get('/valiant-shade');
+        $responseTr->assertStatus(200);
+        $responseTr->assertSee('Kontrol Panelleri');
+        $responseTr->assertSee('Lonca Envanteri');
+        $responseTr->assertSee('Oyuncu XP Takibi');
+
+        // Switch back to English
+        $switchEn = $this->actingAs($user)->get('/valiant-shade/lang/en');
+        $switchEn->assertSessionHas('locale', 'en');
+
+        // Request with session set to 'en'
+        $responseEn = $this->actingAs($user)->withSession(['locale' => 'en'])->get('/valiant-shade');
+        $responseEn->assertStatus(200);
+        $responseEn->assertSee('Dashboards');
+        $responseEn->assertSee('Guild Inventory');
+    }
+
+    public function test_character_sheet_i18n_and_craft_slots(): void
+    {
+        $user = \App\Models\User::firstOrCreate(
+            ['email' => 'admin@valiantshade.com'],
+            ['name' => 'Erdem', 'password' => '123456']
+        );
+
+        // English Character Sheet
+        $resEn = $this->actingAs($user)->withSession(['locale' => 'en'])->get('/valiant-shade/character/sheet');
+        $resEn->assertStatus(200);
+        $resEn->assertSee('Character Name');
+        $resEn->assertSee('Ability Scores');
+        $resEn->assertSee('Saving Throws');
+        $resEn->assertSee('Skills');
+        $resEn->assertSee('Weapons');
+        $resEn->assertSee('craft1');
+        $resEn->assertSee('craft2');
+        $resEn->assertDontSee('craft3');
+
+        // Turkish Character Sheet
+        $resTr = $this->actingAs($user)->withSession(['locale' => 'tr'])->get('/valiant-shade/character/sheet');
+        $resTr->assertStatus(200);
+        $resTr->assertSee('Karakter Adı');
+        $resTr->assertSee('Nitelikler');
+        $resTr->assertSee('Kurtarma Atışları');
+        $resTr->assertSee('Beceriler');
+        $resTr->assertSee('Silahlar');
+    }
+}
+

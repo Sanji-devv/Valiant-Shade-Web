@@ -16,6 +16,9 @@ class DemoVuexyServiceProvider extends ServiceProvider
     public function boot(): void
     {
         View::composer('demo-vuexy.*', function ($view): void {
+            \Illuminate\Support\Facades\Vite::useHotFile(public_path('static/demo-vuexy.hot'));
+            \Illuminate\Support\Facades\Vite::useBuildDirectory('static/demo-vuexy/build');
+
             $verticalMenuJson = file_get_contents(base_path('resources/menu/demo-vuexy/verticalMenu.json'));
             $verticalMenuData = json_decode($verticalMenuJson);
             $horizontalMenuJson = file_get_contents(base_path('resources/menu/demo-vuexy/horizontalMenu.json'));

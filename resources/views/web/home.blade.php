@@ -17,10 +17,11 @@
 <body>
     <main>
         <h1>Valiant Shade</h1>
-        <p>Ön yüz (üye / ziyaretçi) alanı — geliştirme için hazır.</p>
+        <p>Front-facing member and visitor portal — ready for adventure.</p>
         <nav>
-            <a href="{{ url('/admin') }}">Yönetim Paneli</a>
-            <a href="{{ url('/demo-vuexy') }}">Vuexy Demo Referans</a>
+            <a href="{{ url('/valiant-shade') }}">Valiant Shade</a>
+            <a href="{{ url('/admin') }}">Control Panel</a>
+            <a href="{{ url('/demo-vuexy') }}">Vuexy Demo Reference</a>
         </nav>
     </main>
 </body>

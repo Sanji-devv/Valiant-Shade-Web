@@ -12,7 +12,26 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->web(append: [
+            \App\ValiantShade\Http\Middleware\LocaleMiddleware::class,
+        ]);
+        $middleware->encryptCookies(except: [
+            'admin-mode',
+            'front-mode',
+            'valiant-shade-mode',
+            'valiant-shade-user-themes',
+            'admin-colorPref',
+            'front-colorPref',
+            'admin-primaryColor',
+            'front-primaryColor',
+            'customize_skin',
+            'customize_semi_dark',
+            'LayoutCollapsed',
+            'contentLayout',
+            'navbarType',
+            'headerType',
+            'direction',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

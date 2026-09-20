@@ -1,0 +1,90 @@
+{
+    "menu": [
+        {
+            "name": "Dashboards",
+            "icon": "menu-icon icon-base ti tabler-smart-home",
+            "slug": "dashboard",
+            "submenu": [
+                {
+                    "url": "/valiant-shade/",
+                    "name": "Analytics",
+                    "slug": "dashboard-analytics"
+                },
+                {
+                    "url": "/valiant-shade/dashboard/crm",
+                    "name": "CRM",
+                    "slug": "dashboard-crm"
+                }
+            ]
+        },
+        {
+            "name": "Pages",
+            "icon": "menu-icon icon-base ti tabler-files",
+            "slug": "pages",
+            "submenu": [
+                {
+                    "url": "/valiant-shade/app/user/list",
+                    "name": "User List",
+                    "slug": "app-user-list"
+                },
+                {
+                    "url": "/valiant-shade/pages/profile-user",
+                    "name": "Profile",
+                    "slug": "pages-profile-user"
+                },
+                {
+                    "url": "/valiant-shade/pages/inventory",
+                    "name": "Guild Inventory",
+                    "slug": "pages-inventory"
+                },
+                {
+                    "url": "/valiant-shade/pages/xp-tracker",
+                    "name": "Player XP Tracker",
+                    "slug": "pages-xp-tracker"
+                },
+                {
+                    "url": "/valiant-shade/pages/adventurer-info",
+                    "name": "Adventurer Info",
+                    "slug": "pages-adventurer-info"
+                },
+                {
+                    "url": "/valiant-shade/pages/quest-board",
+                    "name": "Quest Board",
+                    "slug": "pages-quest-board"
+                },
+                {
+                    "url": "/valiant-shade/pages/quest-reports",
+                    "name": "Quest Reports",
+                    "slug": "pages-quest-reports"
+                },
+                {
+                    "url": "/valiant-shade/pages/feats",
+                    "name": "Feats List",
+                    "slug": "pages-feats-list"
+                },
+                {
+                    "url": "/valiant-shade/pages/account-settings-account",
+                    "name": "Account Settings",
+                    "slug": "pages-account-settings-account"
+                }
+            ]
+        },
+        {
+            "name": "Authentication",
+            "icon": "menu-icon icon-base ti tabler-lock",
+            "slug": "auth",
+            "submenu": [
+                {
+                    "url": "/valiant-shade/auth/login-basic",
+                    "name": "Login",
+                    "slug": "auth-login-basic"
+                },
+                {
+                    "url": "/valiant-shade/auth/register-basic",
+                    "name": "Register",
+                    "slug": "auth-register-basic"
+                }
+            ]
+        }
+    ]
+}

@@ -16,6 +16,9 @@ class AdminServiceProvider extends ServiceProvider
     public function boot(): void
     {
         View::composer('admin.*', function ($view): void {
+            \Illuminate\Support\Facades\Vite::useHotFile(public_path('static/admin.hot'));
+            \Illuminate\Support\Facades\Vite::useBuildDirectory('static/admin/build');
+
             $verticalMenuJson = file_get_contents(base_path('resources/menu/admin/verticalMenu.json'));
             $verticalMenuData = json_decode($verticalMenuJson);
             $horizontalMenuJson = file_get_contents(base_path('resources/menu/admin/horizontalMenu.json'));

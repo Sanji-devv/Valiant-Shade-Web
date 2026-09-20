@@ -1,0 +1,208 @@
+@extends('valiant-shade.layouts/layoutMaster')
+
+@section('title', 'User List - Valiant Shade')
+
+@section('vendor-style')
+@vite([
+  'resources/valiant-shade/assets/vendor/libs/datatables-bs5/datatables.bootstrap5.scss',
+  'resources/valiant-shade/assets/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.scss',
+  'resources/valiant-shade/assets/vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.scss',
+  'resources/valiant-shade/assets/vendor/libs/select2/select2.scss',
+  'resources/valiant-shade/assets/vendor/libs/@form-validation/form-validation.scss'
+], 'static/valiant-shade/build')
+@endsection
+
+@section('vendor-script')
+@vite([
+  'resources/valiant-shade/assets/vendor/libs/moment/moment.js',
+  'resources/valiant-shade/assets/vendor/libs/datatables-bs5/datatables-bootstrap5.js',
+  'resources/valiant-shade/assets/vendor/libs/select2/select2.js',
+  'resources/valiant-shade/assets/vendor/libs/@form-validation/popular.js',
+  'resources/valiant-shade/assets/vendor/libs/@form-validation/bootstrap5.js',
+  'resources/valiant-shade/assets/vendor/libs/@form-validation/auto-focus.js',
+  'resources/valiant-shade/assets/vendor/libs/cleave-zen/cleave-zen.js'
+], 'static/valiant-shade/build')
+@endsection
+
+@section('page-script')
+<script>
+  window.currentUserIsAdmin = {{ !empty($isAdmin) ? 'true' : 'false' }};
+</script>
+@vite('resources/valiant-shade/assets/js/app-user-list.js', 'static/valiant-shade/build')
+@endsection
+
+@section('content')
+<!-- Statistical Metric Cards -->
+<div class="row g-6 mb-6">
+  <!-- Total Users -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="card shadow-none border">
+      <div class="card-body">
+        <div class="d-flex align-items-start justify-content-between">
+          <div class="content-left">
+            <span class="text-heading fw-semibold">Total Users</span>
+            <div class="d-flex align-items-center my-1">
+              <h4 class="mb-0 me-2">{{ $totalUsers }}</h4>
+              <span class="badge bg-label-primary font-size-12">Active: {{ $activeUsers }}</span>
+            </div>
+            <small class="text-body-secondary mb-0">All registered accounts</small>
+          </div>
+          <div class="avatar">
+            <span class="avatar-initial rounded-3 bg-label-primary">
+              <i class="icon-base ti tabler-users icon-26px"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Administrators (Admin) -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="card shadow-none border">
+      <div class="card-body">
+        <div class="d-flex align-items-start justify-content-between">
+          <div class="content-left">
+            <span class="text-heading fw-semibold">Administrators</span>
+            <div class="d-flex align-items-center my-1">
+              <h4 class="mb-0 me-2">{{ $adminUsers }}</h4>
+              <span class="badge bg-label-danger font-size-12">Full Access</span>
+            </div>
+            <small class="text-body-secondary mb-0">Users with Admin role</small>
+          </div>
+          <div class="avatar">
+            <span class="avatar-initial rounded-3 bg-label-danger">
+              <i class="icon-base ti tabler-crown icon-26px"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bailiffs -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="card shadow-none border">
+      <div class="card-body">
+        <div class="d-flex align-items-start justify-content-between">
+          <div class="content-left">
+            <span class="text-heading fw-semibold">Bailiffs</span>
+            <div class="d-flex align-items-center my-1">
+              <h4 class="mb-0 me-2">{{ $bailiffUsers }}</h4>
+              <span class="badge bg-label-warning font-size-12">Moderation</span>
+            </div>
+            <small class="text-body-secondary mb-0">Guards with Bailiff role</small>
+          </div>
+          <div class="avatar">
+            <span class="avatar-initial rounded-3 bg-label-warning">
+              <i class="icon-base ti tabler-shield icon-26px"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Standard Members (User) -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="card shadow-none border">
+      <div class="card-body">
+        <div class="d-flex align-items-start justify-content-between">
+          <div class="content-left">
+            <span class="text-heading fw-semibold">Standard Members</span>
+            <div class="d-flex align-items-center my-1">
+              <h4 class="mb-0 me-2">{{ $standardUsers }}</h4>
+              <span class="badge bg-label-info font-size-12">Players</span>
+            </div>
+            <small class="text-body-secondary mb-0">Members with User role</small>
+          </div>
+          <div class="avatar">
+            <span class="avatar-initial rounded-3 bg-label-info">
+              <i class="icon-base ti tabler-user icon-26px"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- User List Table and Filters -->
+<div class="card">
+  <div class="card-header border-bottom">
+    <h5 class="card-title mb-0">User Filters</h5>
+    <div class="d-flex justify-content-between align-items-center row pt-4 gap-4 gap-md-0">
+      <div class="col-md-6 user_role"></div>
+      <div class="col-md-6 user_status"></div>
+    </div>
+  </div>
+  <div class="card-datatable table-responsive">
+    <table class="datatables-users table">
+      <thead class="border-top">
+        <tr>
+          <th></th>
+          <th></th>
+          <th>User</th>
+          <th>Role</th>
+          <th>Active Character</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+    </table>
+  </div>
+
+  <!-- Add New User Offcanvas -->
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasAddUser" aria-labelledby="offcanvasAddUserLabel">
+    <div class="offcanvas-header border-bottom">
+      <h5 id="offcanvasAddUserLabel" class="offcanvas-title">Add New User</h5>
+      <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body mx-0 flex-grow-0 p-6 h-100">
+      <form class="add-new-user pt-0" id="addNewUserForm" onsubmit="return false">
+        <!-- Full Name -->
+        <div class="mb-6 form-control-validation">
+          <label class="form-label" for="add-user-fullname">Full Name <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="add-user-fullname" placeholder="Valerius Thorn" name="userFullname" required />
+        </div>
+
+        <!-- Email -->
+        <div class="mb-6 form-control-validation">
+          <label class="form-label" for="add-user-email">Email <span class="text-danger">*</span></label>
+          <input type="email" id="add-user-email" class="form-control" placeholder="valerius@valiantshade.com" name="userEmail" required />
+        </div>
+
+        <!-- Active Character -->
+        <div class="mb-6">
+          <label class="form-label" for="add-user-character">Active Character</label>
+          <div class="input-group input-group-merge">
+            <span class="input-group-text"><i class="icon-base ti tabler-swords"></i></span>
+            <input type="text" id="add-user-character" class="form-control" placeholder="e.g. Valerius (Barbarian)" name="currentCharacter" />
+          </div>
+          <div class="form-text text-muted">User's active character in Valiant Shade</div>
+        </div>
+
+        <!-- Role (3 Roles: Admin, Bailiff, User) -->
+        <div class="mb-6">
+          <label class="form-label fw-semibold" for="user-role">User Role <span class="text-danger">*</span></label>
+          <select id="user-role" name="userRole" class="form-select">
+            <option value="User" selected>User (Standard Member)</option>
+            <option value="Bailiff">Bailiff (Guard / Moderator)</option>
+            <option value="Admin">Admin (Administrator)</option>
+          </select>
+          <div class="form-text text-muted">Select one of the 3 valid system roles.</div>
+        </div>
+
+        <div class="pt-2">
+          <button type="submit" class="btn btn-primary me-3 data-submit waves-effect waves-light">
+            <i class="icon-base ti tabler-check me-1"></i> Submit
+          </button>
+          <button type="reset" class="btn btn-label-danger waves-effect" data-bs-dismiss="offcanvas">
+            <i class="icon-base ti tabler-x me-1"></i> Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+@endsection

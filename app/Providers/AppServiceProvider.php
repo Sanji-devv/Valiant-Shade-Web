@@ -11,7 +11,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        if (!class_exists('Laravel\Jetstream\Jetstream')) {
+            class_alias(\App\Support\JetstreamStub::class, 'Laravel\Jetstream\Jetstream');
+        }
     }
 
     /**

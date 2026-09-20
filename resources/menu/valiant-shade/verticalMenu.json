@@ -1,0 +1,120 @@
+{
+    "menu": [
+        {
+            "name": "Dashboards",
+            "icon": "menu-icon icon-base ti tabler-smart-home",
+            "slug": "dashboard",
+            "submenu": [
+                {
+                    "url": "/valiant-shade/",
+                    "name": "Analytics",
+                    "slug": "dashboard-analytics"
+                },
+                {
+                    "url": "/valiant-shade/dashboard/crm",
+                    "name": "CRM",
+                    "slug": "dashboard-crm"
+                }
+            ]
+        },
+        {
+            "menuHeader": "Pages"
+        },
+        {
+            "name": "User List",
+            "icon": "menu-icon icon-base ti tabler-users",
+            "slug": "app-user-list",
+            "url": "/valiant-shade/app/user/list"
+        },
+        {
+            "name": "User Profile",
+            "icon": "menu-icon icon-base ti tabler-user",
+            "slug": "pages-profile",
+            "submenu": [
+                {
+                    "url": "/valiant-shade/pages/profile-user",
+                    "name": "Profile",
+                    "slug": "pages-profile-user"
+                },
+                {
+                    "url": "/valiant-shade/pages/profile-teams",
+                    "name": "Teams",
+                    "slug": "pages-profile-teams"
+                },
+                {
+                    "url": "/valiant-shade/pages/profile-projects",
+                    "name": "Projects",
+                    "slug": "pages-profile-projects"
+                },
+                {
+                    "url": "/valiant-shade/pages/profile-connections",
+                    "name": "Connections",
+                    "slug": "pages-profile-connections"
+                }
+            ]
+        },
+        {
+            "name": "Guild Inventory",
+            "icon": "menu-icon icon-base ti tabler-package",
+            "slug": "pages-inventory",
+            "url": "/valiant-shade/pages/inventory"
+        },
+        {
+            "name": "Player XP Tracker",
+            "icon": "menu-icon icon-base ti tabler-award",
+            "slug": "pages-xp-tracker",
+            "url": "/valiant-shade/pages/xp-tracker"
+        },
+        {
+            "name": "Adventurer Info",
+            "icon": "menu-icon icon-base ti tabler-layout-dashboard",
+            "slug": "pages-adventurer-info",
+            "url": "/valiant-shade/pages/adventurer-info"
+        },
+        {
+            "name": "Quest Board",
+            "icon": "menu-icon icon-base ti tabler-scroll",
+            "slug": "pages-quest-board",
+            "url": "/valiant-shade/pages/quest-board"
+        },
+        {
+            "name": "Quest Reports",
+            "icon": "menu-icon icon-base ti tabler-report-analytics",
+            "slug": "pages-quest-reports",
+            "url": "/valiant-shade/pages/quest-reports"
+        },
+        {
+            "name": "Feats List",
+            "icon": "menu-icon icon-base ti tabler-swords",
+            "slug": "pages-feats-list",
+            "url": "/valiant-shade/pages/feats"
+        },
+        {
+            "name": "Account Settings",
+            "icon": "menu-icon icon-base ti tabler-settings",
+            "slug": "pages-account-settings",
+            "url": "/valiant-shade/pages/account-settings-account"
+        },
+        {
+            "menuHeader": "Authentication"
+        },
+        {
+            "name": "Profile",
+            "icon": "menu-icon icon-base ti tabler-user",
+            "slug": "pages-profile-user",
+            "url": "/valiant-shade/pages/profile-user"
+        },
+        {
+            "name": "Login",
+            "icon": "menu-icon icon-base ti tabler-login",
+            "slug": "auth-login-basic",
+            "url": "/valiant-shade/auth/login-basic"
+        },
+        {
+            "name": "Register",
+            "icon": "menu-icon icon-base ti tabler-user-plus",
+            "slug": "auth-register-basic",
+            "url": "/valiant-shade/auth/register-basic"
+        }
+    ]
+}
