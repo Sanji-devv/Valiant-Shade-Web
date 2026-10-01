@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('display_name');
             $table->string('slug');
             $table->text('notes')->nullable();
-            $table->enum('status', [0, 1, 2])->default(0); # 0 -> closed  / 1 -> active /  2 -> passive
+            $table->unsignedTinyInteger('status')->default(0); // 0 closed / 1 active / 2 passive
             $table->timestamps();
 
             $table->index('slug');

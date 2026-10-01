@@ -13,10 +13,13 @@ return new class extends Migration
     {
         Schema::create('inventory_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('inventory_item_type_id')->nullable()->constrained('inventroy_item_types')->nullOnDelete();
+            $table->foreignId('inventory_id')->nullable()->constrained('inventories')->nullOnDelete();
+            $table->foreignId('inventory_item_type_id')->nullable()->constrained('inventory_item_types')->nullOnDelete();
             $table->string('name');
             $table->string('display_name');
             $table->string('slug');
+            $table->string('quality')->nullable();
+            $table->unsignedSmallInteger('uses_remaining')->nullable();
             $table->decimal('unit_price', 14, 2)->default(0);
             $table->decimal('total_price', 14, 2)->default(0);
             $table->decimal('market_value', 14, 2)->default(0); // Ederi (%55)
