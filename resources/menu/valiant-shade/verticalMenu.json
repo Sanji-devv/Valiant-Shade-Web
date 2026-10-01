@@ -60,6 +60,12 @@
             "url": "/valiant-shade/pages/inventory"
         },
         {
+            "name": "Guild News",
+            "icon": "menu-icon icon-base ti tabler-news",
+            "slug": "pages-guild-news",
+            "url": "/valiant-shade/pages/guild-news"
+        },
+        {
             "name": "Player XP Tracker",
             "icon": "menu-icon icon-base ti tabler-award",
             "slug": "pages-xp-tracker",
@@ -84,10 +90,13 @@
             "url": "/valiant-shade/pages/quest-reports"
         },
         {
-            "name": "Feats List",
+            "name": "Feats and Traits",
             "icon": "menu-icon icon-base ti tabler-swords",
-            "slug": "pages-feats-list",
-            "url": "/valiant-shade/pages/feats"
+            "slug": [
+                "pages-featntrait",
+                "pages-feats-list"
+            ],
+            "url": "/valiant-shade/pages/featntrait"
         },
         {
             "name": "Account Settings",

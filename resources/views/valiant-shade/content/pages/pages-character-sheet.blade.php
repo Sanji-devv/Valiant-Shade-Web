@@ -126,6 +126,38 @@
     user-select: none;
   }
 
+  /* AC Items Active & Inactive Row States */
+  .row-ac-active {
+    background: rgba(40, 199, 111, 0.08) !important;
+    border-left: 3px solid #28c76f !important;
+    transition: all 0.2s ease;
+  }
+  .row-ac-inactive {
+    opacity: 0.55;
+    background: rgba(255, 255, 255, 0.02) !important;
+    border-left: 3px solid rgba(255, 255, 255, 0.1) !important;
+    transition: all 0.2s ease;
+  }
+  .row-ac-inactive:hover {
+    opacity: 0.9;
+  }
+
+  /* Saving Throw Items Active & Inactive Row States */
+  .row-save-active {
+    background: rgba(255, 159, 67, 0.08) !important;
+    border-left: 3px solid #ff9f43 !important;
+    transition: all 0.2s ease;
+  }
+  .row-save-inactive {
+    opacity: 0.55;
+    background: rgba(255, 255, 255, 0.02) !important;
+    border-left: 3px solid rgba(255, 255, 255, 0.1) !important;
+    transition: all 0.2s ease;
+  }
+  .row-save-inactive:hover {
+    opacity: 0.9;
+  }
+
   /* Skills Table */
   .pf-skills-table {
     font-size: 0.8rem;
@@ -682,6 +714,60 @@
             <div id="dexCapNotice" class="d-none text-center mt-2">
               <span id="badgeDexCapInfo" class="badge bg-label-warning font-monospace py-1 px-2" style="font-size: 0.72rem;"></span>
             </div>
+
+            <!-- ====================================================
+                 INTEGRATED AC ITEMS (ARMOR & SHIELDS / AKTİF ZIRH & KALKAN)
+                 ==================================================== -->
+            <div class="pt-3 mt-3 border-top border-secondary border-opacity-20" id="sectionIntegratedAcItems">
+              <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                <div class="d-flex align-items-center gap-2 flex-wrap" style="font-size: 0.75rem;">
+                  <span class="badge bg-label-primary font-monospace py-1 px-2 d-inline-flex align-items-center gap-1 shadow-xs" id="badgeActiveArmor">
+                    <i class="icon-base ti tabler-shield-filled fs-6"></i>
+                    <span>{{ __('Aktif Zırh') }}:</span>
+                    <strong id="lblActiveArmorName" class="text-heading ms-1">{{ __('Yok (Zırhsız)') }}</strong>
+                  </span>
+                  <span class="badge bg-label-info font-monospace py-1 px-2 d-inline-flex align-items-center gap-1 shadow-xs" id="badgeActiveShield">
+                    <i class="icon-base ti tabler-shield fs-6"></i>
+                    <span>{{ __('Aktif Kalkan') }}:</span>
+                    <strong id="lblActiveShieldName" class="text-heading ms-1">{{ __('Yok') }}</strong>
+                  </span>
+                </div>
+                <button type="button" class="btn btn-xs btn-label-primary rounded-pill px-2" id="btnAddAcItemRow">
+                  <i class="icon-base ti tabler-plus me-1"></i> {{ __('Add Item') }}
+                </button>
+              </div>
+
+              <div class="table-responsive" style="overflow: visible;">
+                <table class="table table-sm align-middle text-center mb-0" id="tableAcItems" style="font-size: 0.76rem;">
+                  <thead>
+                    <tr class="text-body-secondary font-monospace text-uppercase" style="font-size: 0.68rem;">
+                      <th style="width: 58px;" title="{{ __('Kullanımda / Kuşanılmış Olan Zırh ve Kalkan') }}">{{ __('Aktif') }}</th>
+                      <th class="text-start">{{ __('Item / Eşya Adı') }}</th>
+                      <th style="width: 82px;">{{ __('Type') }}</th>
+                      <th style="width: 50px;">{{ __('Bonus') }}</th>
+                      <th style="width: 46px;" title="{{ __('Armor Check Penalty') }}">Pen</th>
+                      <th style="width: 46px;" title="{{ __('Weight') }}">Wt</th>
+                      <th style="width: 26px;"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="acItemsTbody">
+                  </tbody>
+                  <tfoot>
+                    <tr class="fw-bold font-monospace bg-body border-top">
+                      <td class="text-center"><span class="badge bg-label-success py-0 px-1" style="font-size: 0.62rem;">{{ __('AKTİF') }}</span></td>
+                      <td class="text-start" colspan="2">{{ __('KUŞANILAN TOPLAM') }}:</td>
+                      <td id="acItemTotalBonus" class="text-primary">+0</td>
+                      <td id="acItemTotalPen" class="text-danger">+0</td>
+                      <td id="acItemTotalWeight">0 lbs</td>
+                      <td></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+              <small class="text-body-secondary d-block mt-1 font-monospace" style="font-size: 0.67rem;">
+                * {{ __('Birden fazla zırh veya kalkan varsa, sadece "Aktif" seçili olanın bonusu ve ceza puanı AC\'ye yansıtılır. Ağırlıklar toplam yüke dahil edilir.') }}
+              </small>
+            </div>
           </div>
 
           <!-- 4. SAVING THROWS -->
@@ -759,6 +845,58 @@
                   </tr>
                 </tbody>
               </table>
+            </div>
+
+            <!-- ====================================================
+                 INTEGRATED SAVING THROW ITEMS (RESISTANCE & PROTECTIVE ITEMS / DİRENÇ & KORUMA EŞYALARI)
+                 ==================================================== -->
+            <div class="pt-3 mt-3 border-top border-secondary border-opacity-20" id="sectionIntegratedSaveItems">
+              <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                <div class="d-flex align-items-center gap-2 flex-wrap" style="font-size: 0.75rem;">
+                  <span class="badge bg-label-warning font-monospace py-1 px-2 d-inline-flex align-items-center gap-1 shadow-xs" id="badgeActiveResistance">
+                    <i class="icon-base ti tabler-shield-spark fs-6"></i>
+                    <span>{{ __('Aktif Koruma / Direnç Eşyası') }}:</span>
+                    <strong id="lblActiveResistanceName" class="text-heading ms-1">{{ __('Yok') }}</strong>
+                  </span>
+                  <span class="badge bg-label-primary font-monospace py-1 px-2 d-inline-flex align-items-center gap-1 shadow-xs" id="badgeActiveSaveBonuses">
+                    <span>{{ __('Eklenen Bonus') }}:</span>
+                    <strong id="lblActiveSaveBonusesText" class="text-heading ms-1">Fort +0 | Ref +0 | Will +0</strong>
+                  </span>
+                </div>
+                <button type="button" class="btn btn-xs btn-label-warning rounded-pill px-2" id="btnAddSaveItemRow">
+                  <i class="icon-base ti tabler-plus me-1"></i> {{ __('Add Save Item') }}
+                </button>
+              </div>
+
+              <div class="table-responsive" style="overflow: visible;">
+                <table class="table table-sm align-middle text-center mb-0" id="tableSaveItems" style="font-size: 0.76rem;">
+                  <thead>
+                    <tr class="text-body-secondary font-monospace text-uppercase" style="font-size: 0.68rem;">
+                      <th style="width: 58px;" title="{{ __('Kullanımda / Kuşanılmış Olan Koruma Eşyası') }}">{{ __('Aktif') }}</th>
+                      <th class="text-start">{{ __('Item / Eşya Adı') }}</th>
+                      <th style="width: 100px;">{{ __('Save Type') }}</th>
+                      <th style="width: 100px;">{{ __('Bonus Type') }}</th>
+                      <th style="width: 52px;">{{ __('Bonus') }}</th>
+                      <th style="width: 48px;" title="{{ __('Weight') }}">Wt</th>
+                      <th style="width: 26px;"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="saveItemsTbody">
+                  </tbody>
+                  <tfoot>
+                    <tr class="fw-bold font-monospace bg-body border-top">
+                      <td class="text-center"><span class="badge bg-label-success py-0 px-1" style="font-size: 0.62rem;">{{ __('AKTİF') }}</span></td>
+                      <td class="text-start" colspan="3">{{ __('KUŞANILAN DİRENÇ TOPLAMI') }}:</td>
+                      <td id="saveItemTotalBonus" class="text-warning">+0</td>
+                      <td id="saveItemTotalWeight">0 lbs</td>
+                      <td></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+              <small class="text-body-secondary d-block mt-1 font-monospace" style="font-size: 0.67rem;">
+                * {{ __('Aktif olan koruma eşyalarının (örn. Cloak of Resistance +1..+5) bonusları otomatik olarak yukarıdaki Saving Throws tablosunun "Magic" (Büyülü Direnç) sütununa işlenir ve toplamları günceller. Ağırlıklar toplam yüke eklenir.') }}
+              </small>
             </div>
           </div>
 
@@ -1075,45 +1213,8 @@
     <div id="tab-page2" class="page-break mb-4">
       <div class="row g-4">
 
-        <!-- Column 1: AC Items, Gear, Carrying Capacity, Money (4 Cols) -->
+        <!-- Column 1: Gear, Carrying Capacity, Money (4 Cols) -->
         <div class="col-12 col-lg-4">
-
-          <!-- AC Items Table -->
-          <div class="pf-card p-3 mb-3">
-            <div class="pf-banner-header">
-              <span>{{ __('AC Items (Armor & Shields)') }}</span>
-              <button type="button" class="btn btn-xs btn-label-primary rounded-pill px-2" id="btnAddAcItemRow">
-                <i class="icon-base ti tabler-plus"></i> {{ __('Add Item') }}
-              </button>
-            </div>
-
-            <div class="table-responsive" style="overflow: visible;">
-              <table class="table table-sm align-middle text-center mb-0" id="tableAcItems" style="font-size: 0.76rem;">
-                <thead>
-                  <tr class="text-body-secondary font-monospace text-uppercase" style="font-size: 0.68rem;">
-                    <th class="text-start">{{ __('Item') }}</th>
-                    <th style="width: 78px;">{{ __('Type') }}</th>
-                    <th style="width: 48px;">{{ __('Bonus') }}</th>
-                    <th style="width: 44px;" title="Armor Check Penalty">Pen</th>
-                    <th style="width: 44px;" title="Weight">Wt</th>
-                    <th style="width: 26px;"></th>
-                  </tr>
-                </thead>
-                <tbody id="acItemsTbody">
-                </tbody>
-                <tfoot>
-                  <tr class="fw-bold font-monospace bg-body border-top">
-                    <td colspan="2" class="text-start">{{ __('TOTALS') }}:</td>
-                    <td id="acItemTotalBonus" class="text-primary">+0</td>
-                    <td id="acItemTotalPen" class="text-danger">+0</td>
-                    <td id="acItemTotalWeight">0 lbs</td>
-                    <td></td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-            <small class="text-body-secondary d-block mt-1" style="font-size: 0.68rem;">* {{ __('Bonuses (Armor, Shield, Deflect, Natural, Misc) are automatically synced to Page 1 AC.') }}</small>
-          </div>
 
           <!-- Gear & Equipment List -->
           <div class="pf-card p-3 mb-3">
@@ -1233,8 +1334,107 @@
 
         </div>
 
-        <!-- Column 2: Feats & Special Abilities (4 Cols) -->
+        <!-- Column 2: Feats, Traits & Special Abilities (4 Cols) -->
         <div class="col-12 col-lg-4">
+
+          <!-- Character Traits (Rütbe Traitleri: Üye, Kıdemli, Uzman) -->
+          @php
+            $existingTraits = [];
+            if ($dbCharacter) {
+              if ($dbCharacter->relationLoaded('traits') && $dbCharacter->traits->isNotEmpty()) {
+                foreach ($dbCharacter->traits as $t) {
+                  if (!empty($t->slot_key)) {
+                    $existingTraits[$t->slot_key] = [
+                      'name'       => $t->trait_name ?? '',
+                      'desc'       => $t->description ?? '',
+                      'category'   => $t->category ?? '',
+                      'source_url' => $t->source_url ?? '',
+                    ];
+                  }
+                }
+              }
+              if (empty($existingTraits['uye']['name']) && isset($dbCharacter->sheet_data['traits']['uye'])) {
+                $existingTraits['uye'] = $dbCharacter->sheet_data['traits']['uye'];
+              }
+              if (empty($existingTraits['kidemli']['name']) && isset($dbCharacter->sheet_data['traits']['kidemli'])) {
+                $existingTraits['kidemli'] = $dbCharacter->sheet_data['traits']['kidemli'];
+              }
+              if (empty($existingTraits['uzman']['name']) && isset($dbCharacter->sheet_data['traits']['uzman'])) {
+                $existingTraits['uzman'] = $dbCharacter->sheet_data['traits']['uzman'];
+              }
+              if (empty($existingTraits['uye']['name']) && isset($dbCharacter->sheet_data['sheetData']['traits']['uye'])) {
+                $existingTraits['uye'] = $dbCharacter->sheet_data['sheetData']['traits']['uye'];
+              }
+              if (empty($existingTraits['kidemli']['name']) && isset($dbCharacter->sheet_data['sheetData']['traits']['kidemli'])) {
+                $existingTraits['kidemli'] = $dbCharacter->sheet_data['sheetData']['traits']['kidemli'];
+              }
+              if (empty($existingTraits['uzman']['name']) && isset($dbCharacter->sheet_data['sheetData']['traits']['uzman'])) {
+                $existingTraits['uzman'] = $dbCharacter->sheet_data['sheetData']['traits']['uzman'];
+              }
+            }
+
+            $slotsMeta = [
+              'uye'     => ['label' => __('Üye Traiti'), 'slot' => 'Slot 1 • Üye', 'badge' => 'bg-label-info', 'icon' => 'tabler-user-check', 'border' => 'rgba(115, 103, 240, 0.28)'],
+              'kidemli' => ['label' => __('Kıdemli Traiti'), 'slot' => 'Slot 2 • Kıdemli', 'badge' => 'bg-label-warning', 'icon' => 'tabler-award', 'border' => 'rgba(255, 171, 0, 0.28)'],
+              'uzman'   => ['label' => __('Uzman Traiti'), 'slot' => 'Slot 3 • Uzman', 'badge' => 'bg-label-success', 'icon' => 'tabler-shield-star', 'border' => 'rgba(40, 199, 111, 0.28)'],
+            ];
+          @endphp
+          <div class="pf-card p-3 mb-3" id="characterTraitsCard">
+            <div class="pf-banner-header d-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center gap-1_5">
+                <i class="icon-base ti tabler-sparkles text-warning fs-5"></i>
+                <span>{{ __('Character Traits') }} ({{ __('Rütbe Traitleri') }})</span>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-label-warning font-monospace py-0 px-2" style="font-size: 0.68rem;">3 {{ __('Slots') }}</span>
+                <a href="{{ route('valiant-shade.pages-featntrait', ['character' => $dbCharacter->character_name ?? '']) }}" class="btn btn-xs btn-label-primary rounded-pill px-2 d-inline-flex align-items-center gap-1" title="{{ __('Feat & Traits Sayfasında Düzenle') }}">
+                  <i class="icon-base ti tabler-edit fs-6"></i> {{ __('Düzenle') }}
+                </a>
+              </div>
+            </div>
+
+            <div class="d-flex flex-column gap-2" id="traitsListContainer">
+              @foreach(['uye', 'kidemli', 'uzman'] as $slotKey)
+                @php
+                  $meta = $slotsMeta[$slotKey];
+                  $tData = $existingTraits[$slotKey] ?? [];
+                  $tName = trim((string)($tData['name'] ?? ''));
+                  if ($tName === '-') { $tName = ''; }
+                  $tUrl = $tData['source_url'] ?? $tData['url'] ?? '';
+                  if (empty($tUrl) && !empty($tName)) {
+                    $tUrl = 'https://www.d20pfsrd.com/?s=' . urlencode($tName);
+                  }
+                  $tCat = $tData['category'] ?? '';
+                @endphp
+                <div class="p-2_5 rounded border bg-body d-flex align-items-center justify-content-between flex-wrap gap-2" style="border-color: {{ $meta['border'] }} !important;">
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="badge {{ $meta['badge'] }} font-monospace py-1 px-2 d-flex align-items-center gap-1" style="font-size: 0.72rem;">
+                      <i class="icon-base ti {{ $meta['icon'] }} icon-xs"></i> {{ $meta['label'] }}
+                    </span>
+                    <small class="text-body-secondary font-monospace d-none d-sm-inline" style="font-size: 0.68rem;">{{ $meta['slot'] }}</small>
+                  </div>
+
+                  <div class="d-flex align-items-center gap-2 ms-auto">
+                    <!-- Trait Link / Display -->
+                    <a href="{{ $tUrl ?: '#' }}" target="_blank" rel="noopener noreferrer" id="sheetTraitLink_{{ $slotKey }}" class="fw-bold text-primary font-monospace fs-6 text-decoration-none d-inline-flex align-items-center gap-1 hover-underline {{ empty($tName) ? 'd-none' : '' }}" title="{{ __('Kaynağı Aç') }}">
+                      <span id="sheetTraitDisplay_{{ $slotKey }}">{{ $tName }}</span>
+                      <i class="icon-base ti tabler-external-link fs-6 text-body-secondary"></i>
+                    </a>
+
+                    <span class="badge bg-label-secondary font-monospace py-0 px-1 {{ (empty($tName) || empty($tCat)) ? 'd-none' : '' }}" id="sheetTraitCat_{{ $slotKey }}" style="font-size: 0.65rem;">{{ $tCat }}</span>
+
+                    <span class="text-body-secondary fst-italic small {{ !empty($tName) ? 'd-none' : '' }}" id="sheetTraitEmpty_{{ $slotKey }}">
+                      {{ __('Henüz atanmadı') }}
+                    </span>
+
+                    <!-- Hidden inputs so JS save/state remains fully intact -->
+                    <input type="hidden" class="trait-name-input" id="sheetTraitName_{{ $slotKey }}" value="{{ $tName }}" />
+                    <input type="hidden" class="trait-desc-input" id="sheetTraitDesc_{{ $slotKey }}" value="{{ $tData['desc'] ?? '' }}" />
+                  </div>
+                </div>
+              @endforeach
+            </div>
+          </div>
 
           <!-- Feats List -->
           <div class="pf-card p-3 mb-3">
@@ -1248,8 +1448,11 @@
             <div class="pf-scroll" style="max-height: 350px;" id="featsContainer">
               @php
                 $existingFeats = $dbCharacter ? ($dbCharacter->feats ?? []) : [];
-                if (empty($existingFeats) && isset($dbCharacter->sheet_data['feats'])) {
+                if ((empty($existingFeats) || count($existingFeats) === 0) && isset($dbCharacter->sheet_data['feats'])) {
                   $existingFeats = $dbCharacter->sheet_data['feats'];
+                }
+                if ((empty($existingFeats) || count($existingFeats) === 0) && isset($dbCharacter->sheet_data['sheetData']['feats'])) {
+                  $existingFeats = $dbCharacter->sheet_data['sheetData']['feats'];
                 }
               @endphp
               @if(!empty($existingFeats) && count($existingFeats) > 0)
@@ -1397,7 +1600,13 @@
 
         <div class="mb-3">
           <label class="form-label small text-body-secondary fw-semibold">{{ __('Extra HP / Feat Bonus (Misc)') }}</label>
-          <input type="number" id="sheetHpExtraMisc" class="form-control form-control-sm pf-box-input font-monospace text-center" value="0" />
+          @php
+            $initialExtraHp = 0;
+            if (isset($dbCharacter)) {
+              $initialExtraHp = $dbCharacter->sheet_data['hpExtraMisc'] ?? ($dbCharacter->sheet_data['sheetData']['hpExtraMisc'] ?? 0);
+            }
+          @endphp
+          <input type="number" id="sheetHpExtraMisc" class="form-control form-control-sm pf-box-input font-monospace text-center" value="{{ $initialExtraHp }}" />
         </div>
 
         <div class="d-flex align-items-center justify-content-between pt-2 border-top">
@@ -1497,8 +1706,43 @@ document.addEventListener('DOMContentLoaded', function () {
     bab: @json($bab ?? []),
     saves: @json($saves ?? []),
     progressions: @json($progressions ?? []),
-    armors: @json($armors ?? [])
+    armors: @json($armors ?? []),
+    saveItems: @json($saveItems ?? [])
   };
+
+  // Official Pathfinder 1E Protective & Resistance Items Catalog for Saving Throws
+  const PATHFINDER_SAVE_ITEMS = [
+    { name: 'Cloak of Resistance +1', target: 'all', type: 'resistance', bonus: 1, weight: 1, slot: 'Shoulders', desc: '+1 resistance bonus on all saving throws' },
+    { name: 'Cloak of Resistance +2', target: 'all', type: 'resistance', bonus: 2, weight: 1, slot: 'Shoulders', desc: '+2 resistance bonus on all saving throws' },
+    { name: 'Cloak of Resistance +3', target: 'all', type: 'resistance', bonus: 3, weight: 1, slot: 'Shoulders', desc: '+3 resistance bonus on all saving throws' },
+    { name: 'Cloak of Resistance +4', target: 'all', type: 'resistance', bonus: 4, weight: 1, slot: 'Shoulders', desc: '+4 resistance bonus on all saving throws' },
+    { name: 'Cloak of Resistance +5', target: 'all', type: 'resistance', bonus: 5, weight: 1, slot: 'Shoulders', desc: '+5 resistance bonus on all saving throws' },
+    { name: 'Vest of Resistance +1', target: 'all', type: 'resistance', bonus: 1, weight: 1, slot: 'Chest', desc: '+1 resistance bonus on all saving throws' },
+    { name: 'Vest of Resistance +2', target: 'all', type: 'resistance', bonus: 2, weight: 1, slot: 'Chest', desc: '+2 resistance bonus on all saving throws' },
+    { name: 'Vest of Resistance +3', target: 'all', type: 'resistance', bonus: 3, weight: 1, slot: 'Chest', desc: '+3 resistance bonus on all saving throws' },
+    { name: 'Vest of Resistance +4', target: 'all', type: 'resistance', bonus: 4, weight: 1, slot: 'Chest', desc: '+4 resistance bonus on all saving throws' },
+    { name: 'Vest of Resistance +5', target: 'all', type: 'resistance', bonus: 5, weight: 1, slot: 'Chest', desc: '+5 resistance bonus on all saving throws' },
+    { name: 'Ring of Resistance +1', target: 'all', type: 'resistance', bonus: 1, weight: 0, slot: 'Ring', desc: '+1 resistance bonus on all saving throws' },
+    { name: 'Ring of Resistance +2', target: 'all', type: 'resistance', bonus: 2, weight: 0, slot: 'Ring', desc: '+2 resistance bonus on all saving throws' },
+    { name: 'Ring of Resistance +3', target: 'all', type: 'resistance', bonus: 3, weight: 0, slot: 'Ring', desc: '+3 resistance bonus on all saving throws' },
+    { name: 'Ring of Resistance +4', target: 'all', type: 'resistance', bonus: 4, weight: 0, slot: 'Ring', desc: '+4 resistance bonus on all saving throws' },
+    { name: 'Ring of Resistance +5', target: 'all', type: 'resistance', bonus: 5, weight: 0, slot: 'Ring', desc: '+5 resistance bonus on all saving throws' },
+    { name: 'Stone of Good Luck (Luckstone)', target: 'all', type: 'luck', bonus: 1, weight: 0, slot: 'None', desc: '+1 luck bonus on saving throws, ability checks, and skill checks' },
+    { name: 'Four-Leaf Clover', target: 'all', type: 'luck', bonus: 2, weight: 0, slot: 'None', desc: '+2 luck bonus on saving throws, ability checks, or skill checks (3/day)' },
+    { name: 'Fortifying Stone', target: 'all', type: 'resistance', bonus: 1, weight: 0, slot: 'None', desc: '+1 resistance bonus on saving throws' },
+    { name: 'Shawl of Life-Keeping', target: 'fort', type: 'resistance', bonus: 2, weight: 1, slot: 'Shoulders', desc: '+2 resistance bonus on Fortitude saves against death effects' },
+    { name: 'Periapt of Proof against Poison', target: 'fort', type: 'misc', bonus: 4, weight: 0, slot: 'Neck', desc: '+4 bonus on Fortitude saves against poison' },
+    { name: 'Periapt of Health', target: 'fort', type: 'misc', bonus: 4, weight: 0, slot: 'Neck', desc: 'Immunity to all disease effects and +4 Fortitude checks' },
+    { name: 'Boots of the Cat', target: 'ref', type: 'misc', bonus: 2, weight: 1, slot: 'Feet', desc: '+2 bonus on Acrobatics and Reflex saving throws against falls/trips' },
+    { name: 'Boots of Friendly Terrain', target: 'ref', type: 'insight', bonus: 2, weight: 1, slot: 'Feet', desc: '+2 insight bonus on initiative and Reflex saves in favored terrain' },
+    { name: 'Cap of the Free Thinker', target: 'will', type: 'misc', bonus: 2, weight: 0, slot: 'Head', desc: '+2 bonus and roll-twice advantage on Will saves against mind-affecting effects' },
+    { name: 'Amulet of the Planes', target: 'will', type: 'misc', bonus: 2, weight: 0, slot: 'Neck', desc: '+2 on Will saving throws against extraplanar powers' },
+    { name: 'Bracers of Steadfast Resilience', target: 'fort', type: 'resistance', bonus: 2, weight: 1, slot: 'Wrists', desc: '+2 resistance bonus on Fortitude saves' },
+    { name: 'Band of the Stalwart Warrior', target: 'fort', type: 'morale', bonus: 2, weight: 0, slot: 'Headband', desc: '+2 morale bonus on Fortitude saves against fatigue, exhaustion, and fear' },
+    { name: 'Brooch of Shielding', target: 'all', type: 'misc', bonus: 1, weight: 0, slot: 'Neck', desc: '+1 bonus on saving throws against harmful spells' },
+    { name: 'Medallion of Courage', target: 'will', type: 'morale', bonus: 2, weight: 0, slot: 'Neck', desc: '+2 morale bonus on Will saving throws against fear' },
+    { name: 'All-Tool (Alchemical)', target: 'all', type: 'misc', bonus: 1, weight: 1, slot: 'None', desc: '+1 alchemical bonus assisting saving throws' }
+  ];
 
   // Official Pathfinder 1E All 35 Skills with their core ability & armor check penalty flag
   const PF_SKILLS = [
@@ -1608,48 +1852,88 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // 1. If backend resolved a DB character, use it
   if (serverDbChar) {
-    if (serverDbChar.sheet_data) {
-      const parsed = typeof serverDbChar.sheet_data === 'string' ? JSON.parse(serverDbChar.sheet_data) : serverDbChar.sheet_data;
-      const sDetails = parsed.sheetData || parsed;
-      currentChar = {
-        id: serverDbChar.character_id || ('char_' + serverDbChar.id),
-        name: serverDbChar.character_name,
-        race: serverDbChar.race || 'Human',
-        class: serverDbChar.class_name || 'Paladin',
-        classKey: parsed.classKey || (serverDbChar.class_name || 'paladin').toLowerCase(),
-        level: serverDbChar.level || 1,
-        hp: serverDbChar.hp !== null ? serverDbChar.hp : (sDetails.currentHp || 12),
-        maxHp: serverDbChar.max_hp !== null ? serverDbChar.max_hp : (sDetails.maxHp || 12),
-        hitDie: serverDbChar.hit_die || sDetails.hitDie || 'd10',
-        active: true,
-        sheetData: sDetails
-      };
-    } else {
-      currentChar = {
-        id: serverDbChar.character_id || ('char_' + serverDbChar.id),
-        name: serverDbChar.character_name,
-        race: serverDbChar.race || 'Human',
-        class: serverDbChar.class_name || 'Paladin',
-        classKey: (serverDbChar.class_name || 'paladin').toLowerCase(),
-        level: serverDbChar.level || 1,
-        hp: serverDbChar.hp || 12,
-        maxHp: serverDbChar.max_hp || 12,
-        hitDie: serverDbChar.hit_die || 'd10',
-        active: true,
-        sheetData: {
-          player: serverDbChar.player_name || '',
-          abilityScores: {
-            str: serverDbChar.str || 10,
-            dex: serverDbChar.dex || 10,
-            con: serverDbChar.con || 10,
-            int: serverDbChar.int || 10,
-            wis: serverDbChar.wis || 10,
-            cha: serverDbChar.cha || 10
-          },
-          feats: (serverDbChar.feats || []).map(f => ({ title: f.feat_name, desc: f.notes || '' }))
-        }
-      };
+    let parsed = serverDbChar.sheet_data || {};
+    if (typeof parsed === 'string') {
+      try { parsed = JSON.parse(parsed); } catch (e) { parsed = {}; }
     }
+    const sDetails = (parsed && parsed.sheetData) ? parsed.sheetData : (parsed || {});
+
+    // Synchronize fresh DB traits into sDetails.traits
+    if (!sDetails.traits) sDetails.traits = {};
+    if (serverDbChar.traits && Array.isArray(serverDbChar.traits)) {
+      serverDbChar.traits.forEach(t => {
+        if (t.slot_key) {
+          sDetails.traits[t.slot_key] = {
+            name: t.trait_name || '',
+            desc: t.description || '',
+            category: t.category || '',
+            source_url: t.source_url || ''
+          };
+        }
+      });
+    }
+    if (parsed.traits && typeof parsed.traits === 'object') {
+      ['uye', 'kidemli', 'uzman'].forEach(k => {
+        if (parsed.traits[k] && (!sDetails.traits[k] || !sDetails.traits[k].name)) {
+          sDetails.traits[k] = parsed.traits[k];
+        }
+      });
+    }
+
+    // Synchronize fresh DB feats into sDetails.feats
+    if (serverDbChar.feats && Array.isArray(serverDbChar.feats) && serverDbChar.feats.length > 0) {
+      sDetails.feats = serverDbChar.feats.map(f => ({
+        title: f.feat_name || f.title || '',
+        desc: f.notes || f.desc || ''
+      }));
+    } else if (parsed.feats && Array.isArray(parsed.feats)) {
+      sDetails.feats = parsed.feats;
+    }
+
+    // Synchronize stats & attributes into sDetails
+    if (!sDetails.abilityScores) sDetails.abilityScores = {};
+    ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(attr => {
+      if (serverDbChar[attr] !== undefined && serverDbChar[attr] !== null) {
+        sDetails.abilityScores[attr] = serverDbChar[attr];
+      }
+    });
+    if (serverDbChar.level) {
+      sDetails.level = serverDbChar.level;
+    }
+    if (serverDbChar.hp !== undefined && serverDbChar.hp !== null) {
+      sDetails.currentHp = serverDbChar.hp;
+      sDetails.maxHp = serverDbChar.max_hp || serverDbChar.hp;
+    }
+    if (serverDbChar.class_name) {
+      sDetails.class = serverDbChar.class_name;
+      sDetails.className = serverDbChar.class_name;
+    }
+    if (serverDbChar.race) {
+      sDetails.race = serverDbChar.race;
+    }
+
+    currentChar = {
+      id: serverDbChar.character_id || ('char_' + serverDbChar.id),
+      name: serverDbChar.character_name,
+      race: serverDbChar.race || 'Human',
+      class: serverDbChar.class_name || 'Paladin',
+      classKey: parsed.classKey || (serverDbChar.class_name || 'paladin').toLowerCase(),
+      level: serverDbChar.level || 1,
+      hp: serverDbChar.hp !== null && serverDbChar.hp !== undefined ? serverDbChar.hp : (sDetails.currentHp || 12),
+      maxHp: serverDbChar.max_hp !== null && serverDbChar.max_hp !== undefined ? serverDbChar.max_hp : (sDetails.maxHp || 12),
+      hitDie: serverDbChar.hit_die || sDetails.hitDie || 'd10',
+      active: true,
+      sheetData: sDetails
+    };
+
+    // Update localStorage cache immediately with fresh server data
+    const existingIdx = chars.findIndex(c => c.id === currentChar.id || c.name === currentChar.name);
+    if (existingIdx !== -1) {
+      chars[existingIdx] = currentChar;
+    } else {
+      chars.unshift(currentChar);
+    }
+    saveCharacters(chars);
   }
 
   // 2. Fallback to localStorage if no server DB character loaded
@@ -1734,6 +2018,54 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('sheetSpeedClimb').value = sData.speedClimb || '';
   document.getElementById('sheetSpeedBurrow').value = sData.speedBurrow || '';
   document.getElementById('sheetInitMisc').value = sData.initMisc || 0;
+
+  const hpExtraElInit = document.getElementById('sheetHpExtraMisc');
+  if (hpExtraElInit) {
+    const savedExtra = sData.hpExtraMisc !== undefined ? sData.hpExtraMisc : (parseInt(hpExtraElInit.value, 10) || 0);
+    hpExtraElInit.value = savedExtra;
+    sData.hpExtraMisc = savedExtra;
+  }
+
+  // Populate Traits (Üye, Kıdemli, Uzman)
+  const traitsInit = sData.traits || {};
+  ['uye', 'kidemli', 'uzman'].forEach(r => {
+    const tData = traitsInit[r] || {};
+    const rawName = tData.name || '';
+    const cleanName = (rawName && rawName !== '-') ? rawName.trim() : '';
+    const rawUrl = tData.source_url || tData.url || (cleanName ? `https://www.d20pfsrd.com/?s=${encodeURIComponent(cleanName)}` : '');
+    const rawCat = tData.category || '';
+
+    const nameInp = document.getElementById(`sheetTraitName_${r}`);
+    const descInp = document.getElementById(`sheetTraitDesc_${r}`);
+    if (nameInp) nameInp.value = cleanName;
+    if (descInp && tData.desc !== undefined) descInp.value = tData.desc || '';
+
+    const linkEl = document.getElementById(`sheetTraitLink_${r}`);
+    const displayEl = document.getElementById(`sheetTraitDisplay_${r}`);
+    const emptyEl = document.getElementById(`sheetTraitEmpty_${r}`);
+    const catEl = document.getElementById(`sheetTraitCat_${r}`);
+
+    if (cleanName) {
+      if (displayEl) displayEl.textContent = cleanName;
+      if (linkEl) {
+        linkEl.href = rawUrl;
+        linkEl.classList.remove('d-none');
+      }
+      if (emptyEl) emptyEl.classList.add('d-none');
+      if (catEl) {
+        if (rawCat) {
+          catEl.textContent = rawCat;
+          catEl.classList.remove('d-none');
+        } else {
+          catEl.classList.add('d-none');
+        }
+      }
+    } else {
+      if (linkEl) linkEl.classList.add('d-none');
+      if (emptyEl) emptyEl.classList.remove('d-none');
+      if (catEl) catEl.classList.add('d-none');
+    }
+  });
 
   // Ability Scores
   const defaultScores = { str: 16, dex: 12, con: 14, int: 10, wis: 12, cha: 14 };
@@ -2098,6 +2430,20 @@ document.addEventListener('DOMContentLoaded', function () {
           }
           if (item.category) tr.setAttribute('data-category', item.category);
 
+          // If active and targetType is armor/shield, ensure other armors/shields are deactivated
+          const activeChk = tr.querySelector('.ac-item-active');
+          if (activeChk && activeChk.checked && (targetType === 'armor' || targetType === 'shield')) {
+            document.querySelectorAll('#acItemsTbody tr').forEach(otherTr => {
+              if (otherTr !== tr) {
+                const otherType = otherTr.querySelector('.ac-item-type')?.value || 'armor';
+                if (otherType === targetType) {
+                  const otherChk = otherTr.querySelector('.ac-item-active');
+                  if (otherChk) otherChk.checked = false;
+                }
+              }
+            });
+          }
+
           dropdown.style.display = 'none';
           dropdown.innerHTML = '';
 
@@ -2130,11 +2476,19 @@ document.addEventListener('DOMContentLoaded', function () {
     const weight = data.weight !== undefined && data.weight !== null ? data.weight : 0;
     const maxDex = data.maxDex !== undefined && data.maxDex !== null ? data.maxDex : (data.max_dex || '');
     const category = data.category || '';
+    const isActive = data.is_active !== undefined ? !!data.is_active : (data.isActive !== undefined ? !!data.isActive : true);
 
     if (maxDex !== '') tr.setAttribute('data-max-dex', maxDex);
     if (category) tr.setAttribute('data-category', category);
 
+    tr.className = isActive ? 'row-ac-active' : 'row-ac-inactive';
+
     tr.innerHTML = `
+      <td class="p-1 text-center align-middle" style="width: 58px;">
+        <div class="form-check form-switch d-flex justify-content-center m-0 p-0" title="Aktif Kullanımda / Kuşanılmış">
+          <input type="checkbox" class="form-check-input ac-item-active m-0 cursor-pointer" ${isActive ? 'checked' : ''} style="width: 2.1rem; height: 1.15rem;" />
+        </div>
+      </td>
       <td class="position-relative p-1">
         <input type="text" class="form-control form-control-sm pf-box-input pf-input-compact text-start ac-item-name" placeholder="Item Name (e.g. Mithral Shirt)" value="${escapeHtml(name)}" autocomplete="off" />
         <div class="ac-item-autocomplete dropdown-menu shadow-lg pf-scroll p-1" style="display: none; position: absolute; top: 100%; left: 0; min-width: 280px; max-width: 360px; max-height: 240px; overflow-y: auto; z-index: 1050; background: #1b1c2d; border: 1px solid rgba(226, 185, 111, 0.35);"></div>
@@ -2169,14 +2523,29 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!item) return;
     const tbody = document.getElementById('acItemsTbody');
     if (!tbody) return;
+    const isShield = item.bonus_type === 'shield' || isShieldItem(item);
+    const targetType = item.bonus_type || (isShield ? 'shield' : 'armor');
+
+    // Deactivate existing active items of this type if equip is called
+    if (targetType === 'armor' || targetType === 'shield') {
+      document.querySelectorAll('#acItemsTbody tr').forEach(otherTr => {
+        const otherType = otherTr.querySelector('.ac-item-type')?.value || 'armor';
+        if (otherType === targetType) {
+          const otherChk = otherTr.querySelector('.ac-item-active');
+          if (otherChk) otherChk.checked = false;
+        }
+      });
+    }
+
     const tr = createAcItemRow({
       name: item.name,
-      type: item.bonus_type || (isShieldItem(item) ? 'shield' : 'armor'),
+      type: targetType,
       bonus: item.bonus || 0,
       pen: item.check_penalty || 0,
       weight: parseInt(item.weight, 10) || 0,
       maxDex: item.max_dex,
-      category: item.category
+      category: item.category,
+      is_active: true
     });
     tbody.appendChild(tr);
     attachDynamicRowEvents();
@@ -2185,7 +2554,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function setupArmorSearch() {
-    // No-op (search bar removed from Page 1 AC card)
+    // No-op (search bar integrated into AC item row autocomplete)
   }
 
   function populateAcItemsFromData(acItems) {
@@ -2193,6 +2562,9 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!tbody) return;
     tbody.innerHTML = '';
     if (Array.isArray(acItems) && acItems.length > 0) {
+      let hasActiveArmor = false;
+      let hasActiveShield = false;
+
       acItems.forEach(item => {
         const found = findArmorByName(item.name);
         const maxDex = item.max_dex !== undefined && item.max_dex !== null && item.max_dex !== ''
@@ -2209,6 +2581,26 @@ document.addEventListener('DOMContentLoaded', function () {
             type = 'armor';
           }
         }
+
+        let isActive = true;
+        if (item.is_active !== undefined) {
+          isActive = !!item.is_active;
+        } else if (item.isActive !== undefined) {
+          isActive = !!item.isActive;
+        } else {
+          // Default rule for legacy data: only first armor and first shield are active
+          if (type === 'armor') {
+            isActive = !hasActiveArmor;
+          } else if (type === 'shield') {
+            isActive = !hasActiveShield;
+          }
+        }
+
+        if (isActive) {
+          if (type === 'armor') hasActiveArmor = true;
+          if (type === 'shield') hasActiveShield = true;
+        }
+
         const tr = createAcItemRow({
           name: item.name || '',
           type: type,
@@ -2216,7 +2608,228 @@ document.addEventListener('DOMContentLoaded', function () {
           pen: item.pen !== undefined ? item.pen : 0,
           weight: item.weight !== undefined ? item.weight : 0,
           maxDex: maxDex,
-          category: category
+          category: category,
+          is_active: isActive
+        });
+        tbody.appendChild(tr);
+      });
+    }
+    if (typeof attachDynamicRowEvents === 'function') {
+      attachDynamicRowEvents();
+    }
+  }
+
+  function findSaveItemByName(name) {
+    if (!name) return null;
+    const q = name.trim().toLowerCase();
+    const catalog = (pfData && pfData.saveItems && Array.isArray(pfData.saveItems) && pfData.saveItems.length > 0)
+      ? pfData.saveItems
+      : PATHFINDER_SAVE_ITEMS;
+    return catalog.find(a => (a.name || '').trim().toLowerCase() === q) || null;
+  }
+
+  function attachSaveItemAutocomplete(tr) {
+    const input = tr.querySelector('.save-item-name');
+    const dropdown = tr.querySelector('.save-item-autocomplete');
+    const targetSelect = tr.querySelector('.save-item-target');
+    const typeSelect = tr.querySelector('.save-item-type');
+    const bonusInput = tr.querySelector('.save-item-bonus');
+    const wtInput = tr.querySelector('.save-item-weight');
+
+    if (!input || !dropdown) return;
+
+    function doSearch() {
+      const q = (input.value || '').trim().toLowerCase();
+      if (!q || q.length < 1) {
+        dropdown.style.display = 'none';
+        dropdown.innerHTML = '';
+        return;
+      }
+
+      const items = (pfData && pfData.saveItems && Array.isArray(pfData.saveItems) && pfData.saveItems.length > 0)
+        ? pfData.saveItems
+        : PATHFINDER_SAVE_ITEMS;
+
+      const qTokens = q.split(/\s+/).filter(Boolean);
+      const matches = items.filter(it => {
+        const name = (it.name || '').toLowerCase();
+        const desc = (it.desc || it.description || '').toLowerCase();
+        const target = (it.target || '').toLowerCase();
+        const type = (it.type || '').toLowerCase();
+        return qTokens.every(tok => name.includes(tok) || desc.includes(tok) || target.includes(tok) || type.includes(tok));
+      }).slice(0, 15);
+
+      if (matches.length === 0) {
+        dropdown.innerHTML = '<div class="p-2 text-body-secondary small text-center font-monospace">{{ __("Eşleşen koruma eşyası bulunamadı") }}</div>';
+        dropdown.style.display = 'block';
+        return;
+      }
+
+      dropdown.innerHTML = '';
+      matches.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'pf-save-result-item d-flex align-items-center justify-content-between font-monospace p-1 rounded mb-1';
+        div.style.cursor = 'pointer';
+        div.style.transition = 'background-color 0.15s ease';
+
+        const nameLower = (item.name || '').toLowerCase();
+        let icon = 'tabler-shield-spark';
+        if (nameLower.includes('cloak') || nameLower.includes('cape')) icon = 'tabler-hanger';
+        else if (nameLower.includes('ring')) icon = 'tabler-ring';
+        else if (nameLower.includes('vest') || nameLower.includes('shirt')) icon = 'tabler-shirt';
+        else if (nameLower.includes('stone') || nameLower.includes('luck') || nameLower.includes('clover')) icon = 'tabler-sparkles';
+        else if (nameLower.includes('periapt') || nameLower.includes('amulet') || nameLower.includes('medallion')) icon = 'tabler-medal';
+        else if (nameLower.includes('boot')) icon = 'tabler-shoe';
+
+        let targetBadgeClass = 'bg-label-primary';
+        let targetLabel = 'All Saves';
+        if (item.target === 'fort') {
+          targetBadgeClass = 'bg-label-danger';
+          targetLabel = 'Fortitude';
+        } else if (item.target === 'ref') {
+          targetBadgeClass = 'bg-label-success';
+          targetLabel = 'Reflex';
+        } else if (item.target === 'will') {
+          targetBadgeClass = 'bg-label-info';
+          targetLabel = 'Will';
+        }
+
+        const bonusStr = formatMod(item.bonus || 0);
+        const typeStr = item.type ? (item.type.charAt(0).toUpperCase() + item.type.slice(1)) : 'Resistance';
+        const wtStr = item.weight !== undefined ? `${item.weight} lbs` : '1 lbs';
+        const slotStr = item.slot || '';
+
+        div.innerHTML = `
+          <div class="d-flex align-items-center gap-2 text-start">
+            <i class="icon-base ti ${icon} text-warning fs-5"></i>
+            <div>
+              <span class="fw-bold text-heading d-block" style="font-size: 0.78rem;">${escapeHtml(item.name)}</span>
+              <div class="d-flex align-items-center gap-1">
+                <span class="badge ${targetBadgeClass} py-0 px-1" style="font-size: 0.62rem;">${targetLabel}</span>
+                <span class="badge bg-label-secondary py-0 px-1" style="font-size: 0.62rem;">${typeStr}</span>
+              </div>
+            </div>
+          </div>
+          <div class="text-end font-monospace" style="font-size: 0.7rem;">
+            <div class="fw-bold text-warning">${bonusStr} ${typeStr}</div>
+            <div class="text-body-secondary" style="font-size: 0.62rem;">${[slotStr, wtStr].filter(Boolean).join(' | ')}</div>
+          </div>
+        `;
+
+        div.onmouseenter = () => div.style.backgroundColor = 'rgba(226, 185, 111, 0.15)';
+        div.onmouseleave = () => div.style.backgroundColor = 'transparent';
+
+        div.onmousedown = function (e) {
+          e.preventDefault();
+          input.value = item.name;
+          if (targetSelect) targetSelect.value = item.target || 'all';
+          if (typeSelect) typeSelect.value = item.type || 'resistance';
+          if (bonusInput) bonusInput.value = item.bonus !== undefined ? item.bonus : 1;
+          if (wtInput) wtInput.value = item.weight !== undefined ? item.weight : 1;
+
+          dropdown.style.display = 'none';
+          dropdown.innerHTML = '';
+
+          recalculateAll();
+          triggerAutoSave();
+        };
+
+        dropdown.appendChild(div);
+      });
+      dropdown.style.display = 'block';
+    }
+
+    input.addEventListener('input', doSearch);
+    input.addEventListener('focus', () => {
+      if (input.value.trim().length > 0) doSearch();
+    });
+    input.addEventListener('blur', () => {
+      setTimeout(() => {
+        dropdown.style.display = 'none';
+      }, 200);
+    });
+  }
+
+  function createSaveItemRow(data = {}) {
+    const tr = document.createElement('tr');
+    const name = data.name || '';
+    const target = (data.target || 'all').toLowerCase();
+    const type = (data.type || 'resistance').toLowerCase();
+    const bonus = data.bonus !== undefined && data.bonus !== null ? data.bonus : 1;
+    const weight = data.weight !== undefined && data.weight !== null ? data.weight : 1;
+    const isActive = data.is_active !== undefined ? !!data.is_active : (data.isActive !== undefined ? !!data.isActive : true);
+
+    tr.className = isActive ? 'row-save-active' : 'row-save-inactive';
+
+    tr.innerHTML = `
+      <td class="p-1 text-center align-middle" style="width: 58px;">
+        <div class="form-check form-switch d-flex justify-content-center m-0 p-0" title="Aktif Kullanımda / Kuşanılmış">
+          <input type="checkbox" class="form-check-input save-item-active m-0 cursor-pointer" ${isActive ? 'checked' : ''} style="width: 2.1rem; height: 1.15rem;" />
+        </div>
+      </td>
+      <td class="position-relative p-1">
+        <input type="text" class="form-control form-control-sm pf-box-input pf-input-compact text-start save-item-name" placeholder="Eşya Adı (örn: Cloak of Resistance +2)" value="${escapeHtml(name)}" autocomplete="off" />
+        <div class="save-item-autocomplete dropdown-menu shadow-lg pf-scroll p-1" style="display: none; position: absolute; top: 100%; left: 0; min-width: 290px; max-width: 380px; max-height: 240px; overflow-y: auto; z-index: 1050; background: #1b1c2d; border: 1px solid rgba(226, 185, 111, 0.35);"></div>
+      </td>
+      <td class="p-1">
+        <select class="form-select form-select-sm pf-box-input pf-input-compact save-item-target font-monospace p-1 text-center" style="font-size: 0.68rem;">
+          <option value="all" ${target === 'all' ? 'selected' : ''}>All (Tümü)</option>
+          <option value="fort" ${target === 'fort' ? 'selected' : ''}>Fortitude</option>
+          <option value="ref" ${target === 'ref' ? 'selected' : ''}>Reflex</option>
+          <option value="will" ${target === 'will' ? 'selected' : ''}>Will</option>
+        </select>
+      </td>
+      <td class="p-1">
+        <select class="form-select form-select-sm pf-box-input pf-input-compact save-item-type font-monospace p-1 text-center" style="font-size: 0.68rem;">
+          <option value="resistance" ${type === 'resistance' ? 'selected' : ''}>Resistance</option>
+          <option value="luck" ${type === 'luck' ? 'selected' : ''}>Luck</option>
+          <option value="morale" ${type === 'morale' ? 'selected' : ''}>Morale</option>
+          <option value="insight" ${type === 'insight' ? 'selected' : ''}>Insight</option>
+          <option value="sacred" ${type === 'sacred' ? 'selected' : ''}>Sacred</option>
+          <option value="misc" ${type === 'misc' ? 'selected' : ''}>Misc</option>
+        </select>
+      </td>
+      <td class="p-1"><input type="number" class="form-control form-control-sm pf-box-input pf-input-compact text-center save-item-bonus font-monospace" value="${bonus}" /></td>
+      <td class="p-1"><input type="number" class="form-control form-control-sm pf-box-input pf-input-compact text-center save-item-weight font-monospace" value="${weight}" /></td>
+      <td class="p-1"><button type="button" class="btn btn-icon btn-text-danger btn-xs btn-del-save-row" title="Delete Item"><i class="icon-base ti tabler-x"></i></button></td>
+    `;
+
+    attachSaveItemAutocomplete(tr);
+    return tr;
+  }
+
+  function equipSaveItem(item) {
+    if (!item) return;
+    const tbody = document.getElementById('saveItemsTbody');
+    if (!tbody) return;
+
+    const tr = createSaveItemRow({
+      name: item.name,
+      target: item.target || 'all',
+      type: item.type || 'resistance',
+      bonus: item.bonus || 1,
+      weight: parseInt(item.weight, 10) || 1,
+      is_active: true
+    });
+    tbody.appendChild(tr);
+    attachDynamicRowEvents();
+    recalculateAll();
+    triggerAutoSave();
+  }
+
+  function populateSaveItemsFromData(saveItems) {
+    const tbody = document.getElementById('saveItemsTbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    if (Array.isArray(saveItems) && saveItems.length > 0) {
+      saveItems.forEach(item => {
+        const tr = createSaveItemRow({
+          name: item.name || '',
+          target: item.target || 'all',
+          type: item.type || 'resistance',
+          bonus: item.bonus !== undefined ? item.bonus : 1,
+          weight: item.weight !== undefined ? item.weight : 1,
+          is_active: item.is_active !== undefined ? !!item.is_active : (item.isActive !== undefined ? !!item.isActive : true)
         });
         tbody.appendChild(tr);
       });
@@ -2497,6 +3110,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   attachWeaponEvents();
   populateAcItemsFromData(sData.acItems);
+  populateSaveItemsFromData(sData.saveItems);
   populateGearFromData(sData.gear);
   populateFeatsFromData(sData.feats);
   populateSpecialsFromData(sData.specials);
@@ -2742,6 +3356,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // Determine if any equipped armor/shield caps Dexterity bonus
     let minMaxDex = null;
     document.querySelectorAll('#acItemsTbody tr').forEach(tr => {
+      const isActive = tr.querySelector('.ac-item-active')?.checked ?? true;
+      if (!isActive) return;
+
       const type = tr.querySelector('.ac-item-type')?.value || 'armor';
       if (type !== 'armor' && type !== 'shield') return;
 
@@ -2811,7 +3428,8 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('sheetAcTouch').textContent = touchAc;
     document.getElementById('sheetAcFlat').textContent = flatAc;
 
-    // 4. Saves
+    // 4. Saves & Protective Items
+    updateSaveItemsTotals();
     ['fort', 'ref', 'will'].forEach(k => {
       recalculateSaveTotal(k);
     });
@@ -2930,7 +3548,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const classKey = document.getElementById('sheetClassSelect').value;
     const hdStr = (pfData.classes[classKey] && pfData.classes[classKey].hit_die) || 'd10';
     const sides = parseInt(hdStr.replace('d', ''), 10) || 10;
-    const extraMisc = parseInt(document.getElementById('sheetHpExtraMisc')?.value, 10) || 0;
+    const hpExtraInp = document.getElementById('sheetHpExtraMisc');
+    const extraMisc = hpExtraInp ? (parseInt(hpExtraInp.value, 10) || 0) : (parseInt(sData.hpExtraMisc, 10) || 0);
+    sData.hpExtraMisc = extraMisc;
 
     if (!sData.hpRolls) sData.hpRolls = {};
     if (sData.hpRolls[1] === undefined) sData.hpRolls[1] = sides; // 1st level is max
@@ -2946,10 +3566,24 @@ document.addEventListener('DOMContentLoaded', function () {
     const conTotal = lvl * conMod;
     const totalMaxHp = Math.max(1, rollsSum + conTotal + extraMisc);
 
+    const oldMaxHp = parseInt(document.getElementById('sheetMaxHp')?.value, 10) || totalMaxHp;
+    const curHpEl = document.getElementById('sheetCurrentHp');
+    if (curHpEl) {
+      const curHp = parseInt(curHpEl.value, 10);
+      if (curHp === oldMaxHp || isNaN(curHp) || curHp > totalMaxHp) {
+        curHpEl.value = totalMaxHp;
+      }
+    }
+
     document.getElementById('sheetMaxHp').value = totalMaxHp;
     document.getElementById('sheetMaxHpDisplay').textContent = totalMaxHp;
+    
+    let extraMiscStr = '';
+    if (extraMisc !== 0) {
+      extraMiscStr = extraMisc > 0 ? ` + ${extraMisc} (Misc/Feat)` : ` - ${Math.abs(extraMisc)} (Misc/Feat)`;
+    }
     document.getElementById('sheetHpTotalFormulaSummary').textContent =
-      `Seviye ${lvl}: ${rollsSum} (Zarlar) + ${conTotal} (Con${conMod >= 0 ? '+' : ''}${conMod}x${lvl})${extraMisc !== 0 ? ' + ' + extraMisc : ''} = ${totalMaxHp} Max HP`;
+      `Seviye ${lvl}: ${rollsSum} (Zarlar) + ${conTotal} (Con${conMod >= 0 ? '+' : ''}${conMod}x${lvl})${extraMiscStr} = ${totalMaxHp} Max HP`;
 
     document.getElementById('modalHpConMod').textContent = formatMod(conMod);
     document.getElementById('modalHpTotalMax').textContent = `${totalMaxHp} HP`;
@@ -2960,8 +3594,26 @@ document.addEventListener('DOMContentLoaded', function () {
   function renderLevelHpTable(lvl, sides, conMod) {
     const tbody = document.getElementById('tbodyLevelHpBreakdown');
     if (!tbody) return;
-    tbody.innerHTML = '';
 
+    // In-place update if row count matches level so input focus and DOM elements are preserved
+    const existingRows = tbody.querySelectorAll('tr');
+    if (existingRows.length === lvl) {
+      existingRows.forEach((tr, idx) => {
+        const i = idx + 1;
+        const inp = tr.querySelector('.hp-level-roll');
+        if (inp && document.activeElement !== inp) {
+          inp.value = sData.hpRolls[i] !== undefined ? sData.hpRolls[i] : (i === 1 ? sides : Math.floor(sides / 2) + 1);
+        }
+        const roll = parseInt(inp ? inp.value : sData.hpRolls[i], 10) || (i === 1 ? sides : Math.floor(sides / 2) + 1);
+        const conTd = tr.children[2];
+        const totalTd = tr.children[3];
+        if (conTd) conTd.textContent = formatMod(conMod);
+        if (totalTd) totalTd.textContent = roll + conMod;
+      });
+      return;
+    }
+
+    tbody.innerHTML = '';
     for (let i = 1; i <= lvl; i++) {
       const roll = parseInt(sData.hpRolls[i], 10) || (i === 1 ? sides : Math.floor(sides / 2) + 1);
       const rowTotal = roll + conMod;
@@ -2978,10 +3630,11 @@ document.addEventListener('DOMContentLoaded', function () {
       tbody.appendChild(tr);
     }
 
-    document.querySelectorAll('.hp-level-roll').forEach(inp => {
+    tbody.querySelectorAll('.hp-level-roll').forEach(inp => {
       inp.addEventListener('input', function () {
         const lvlIdx = parseInt(this.getAttribute('data-level'), 10);
         const val = parseInt(this.value, 10) || 1;
+        if (!sData.hpRolls) sData.hpRolls = {};
         sData.hpRolls[lvlIdx] = val;
         recalculateAll();
         triggerAutoSave();
@@ -3018,30 +3671,50 @@ document.addEventListener('DOMContentLoaded', function () {
     let deflectBonus = 0;
     let naturalBonus = 0;
     let miscBonus = 0;
+    let activeArmorName = '';
+    let activeShieldName = '';
     const rows = document.querySelectorAll('#acItemsTbody tr');
 
     rows.forEach(tr => {
-      const name = tr.querySelector('.ac-item-name')?.value || '';
+      const name = (tr.querySelector('.ac-item-name')?.value || '').trim();
       const type = tr.querySelector('.ac-item-type')?.value || 'armor';
       const bonus = parseInt(tr.querySelector('.ac-item-bonus')?.value, 10) || 0;
       const pen = parseInt(tr.querySelector('.ac-item-pen')?.value, 10) || 0;
       const wt = parseInt(tr.querySelector('.ac-item-weight')?.value, 10) || 0;
+      const isActive = tr.querySelector('.ac-item-active')?.checked ?? true;
 
-      if (type === 'shield') {
-        shieldBonus += bonus;
-      } else if (type === 'deflection') {
-        deflectBonus += bonus;
-      } else if (type === 'natural') {
-        naturalBonus += bonus;
-      } else if (type === 'dodge' || type === 'misc') {
-        miscBonus += bonus;
+      // Update row visual styling
+      if (isActive) {
+        tr.classList.add('row-ac-active');
+        tr.classList.remove('row-ac-inactive');
       } else {
-        armorBonus += bonus;
+        tr.classList.add('row-ac-inactive');
+        tr.classList.remove('row-ac-active');
       }
 
-      totBonus += bonus;
-      totPen += pen;
+      // Weight is always counted in carrying capacity
       totWeight += wt;
+
+      // Only ACTIVE items contribute to AC bonuses, ACP and active status
+      if (isActive) {
+        if (type === 'shield') {
+          shieldBonus += bonus;
+          activeShieldName = name ? `${name} (+${bonus})` : `Kalkan (+${bonus})`;
+        } else if (type === 'deflection') {
+          deflectBonus += bonus;
+        } else if (type === 'natural') {
+          naturalBonus += bonus;
+        } else if (type === 'dodge' || type === 'misc') {
+          miscBonus += bonus;
+        } else {
+          // armor
+          armorBonus += bonus;
+          activeArmorName = name ? `${name} (+${bonus})` : `Zırh (+${bonus})`;
+        }
+
+        totBonus += bonus;
+        totPen += pen;
+      }
     });
 
     const bEl = document.getElementById('acItemTotalBonus');
@@ -3051,6 +3724,12 @@ document.addEventListener('DOMContentLoaded', function () {
     if (bEl) bEl.textContent = formatMod(totBonus);
     if (pEl) pEl.textContent = formatMod(totPen);
     if (wEl) wEl.textContent = `${totWeight} lbs`;
+
+    // Update Quick status labels in AC header
+    const lblArmor = document.getElementById('lblActiveArmorName');
+    const lblShield = document.getElementById('lblActiveShieldName');
+    if (lblArmor) lblArmor.textContent = activeArmorName || 'Yok (Zırhsız)';
+    if (lblShield) lblShield.textContent = activeShieldName || 'Yok';
 
     // Feed separated Armor, Shield, Deflect, Natural, Misc into Sheet 1 AC
     const sheetArmorInput = document.getElementById('sheetAcArmor');
@@ -3070,9 +3749,116 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.gear-wt').forEach(inp => {
       gearTotWt += parseInt(inp.value, 10) || 0;
     });
-    const totalAllWeight = totWeight + gearTotWt;
+    let saveTotWt = 0;
+    document.querySelectorAll('.save-item-weight').forEach(inp => {
+      saveTotWt += parseInt(inp.value, 10) || 0;
+    });
+    const totalAllWeight = totWeight + gearTotWt + saveTotWt;
     const gearWtBadge = document.getElementById('lblTotalGearWeight');
     if (gearWtBadge) gearWtBadge.textContent = `${totalAllWeight} lbs`;
+  }
+
+  // -------------------------------------------------------------
+  // AUTOMATION 7.5: Saving Throw Items Totals (Resistance & Protection)
+  // -------------------------------------------------------------
+  function updateSaveItemsTotals() {
+    let fortBonus = 0;
+    let refBonus = 0;
+    let willBonus = 0;
+    let totWeight = 0;
+    let activeItemNames = [];
+    const rows = document.querySelectorAll('#saveItemsTbody tr');
+
+    rows.forEach(tr => {
+      const name = (tr.querySelector('.save-item-name')?.value || '').trim();
+      const target = tr.querySelector('.save-item-target')?.value || 'all';
+      const type = tr.querySelector('.save-item-type')?.value || 'resistance';
+      const bonus = parseInt(tr.querySelector('.save-item-bonus')?.value, 10) || 0;
+      const wt = parseInt(tr.querySelector('.save-item-weight')?.value, 10) || 0;
+      const isActive = tr.querySelector('.save-item-active')?.checked ?? true;
+
+      // Visual styling
+      if (isActive) {
+        tr.classList.add('row-save-active');
+        tr.classList.remove('row-save-inactive');
+      } else {
+        tr.classList.add('row-save-inactive');
+        tr.classList.remove('row-save-active');
+      }
+
+      totWeight += wt;
+
+      if (isActive && bonus !== 0) {
+        if (target === 'all') {
+          fortBonus += bonus;
+          refBonus += bonus;
+          willBonus += bonus;
+        } else if (target === 'fort') {
+          fortBonus += bonus;
+        } else if (target === 'ref') {
+          refBonus += bonus;
+        } else if (target === 'will') {
+          willBonus += bonus;
+        }
+
+        if (name) {
+          activeItemNames.push(`${name} (+${bonus})`);
+        }
+      }
+    });
+
+    // Update Magic bonus inputs in the Saves table if save items table has rows
+    const fInp = document.getElementById('saveMagic_fort');
+    const rInp = document.getElementById('saveMagic_ref');
+    const wInp = document.getElementById('saveMagic_will');
+
+    if (rows.length > 0) {
+      if (fInp) fInp.value = fortBonus;
+      if (rInp) rInp.value = refBonus;
+      if (wInp) wInp.value = willBonus;
+    }
+
+    // Recalculate Fort, Ref, Will totals
+    recalculateSaveTotal('fort');
+    recalculateSaveTotal('ref');
+    recalculateSaveTotal('will');
+
+    // Update Footer Totals in Save Items table
+    const bEl = document.getElementById('saveItemTotalBonus');
+    const wEl = document.getElementById('saveItemTotalWeight');
+    if (bEl) {
+      if (fortBonus === refBonus && refBonus === willBonus) {
+        bEl.textContent = formatMod(fortBonus);
+      } else {
+        bEl.textContent = `F:${formatMod(fortBonus)} R:${formatMod(refBonus)} W:${formatMod(willBonus)}`;
+      }
+    }
+    if (wEl) wEl.textContent = `${totWeight} lbs`;
+
+    // Update Badges at top of Save items block
+    const lblResName = document.getElementById('lblActiveResistanceName');
+    const lblSaveBonuses = document.getElementById('lblActiveSaveBonusesText');
+    if (lblResName) {
+      lblResName.textContent = activeItemNames.length > 0 ? activeItemNames.join(', ') : 'Yok';
+    }
+    if (lblSaveBonuses) {
+      lblSaveBonuses.textContent = `Fort ${formatMod(fortBonus)} | Ref ${formatMod(refBonus)} | Will ${formatMod(willBonus)}`;
+    }
+
+    // Refresh carrying capacity / total gear weight badge
+    let armorTotWt = 0;
+    document.querySelectorAll('.ac-item-weight').forEach(inp => {
+      armorTotWt += parseInt(inp.value, 10) || 0;
+    });
+    let gearTotWt = 0;
+    document.querySelectorAll('.gear-wt').forEach(inp => {
+      gearTotWt += parseInt(inp.value, 10) || 0;
+    });
+    const totalAllWeight = armorTotWt + gearTotWt + totWeight;
+    const gearWtBadge = document.getElementById('lblTotalGearWeight');
+    if (gearWtBadge) gearWtBadge.textContent = `${totalAllWeight} lbs`;
+
+    return { fortBonus, refBonus, willBonus, totWeight };
   }
 
   // -------------------------------------------------------------
@@ -3240,10 +4026,30 @@ document.addEventListener('DOMContentLoaded', function () {
   if (btnAddAcItem) {
     btnAddAcItem.addEventListener('click', () => {
       const tbody = document.getElementById('acItemsTbody');
-      const tr = createAcItemRow({ name: '', type: 'armor', bonus: 0, pen: 0, weight: 0 });
+      // If there is already an active armor, default new item to inactive
+      const hasActiveArmor = !!Array.from(document.querySelectorAll('#acItemsTbody tr')).find(r => {
+        const type = r.querySelector('.ac-item-type')?.value || 'armor';
+        const active = r.querySelector('.ac-item-active')?.checked;
+        return type === 'armor' && active;
+      });
+      const tr = createAcItemRow({ name: '', type: 'armor', bonus: 0, pen: 0, weight: 0, is_active: !hasActiveArmor });
       tbody.appendChild(tr);
       attachDynamicRowEvents();
       const inp = tr.querySelector('.ac-item-name');
+      if (inp) inp.focus();
+      recalculateAll();
+      triggerAutoSave();
+    });
+  }
+
+  const btnAddSaveItem = document.getElementById('btnAddSaveItemRow');
+  if (btnAddSaveItem) {
+    btnAddSaveItem.addEventListener('click', () => {
+      const tbody = document.getElementById('saveItemsTbody');
+      const tr = createSaveItemRow({ name: '', target: 'all', type: 'resistance', bonus: 1, weight: 1, is_active: true });
+      tbody.appendChild(tr);
+      attachDynamicRowEvents();
+      const inp = tr.querySelector('.save-item-name');
       if (inp) inp.focus();
       recalculateAll();
       triggerAutoSave();
@@ -3354,13 +4160,78 @@ document.addEventListener('DOMContentLoaded', function () {
         triggerAutoSave();
       };
     });
+    document.querySelectorAll('.ac-item-active').forEach(chk => {
+      chk.onchange = function () {
+        const tr = this.closest('tr');
+        const isChecked = this.checked;
+        const currentType = tr?.querySelector('.ac-item-type')?.value || 'armor';
+        if (isChecked && (currentType === 'armor' || currentType === 'shield')) {
+          document.querySelectorAll('#acItemsTbody tr').forEach(otherTr => {
+            if (otherTr !== tr) {
+              const otherType = otherTr.querySelector('.ac-item-type')?.value || 'armor';
+              if (otherType === currentType) {
+                const otherChk = otherTr.querySelector('.ac-item-active');
+                if (otherChk) otherChk.checked = false;
+              }
+            }
+          });
+        }
+        recalculateAll();
+        triggerAutoSave();
+      };
+    });
     document.querySelectorAll('.ac-item-type').forEach(sel => {
       sel.onchange = function () {
+        const tr = this.closest('tr');
+        const activeChk = tr?.querySelector('.ac-item-active');
+        const targetType = this.value;
+        if (activeChk && activeChk.checked && (targetType === 'armor' || targetType === 'shield')) {
+          document.querySelectorAll('#acItemsTbody tr').forEach(otherTr => {
+            if (otherTr !== tr) {
+              const otherType = otherTr.querySelector('.ac-item-type')?.value || 'armor';
+              if (otherType === targetType) {
+                const otherChk = otherTr.querySelector('.ac-item-active');
+                if (otherChk) otherChk.checked = false;
+              }
+            }
+          });
+        }
         recalculateAll();
         triggerAutoSave();
       };
     });
     document.querySelectorAll('.ac-item-name').forEach(inp => {
+      inp.onchange = function () {
+        recalculateAll();
+        triggerAutoSave();
+      };
+    });
+    document.querySelectorAll('.btn-del-save-row').forEach(btn => {
+      btn.onclick = function () {
+        this.closest('tr').remove();
+        recalculateAll();
+        triggerAutoSave();
+      };
+    });
+    document.querySelectorAll('.save-item-bonus, .save-item-weight').forEach(inp => {
+      inp.oninput = function () {
+        recalculateAll();
+        triggerAutoSave();
+      };
+    });
+    document.querySelectorAll('.save-item-active').forEach(chk => {
+      chk.onchange = function () {
+        recalculateAll();
+        triggerAutoSave();
+      };
+    });
+    document.querySelectorAll('.save-item-target, .save-item-type').forEach(sel => {
+      sel.onchange = function () {
+        recalculateAll();
+        triggerAutoSave();
+      };
+    });
+    document.querySelectorAll('.save-item-name').forEach(inp => {
       inp.onchange = function () {
         recalculateAll();
         triggerAutoSave();
@@ -3850,6 +4721,7 @@ document.addEventListener('DOMContentLoaded', function () {
       skills: {},
       weapons: [],
       acItems: [],
+      saveItems: [],
       gear: [],
       feats: [],
       specials: [],
@@ -3859,6 +4731,21 @@ document.addEventListener('DOMContentLoaded', function () {
         slots: []
       },
       hpRolls: sData.hpRolls || {},
+      hpExtraMisc: parseInt(document.getElementById('sheetHpExtraMisc')?.value, 10) || 0,
+      traits: {
+        uye: {
+          name: document.getElementById('sheetTraitName_uye')?.value.trim() || '',
+          desc: document.getElementById('sheetTraitDesc_uye')?.value.trim() || ''
+        },
+        kidemli: {
+          name: document.getElementById('sheetTraitName_kidemli')?.value.trim() || '',
+          desc: document.getElementById('sheetTraitDesc_kidemli')?.value.trim() || ''
+        },
+        uzman: {
+          name: document.getElementById('sheetTraitName_uzman')?.value.trim() || '',
+          desc: document.getElementById('sheetTraitDesc_uzman')?.value.trim() || ''
+        }
+      },
       moneyCp: parseInt(document.getElementById('sheetMoneyCp').value, 10) || 0,
       moneySp: parseInt(document.getElementById('sheetMoneySp').value, 10) || 0,
       moneyGp: parseInt(document.getElementById('sheetMoneyGp').value, 10) || 0,
@@ -3905,6 +4792,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('#acItemsTbody tr').forEach(tr => {
       const name = tr.querySelector('.ac-item-name')?.value;
       const type = tr.querySelector('.ac-item-type')?.value || 'armor';
+      const isActive = tr.querySelector('.ac-item-active')?.checked ?? true;
       if (name !== undefined) {
         sheetData.acItems.push({
           name: name,
@@ -3913,7 +4801,27 @@ document.addEventListener('DOMContentLoaded', function () {
           pen: parseInt(tr.querySelector('.ac-item-pen')?.value, 10) || 0,
           weight: parseInt(tr.querySelector('.ac-item-weight')?.value, 10) || 0,
           max_dex: tr.getAttribute('data-max-dex') || null,
-          category: tr.getAttribute('data-category') || null
+          category: tr.getAttribute('data-category') || null,
+          is_active: isActive
+        });
+      }
+    });
+
+    // 3.5 Save Items (Resistance & Protection)
+    sheetData.saveItems = [];
+    document.querySelectorAll('#saveItemsTbody tr').forEach(tr => {
+      const name = tr.querySelector('.save-item-name')?.value;
+      const target = tr.querySelector('.save-item-target')?.value || 'all';
+      const type = tr.querySelector('.save-item-type')?.value || 'resistance';
+      const isActive = tr.querySelector('.save-item-active')?.checked ?? true;
+      if (name !== undefined) {
+        sheetData.saveItems.push({
+          name: name,
+          target: target,
+          type: type,
+          bonus: parseInt(tr.querySelector('.save-item-bonus')?.value, 10) || 0,
+          weight: parseInt(tr.querySelector('.save-item-weight')?.value, 10) || 0,
+          is_active: isActive
         });
       }
     });
@@ -3970,6 +4878,8 @@ document.addEventListener('DOMContentLoaded', function () {
     currentChar.maxHp = sheetData.maxHp;
     currentChar.hitDie = sheetData.hitDie;
     currentChar.sheetData = sheetData;
+    sData.hpExtraMisc = sheetData.hpExtraMisc;
+    sData.traits = sheetData.traits;
 
     // Update top header character name
     const topName = document.getElementById('topCharNameDisplay');
@@ -4049,6 +4959,33 @@ document.addEventListener('DOMContentLoaded', function () {
     if (el) {
       el.addEventListener('input', () => { recalculateAll(); triggerAutoSave(); });
       el.addEventListener('change', () => { recalculateAll(); triggerAutoSave(); });
+    }
+  });
+
+  // HP Extra / Feat Bonus & Current HP real-time change listeners
+  const hpExtraEl = document.getElementById('sheetHpExtraMisc');
+  if (hpExtraEl) {
+    const onHpExtraChange = () => {
+      sData.hpExtraMisc = parseInt(hpExtraEl.value, 10) || 0;
+      recalculateAll();
+      triggerAutoSave();
+    };
+    hpExtraEl.addEventListener('input', onHpExtraChange);
+    hpExtraEl.addEventListener('change', onHpExtraChange);
+  }
+
+  const currentHpEl = document.getElementById('sheetCurrentHp');
+  if (currentHpEl) {
+    currentHpEl.addEventListener('input', () => { triggerAutoSave(); });
+    currentHpEl.addEventListener('change', () => { triggerAutoSave(); });
+  }
+
+  // Traits real-time auto-save listeners
+  ['sheetTraitName_uye', 'sheetTraitDesc_uye', 'sheetTraitName_kidemli', 'sheetTraitDesc_kidemli', 'sheetTraitName_uzman', 'sheetTraitDesc_uzman'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', () => { triggerAutoSave(); });
+      el.addEventListener('change', () => { triggerAutoSave(); });
     }
   });
 

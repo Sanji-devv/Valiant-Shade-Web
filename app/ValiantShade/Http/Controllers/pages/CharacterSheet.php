@@ -4,6 +4,7 @@ namespace App\ValiantShade\Http\Controllers\pages;
 
 use App\Models\CharacterFeat;
 use App\Models\CharacterProfile;
+use App\Models\CharacterTrait;
 use App\ValiantShade\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -33,6 +34,11 @@ class CharacterSheet extends Controller
       $armorsFile = config_path('enums/pathfinder_armors.json');
       $armors = file_exists($armorsFile) ? json_decode(file_get_contents($armorsFile), true) : [];
     }
+    $saveItems = $loadEnum('pathfinder_save_items.php');
+    if (empty($saveItems)) {
+      $saveItemsFile = config_path('enums/pathfinder_save_items.json');
+      $saveItems = file_exists($saveItemsFile) ? json_decode(file_get_contents($saveItemsFile), true) : [];
+    }
 
     $charId = $request->query('id');
     $charName = $request->query('name');
@@ -42,7 +48,7 @@ class CharacterSheet extends Controller
     $allDbCharacters = collect();
 
     try {
-      $userQuery = CharacterProfile::with('feats');
+      $userQuery = CharacterProfile::with(['feats', 'traits']);
       if ($user) {
         $userQuery->where('user_id', $user->id);
       } else {
@@ -56,15 +62,101 @@ class CharacterSheet extends Controller
             $q->orWhere('id', (int) $charId);
           }
         })->first();
+
+        // If not found in user-scoped query (e.g. testing or staff or matching global ID)
+        if (!$dbCharacter) {
+          $dbCharacter = CharacterProfile::with(['feats', 'traits'])->where(function ($q) use ($charId) {
+            $q->where('character_id', $charId);
+            if (is_numeric($charId)) {
+              $q->orWhere('id', (int) $charId);
+            }
+          })->first();
+        }
       }
       if (!$dbCharacter && !empty($charName)) {
         $dbCharacter = (clone $userQuery)->where('character_name', $charName)->first();
+        if (!$dbCharacter) {
+          $dbCharacter = CharacterProfile::with(['feats', 'traits'])->where('character_name', $charName)->first();
+        }
       }
       if (!$dbCharacter && $user && !empty($user->current_character)) {
         $dbCharacter = (clone $userQuery)->where('character_name', $user->current_character)->first();
       }
       if (!$dbCharacter && $user) {
         $dbCharacter = (clone $userQuery)->first();
+      }
+
+      // Synchronize latest relations into $dbCharacter payload
+      if ($dbCharacter) {
+        $dbCharacter->loadMissing(['feats', 'traits']);
+        $sheet = is_array($dbCharacter->sheet_data) ? $dbCharacter->sheet_data : (json_decode($dbCharacter->sheet_data, true) ?: []);
+
+        // Sync fresh traits from character_traits relation
+        $dbTraits = [];
+        foreach ($dbCharacter->traits as $t) {
+          if (!empty($t->slot_key)) {
+            $tUrl = $t->source_url;
+            if (empty($tUrl) && !empty($t->trait_name)) {
+              $tUrl = 'https://www.d20pfsrd.com/?s=' . urlencode($t->trait_name);
+            }
+            $dbTraits[$t->slot_key] = [
+              'name'       => $t->trait_name ?: '',
+              'desc'       => $t->description ?: '',
+              'category'   => $t->category,
+              'source_url' => $tUrl,
+              'url'        => $tUrl,
+            ];
+          }
+        }
+        if (!empty($dbTraits)) {
+          $sheet['traits'] = array_merge($sheet['traits'] ?? [], $dbTraits);
+          if (isset($sheet['sheetData']) && is_array($sheet['sheetData'])) {
+            $sheet['sheetData']['traits'] = array_merge($sheet['sheetData']['traits'] ?? [], $dbTraits);
+          }
+        }
+
+        // Sync fresh feats from character_feats relation
+        if ($dbCharacter->feats->isNotEmpty()) {
+          $dbFeats = [];
+          foreach ($dbCharacter->feats as $f) {
+            $dbFeats[] = [
+              'title'     => $f->feat_name,
+              'desc'      => $f->notes ?: '',
+              'level'     => $f->level,
+              'slot_type' => $f->slot_type,
+              'category'  => $f->category,
+            ];
+          }
+          $sheet['feats'] = $dbFeats;
+          if (isset($sheet['sheetData']) && is_array($sheet['sheetData'])) {
+            $sheet['sheetData']['feats'] = $dbFeats;
+          }
+        }
+
+        // Sync stats
+        $sheet['level'] = (int) $dbCharacter->level;
+        $sheet['race'] = $dbCharacter->race;
+        $sheet['class'] = $dbCharacter->class_name;
+        $sheet['classKey'] = strtolower($dbCharacter->class_name);
+        $sheet['hp'] = (int) $dbCharacter->hp;
+        $sheet['maxHp'] = (int) ($dbCharacter->max_hp ?: $dbCharacter->hp);
+        if (isset($sheet['sheetData']) && is_array($sheet['sheetData'])) {
+          $sheet['sheetData']['level'] = (int) $dbCharacter->level;
+          $sheet['sheetData']['race'] = $dbCharacter->race;
+          $sheet['sheetData']['currentHp'] = (int) $dbCharacter->hp;
+          $sheet['sheetData']['maxHp'] = (int) ($dbCharacter->max_hp ?: $dbCharacter->hp);
+          if (!isset($sheet['sheetData']['abilityScores'])) {
+            $sheet['sheetData']['abilityScores'] = [];
+          }
+          $sheet['sheetData']['abilityScores']['str'] = (int) $dbCharacter->str;
+          $sheet['sheetData']['abilityScores']['dex'] = (int) $dbCharacter->dex;
+          $sheet['sheetData']['abilityScores']['con'] = (int) $dbCharacter->con;
+          $sheet['sheetData']['abilityScores']['int'] = (int) $dbCharacter->int;
+          $sheet['sheetData']['abilityScores']['wis'] = (int) $dbCharacter->wis;
+          $sheet['sheetData']['abilityScores']['cha'] = (int) $dbCharacter->cha;
+        }
+
+        $dbCharacter->sheet_data = $sheet;
       }
 
       // Only fetch characters belonging to the authenticated user
@@ -88,6 +180,7 @@ class CharacterSheet extends Controller
       'progressions',
       'classSkills',
       'armors',
+      'saveItems',
       'dbCharacter',
       'allDbCharacters'
     ));
@@ -104,11 +197,8 @@ class CharacterSheet extends Controller
         ], 401);
       }
 
-      $charId = $request->input('id');
-      $charName = trim($request->input('name') ?? '');
-      if (empty($charName)) {
-        $charName = 'Valiant Adventurer';
-      }
+      $charId = $request->input('id') ?? $request->input('character_id');
+      $charName = trim($request->input('name') ?? $request->input('character_name') ?? '');
 
       $profile = null;
       $userQuery = CharacterProfile::where('user_id', $user->id);
@@ -126,6 +216,10 @@ class CharacterSheet extends Controller
       if (!$profile) {
         $profile = new CharacterProfile();
         $profile->user_id = $user->id;
+      }
+
+      if (empty($charName)) {
+        $charName = $profile->character_name ?: 'Valiant Adventurer';
       }
 
       $sheetData = $request->input('sheetData', []);
@@ -198,6 +292,44 @@ class CharacterSheet extends Controller
               'notes'          => trim($fDesc),
               'sort_order'     => $idx,
             ]);
+          }
+        }
+      }
+
+      // Sync character traits to character_traits table
+      $traits = $sheetData['traits'] ?? ($request->input('traits') ?? []);
+      if (is_array($traits)) {
+        $guildChar = \App\Models\Character::where('name', $profile->character_name)->first();
+        if (!$guildChar && is_numeric($profile->character_id)) {
+          $guildChar = \App\Models\Character::where('id', (int) $profile->character_id)->first();
+        }
+        $slotMeta = [
+          'uye'     => ['slot_name' => 'Üye', 'required_rank' => 'Üye', 'required_hierarchy' => 3],
+          'kidemli' => ['slot_name' => 'Kıdemli', 'required_rank' => 'Kıdemli', 'required_hierarchy' => 4],
+          'uzman'   => ['slot_name' => 'Uzman', 'required_rank' => 'Uzman', 'required_hierarchy' => 5],
+        ];
+
+        foreach (['uye', 'kidemli', 'uzman'] as $slotKey) {
+          if (isset($traits[$slotKey])) {
+            $tVal = $traits[$slotKey];
+            $tName = is_array($tVal) ? ($tVal['name'] ?? null) : (string) $tVal;
+            $tDesc = is_array($tVal) ? ($tVal['desc'] ?? null) : null;
+            if (!empty(trim((string)$tName)) && trim((string)$tName) !== '-') {
+              CharacterTrait::updateOrCreate(
+                [
+                  'character_name' => $profile->character_name,
+                  'slot_key'       => $slotKey,
+                ],
+                [
+                  'character_id'       => $guildChar?->id,
+                  'slot_name'          => $slotMeta[$slotKey]['slot_name'],
+                  'required_rank'      => $slotMeta[$slotKey]['required_rank'],
+                  'required_hierarchy' => $slotMeta[$slotKey]['required_hierarchy'],
+                  'trait_name'         => trim($tName),
+                  'description'        => $tDesc ? trim($tDesc) : null,
+                ]
+              );
+            }
           }
         }
       }

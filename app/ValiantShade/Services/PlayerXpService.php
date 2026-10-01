@@ -178,14 +178,14 @@ class PlayerXpService
     public function ensureSampleDataSeeded(): void
     {
         if ($this->repository->count() === 0) {
-            $this->resetToExcelDefaults();
+            $this->resetToDefaults();
         }
     }
 
     /**
-     * Reset to the exact 64 characters from the Google Sheet screenshot.
+     * Reset to the exact 64 characters from the Master Sheet dataset.
      */
-    public function resetToExcelDefaults(): void
+    public function resetToDefaults(): void
     {
         $this->repository->truncate();
 
@@ -310,5 +310,10 @@ class PlayerXpService
         fclose($output);
 
         return $csv ?: '';
+    }
+
+    public function resetToExcelDefaults(): void
+    {
+        $this->resetToDefaults();
     }
 }

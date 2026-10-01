@@ -135,16 +135,16 @@ class InventoryService
     public function ensureSampleDataSeeded(): void
     {
         if ($this->repository->count() === 0) {
-            $this->resetToExcelDefaults();
+            $this->resetToDefaults();
         }
     }
 
-    public function resetToExcelDefaults(): void
+    public function resetToDefaults(): void
     {
         $this->vaultRepository->resetToDefault();
         $this->repository->truncate();
 
-        $excelItems = [
+        $defaultItems = [
             ['name' => 'Dragon Slaying Arrow', 'quality' => null, 'type' => 'Ammunition', 'quantity' => 1, 'unit_price' => 22820],
             ['name' => 'Human Slaying Arrow', 'quality' => null, 'type' => 'Ammunition', 'quantity' => 1, 'unit_price' => 22820],
             ['name' => 'Armored Coat & Cloak of Resistance', 'quality' => '+1', 'type' => 'Armor', 'quantity' => 1, 'unit_price' => 32000],
@@ -178,8 +178,13 @@ class InventoryService
             ['name' => 'Büyülü Pipo', 'quality' => null, 'type' => 'Misc', 'quantity' => 1, 'unit_price' => 40000],
         ];
 
-        foreach ($excelItems as $item) {
+        foreach ($defaultItems as $item) {
             $this->createItem($item);
         }
+    }
+
+    public function resetToExcelDefaults(): void
+    {
+        $this->resetToDefaults();
     }
 }

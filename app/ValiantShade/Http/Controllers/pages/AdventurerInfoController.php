@@ -154,20 +154,25 @@ class AdventurerInfoController extends Controller
     }
 
     /**
-     * Reset to exact Google Sheets Excel defaults.
+     * Reset to exact Master Sheet defaults.
      */
-    public function resetExcel(Request $request): JsonResponse
+    public function resetDefaults(Request $request): JsonResponse
     {
         if ($deny = $this->checkAdmin($request)) {
             return $deny;
         }
 
-        $this->service->resetToExcelDefaults();
+        $this->service->resetToDefaults();
 
         return response()->json([
             'success' => true,
             'message' => 'Adventurer Info verileri orijinal Master Sheet durumuna sıfırlandı.',
         ]);
+    }
+
+    public function resetExcel(Request $request): JsonResponse
+    {
+        return $this->resetDefaults($request);
     }
 }
 

@@ -55,11 +55,11 @@
                   };
                 @endphp
                 <li class="list-inline-item d-flex gap-2 align-items-center"><i class="icon-base {{ $roleIcon }} icon-lg"></i><span class="fw-medium">{{ $userRole }}</span></li>
-                <li class="list-inline-item d-flex gap-2 align-items-center"><i class="icon-base ti tabler-map-pin  icon-lg"></i><span class="fw-medium">{{ Auth::user()->country ?? 'Vatican City' }}</span></li>
-                <li class="list-inline-item d-flex gap-2 align-items-center"><i class="icon-base ti tabler-calendar  icon-lg"></i><span class="fw-medium"> Joined {{ Auth::user() && Auth::user()->created_at ? Auth::user()->created_at->translatedFormat('F Y') : 'April 2021' }}</span></li>
+
+
               </ul>
             </div>
-            <a href="javascript:void(0)" class="btn btn-primary mb-1"> <i class="icon-base ti tabler-user-check icon-xs me-2"></i>Connected </a>
+            
           </div>
         </div>
       </div>
@@ -76,20 +76,16 @@
         <li class="nav-item">
           <a class="nav-link active" href="javascript:void(0);"><i class="icon-base ti tabler-user-check icon-sm me-1_5"></i> Profile</a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url('/valiant-shade/pages/profile-teams') }}"><i class="icon-base ti tabler-users icon-sm me-1_5"></i> Teams</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url('/valiant-shade/pages/profile-projects') }}"><i class="icon-base ti tabler-layout-grid icon-sm me-1_5"></i> Projects</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url('/valiant-shade/pages/profile-connections') }}"><i class="icon-base ti tabler-link icon-sm me-1_5"></i> Connections</a>
-        </li>
-        <li class="nav-item">
+        <li class="nav-item ms-auto">
           @if(count($characters ?? []) < 2)
-            <button type="button" class="btn btn-primary waves-effect waves-light d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#createCharacterModal">
-              <i class="icon-base ti tabler-user-plus icon-sm me-1_5"></i> {{ __('Create New Character') }}
-            </button>
+            <div class="d-flex align-items-center gap-2">
+              <button type="button" class="btn btn-warning waves-effect waves-light d-flex align-items-center shadow-sm" data-bs-toggle="modal" data-bs-target="#claimCharacterModal">
+                <i class="icon-base ti tabler-user-check icon-sm me-1_5"></i> {{ __('Claim Character') }}
+              </button>
+              <button type="button" class="btn btn-outline-primary waves-effect d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#createCharacterModal">
+                <i class="icon-base ti tabler-user-plus icon-sm me-1_5"></i> {{ __('Create New') }}
+              </button>
+            </div>
           @else
             <button type="button" class="btn btn-secondary waves-effect d-flex align-items-center disabled" disabled title="{{ __('Maximum 2 characters reached (1 Main and 1 Clerk)') }}">
               <i class="icon-base ti tabler-lock icon-sm me-1_5"></i> {{ __('Character Limit Reached (2/2)') }}
@@ -120,7 +116,10 @@
         <div class="d-flex align-items-center gap-2">
           <span class="badge bg-label-primary rounded-pill" id="charListCountBadge">{{ count($characters ?? []) }}/2 Characters</span>
           @if(count($characters ?? []) < 2)
-            <button type="button" class="btn btn-sm btn-primary waves-effect waves-light d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#createCharacterModal">
+            <button type="button" class="btn btn-sm btn-warning waves-effect waves-light d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#claimCharacterModal" title="{{ __('Claim Existing Character from XP Registry') }}">
+              <i class="icon-base ti tabler-user-check icon-xs me-1"></i> {{ __('Claim') }}
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary waves-effect d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#createCharacterModal" title="{{ __('Create Brand New Character') }}">
               <i class="icon-base ti tabler-plus icon-xs me-1"></i> {{ __('New') }}
             </button>
           @else
@@ -141,7 +140,13 @@
                 $hd = $c->hit_die ?? 'd10';
                 $curHp = $c->hp ?? 10;
                 $mHp = $c->max_hp ?? $curHp;
-                $gold = $c->sheet_data['money']['gp'] ?? 150;
+                $sData = $c->sheet_data['sheetData'] ?? $c->sheet_data ?? [];
+                $gold = $sData['moneyGp'] ?? ($c->sheet_data['money']['gp'] ?? 150);
+                $cTr = $sData['traits'] ?? ($c->sheet_data['traits'] ?? []);
+                $tCnt = 0;
+                if (!empty($cTr['uye']['name'])) $tCnt++;
+                if (!empty($cTr['kidemli']['name'])) $tCnt++;
+                if (!empty($cTr['uzman']['name'])) $tCnt++;
               @endphp
               <div class="card border {{ $isActive ? 'border-primary border-opacity-50 is-selected' : 'border-secondary border-opacity-25' }} bg-label-secondary bg-opacity-10 shadow-none p-3 character-item-card" data-id="{{ $c->character_id ?: $c->id }}">
                 <div class="d-flex align-items-center justify-content-between mb-2">
@@ -163,6 +168,9 @@
                       <div class="d-flex align-items-center gap-1 mt-1 flex-wrap">
                         <span class="badge bg-label-primary px-2 py-0_5" style="font-size: 0.7rem;" title="Permanent Race"><i class="icon-base ti tabler-lock icon-xs me-1 text-muted"></i>{{ $c->race }}</span>
                         <span class="badge bg-label-info px-2 py-0_5" style="font-size: 0.7rem;">{{ $c->class_name }}</span>
+                        @if($tCnt > 0)
+                          <span class="badge bg-label-warning px-2 py-0_5" style="font-size: 0.7rem;" title="Rütbe Traitleri"><i class="icon-base ti tabler-sparkles icon-xs me-1"></i>{{ $tCnt }}/3 Trait</span>
+                        @endif
                       </div>
                     </div>
                   </div>
@@ -220,125 +228,75 @@
       </div>
     </div>
     <!--/ Player Characters Card -->
-    <!-- Profile Overview -->
-    <div class="card mb-6">
-      <div class="card-body">
-        <p class="card-text text-uppercase text-body-secondary small">Overview</p>
-        <ul class="list-unstyled mb-0">
-          <li class="d-flex align-items-center mb-4"><i class="icon-base ti tabler-check icon-lg"></i><span class="fw-medium mx-2">Task Compiled:</span> <span>13.5k</span></li>
-          <li class="d-flex align-items-center mb-4"><i class="icon-base ti tabler-layout-grid icon-lg"></i><span class="fw-medium mx-2">Projects Compiled:</span> <span>146</span></li>
-          <li class="d-flex align-items-center"><i class="icon-base ti tabler-users icon-lg"></i><span class="fw-medium mx-2">Connections:</span> <span>897</span></li>
-        </ul>
-      </div>
-    </div>
-    <!--/ Profile Overview -->
   </div>
   <div class="col-xl-8 col-lg-7 col-md-7">
     <!-- Activity Timeline & Class Progression Card -->
     <div class="card card-action mb-6" id="timelineAndProgressionCard">
-      <div class="card-header align-items-center justify-content-between pb-0 border-bottom">
-        <ul class="nav nav-tabs card-header-tabs" role="tablist">
+      <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-3 py-3 px-4 border-bottom border-secondary border-opacity-10">
+        <ul class="nav nav-pills custom-profile-tabs gap-2 mb-0" role="tablist">
           <li class="nav-item">
-            <button type="button" class="nav-link active d-flex align-items-center gap-2 py-3 px-4 fw-semibold" role="tab" data-bs-toggle="tab" data-bs-target="#navs-timeline" aria-controls="navs-timeline" aria-selected="true" id="tab-btn-timeline">
-              <i class="icon-base ti tabler-chart-bar-popular icon-lg"></i>
-              <span>Activity Timeline</span>
+            <button type="button" class="nav-link active d-flex align-items-center gap-2 py-2 px-3 fw-semibold" role="tab" data-bs-toggle="tab" data-bs-target="#navs-timeline" aria-controls="navs-timeline" aria-selected="true" id="tab-btn-timeline">
+              <i class="icon-base ti tabler-history icon-md"></i>
+              <span>{{ __('Activity Timeline') }}</span>
             </button>
           </li>
           <li class="nav-item">
-            <button type="button" class="nav-link d-flex align-items-center gap-2 py-3 px-4 fw-semibold" role="tab" data-bs-toggle="tab" data-bs-target="#navs-progression" aria-controls="navs-progression" aria-selected="false" id="tab-btn-progression">
-              <i class="icon-base ti tabler-table icon-lg text-primary"></i>
-              <span id="tabProgressionTitle">Class</span>
+            <button type="button" class="nav-link d-flex align-items-center gap-2 py-2 px-3 fw-semibold" role="tab" data-bs-toggle="tab" data-bs-target="#navs-progression" aria-controls="navs-progression" aria-selected="false" id="tab-btn-progression">
+              <i class="icon-base ti tabler-swords icon-md"></i>
+              <span id="tabProgressionTitle">{{ __('Class') }}</span>
             </button>
           </li>
           <li class="nav-item">
-            <button type="button" class="nav-link d-flex align-items-center gap-2 py-3 px-4 fw-semibold" role="tab" data-bs-toggle="tab" data-bs-target="#navs-race" aria-controls="navs-race" aria-selected="false" id="tab-btn-race">
-              <i class="icon-base ti tabler-dna icon-lg text-success"></i>
-              <span id="tabRaceTitle">Irk</span>
+            <button type="button" class="nav-link d-flex align-items-center gap-2 py-2 px-3 fw-semibold" role="tab" data-bs-toggle="tab" data-bs-target="#navs-race" aria-controls="navs-race" aria-selected="false" id="tab-btn-race">
+              <i class="icon-base ti tabler-dna icon-md"></i>
+              <span id="tabRaceTitle">{{ __('Race') }}</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button type="button" class="nav-link d-flex align-items-center gap-2 py-2 px-3 fw-semibold" role="tab" data-bs-toggle="tab" data-bs-target="#navs-traits" aria-controls="navs-traits" aria-selected="false" id="tab-btn-traits">
+              <i class="icon-base ti tabler-sparkles icon-md text-warning"></i>
+              <span id="tabTraitsTitle">{{ __('Traits') }}</span>
             </button>
           </li>
         </ul>
-        <div class="card-action-element d-flex align-items-center gap-2 pb-2">
-          <div class="dropdown">
-            <button type="button" class="btn dropdown-toggle hide-arrow p-0 text-body-secondary" data-bs-toggle="dropdown" aria-expanded="false"><i class="icon-base ti tabler-dots-vertical icon-md text-body-secondary"></i></button>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li><a class="dropdown-item" href="javascript:void(0);">Share timeline</a></li>
-              <li><a class="dropdown-item" href="javascript:void(0);">Suggest edits</a></li>
-              <li>
-                <hr class="dropdown-divider" />
-              </li>
-              <li><a class="dropdown-item" href="javascript:void(0);">Report bug</a></li>
-            </ul>
-          </div>
+        <div class="card-action-element d-flex align-items-center gap-2">
+          <span class="badge bg-label-primary px-3 py-2 font-monospace d-flex align-items-center gap-1_5" id="timelineActiveCharBadge" style="font-size: 0.78rem;">
+            <i class="icon-base ti tabler-user icon-xs"></i>
+            <span id="timelineActiveCharName">{{ __('No Hero Selected') }}</span>
+          </span>
         </div>
       </div>
       <div class="card-body pt-4">
         <div class="tab-content p-0">
           <!-- Pane 1: Activity Timeline (Character Financial & Events Ledger) -->
           <div class="tab-pane fade show active" id="navs-timeline" role="tabpanel">
-            <!-- Top Ledger Summary & Action Bar -->
-            <div class="ledger-hero-banner p-3 p-md-4 mb-4 rounded-3 shadow-lg">
-              <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-                <div class="d-flex align-items-center gap-2 gap-sm-3 flex-wrap">
-                  <!-- Character Purse Stat Chip -->
-                  <div class="ledger-stat-chip d-flex align-items-center gap-2">
-                    <div class="stat-chip-icon gold-glow">
-                      <i class="icon-base ti tabler-coins text-warning"></i>
-                    </div>
-                    <div>
-                      <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">{{ __('Character Purse') }}</div>
-                      <div class="d-flex align-items-baseline gap-1" id="timelineSelectedCharPurse">
-                        <span class="fw-bolder fs-5 text-warning font-monospace" id="timelineCharGoldVal">150</span>
-                        <span class="badge bg-warning text-dark px-1_5 py-0 fw-bold" style="font-size: 0.65rem;">GP</span>
-                        <span class="text-muted small font-monospace" id="timelineCharSpVal">(1.500 SP)</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Vault Reserve Stat Chip -->
-                  <div class="ledger-stat-chip d-flex align-items-center gap-2">
-                    <div class="stat-chip-icon vault-glow">
-                      <i class="icon-base ti tabler-building-bank text-info"></i>
-                    </div>
-                    <div>
-                      <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">{{ __('Guild Vault Reserve') }}</div>
-                      <div class="d-flex align-items-baseline gap-1">
-                        <span class="fw-bold fs-6 text-heading font-monospace" id="timelineVaultReserveBadge">{{ number_format((float) ($vault->balance_sp ?? 358989.50), 0, ',', '.') }}</span>
-                        <span class="badge bg-label-info px-1_5 py-0 fw-semibold" style="font-size: 0.65rem;">SP</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Transfer Action Button -->
-                <div class="d-flex align-items-center">
-                  <button type="button" class="btn btn-transfer-funds d-flex align-items-center gap-2 waves-effect waves-light" data-bs-toggle="modal" data-bs-target="#transferMoneyModal" id="btnOpenTransferMoney">
-                    <i class="icon-base ti tabler-arrows-exchange fs-4"></i>
-                    <span>{{ __('Transfer Money') }}</span>
-                  </button>
-                </div>
-              </div>
-            </div>
 
             <!-- Filter Toolbar & Event Counter -->
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4 pb-2 border-bottom border-secondary border-opacity-10">
+            <div class="timeline-toolbar d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4 p-2_5 rounded-3" id="timelineToolbarContainer">
               <div class="timeline-filter-bar d-inline-flex align-items-center" id="timelineFilterGroup">
                 <button type="button" class="timeline-filter-btn active" data-filter="all">
                   <i class="icon-base ti tabler-list me-1"></i> {{ __('All Activities') }}
                 </button>
                 <button type="button" class="timeline-filter-btn" data-filter="transfers">
-                  <i class="icon-base ti tabler-arrows-exchange me-1"></i> {{ __('Money Transfers') }}
+                  <i class="icon-base ti tabler-arrows-exchange me-1"></i> {{ __('Transfers') }}
                 </button>
                 <button type="button" class="timeline-filter-btn" data-filter="vault">
                   <i class="icon-base ti tabler-building-bank me-1"></i> {{ __('Guild Vault') }}
                 </button>
                 <button type="button" class="timeline-filter-btn" data-filter="milestone">
-                  <i class="icon-base ti tabler-sparkles me-1"></i> {{ __('Milestones & Quests') }}
+                  <i class="icon-base ti tabler-sparkles me-1"></i> {{ __('Quests & Deeds') }}
                 </button>
               </div>
+
               <div class="d-flex align-items-center gap-2">
-                <span class="badge bg-label-secondary font-monospace px-3 py-1_5 border border-secondary border-opacity-25" id="timelineActivityCountBadge">
-                  0 {{ __('Events') }}
+                <span class="badge bg-label-secondary font-monospace px-3 py-2 border border-secondary border-opacity-25 d-flex align-items-center gap-1" id="timelineActivityCountBadge">
+                  <i class="icon-base ti tabler-activity icon-xs text-primary"></i>
+                  <span>0 {{ __('Events') }}</span>
                 </span>
+                <button type="button" class="btn btn-sm btn-outline-warning d-flex align-items-center gap-1 px-3 py-2 waves-effect" data-bs-toggle="modal" data-bs-target="#transferMoneyModal" id="btnQuickTransferMoney">
+                  <i class="icon-base ti tabler-arrows-exchange icon-sm"></i>
+                  <span>{{ __('Transfer Money') }}</span>
+                </button>
               </div>
             </div>
 
@@ -349,14 +307,19 @@
 
             <!-- Empty State -->
             <div id="timelineEmptyState" class="text-center py-5 d-none">
-              <div class="avatar avatar-xl bg-label-secondary mx-auto mb-3 rounded-circle d-flex align-items-center justify-content-center shadow-sm">
-                <i class="icon-base ti tabler-coin-off fs-1 text-muted"></i>
+              <div class="timeline-empty-icon-wrap mx-auto mb-3 shadow-lg">
+                <i class="icon-base ti tabler-scroll fs-1 text-primary" id="timelineEmptyStateIcon"></i>
               </div>
-              <h5 class="fw-bold mb-1 text-heading">{{ __('No Financial Activity Yet') }}</h5>
-              <p class="text-body-secondary small mb-3" style="max-width: 420px; margin: 0 auto;">{{ __('Use the Transfer Money button to transfer gold between heroes or withdraw/deposit with the Guild Vault.') }}</p>
-              <button type="button" class="btn btn-sm btn-transfer-funds fw-bold mt-1" data-bs-toggle="modal" data-bs-target="#transferMoneyModal">
-                <i class="icon-base ti tabler-arrows-exchange me-1"></i> {{ __('Make First Transfer') }}
-              </button>
+              <h5 class="fw-bold mb-2 text-heading" id="timelineEmptyStateTitle">{{ __('Chronicles of Valiant Shade') }}</h5>
+              <p class="text-body-secondary small mb-4" id="timelineEmptyStateDesc" style="max-width: 440px; margin: 0 auto;">
+                {{ __('No hero has stepped forward yet. Create your first character to begin recording quest deeds, milestones, and treasury records.') }}
+              </p>
+              <div id="timelineEmptyStateAction">
+                <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2 px-4 py-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#createCharacterModal">
+                  <i class="icon-base ti tabler-user-plus fs-5"></i>
+                  <span>{{ __('Create First Hero') }}</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -482,255 +445,48 @@
               <!-- Dynamically populated -->
             </div>
           </div>
+
+          <!-- Pane 4: Character Traits (Rütbe Traitleri: Üye, Kıdemli, Uzman) -->
+          <div class="tab-pane fade" id="navs-traits" role="tabpanel">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 p-3 mb-4 rounded-3 border border-warning border-opacity-25 bg-label-warning bg-opacity-10 shadow-sm" id="traitsHeaderCard">
+              <div class="d-flex align-items-center gap-3">
+                <div class="avatar avatar-md bg-warning text-white rounded-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 44px; height: 44px;">
+                  <i class="icon-base ti tabler-sparkles fs-4"></i>
+                </div>
+                <div>
+                  <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <h5 class="mb-0 fw-bold text-heading" id="traitsCharName">{{ __('Character Name') }}</h5>
+                    <span class="badge bg-label-warning font-monospace">{{ __('Rütbe Traitleri (3 Slot)') }}</span>
+                  </div>
+                  <div class="d-flex align-items-center gap-2 mt-1 flex-wrap text-body-secondary" style="font-size: 0.82rem;">
+                    <span>{{ __('Karakterin Üye, Kıdemli ve Uzman rütbelerinde kazandığı özel lonca traitleri.') }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="d-flex align-items-center gap-2">
+                <a href="#" class="btn btn-sm btn-outline-warning d-flex align-items-center gap-1 px-3 py-2 waves-effect" id="btnEditTraitsInSheet">
+                  <i class="icon-base ti tabler-edit icon-sm"></i>
+                  <span>{{ __('Karakter Sayfasında Düzenle') }}</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Dynamic Traits Cards Row -->
+            <div class="row g-3" id="traitsContentCardsRow">
+              <!-- Populated dynamically via renderTraitsTab -->
+            </div>
+          </div>
         </div>
       </div>
     </div>
     <!--/ Activity Timeline & Class Progression Card -->
-    <div class="row">
-      <!-- Connections -->
-      <div class="col-lg-12 col-xl-6">
-        <div class="card card-action mb-6">
-          <div class="card-header align-items-center">
-            <h5 class="card-action-title mb-0">Connections</h5>
-            <div class="card-action-element">
-              <div class="dropdown">
-                <button type="button" class="btn btn-icon btn-text-secondary rounded-pill dropdown-toggle hide-arrow p-0 text-body-secondary" data-bs-toggle="dropdown" aria-expanded="false"><i class="icon-base ti tabler-dots-vertical icon-md text-body-secondary"></i></button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                  <li><a class="dropdown-item" href="javascript:void(0);">Share connections</a></li>
-                  <li><a class="dropdown-item" href="javascript:void(0);">Suggest edits</a></li>
-                  <li>
-                    <hr class="dropdown-divider" />
-                  </li>
-                  <li><a class="dropdown-item" href="javascript:void(0);">Report bug</a></li>
-                </ul>
-              </div>
-            </div>
-          </div>
-          <div class="card-body">
-            <ul class="list-unstyled mb-0">
-              <li class="mb-4">
-                <div class="d-flex align-items-center">
-                  <div class="d-flex align-items-center">
-                    <div class="avatar me-2">
-                      <img src="{{ asset('static/demo-vuexy/assets/img/avatars/2.png') }}" alt="Avatar" class="rounded-circle" />
-                    </div>
-                    <div class="me-2">
-                      <h6 class="mb-0">Cecilia Payne</h6>
-                      <small>45 Connections</small>
-                    </div>
-                  </div>
-                  <div class="ms-auto">
-                    <button class="btn btn-label-primary btn-icon"><i class="icon-base ti tabler-user-check icon-22px"></i></button>
-                  </div>
-                </div>
-              </li>
-              <li class="mb-4">
-                <div class="d-flex align-items-center">
-                  <div class="d-flex align-items-center">
-                    <div class="avatar me-2">
-                      <img src="{{ asset('static/demo-vuexy/assets/img/avatars/3.png') }}" alt="Avatar" class="rounded-circle" />
-                    </div>
-                    <div class="me-2">
-                      <h6 class="mb-0">Curtis Fletcher</h6>
-                      <small>1.32k Connections</small>
-                    </div>
-                  </div>
-                  <div class="ms-auto">
-                    <button class="btn btn-primary btn-icon"><i class="icon-base ti tabler-user-x icon-22px"></i></button>
-                  </div>
-                </div>
-              </li>
-              <li class="mb-4">
-                <div class="d-flex align-items-center">
-                  <div class="d-flex align-items-center">
-                    <div class="avatar me-2">
-                      <img src="{{ asset('static/demo-vuexy/assets/img/avatars/10.png') }}" alt="Avatar" class="rounded-circle" />
-                    </div>
-                    <div class="me-2">
-                      <h6 class="mb-0">Alice Stone</h6>
-                      <small>125 Connections</small>
-                    </div>
-                  </div>
-                  <div class="ms-auto">
-                    <button class="btn btn-primary btn-icon"><i class="icon-base ti tabler-user-x icon-22px"></i></button>
-                  </div>
-                </div>
-              </li>
-              <li class="mb-4">
-                <div class="d-flex align-items-center">
-                  <div class="d-flex align-items-center">
-                    <div class="avatar me-2">
-                      <img src="{{ asset('static/demo-vuexy/assets/img/avatars/7.png') }}" alt="Avatar" class="rounded-circle" />
-                    </div>
-                    <div class="me-2">
-                      <h6 class="mb-0">Darrell Barnes</h6>
-                      <small>456 Connections</small>
-                    </div>
-                  </div>
-                  <div class="ms-auto">
-                    <button class="btn btn-label-primary btn-icon"><i class="icon-base ti tabler-user-check icon-22px"></i></button>
-                  </div>
-                </div>
-              </li>
-
-              <li class="mb-6">
-                <div class="d-flex align-items-center">
-                  <div class="d-flex align-items-center">
-                    <div class="avatar me-2">
-                      <img src="{{ asset('static/demo-vuexy/assets/img/avatars/12.png') }}" alt="Avatar" class="rounded-circle" />
-                    </div>
-                    <div class="me-2">
-                      <h6 class="mb-0">Eugenia Moore</h6>
-                      <small>1.2k Connections</small>
-                    </div>
-                  </div>
-                  <div class="ms-auto">
-                    <button class="btn btn-label-primary btn-icon"><i class="icon-base ti tabler-user-check icon-22px"></i></button>
-                  </div>
-                </div>
-              </li>
-              <li class="text-center">
-                <a href="javascript:;">View all connections</a>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-      <!--/ Connections -->
-      <!-- Teams -->
-      <div class="col-lg-12 col-xl-6">
-        <div class="card card-action mb-6">
-          <div class="card-header align-items-center">
-            <h5 class="card-action-title mb-0">Teams</h5>
-            <div class="card-action-element">
-              <div class="dropdown">
-                <button type="button" class="btn btn-icon btn-text-secondary dropdown-toggle hide-arrow p-0" data-bs-toggle="dropdown" aria-expanded="false"><i class="icon-base ti tabler-dots-vertical  icon-md text-body-secondary"></i></button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                  <li><a class="dropdown-item" href="javascript:void(0);">Share teams</a></li>
-                  <li><a class="dropdown-item" href="javascript:void(0);">Suggest edits</a></li>
-                  <li>
-                    <hr class="dropdown-divider" />
-                  </li>
-                  <li><a class="dropdown-item" href="javascript:void(0);">Report bug</a></li>
-                </ul>
-              </div>
-            </div>
-          </div>
-          <div class="card-body">
-            <ul class="list-unstyled mb-0">
-              <li class="mb-4">
-                <div class="d-flex align-items-center">
-                  <div class="d-flex align-items-center">
-                    <div class="avatar me-2">
-                      <img src="{{ asset('static/demo-vuexy/assets/img/icons/brands/react-label.png') }}" alt="Avatar" class="rounded-circle" />
-                    </div>
-                    <div class="me-2">
-                      <h6 class="mb-0">React Developers</h6>
-                      <small>72 Members</small>
-                    </div>
-                  </div>
-                  <div class="ms-auto">
-                    <a href="javascript:;"><span class="badge bg-label-danger">Developer</span></a>
-                  </div>
-                </div>
-              </li>
-              <li class="mb-4">
-                <div class="d-flex align-items-center">
-                  <div class="d-flex align-items-center">
-                    <div class="avatar me-2">
-                      <img src="{{ asset('static/demo-vuexy/assets/img/icons/brands/support-label.png') }}" alt="Avatar" class="rounded-circle" />
-                    </div>
-                    <div class="me-2">
-                      <h6 class="mb-0">Support Team</h6>
-                      <small>122 Members</small>
-                    </div>
-                  </div>
-                  <div class="ms-auto">
-                    <a href="javascript:;"><span class="badge bg-label-primary">Support</span></a>
-                  </div>
-                </div>
-              </li>
-              <li class="mb-4">
-                <div class="d-flex align-items-center">
-                  <div class="d-flex align-items-center">
-                    <div class="avatar me-2">
-                      <img src="{{ asset('static/demo-vuexy/assets/img/icons/brands/figma-label.png') }}" alt="Avatar" class="rounded-circle" />
-                    </div>
-                    <div class="me-2">
-                      <h6 class="mb-0">UI Designers</h6>
-                      <small>7 Members</small>
-                    </div>
-                  </div>
-                  <div class="ms-auto">
-                    <a href="javascript:;"><span class="badge bg-label-info">Designer</span></a>
-                  </div>
-                </div>
-              </li>
-              <li class="mb-4">
-                <div class="d-flex align-items-center">
-                  <div class="d-flex align-items-center">
-                    <div class="avatar me-2">
-                      <img src="{{ asset('static/demo-vuexy/assets/img/icons/brands/vue-label.png') }}" alt="Avatar" class="rounded-circle" />
-                    </div>
-                    <div class="me-2">
-                      <h6 class="mb-0">Vue.js Developers</h6>
-                      <small>289 Members</small>
-                    </div>
-                  </div>
-                  <div class="ms-auto">
-                    <a href="javascript:;"><span class="badge bg-label-danger">Developer</span></a>
-                  </div>
-                </div>
-              </li>
-              <li class="mb-6">
-                <div class="d-flex align-items-center">
-                  <div class="d-flex align-items-center">
-                    <div class="avatar me-2">
-                      <img src="{{ asset('static/demo-vuexy/assets/img/icons/brands/twitter-label.png') }}" alt="Avatar" class="rounded-circle" />
-                    </div>
-                    <div class="me-w">
-                      <h6 class="mb-0">Digital Marketing</h6>
-                      <small>24 Members</small>
-                    </div>
-                  </div>
-                  <div class="ms-auto">
-                    <a href="javascript:;"><span class="badge bg-label-secondary">Marketing</span></a>
-                  </div>
-                </div>
-              </li>
-              <li class="text-center">
-                <a href="javascript:;">View all teams</a>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-      <!--/ Teams -->
-    </div>
-    <!-- Projects table -->
-    <div class="card mb-6">
-      <div class="mb-4">
-        <table class="table datatable-project">
-          <thead class="border-top">
-            <tr>
-              <th></th>
-              <th></th>
-              <th>Project</th>
-              <th>Leader</th>
-              <th>Team</th>
-              <th class="w-px-200">Progress</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-        </table>
-      </div>
-    </div>
-    <!--/ Projects table -->
   </div>
 </div>
 <!--/ User Profile Content -->
 
 @include('valiant-shade._partials._modals.modal-create-character')
+@include('valiant-shade._partials._modals.modal-claim-character')
 @include('valiant-shade._partials._modals.modal-transfer-money')
 
 
@@ -821,21 +577,54 @@
     filter: brightness(1.08);
     color: #0b0c12 !important;
   }
+  /* Custom Profile & Timeline Segmented Nav Pills */
+  .custom-profile-tabs {
+    border-bottom: none !important;
+  }
+  .custom-profile-tabs .nav-link {
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 8px !important;
+    color: #9ba0bc !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    font-size: 0.88rem !important;
+    font-weight: 600 !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    padding: 0.52rem 1.05rem !important;
+  }
+  .custom-profile-tabs .nav-link:hover {
+    color: #ffffff !important;
+    background: rgba(115, 103, 240, 0.12) !important;
+    border-color: rgba(115, 103, 240, 0.35) !important;
+    transform: translateY(-1px);
+  }
+  .custom-profile-tabs .nav-link.active {
+    background: linear-gradient(135deg, #7367f0 0%, #5e50ee 100%) !important;
+    color: #ffffff !important;
+    border-color: rgba(115, 103, 240, 0.6) !important;
+    box-shadow: 0 4px 14px rgba(115, 103, 240, 0.38) !important;
+  }
+
+  /* Timeline Toolbar & Filter Bar */
+  .timeline-toolbar {
+    background: rgba(23, 25, 45, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: blur(8px);
+  }
   .timeline-filter-bar {
-    background: rgba(16, 18, 30, 0.85);
+    background: rgba(15, 17, 30, 0.85);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
-    padding: 4px;
+    border-radius: 8px;
+    padding: 3px;
     gap: 3px;
   }
   .timeline-filter-btn {
     background: transparent;
     color: #9ba0bc;
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
     font-size: 0.78rem;
     font-weight: 600;
-    padding: 0.44rem 0.9rem;
+    padding: 0.42rem 0.82rem;
     transition: all 0.18s ease;
     cursor: pointer;
     display: inline-flex;
@@ -849,6 +638,19 @@
     background: linear-gradient(135deg, #7367f0 0%, #5e50ee 100%) !important;
     color: #ffffff !important;
     box-shadow: 0 2px 10px rgba(115, 103, 240, 0.45) !important;
+  }
+
+  /* Timeline Empty State Styling */
+  .timeline-empty-icon-wrap {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(115, 103, 240, 0.22) 0%, rgba(115, 103, 240, 0.04) 70%, transparent 100%);
+    border: 1px solid rgba(115, 103, 240, 0.35);
+    box-shadow: 0 0 24px rgba(115, 103, 240, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   /* Custom RPG Ledger Timeline Track & Nodes */
@@ -1073,6 +875,19 @@
 </script>
 
 <script>
+window.assetsPath = window.assetsPath || document.documentElement.getAttribute('data-assets-path') || '/static/valiant-shade/assets/';
+var assetsPath = window.assetsPath;
+
+function escapeHtml(text) {
+  if (!text) return '';
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 document.addEventListener('DOMContentLoaded', function () {
   const container = document.getElementById('characterCardsContainer');
   const emptyState = document.getElementById('characterEmptyState');
@@ -1568,6 +1383,108 @@ document.addEventListener('DOMContentLoaded', function () {
     `;
   }
 
+  function renderTraitsTab(char) {
+    const tabTraitsTitle = document.getElementById('tabTraitsTitle');
+    const nameEl = document.getElementById('traitsCharName');
+    const editBtn = document.getElementById('btnEditTraitsInSheet');
+    const container = document.getElementById('traitsContentCardsRow');
+    if (!container) return;
+
+    if (!char) {
+      if (tabTraitsTitle) tabTraitsTitle.textContent = 'Traits';
+      if (nameEl) nameEl.textContent = '{{ __("No Hero Selected") }}';
+      if (editBtn) editBtn.classList.add('d-none');
+      container.innerHTML = `
+        <div class="col-12 text-center py-5">
+          <i class="icon-base ti tabler-sparkles text-muted fs-1 mb-2 d-block opacity-50"></i>
+          <h6 class="text-heading fw-bold mb-1">{{ __("Karakter Seçilmedi") }}</h6>
+          <p class="text-body-secondary small mb-0">{{ __("Traitleri görüntülemek için bir karakter seçin.") }}</p>
+        </div>
+      `;
+      return;
+    }
+
+    if (nameEl) nameEl.textContent = char.name;
+    const charSheetUrl = `{{ url('/valiant-shade/character/sheet') }}?id=${encodeURIComponent(char.id || '')}`;
+    if (editBtn) {
+      editBtn.classList.remove('d-none');
+      editBtn.href = charSheetUrl;
+    }
+
+    const sDetails = (char.sheetData && char.sheetData.sheetData) ? char.sheetData.sheetData : (char.sheetData || {});
+    const traits = sDetails.traits || char.traits || {};
+
+    let filledCount = 0;
+    ['uye', 'kidemli', 'uzman'].forEach(k => {
+      if (traits[k] && traits[k].name) filledCount++;
+    });
+
+    if (tabTraitsTitle) {
+      tabTraitsTitle.textContent = filledCount > 0 ? `Traits (${filledCount}/3)` : 'Traits';
+    }
+
+    const slots = [
+      {
+        key: 'uye',
+        title: '{{ __("Üye Traiti") }}',
+        rankLabel: 'Üye &bull; Slot 1',
+        badgeClass: 'bg-label-info',
+        borderStyle: 'border-color: rgba(115, 103, 240, 0.35) !important;',
+        icon: 'ti tabler-user-check text-info',
+        data: traits.uye || {}
+      },
+      {
+        key: 'kidemli',
+        title: '{{ __("Kıdemli Traiti") }}',
+        rankLabel: 'Kıdemli &bull; Slot 2',
+        badgeClass: 'bg-label-warning',
+        borderStyle: 'border-color: rgba(255, 171, 0, 0.35) !important;',
+        icon: 'ti tabler-award text-warning',
+        data: traits.kidemli || {}
+      },
+      {
+        key: 'uzman',
+        title: '{{ __("Uzman Traiti") }}',
+        rankLabel: 'Uzman &bull; Slot 3',
+        badgeClass: 'bg-label-success',
+        borderStyle: 'border-color: rgba(40, 199, 111, 0.35) !important;',
+        icon: 'ti tabler-shield-star text-success',
+        data: traits.uzman || {}
+      }
+    ];
+
+    container.innerHTML = slots.map(s => {
+      const name = s.data.name ? escapeHtml(s.data.name) : '';
+      const desc = s.data.desc ? escapeHtml(s.data.desc) : '';
+      const hasContent = name.length > 0 || desc.length > 0;
+
+      return `
+        <div class="col-12 col-md-4">
+          <div class="card h-100 p-3 shadow-xs border" style="${s.borderStyle} background: rgba(255, 255, 255, 0.02);">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="badge ${s.badgeClass} font-monospace d-flex align-items-center gap-1 py-1 px-2" style="font-size: 0.72rem;">
+                <i class="icon-base ${s.icon} icon-xs"></i> ${s.title}
+              </span>
+              <small class="text-body-secondary font-monospace" style="font-size: 0.68rem;">${s.rankLabel}</small>
+            </div>
+            ${hasContent ? `
+              <h6 class="fw-bold text-heading mb-1 text-primary">${name || '—'}</h6>
+              <p class="text-body-secondary small mb-0" style="white-space: pre-wrap; font-size: 0.8rem; line-height: 1.45;">${desc || '—'}</p>
+            ` : `
+              <div class="text-center py-4 text-body-secondary">
+                <i class="icon-base ti tabler-plus-circle text-muted fs-3 mb-1 d-block opacity-50"></i>
+                <small class="d-block text-muted mb-2">{{ __("Henüz tanımlanmadı") }}</small>
+                <a href="${charSheetUrl}" class="btn btn-xs btn-label-secondary rounded-pill">
+                  <i class="icon-base ti tabler-edit me-1"></i> {{ __("Trait Ekle") }}
+                </a>
+              </div>
+            `}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
   const userUuid = "{{ Auth::user()->uuid ?? Auth::id() ?? 'guest' }}";
   const charStorageKey = 'valiant_shade_characters_' + userUuid;
 
@@ -1661,6 +1578,11 @@ document.addEventListener('DOMContentLoaded', function () {
     if (tabRaceTitle) {
       tabRaceTitle.textContent = `Race`;
     }
+    const activeCharNameEl = document.getElementById('timelineActiveCharName');
+    if (activeCharNameEl) {
+      activeCharNameEl.textContent = '{{ __("No Hero Selected") }}';
+    }
+    renderTraitsTab(null);
     const nameEl = document.getElementById('progSelectedCharName');
     if (nameEl) nameEl.textContent = 'Character Not Found';
     const iconEl = document.getElementById('progSelectedCharIcon');
@@ -1866,12 +1788,13 @@ document.addEventListener('DOMContentLoaded', function () {
     renderClassProgressionTable(classKey, found);
     renderRaceDetails(found);
     renderActivityTimeline(found);
+    renderTraitsTab(found);
   }
 
   // ----------------------------------------------------
   // ACTIVITY TIMELINE & FINANCIAL LEDGER ENGINE
   // ----------------------------------------------------
-  const activityStorageKey = 'valiant_shade_activities_v6_' + userUuid;
+  const activityStorageKey = 'valiant_shade_activities_v7_' + userUuid;
   let currentTimelineFilter = 'all';
 
   function formatActivityDateTime(dateInput) {
@@ -1889,47 +1812,57 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  function isMockActivity(item) {
+    if (!item || typeof item !== 'object') return true;
+    const title = String(item.title || '');
+    const desc = String(item.desc || '');
+    const meta = String(item.meta || '');
+    // Mock titles / quests / characters
+    if (title.includes('Goblin Ambush') || title.includes('Goblin Pususu')) return true;
+    if (title.includes('Dungeon Escape') || title.includes('Zindandan Kaçış')) return true;
+    if (title.includes('Successful Quest Payout') || title.includes('Başarılı Görev Ödemesi')) return true;
+    if (title.includes('Lyra Shadowmend') && (title.includes('100 Gold') || title.includes('para gönderdi') || title.includes('sent you 100'))) return true;
+    if (title.includes('Valen Ironforge') && (title.includes('200 Gold') || title.includes('gönderdi') || title.includes('sent 200'))) return true;
+    // Mock descriptions
+    if (desc.includes('Goblin Pususu') || desc.includes('Goblin Ambush')) return true;
+    if (desc.includes('Zindandan Kaçış') || desc.includes('Dungeon Escape')) return true;
+    if (desc.includes('Demirci ustasından zırh siparişi') || desc.includes('Blacksmith armor order')) return true;
+    if (desc.includes('Zindan keşif seferi ganimet payı') || desc.includes('Dungeon expedition loot share')) return true;
+    // Mock metadata
+    if (meta.includes('Goblin Ambush') || meta.includes('Dungeon Escape')) return true;
+    if (meta.includes('Valen Ironforge')) return true;
+    return false;
+  }
+
   function getAllActivities() {
     try {
       let raw = localStorage.getItem(activityStorageKey);
       if (!raw) {
-        raw = localStorage.getItem('valiant_shade_activities_v5_' + userUuid) ||
+        raw = localStorage.getItem('valiant_shade_activities_v6_' + userUuid) ||
+              localStorage.getItem('valiant_shade_activities_v5_' + userUuid) ||
               localStorage.getItem('valiant_shade_activities_v4_' + userUuid) ||
               localStorage.getItem('valiant_shade_activities_v3_' + userUuid);
       }
       if (raw) {
         const parsed = JSON.parse(raw) || {};
-        const isTr = '{{ app()->getLocale() }}' === 'tr';
         let modified = false;
 
         Object.keys(parsed).forEach(charId => {
           if (Array.isArray(parsed[charId])) {
-            parsed[charId].forEach((item, index) => {
-              // Rule 1: Failed Quest gives +20 Gold, but quest itself is a FAILURE so badge & node are RED (danger)
-              if (item.amount === '-20 Gold' || (item.title && (item.title.includes('Failed') || item.title.includes('Başarısız') || item.title.includes('Penalty') || item.title.includes('Cezası')))) {
-                item.title = '{{ __("Failed Quest") }}';
-                item.amount = '+20 Gold';
-                item.point = 'danger';
-                item.badge = '{{ __("Failed Quest") }}';
-                item.icon = 'ti tabler-circle-x';
-                item.desc = isTr
-                  ? 'Zindandan Kaçış görevi tamamlanamadı. Lonca keşif ve teselli ödeneği aktarıldı.'
-                  : 'Dungeon Escape quest failed. Guild consolation and hazard allowance credited.';
-                modified = true;
-              }
-
-              // Rule 2: Dates must be in format "16.09.2026 saat 11.11 tarihinde gönderildi"
-              if (!item.time || item.time === '{{ __("Recent") }}' || item.time === 'Recent' || item.time === 'Son' || item.time === '{{ __("Just now") }}' || !item.time.includes('tarihinde')) {
-                const itemDate = item.timestamp ? new Date(item.timestamp) : new Date(Date.now() - (index * 3600 * 1000));
-                item.time = formatActivityDateTime(itemDate);
-                item.timestamp = itemDate.getTime();
-                modified = true;
-              }
-            });
+            const originalCount = parsed[charId].length;
+            parsed[charId] = parsed[charId].filter(item => !isMockActivity(item));
+            if (parsed[charId].length !== originalCount) {
+              modified = true;
+            }
           }
         });
 
-        if (modified) {
+        // Purge legacy storage keys so they never reload old mock activities
+        ['v6', 'v5', 'v4', 'v3'].forEach(v => {
+          try { localStorage.removeItem('valiant_shade_activities_' + v + '_' + userUuid); } catch (e) {}
+        });
+
+        if (modified || !localStorage.getItem(activityStorageKey)) {
           saveAllActivities(parsed);
         }
         return parsed;
@@ -1947,65 +1880,6 @@ document.addEventListener('DOMContentLoaded', function () {
   function getCharacterActivities(char) {
     if (!char) return [];
     const allActs = getAllActivities();
-    if (!allActs[char.id] || allActs[char.id].length === 0) {
-      const isTr = '{{ app()->getLocale() }}' === 'tr';
-
-      allActs[char.id] = [
-        {
-          id: 'act_' + Date.now() + '_1',
-          category: 'milestone',
-          title: '{{ __("Successful Quest Payout") }}',
-          timestamp: new Date('2026-09-16T11:11:00').getTime(),
-          time: isTr ? '16.09.2026 saat 11.11 tarihinde gönderildi' : 'Sent on 16.09.2026 at 11:11',
-          desc: isTr ? 'Goblin Pususu görevi başarıyla tamamlandı. Lonca ödülü hesaba aktarıldı.' : 'Goblin Ambush bounty quest completed successfully. Guild reward credited.',
-          amount: '+50 Gold',
-          point: 'success',
-          badge: '{{ __("Quest Payout") }}',
-          icon: 'ti tabler-circle-check',
-          meta: '{{ __("Quest") }}: {{ __("Goblin Ambush") }}'
-        },
-        {
-          id: 'act_' + Date.now() + '_2',
-          category: 'milestone',
-          title: '{{ __("Failed Quest") }}',
-          timestamp: new Date('2026-09-16T10:45:00').getTime(),
-          time: isTr ? '16.09.2026 saat 10.45 tarihinde gönderildi' : 'Sent on 16.09.2026 at 10:45',
-          desc: isTr ? 'Zindandan Kaçış görevi tamamlanamadı. Lonca keşif ve teselli ödeneği aktarıldı.' : 'Dungeon Escape quest failed. Guild consolation and hazard allowance credited.',
-          amount: '+20 Gold',
-          point: 'danger',
-          badge: '{{ __("Failed Quest") }}',
-          icon: 'ti tabler-circle-x',
-          meta: '{{ __("Quest") }}: {{ __("Dungeon Escape") }}'
-        },
-        {
-          id: 'act_' + Date.now() + '_3',
-          category: 'transfers',
-          title: isTr ? 'Lyra Shadowmend adlı karakter size 100 Gold para gönderdi' : 'Lyra Shadowmend sent you 100 Gold',
-          timestamp: new Date('2026-09-16T09:30:00').getTime(),
-          time: isTr ? '16.09.2026 saat 09.30 tarihinde gönderildi' : 'Sent on 16.09.2026 at 09:30',
-          desc: isTr ? 'Zindan keşif seferi ganimet payı ve ortak ekipman desteği.' : 'Dungeon expedition loot share and party supplies fund.',
-          amount: '+100 Gold',
-          point: 'success',
-          badge: '{{ __("Incoming Transfer") }}',
-          icon: 'ti tabler-arrow-down-left',
-          meta: '{{ __("Sender") }}: Lyra Shadowmend'
-        },
-        {
-          id: 'act_' + Date.now() + '_4',
-          category: 'transfers',
-          title: isTr ? `${char.name}, Valen Ironforge adlı oyuncuya 200 Gold gönderdi` : `${char.name} sent 200 Gold to Valen Ironforge`,
-          timestamp: new Date('2026-09-15T16:20:00').getTime(),
-          time: isTr ? '15.09.2026 saat 16.20 tarihinde gönderildi' : 'Sent on 15.09.2026 at 16:20',
-          desc: isTr ? 'Demirci ustasından zırh siparişi ve malzeme tedarik ödemesi.' : 'Blacksmith armor order and material supply payment.',
-          amount: '-200 Gold',
-          point: 'danger',
-          badge: '{{ __("Outgoing Transfer") }}',
-          icon: 'ti tabler-arrow-up-right',
-          meta: '{{ __("Recipient") }}: Valen Ironforge'
-        }
-      ];
-      saveAllActivities(allActs);
-    }
     return allActs[char.id] || [];
   }
 
@@ -2022,21 +1896,58 @@ document.addEventListener('DOMContentLoaded', function () {
     saveAllActivities(allActs);
   }
 
+  function resetTimelineFilter() {
+    currentTimelineFilter = 'all';
+    document.querySelectorAll('.timeline-filter-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-filter') === 'all');
+    });
+    const chars = getCharacters();
+    const char = chars.find(c => c.id === selectedCharId) || chars[0];
+    if (char) renderActivityTimeline(char);
+  }
+
   function renderActivityTimeline(char) {
     const goldValEl = document.getElementById('timelineCharGoldVal');
     const spValEl = document.getElementById('timelineCharSpVal');
     const timelineList = document.getElementById('characterActivityTimelineList');
     const emptyEl = document.getElementById('timelineEmptyState');
     const countEl = document.getElementById('timelineActivityCountBadge');
+    const activeCharNameEl = document.getElementById('timelineActiveCharName');
+    const emptyIconEl = document.getElementById('timelineEmptyStateIcon');
+    const emptyTitleEl = document.getElementById('timelineEmptyStateTitle');
+    const emptyDescEl = document.getElementById('timelineEmptyStateDesc');
+    const emptyActionEl = document.getElementById('timelineEmptyStateAction');
+    const quickTransferBtn = document.getElementById('btnQuickTransferMoney');
+
+    if (activeCharNameEl) {
+      activeCharNameEl.textContent = char ? char.name : '{{ __("No Hero Selected") }}';
+    }
 
     if (!char) {
       if (goldValEl) goldValEl.textContent = '0';
       if (spValEl) spValEl.textContent = '(0 SP)';
       if (timelineList) timelineList.innerHTML = '';
-      if (emptyEl) emptyEl.classList.remove('d-none');
-      if (countEl) countEl.textContent = '0 {{ __("Events") }}';
+      if (countEl) countEl.innerHTML = '<i class="icon-base ti tabler-activity icon-xs text-muted me-1"></i><span>0 {{ __("Events") }}</span>';
+      if (quickTransferBtn) quickTransferBtn.classList.add('d-none');
+
+      if (emptyEl) {
+        emptyEl.classList.remove('d-none');
+        if (emptyIconEl) emptyIconEl.className = 'icon-base ti tabler-scroll fs-1 text-primary';
+        if (emptyTitleEl) emptyTitleEl.textContent = '{{ __("Chronicles of Valiant Shade") }}';
+        if (emptyDescEl) emptyDescEl.textContent = '{{ __("No hero has stepped forward yet. Create your first character to begin recording quest deeds, milestones, and treasury records.") }}';
+        if (emptyActionEl) {
+          emptyActionEl.innerHTML = `
+            <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2 px-4 py-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#createCharacterModal">
+              <i class="icon-base ti tabler-user-plus fs-5"></i>
+              <span>{{ __("Create First Hero") }}</span>
+            </button>
+          `;
+        }
+      }
       return;
     }
+
+    if (quickTransferBtn) quickTransferBtn.classList.remove('d-none');
 
     const gp = Number(char.gold || 0);
     if (goldValEl) goldValEl.textContent = gp.toLocaleString();
@@ -2051,11 +1962,41 @@ document.addEventListener('DOMContentLoaded', function () {
       return true;
     });
 
-    if (countEl) countEl.textContent = `${filtered.length} {{ __("Events") }}`;
+    if (countEl) {
+      countEl.innerHTML = `<i class="icon-base ti tabler-activity icon-xs text-primary me-1"></i><span>${filtered.length} {{ __("Events") }}</span>`;
+    }
 
     if (filtered.length === 0) {
       if (timelineList) timelineList.innerHTML = '';
-      if (emptyEl) emptyEl.classList.remove('d-none');
+      if (emptyEl) {
+        emptyEl.classList.remove('d-none');
+        if (allItems.length === 0) {
+          if (emptyIconEl) emptyIconEl.className = 'icon-base ti tabler-clock-pause fs-1 text-muted';
+          if (emptyTitleEl) emptyTitleEl.textContent = '{{ __("No Activities Found") }}';
+          if (emptyDescEl) emptyDescEl.textContent = '{{ __("No activity records found for this character yet.") }}';
+          if (emptyActionEl) {
+            emptyActionEl.innerHTML = `
+              <button type="button" class="btn btn-sm btn-outline-warning d-inline-flex align-items-center gap-1 px-3 py-2 waves-effect" data-bs-toggle="modal" data-bs-target="#transferMoneyModal">
+                <i class="icon-base ti tabler-arrows-exchange me-1"></i>
+                <span>{{ __("Transfer Money") }}</span>
+              </button>
+            `;
+          }
+        } else {
+          if (emptyIconEl) emptyIconEl.className = 'icon-base ti tabler-notes-off fs-1 text-muted';
+          if (emptyTitleEl) emptyTitleEl.textContent = '{{ __("No Activities in this Category") }}';
+          if (emptyDescEl) emptyDescEl.textContent = `{{ __("No recorded activities found for this filter for") }} ${char.name}.`;
+          if (emptyActionEl) {
+            emptyActionEl.innerHTML = `
+              <button type="button" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 px-3 py-2" id="btnResetTimelineFilter">
+                <i class="icon-base ti tabler-filter-off me-1"></i>
+                <span>{{ __("Show All Activities") }}</span>
+              </button>
+            `;
+            document.getElementById('btnResetTimelineFilter')?.addEventListener('click', resetTimelineFilter);
+          }
+        }
+      }
       return;
     }
 
@@ -2191,8 +2132,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 ${icon}
               </div>
               <div>
-                @php
-                @endphp
                 <div class="d-flex align-items-center gap-1 flex-wrap mb-1">
                   <h6 class="mb-0 fw-bold text-heading me-1">${c.name}</h6>
                   ${(c.rank && c.rank.toLowerCase() === 'clerk') 
@@ -2204,6 +2143,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="d-flex align-items-center gap-1 mt-1 flex-wrap">
                   <span class="badge bg-label-primary px-2 py-0_5" style="font-size: 0.7rem;" title="Permanent Race"><i class="icon-base ti tabler-lock icon-xs me-1 text-muted"></i>${cleanRaceName(c.race)}</span>
                   <span class="badge bg-label-info px-2 py-0_5" style="font-size: 0.7rem;">${c.class}</span>
+                  ${(() => {
+                    const cTr = c.traits || ((c.sheetData && c.sheetData.sheetData) ? (c.sheetData.sheetData.traits || {}) : (c.sheetData ? (c.sheetData.traits || {}) : {}));
+                    let tCnt = 0;
+                    if (cTr.uye && cTr.uye.name) tCnt++;
+                    if (cTr.kidemli && cTr.kidemli.name) tCnt++;
+                    if (cTr.uzman && cTr.uzman.name) tCnt++;
+                    return tCnt > 0 ? `<span class="badge bg-label-warning px-2 py-0_5" style="font-size: 0.7rem;" title="Rütbe Traitleri"><i class="icon-base ti tabler-sparkles icon-xs me-1"></i>${tCnt}/3 Trait</span>` : '';
+                  })()}
                 </div>
               </div>
             </div>
@@ -2809,10 +2756,12 @@ document.addEventListener('DOMContentLoaded', function () {
     renderClassProgressionTable(initClass, initChar);
     renderRaceDetails(initChar);
     renderActivityTimeline(initChar);
+    renderTraitsTab(initChar);
   } else {
     selectedCharId = null;
     renderEmptyProgressionState();
     renderActivityTimeline(null);
+    renderTraitsTab(null);
   }
 
   // Listen for new characters from modal

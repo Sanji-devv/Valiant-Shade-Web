@@ -1,6 +1,6 @@
 @extends('valiant-shade.layouts/layoutMaster')
 
-@section('title', __('Feats List') . ' - Pathfinder 1E')
+@section('title', __('Feat and Traits') . ' - Pathfinder 1E')
 
 @section('vendor-style')
 @vite([
@@ -232,6 +232,185 @@
     border-radius: 14px;
     overflow: hidden;
   }
+
+  /* ====================================================
+     TRAIT CATALOG MODAL - ULTRA HIGH-CONTRAST THEME
+     (No muddy purple, clean obsidian dark with pure white text)
+     ==================================================== */
+  #modalTraitCatalog .modal-content {
+    background-color: #0d1117 !important;
+    border: 1px solid #30363d !important;
+    border-radius: 12px !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85) !important;
+    color: #f0f6fc !important;
+  }
+  #modalTraitCatalog .modal-header {
+    background-color: #161b22 !important;
+    border-bottom: 1px solid #30363d !important;
+  }
+  #modalTraitCatalog .modal-title {
+    color: #ffffff !important;
+    font-size: 1.15rem !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.2px !important;
+  }
+  #modalTraitCatalog .modal-body {
+    background-color: #0d1117 !important;
+  }
+  #modalTraitCatalog .modal-footer {
+    background-color: #161b22 !important;
+    border-top: 1px solid #30363d !important;
+  }
+
+  /* Search input group */
+  #modalTraitCatalog .trait-search-wrapper {
+    background-color: #161b22 !important;
+    border: 1px solid #30363d !important;
+    border-radius: 8px !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  #modalTraitCatalog .trait-search-wrapper:focus-within {
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25) !important;
+  }
+  #modalTraitCatalog .trait-search-addon {
+    background: transparent !important;
+    border: none !important;
+    color: #f59e0b !important;
+    font-size: 1.1rem !important;
+  }
+  #modalTraitCatalog #traitCatalogSearchInput {
+    background: transparent !important;
+    border: none !important;
+    color: #ffffff !important;
+    font-size: 0.95rem !important;
+    font-weight: 500 !important;
+  }
+  #modalTraitCatalog #traitCatalogSearchInput::placeholder {
+    color: #8b949e !important;
+    opacity: 1 !important;
+  }
+  #modalTraitCatalog .trait-search-btn {
+    background: #f59e0b !important;
+    color: #000000 !important;
+    font-weight: 700 !important;
+    border: none !important;
+    padding: 0.5rem 1.25rem !important;
+    border-radius: 6px !important;
+    transition: background 0.15s ease !important;
+  }
+  #modalTraitCatalog .trait-search-btn:hover {
+    background: #d97706 !important;
+    color: #000000 !important;
+  }
+
+  /* Category Filter Pills */
+  #modalTraitCatalog .btn-trait-cat-filter {
+    background-color: #161b22 !important;
+    color: #c9d1d9 !important;
+    border: 1px solid #30363d !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    padding: 0.3rem 0.8rem !important;
+    border-radius: 6px !important;
+    transition: all 0.15s ease !important;
+  }
+  #modalTraitCatalog .btn-trait-cat-filter:hover {
+    background-color: #21262d !important;
+    color: #ffffff !important;
+    border-color: #8b949e !important;
+  }
+  #modalTraitCatalog .btn-trait-cat-filter.active {
+    background: #6366f1 !important;
+    color: #ffffff !important;
+    border-color: #818cf8 !important;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4) !important;
+  }
+
+  /* Trait Result Cards */
+  .trait-card-item {
+    background-color: #161b22 !important;
+    border: 1px solid #30363d !important;
+    transition: all 0.15s ease !important;
+  }
+  .trait-card-item:hover {
+    background-color: #1f242c !important;
+    border-color: #6366f1 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
+    transform: translateY(-1px);
+  }
+  .trait-card-title {
+    color: #ffffff !important;
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.2px !important;
+  }
+  .trait-card-desc {
+    color: #e6edf3 !important; /* Pure legible high-contrast light silver */
+    font-size: 0.88rem !important;
+    line-height: 1.5 !important;
+    margin-top: 0.25rem !important;
+  }
+  .trait-card-urllink {
+    display: inline-block;
+    color: #58a6ff !important;
+    font-size: 0.82rem !important;
+    font-weight: 500 !important;
+    text-decoration: none !important;
+    margin-top: 0.25rem !important;
+    transition: color 0.15s ease !important;
+  }
+  .trait-card-urllink:hover {
+    color: #79c0ff !important;
+    text-decoration: underline !important;
+  }
+  .trait-card-extlink {
+    color: #58a6ff !important;
+    font-size: 0.85rem !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+    background: rgba(88, 166, 255, 0.12) !important;
+    border: 1px solid rgba(88, 166, 255, 0.25) !important;
+    transition: all 0.15s ease !important;
+  }
+  .trait-card-extlink:hover {
+    color: #ffffff !important;
+    background: #58a6ff !important;
+  }
+  .trait-btn-select {
+    background: #238636 !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(240, 246, 252, 0.1) !important;
+    font-weight: 700 !important;
+    font-size: 0.85rem !important;
+    padding: 0.45rem 1.15rem !important;
+    border-radius: 6px !important;
+    box-shadow: 0 2px 6px rgba(35, 134, 54, 0.35) !important;
+    transition: all 0.15s ease !important;
+  }
+  .trait-btn-select:hover {
+    background: #2ea043 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(46, 160, 67, 0.45) !important;
+    transform: translateY(-1px);
+  }
+  .trait-footer-note {
+    color: #8b949e !important;
+    font-size: 0.8rem !important;
+  }
+  .trait-btn-close {
+    background: #21262d !important;
+    color: #c9d1d9 !important;
+    border: 1px solid #30363d !important;
+    font-weight: 600 !important;
+    padding: 0.4rem 1.1rem !important;
+    border-radius: 6px !important;
+    transition: all 0.15s ease !important;
+  }
+  .trait-btn-close:hover {
+    background: #30363d !important;
+    color: #ffffff !important;
+  }
 </style>
 @endsection
 
@@ -249,10 +428,10 @@
             <i class="icon-base ti tabler-swords fs-4"></i>
           </div>
           <h3 class="mb-0 fw-bold text-heading" style="font-size: 1.45rem; letter-spacing: 0.3px;">
-            {{ __('Feats List') }}
+            {{ __('Feat and Traits') }}
           </h3>
           <span class="badge bg-label-warning fw-bold font-monospace px-3 py-1 shadow-xs">
-            Pathfinder 1E
+            {{ __('Feats List') }} &bull; Pathfinder 1E
           </span>
         </div>
         <p class="text-body-secondary small mb-0">
@@ -265,6 +444,11 @@
         <button type="button" class="btn btn-primary fw-bold d-flex align-items-center gap-1 shadow-xs" id="btnOpenAddFeatModal">
           <i class="icon-base ti tabler-plus fs-5"></i>
           <span>{{ __('Add Feat') }}</span>
+        </button>
+
+        <!-- Reset Defaults Button -->
+        <button type="button" class="btn btn-outline-warning btn-sm" id="btnResetFeatsExcel" title="{{ __('Reset to Original Master Sheet Data') }}">
+          <i class="icon-base ti tabler-rotate-clockwise me-1"></i> {{ __('Reset') }}
         </button>
 
         <a href="{{ route('valiant-shade.pages-xp-tracker') }}" class="btn btn-outline-primary btn-sm">
@@ -487,6 +671,119 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- ====================================================
+           TRAITS MINI TABLOSU (LONCA RÜTBE GELİŞİMİ: ÜYE, KIDEMLİ, UZMAN)
+           ==================================================== -->
+      <div class="card mb-4 shadow-sm" id="cardGuildTraits" style="background: #2f3349; border: 1px solid rgba(255, 171, 0, 0.35);">
+        <div class="card-header d-flex align-items-center justify-content-between p-3 border-bottom border-secondary border-opacity-20 flex-wrap gap-2">
+          <div class="d-flex align-items-center gap-2">
+            <span class="avatar avatar-sm bg-label-warning rounded-circle d-flex align-items-center justify-content-center">
+              <i class="icon-base ti tabler-sparkles fs-4"></i>
+            </span>
+            <div>
+              <h5 class="mb-0 fw-bold text-heading font-monospace">Karakter Traitleri (Lonca Rütbe Gelişimi)</h5>
+              <small class="text-body-secondary font-monospace">
+                Lonca hiyerarşisine göre açılan özel karakter nitelikleri (Üye &bull; Kıdemli &bull; Uzman)
+              </small>
+            </div>
+          </div>
+          <span class="badge bg-label-warning font-monospace py-1 px-3">
+            {{ $prof->rank ?? 'Üye' }} &bull; Rütbe Traitleri
+          </span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0" id="traitsTable" style="font-size: 0.84rem;">
+            <thead class="table-dark">
+              <tr class="font-monospace text-uppercase" style="font-size: 0.72rem;">
+                <th style="width: 190px;">Slot / Rütbe</th>
+                <th style="width: 110px;">Durum</th>
+                <th>Trait Adı</th>
+                <th style="width: 120px;">Kategori</th>
+                <th>Açıklama / Bonus</th>
+                <th style="width: 140px;" class="text-end">İşlem</th>
+              </tr>
+            </thead>
+            <tbody>
+              @foreach(['uye', 'kidemli', 'uzman'] as $sKey)
+                @php
+                  $sData = $traitsProgression[$sKey] ?? [];
+                  $isUnlocked = $sData['is_unlocked'] ?? false;
+                  $tObj = $sData['trait'] ?? null;
+                  $tName = is_object($tObj) ? ($tObj->trait_name ?? '') : ($tObj['trait_name'] ?? '');
+                  $tCat = is_object($tObj) ? ($tObj->category ?? '') : ($tObj['category'] ?? '');
+                  $tDesc = is_object($tObj) ? ($tObj->description ?? '') : ($tObj['description'] ?? '');
+                  $tUrl = is_object($tObj) ? ($tObj->source_url ?? '') : ($tObj['source_url'] ?? '');
+                @endphp
+                <tr class="{{ $isUnlocked ? '' : 'opacity-50 bg-light-subtle' }}">
+                  <td>
+                    <div class="fw-bold font-monospace text-heading">{{ $sData['slot_label'] ?? $sKey }}</div>
+                    <small class="text-body-secondary">Gereken: <span class="badge bg-label-secondary py-0 px-1">{{ $sData['required_rank'] ?? $sKey }}</span></small>
+                  </td>
+                  <td>
+                    @if($isUnlocked)
+                      <span class="badge bg-label-success font-monospace py-1 px-2 d-inline-flex align-items-center gap-1">
+                        <i class="icon-base ti tabler-lock-open fs-6"></i> Açık
+                      </span>
+                    @else
+                      <span class="badge bg-label-secondary font-monospace py-1 px-2 d-inline-flex align-items-center gap-1">
+                        <i class="icon-base ti tabler-lock fs-6"></i> Kilitli
+                      </span>
+                    @endif
+                  </td>
+                  <td>
+                    @if(!empty($tName))
+                      <span class="fw-bold text-primary font-monospace">{{ $tName }}</span>
+                      @if(!empty($tUrl))
+                        <a href="{{ $tUrl }}" target="_blank" class="ms-1 text-muted small" title="d20pfsrd kaynağı"><i class="icon-base ti tabler-external-link"></i></a>
+                      @endif
+                    @elseif($isUnlocked)
+                      <span class="text-body-secondary fst-italic">Henüz trait atanmadı</span>
+                    @else
+                      <span class="text-muted fst-italic">{{ $sData['required_rank'] }} rütbesine ulaşıldığında açılır</span>
+                    @endif
+                  </td>
+                  <td>
+                    @if(!empty($tCat))
+                      <span class="badge bg-label-info font-monospace py-0 px-2">{{ $tCat }}</span>
+                    @else
+                      <span class="text-muted">—</span>
+                    @endif
+                  </td>
+                  <td>
+                    <div class="text-body-secondary small" style="max-width: 420px; white-space: normal; line-height: 1.4;">
+                      {{ !empty($tDesc) ? $tDesc : '—' }}
+                    </div>
+                  </td>
+                  <td class="text-end">
+                    @if($isUnlocked)
+                      <div class="d-flex align-items-center justify-content-end gap-1">
+                        <button type="button" class="btn btn-xs btn-label-warning rounded-pill px-2 btn-open-trait-modal"
+                                data-slot="{{ $sKey }}"
+                                data-slot-label="{{ $sData['slot_label'] ?? $sKey }}"
+                                data-char="{{ $prof->character_name }}">
+                          <i class="icon-base ti tabler-sparkles me-1"></i> {{ !empty($tName) ? __('Değiştir') : __('Trait Seç') }}
+                        </button>
+                        @if(!empty($tName))
+                          <button type="button" class="btn btn-icon btn-text-danger btn-xs btn-clear-trait"
+                                  data-slot="{{ $sKey }}"
+                                  data-char="{{ $prof->character_name }}"
+                                  title="Traiti Kaldır">
+                            <i class="icon-base ti tabler-x"></i>
+                          </button>
+                        @endif
+                      </div>
+                    @else
+                      <span class="text-muted small font-monospace"><i class="icon-base ti tabler-lock fs-6 me-1"></i>Kilitli</span>
+                    @endif
+                  </td>
+                </tr>
+              @endforeach
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -918,6 +1215,73 @@
     </div>
   </div>
 </div>
+
+<!-- ====================================================
+     7. MODAL: TRAIT CATALOG (1,346 TRAIT)
+     ==================================================== -->
+<div class="modal fade" id="modalTraitCatalog" tabindex="-1" aria-labelledby="modalTraitCatalogTitle" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header d-flex align-items-center justify-content-between p-3">
+        <div class="d-flex align-items-center gap-2">
+          <span class="avatar avatar-sm rounded-circle d-flex align-items-center justify-content-center" style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4);">
+            <i class="icon-base ti tabler-sparkles fs-4" style="color: #f59e0b;"></i>
+          </span>
+          <div>
+            <h5 class="modal-title mb-0" id="modalTraitCatalogTitle">
+              Pathfinder Trait Kataloğundan Ara (1,346 Trait)
+            </h5>
+            <div class="d-flex align-items-center gap-2 mt-1" id="traitModalSlotInfo">
+              <span class="small" style="color: #8b949e;">Hedef Yuva:</span>
+              <span class="badge font-monospace px-2 py-0" id="traitModalSlotBadge" style="background: #f59e0b; color: #000; font-weight: 700; font-size: 0.72rem;">Üye Traiti</span>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body p-3 p-md-4">
+        <!-- Live Search Input -->
+        <div class="input-group input-group-merge mb-3 shadow-sm trait-search-wrapper">
+          <span class="input-group-text trait-search-addon"><i class="icon-base ti tabler-search"></i></span>
+          <input type="text" class="form-control font-monospace"
+                 id="traitCatalogSearchInput"
+                 placeholder="Trait adı, kategori veya açıklama arayın (Örn: Reactionary, Anatomist, Magical Lineage...)"
+                 autocomplete="off" />
+          <button type="button" class="btn trait-search-btn" id="btnTriggerTraitSearch">
+            <i class="icon-base ti tabler-search me-1"></i> Ara
+          </button>
+        </div>
+
+        <!-- Category Filter Pills -->
+        <div class="d-flex align-items-center gap-1 flex-wrap mb-3" id="traitCategoryPills">
+          <button type="button" class="btn btn-xs btn-trait-cat-filter active" data-cat="all">Hepsi</button>
+          <button type="button" class="btn btn-xs btn-trait-cat-filter" data-cat="Combat">Combat</button>
+          <button type="button" class="btn btn-xs btn-trait-cat-filter" data-cat="Magic">Magic</button>
+          <button type="button" class="btn btn-xs btn-trait-cat-filter" data-cat="Faith">Faith</button>
+          <button type="button" class="btn btn-xs btn-trait-cat-filter" data-cat="Social">Social</button>
+          <button type="button" class="btn btn-xs btn-trait-cat-filter" data-cat="Regional">Regional</button>
+          <button type="button" class="btn btn-xs btn-trait-cat-filter" data-cat="Race">Race</button>
+          <button type="button" class="btn btn-xs btn-trait-cat-filter" data-cat="Equipment">Equipment</button>
+        </div>
+
+        <!-- Search Results List -->
+        <div class="pf-scroll" style="max-height: 520px; overflow-y: auto; padding-right: 4px;" id="traitSearchResultsContainer">
+          <div class="text-center py-4 font-monospace" style="color: #8b949e;">
+            <span class="spinner-border spinner-border-sm me-2" style="color: #f59e0b;"></span>Katalog yükleniyor...
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer d-flex align-items-center justify-content-between p-3">
+        <span class="trait-footer-note font-monospace">
+          * Traitler Pathfinder 1E d20pfsrd kurallarına tabidir.
+        </span>
+        <button type="button" class="btn btn-sm trait-btn-close" data-bs-dismiss="modal">{{ __('Kapat') }}</button>
+      </div>
+    </div>
+  </div>
+</div>
 @endsection
 
 @section('vendor-script')
@@ -1065,7 +1429,7 @@ document.addEventListener('DOMContentLoaded', function () {
       buttonsStyling: false
     }).then(result => {
       if (result.isConfirmed) {
-        fetch(`{{ url('/valiant-shade/pages/feats/character/delete') }}`, {
+        fetch(`{{ url('/valiant-shade/pages/featntrait/character/delete') }}`, {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
@@ -1202,8 +1566,8 @@ document.addEventListener('DOMContentLoaded', function () {
       };
 
       const url = featId 
-        ? `{{ url('/valiant-shade/pages/feats') }}/${featId}`
-        : `{{ url('/valiant-shade/pages/feats') }}`;
+        ? `{{ url('/valiant-shade/pages/featntrait') }}/${featId}`
+        : `{{ url('/valiant-shade/pages/featntrait') }}`;
       const method = featId ? 'PUT' : 'POST';
 
       fetch(url, {
@@ -1254,7 +1618,7 @@ document.addEventListener('DOMContentLoaded', function () {
       buttonsStyling: false
     }).then(result => {
       if (result.isConfirmed) {
-        fetch(`{{ url('/valiant-shade/pages/feats') }}/${id}`, {
+        fetch(`{{ url('/valiant-shade/pages/featntrait') }}/${id}`, {
           method: 'DELETE',
           headers: {
             'X-CSRF-TOKEN': csrfToken,
@@ -1326,7 +1690,7 @@ document.addEventListener('DOMContentLoaded', function () {
         notes: notes,
       };
 
-      fetch(`{{ url('/valiant-shade/pages/feats/stats') }}`, {
+      fetch(`{{ url('/valiant-shade/pages/featntrait/stats') }}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1376,7 +1740,7 @@ document.addEventListener('DOMContentLoaded', function () {
         buttonsStyling: false
       }).then(result => {
         if (result.isConfirmed) {
-          fetch(`{{ url('/valiant-shade/pages/feats/reset-excel') }}`, {
+          fetch(`{{ url('/valiant-shade/pages/featntrait/reset-excel') }}`, {
             method: 'POST',
             headers: {
               'X-CSRF-TOKEN': csrfToken,
@@ -1404,6 +1768,229 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     });
   }
+
+  // -------------------------------------------------------------
+  // Trait Catalog & Guild Rank Trait Progression Modal Logic
+  // -------------------------------------------------------------
+  const traitModalEl = document.getElementById('modalTraitCatalog');
+  const traitModal = traitModalEl ? new bootstrap.Modal(traitModalEl) : null;
+  const traitSearchInput = document.getElementById('traitCatalogSearchInput');
+  const traitResultsContainer = document.getElementById('traitSearchResultsContainer');
+  let activeTraitSlot = null;
+  let activeTraitChar = null;
+  let activeCategoryFilter = 'all';
+
+  function escapeHtml(text) {
+    if (!text) return '';
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  // Open Trait Modal
+  document.querySelectorAll('.btn-open-trait-modal').forEach(btn => {
+    btn.addEventListener('click', function () {
+      activeTraitSlot = this.dataset.slot;
+      activeTraitChar = this.dataset.char;
+      const slotLabel = this.dataset.slotLabel || activeTraitSlot;
+      const titleSpan = document.getElementById('traitModalSlotBadge');
+      if (titleSpan) titleSpan.textContent = slotLabel;
+      if (traitSearchInput) traitSearchInput.value = '';
+      activeCategoryFilter = 'all';
+      document.querySelectorAll('.btn-trait-cat-filter').forEach(b => b.classList.toggle('active', b.dataset.cat === 'all'));
+      fetchTraits('');
+      if (traitModal) traitModal.show();
+    });
+  });
+
+  // Clear Trait
+  document.querySelectorAll('.btn-clear-trait').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const slot = this.dataset.slot;
+      const charName = this.dataset.char;
+      Swal.fire({
+        title: 'Traiti Kaldır?',
+        text: 'Bu slottaki trait temizlenecektir.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Evet, Kaldır',
+        cancelButtonText: 'Vazgeç',
+        customClass: {
+          confirmButton: 'btn btn-danger me-2',
+          cancelButton: 'btn btn-label-secondary'
+        },
+        buttonsStyling: false
+      }).then(result => {
+        if (result.isConfirmed) {
+          fetch('{{ url("/valiant-shade/pages/traits/clear") }}', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': csrfToken,
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({ character_name: charName, slot_key: slot })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              Swal.fire({ icon: 'success', title: 'Temizlendi', timer: 1000, showConfirmButton: false })
+                .then(() => location.reload());
+            } else {
+              Swal.fire({ icon: 'error', title: 'Hata', text: data.message });
+            }
+          })
+          .catch(() => {
+            Swal.fire({ icon: 'error', title: 'Hata', text: 'Ağ hatası oluştu.' });
+          });
+        }
+      });
+    });
+  });
+
+  function fetchTraits(query = '') {
+    if (!traitResultsContainer) return;
+    traitResultsContainer.innerHTML = '<div class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm me-2"></span>Katalog taranıyor...</div>';
+    fetch(`{{ url("/valiant-shade/pages/traits/search") }}?q=${encodeURIComponent(query)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (!data.success || !Array.isArray(data.traits) || data.traits.length === 0) {
+          traitResultsContainer.innerHTML = '<div class="text-center py-4 text-muted">Eşleşen trait bulunamadı.</div>';
+          return;
+        }
+        renderTraitResults(data.traits);
+      })
+      .catch(() => {
+        traitResultsContainer.innerHTML = '<div class="text-center py-4 text-danger">Traitler yüklenirken hata oluştu.</div>';
+      });
+  }
+
+  function renderTraitResults(traits) {
+    let filtered = traits;
+    if (activeCategoryFilter !== 'all') {
+      filtered = traits.filter(t => (t.category || '').toLowerCase() === activeCategoryFilter.toLowerCase());
+    }
+
+    if (filtered.length === 0) {
+      traitResultsContainer.innerHTML = '<div class="text-center py-4 font-monospace" style="color: #8b949e;">Bu kategoride eşleşen trait bulunamadı.</div>';
+      return;
+    }
+
+    const catColorMap = {
+      'combat': { bg: 'rgba(239, 68, 68, 0.18)', text: '#fca5a5', border: 'rgba(239, 68, 68, 0.45)' },
+      'magic': { bg: 'rgba(99, 102, 241, 0.18)', text: '#c7d2fe', border: 'rgba(99, 102, 241, 0.45)' },
+      'faith': { bg: 'rgba(245, 158, 11, 0.18)', text: '#fde68a', border: 'rgba(245, 158, 11, 0.45)' },
+      'social': { bg: 'rgba(6, 182, 212, 0.18)', text: '#a5f3fc', border: 'rgba(6, 182, 212, 0.45)' },
+      'regional': { bg: 'rgba(16, 185, 129, 0.18)', text: '#a7f3d0', border: 'rgba(16, 185, 129, 0.45)' },
+      'race': { bg: 'rgba(251, 146, 60, 0.18)', text: '#fed7aa', border: 'rgba(251, 146, 60, 0.45)' },
+      'equipment': { bg: 'rgba(148, 163, 184, 0.18)', text: '#e2e8f0', border: 'rgba(148, 163, 184, 0.45)' },
+      'campaign': { bg: 'rgba(168, 85, 247, 0.18)', text: '#e9d5ff', border: 'rgba(168, 85, 247, 0.45)' },
+    };
+
+    traitResultsContainer.innerHTML = filtered.map(t => {
+      const name = escapeHtml(t.name);
+      const cat = escapeHtml(t.category || 'General');
+      const desc = escapeHtml(t.description || '');
+      const url = t.url ? escapeHtml(t.url) : '';
+      const catStyle = catColorMap[cat.toLowerCase()] || { bg: 'rgba(148, 163, 184, 0.18)', text: '#e2e8f0', border: 'rgba(148, 163, 184, 0.45)' };
+
+      return `
+        <div class="trait-card-item p-3 mb-2 rounded-3 d-flex align-items-center justify-content-between gap-3 flex-wrap flex-sm-nowrap">
+          <div class="flex-grow-1" style="min-width: 0;">
+            <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+              <span class="trait-card-title">${name}</span>
+              <span class="badge py-1 px-2 font-monospace" style="background: ${catStyle.bg}; color: ${catStyle.text}; border: 1px solid ${catStyle.border}; font-size: 0.72rem; font-weight: 600;">
+                ${cat}
+              </span>
+              ${url ? `<a href="${url}" target="_blank" class="trait-card-extlink" title="d20pfsrd Kural & Kaynak Sayfası"><i class="icon-base ti tabler-external-link"></i></a>` : ''}
+            </div>
+            ${desc ? `<p class="trait-card-desc mb-0">${desc}</p>` : (url ? `<a href="${url}" target="_blank" class="trait-card-urllink"><i class="icon-base ti tabler-book-2 me-1"></i>d20pfsrd kural & detay sayfasını incele &rarr;</a>` : '')}
+          </div>
+          <button type="button" class="btn btn-sm btn-select-trait-item trait-btn-select flex-shrink-0"
+                  data-name="${name}"
+                  data-category="${cat}"
+                  data-desc="${desc}"
+                  data-url="${url}">
+            <i class="icon-base ti tabler-check me-1"></i> Seç
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    // Bind item selection
+    document.querySelectorAll('.btn-select-trait-item').forEach(btn => {
+      btn.onclick = function () {
+        const payload = {
+          character_name: activeTraitChar,
+          slot_key: activeTraitSlot,
+          trait_name: this.dataset.name,
+          category: this.dataset.category,
+          description: this.dataset.desc,
+          source_url: this.dataset.url,
+        };
+
+        this.disabled = true;
+        fetch('{{ url("/valiant-shade/pages/traits/save") }}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            if (traitModal) traitModal.hide();
+            Swal.fire({
+              icon: 'success',
+              title: 'Trait Eklendi!',
+              text: data.message,
+              timer: 1200,
+              showConfirmButton: false
+            }).then(() => location.reload());
+          } else {
+            this.disabled = false;
+            Swal.fire({ icon: 'error', title: 'Hata', text: data.message || 'Trait kaydedilemedi.' });
+          }
+        })
+        .catch(() => {
+          this.disabled = false;
+          Swal.fire({ icon: 'error', title: 'Hata', text: 'Sunucuya ulaşılamadı.' });
+        });
+      };
+    });
+  }
+
+  if (traitSearchInput) {
+    let searchTimeout;
+    traitSearchInput.addEventListener('input', function () {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        fetchTraits(this.value.trim());
+      }, 300);
+    });
+  }
+
+  const btnTriggerTraitSearch = document.getElementById('btnTriggerTraitSearch');
+  if (btnTriggerTraitSearch && traitSearchInput) {
+    btnTriggerTraitSearch.addEventListener('click', function () {
+      fetchTraits(traitSearchInput.value.trim());
+    });
+  }
+
+  document.querySelectorAll('.btn-trait-cat-filter').forEach(btn => {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.btn-trait-cat-filter').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      activeCategoryFilter = this.dataset.cat;
+      fetchTraits(traitSearchInput ? traitSearchInput.value.trim() : '');
+    });
+  });
 });
 </script>
 @endsection

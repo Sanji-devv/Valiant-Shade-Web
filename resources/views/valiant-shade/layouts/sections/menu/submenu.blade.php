@@ -10,22 +10,18 @@ use Illuminate\Support\Facades\Route;
     @php
       $activeClass = null;
       $active = $configData["layout"] === 'vertical' ? 'active open':'active';
-      $currentRouteName =  Route::currentRouteName();
+      $currentRouteName = Route::currentRouteName() ?? '';
+      $routeWithoutPrefix = str_starts_with($currentRouteName, 'valiant-shade.') ? substr($currentRouteName, 14) : $currentRouteName;
 
-      if ($currentRouteName === $submenu->slug) {
+      if ($currentRouteName === $submenu->slug || $routeWithoutPrefix === $submenu->slug) {
           $activeClass = 'active';
       }
       elseif (isset($submenu->submenu)) {
-        if (gettype($submenu->slug) === 'array') {
-          foreach($submenu->slug as $slug){
-            if (str_contains($currentRouteName,$slug) and strpos($currentRouteName,$slug) === 0) {
-                $activeClass = $active;
-            }
-          }
-        }
-        else{
-          if (str_contains($currentRouteName,$submenu->slug) and strpos($currentRouteName,$submenu->slug) === 0) {
-            $activeClass = $active;
+        $slugs = is_array($submenu->slug) ? $submenu->slug : [$submenu->slug];
+        foreach ($slugs as $slug) {
+          if (str_starts_with($routeWithoutPrefix, $slug) || str_starts_with($currentRouteName, $slug)) {
+              $activeClass = $active;
+              break;
           }
         }
       }

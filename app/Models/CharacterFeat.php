@@ -13,6 +13,10 @@ class CharacterFeat extends Model
     protected $table = 'character_feats';
 
     protected $fillable = [
+        'character_id',
+        'feat_id',
+        'custom_feat_name',
+        'acquired_at_level',
         'character_name',
         'level',
         'slot_type',
@@ -26,6 +30,9 @@ class CharacterFeat extends Model
     ];
 
     protected $casts = [
+        'character_id' => 'integer',
+        'feat_id' => 'integer',
+        'acquired_at_level' => 'integer',
         'level' => 'integer',
         'is_class_feat' => 'boolean',
         'sort_order' => 'integer',
@@ -38,8 +45,31 @@ class CharacterFeat extends Model
     public const SLOT_TRAIT = 'trait';               // Additional Traits or character traits
     public const SLOT_RESERVE = 'reserve';           // Reserve / planned feats (Yedek Feat)
 
+    public function character(): BelongsTo
+    {
+        return $this->belongsTo(Character::class, 'character_id');
+    }
+
+    public function feat(): BelongsTo
+    {
+        return $this->belongsTo(Feat::class, 'feat_id');
+    }
+
     public function profile(): BelongsTo
     {
         return $this->belongsTo(CharacterProfile::class, 'character_name', 'character_name');
+    }
+
+    public function getAcquiredAtLevelAttribute(?int $value): int
+    {
+        return $value ?? (int) ($this->attributes['level'] ?? 1);
+    }
+
+    public function setLevelAttribute($value): void
+    {
+        $this->attributes['level'] = (int) $value;
+        if (!isset($this->attributes['acquired_at_level'])) {
+            $this->attributes['acquired_at_level'] = (int) $value;
+        }
     }
 }

@@ -14,6 +14,6 @@ class InventoryItemSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->inventoryService->resetToExcelDefaults();
+        $this->inventoryService->resetToDefaults();
     }
 }

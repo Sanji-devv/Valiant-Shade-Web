@@ -772,6 +772,13 @@ class CharacterProfileTest extends TestCase
         $response->assertSee('id="badgeDexCapInfo"', false);
         $response->assertSee('id="dexCapNotice"', false);
 
+        // Verify Integrated AC section and Active Badges
+        $response->assertSee('id="sectionIntegratedAcItems"', false);
+        $response->assertSee('id="badgeActiveArmor"', false);
+        $response->assertSee('id="lblActiveArmorName"', false);
+        $response->assertSee('id="badgeActiveShield"', false);
+        $response->assertSee('id="lblActiveShieldName"', false);
+
         // Verify armors data payload is rendered with Pathfinder armor items
         $response->assertSee('Buckler');
         $response->assertSee('Mithral Shirt');
@@ -809,19 +816,33 @@ class CharacterProfileTest extends TestCase
                 'acItems' => [
                     [
                         'name' => 'Mithral Shirt',
+                        'type' => 'armor',
                         'bonus' => 4,
                         'pen' => 0,
                         'weight' => 10,
                         'max_dex' => 6,
-                        'category' => 'Light Armors'
+                        'category' => 'Light Armors',
+                        'is_active' => true,
+                    ],
+                    [
+                        'name' => 'Full Plate',
+                        'type' => 'armor',
+                        'bonus' => 9,
+                        'pen' => -6,
+                        'weight' => 50,
+                        'max_dex' => 1,
+                        'category' => 'Heavy Armors',
+                        'is_active' => false,
                     ],
                     [
                         'name' => 'Buckler',
+                        'type' => 'shield',
                         'bonus' => 1,
                         'pen' => -1,
                         'weight' => 5,
                         'max_dex' => null,
-                        'category' => 'Shields'
+                        'category' => 'Shields',
+                        'is_active' => true,
                     ]
                 ]
             ]
@@ -838,11 +859,92 @@ class CharacterProfileTest extends TestCase
         $this->assertEquals(1, $innerData['acNatural']);
         $this->assertEquals(2, $innerData['acDeflect']);
         $this->assertEquals(1, $innerData['acMisc']);
-        $this->assertCount(2, $innerData['acItems']);
+        $this->assertCount(3, $innerData['acItems']);
         $this->assertEquals('Mithral Shirt', $innerData['acItems'][0]['name']);
         $this->assertEquals(4, $innerData['acItems'][0]['bonus']);
-        $this->assertEquals('Buckler', $innerData['acItems'][1]['name']);
-        $this->assertEquals(1, $innerData['acItems'][1]['bonus']);
+        $this->assertTrue($innerData['acItems'][0]['is_active']);
+        $this->assertEquals('Full Plate', $innerData['acItems'][1]['name']);
+        $this->assertEquals(9, $innerData['acItems'][1]['bonus']);
+        $this->assertFalse($innerData['acItems'][1]['is_active']);
+        $this->assertEquals('Buckler', $innerData['acItems'][2]['name']);
+        $this->assertEquals(1, $innerData['acItems'][2]['bonus']);
+        $this->assertTrue($innerData['acItems'][2]['is_active']);
+    }
+
+    public function test_character_sheet_supports_multiple_armors_and_shields_with_active_selection(): void
+    {
+        $user = $this->createTestUser('multiarmor@valiantshade.com', 'Multi Armor Hero');
+
+        $this->actingAs($user)->postJson('/valiant-shade/character/create', [
+            'character_name' => 'Armory Master',
+            'rank' => 'Main',
+            'race' => 'Dwarf',
+            'class_name' => 'Fighter',
+            'str' => 18, 'dex' => 14, 'con' => 16, 'int' => 10, 'wis' => 12, 'cha' => 8,
+        ])->assertStatus(200);
+
+        $hero = CharacterProfile::where('character_name', 'Armory Master')->first();
+        $this->assertNotNull($hero);
+
+        // Save multiple armors and shields with active status flags
+        $saveData = [
+            'id' => $hero->character_id,
+            'name' => 'Armory Master',
+            'class' => 'Fighter',
+            'sheetData' => [
+                'acArmor' => 9, // active Full Plate
+                'acShield' => 2, // active Heavy Steel Shield
+                'acItems' => [
+                    [
+                        'name' => 'Full Plate',
+                        'type' => 'armor',
+                        'bonus' => 9,
+                        'pen' => -6,
+                        'weight' => 50,
+                        'is_active' => true,
+                    ],
+                    [
+                        'name' => 'Breastplate',
+                        'type' => 'armor',
+                        'bonus' => 6,
+                        'pen' => -4,
+                        'weight' => 30,
+                        'is_active' => false,
+                    ],
+                    [
+                        'name' => 'Heavy Steel Shield',
+                        'type' => 'shield',
+                        'bonus' => 2,
+                        'pen' => -2,
+                        'weight' => 15,
+                        'is_active' => true,
+                    ],
+                    [
+                        'name' => 'Light Wooden Shield',
+                        'type' => 'shield',
+                        'bonus' => 1,
+                        'pen' => -1,
+                        'weight' => 5,
+                        'is_active' => false,
+                    ],
+                ]
+            ]
+        ];
+
+        $this->actingAs($user)->postJson('/valiant-shade/character/sheet/save', $saveData)
+            ->assertStatus(200)
+            ->assertJson(['success' => true]);
+
+        // Load sheet and verify it renders
+        $sheetResponse = $this->actingAs($user)->get('/valiant-shade/character/sheet?id=' . $hero->character_id);
+        $sheetResponse->assertStatus(200);
+        $sheetResponse->assertSee('Full Plate');
+        $sheetResponse->assertSee('Breastplate');
+        $sheetResponse->assertSee('Heavy Steel Shield');
+        $sheetResponse->assertSee('Light Wooden Shield');
+        $sheetResponse->assertSee('id="tableAcItems"', false);
+        $sheetResponse->assertSee('id="badgeActiveArmor"', false);
+        $sheetResponse->assertSee('id="badgeActiveShield"', false);
     }
 
     public function test_pathfinder_armors_enum_and_magic_ac_items_with_bonus_types(): void
@@ -945,6 +1047,378 @@ class CharacterProfileTest extends TestCase
         $this->assertCount(3, $innerData['acItems']);
         $this->assertEquals('deflection', $innerData['acItems'][1]['type']);
         $this->assertEquals('natural', $innerData['acItems'][2]['type']);
+    }
+
+    public function test_character_sheet_saves_and_persists_hp_extra_misc_feat_bonus(): void
+    {
+        $user = $this->createTestUser('hptest@valiantshade.com', 'HpTester');
+
+        $hero = CharacterProfile::create([
+            'character_id' => 'char_hp_test_' . time(),
+            'user_id' => $user->id,
+            'character_name' => 'Tough Knight',
+            'race' => 'Human',
+            'class_name' => 'Paladin',
+            'level' => 1,
+            'rank' => 'Main',
+            'character_type' => 'Main',
+            'str' => 16, 'dex' => 12, 'con' => 14, 'int' => 10, 'wis' => 12, 'cha' => 14,
+            'hp' => 12, 'max_hp' => 12, 'hit_die' => 'd10',
+            'sheet_data' => [
+                'name' => 'Tough Knight',
+                'race' => 'Human',
+                'rank' => 'Main',
+                'hpExtraMisc' => 0,
+            ],
+        ]);
+
+        $saveData = [
+            'id' => $hero->character_id,
+            'character_id' => $hero->character_id,
+            'character_name' => $hero->character_name,
+            'className' => 'Paladin',
+            'level' => 1,
+            'hitDie' => 'd10',
+            'hp' => 15,
+            'maxHp' => 15,
+            'sheetData' => [
+                'player' => 'HpTester',
+                'currentHp' => 15,
+                'maxHp' => 15,
+                'hpExtraMisc' => 3,
+                'hpRolls' => [1 => 10],
+            ]
+        ];
+
+        $saveResponse = $this->actingAs($user)->postJson('/valiant-shade/character/sheet/save', $saveData);
+        $saveResponse->assertStatus(200);
+
+        $hero->refresh();
+        $sheetData = is_string($hero->sheet_data) ? json_decode($hero->sheet_data, true) : $hero->sheet_data;
+        $innerData = $sheetData['sheetData'] ?? $sheetData;
+
+        $this->assertEquals(15, $hero->max_hp);
+        $this->assertEquals(15, $hero->hp);
+        $this->assertEquals(3, $innerData['hpExtraMisc']);
+
+        $viewResponse = $this->actingAs($user)->get('/valiant-shade/character/sheet?id=' . $hero->character_id);
+        $viewResponse->assertStatus(200);
+        $viewResponse->assertSee('id="sheetHpExtraMisc"', false);
+        $viewResponse->assertSee('value="3"', false);
+    }
+
+    public function test_character_sheet_and_profile_saves_and_renders_three_rank_traits(): void
+    {
+        $user = $this->createTestUser('traittest@valiantshade.com', 'TraitHero');
+
+        $hero = CharacterProfile::create([
+            'character_id' => 'char_trait_test_' . time(),
+            'user_id' => $user->id,
+            'character_name' => 'Sir Lancelot',
+            'race' => 'Human',
+            'class_name' => 'Paladin',
+            'level' => 5,
+            'rank' => 'Main',
+            'character_type' => 'Main',
+            'str' => 16, 'dex' => 12, 'con' => 14, 'int' => 10, 'wis' => 12, 'cha' => 14,
+            'hp' => 45, 'max_hp' => 45, 'hit_die' => 'd10',
+            'sheet_data' => [
+                'name' => 'Sir Lancelot',
+                'race' => 'Human',
+                'rank' => 'Main',
+                'traits' => [
+                    'uye' => ['name' => 'Reactionary', 'desc' => '+2 Initiative check bonus'],
+                    'kidemli' => ['name' => 'Courageous', 'desc' => '+2 save vs fear'],
+                    'uzman' => ['name' => 'Armor Master', 'desc' => '-1 Armor check penalty'],
+                ],
+            ],
+        ]);
+
+        $saveData = [
+            'id' => $hero->character_id,
+            'character_id' => $hero->character_id,
+            'character_name' => $hero->character_name,
+            'className' => 'Paladin',
+            'level' => 5,
+            'hitDie' => 'd10',
+            'hp' => 45,
+            'maxHp' => 45,
+            'sheetData' => [
+                'player' => 'TraitHero',
+                'currentHp' => 45,
+                'maxHp' => 45,
+                'traits' => [
+                    'uye' => ['name' => 'Reactionary', 'desc' => '+2 Initiative check bonus'],
+                    'kidemli' => ['name' => 'Courageous', 'desc' => '+2 save vs fear'],
+                    'uzman' => ['name' => 'Armor Master', 'desc' => '-1 Armor check penalty'],
+                ]
+            ]
+        ];
+
+        $saveResponse = $this->actingAs($user)->postJson('/valiant-shade/character/sheet/save', $saveData);
+        $saveResponse->assertStatus(200);
+
+        $hero->refresh();
+        $sheetData = is_string($hero->sheet_data) ? json_decode($hero->sheet_data, true) : $hero->sheet_data;
+        $innerData = $sheetData['sheetData'] ?? $sheetData;
+
+        $this->assertArrayHasKey('traits', $innerData);
+        $this->assertEquals('Reactionary', $innerData['traits']['uye']['name']);
+        $this->assertEquals('Courageous', $innerData['traits']['kidemli']['name']);
+        $this->assertEquals('Armor Master', $innerData['traits']['uzman']['name']);
+
+        // Check Character Sheet View
+        $sheetView = $this->actingAs($user)->get('/valiant-shade/character/sheet?id=' . $hero->character_id);
+        $sheetView->assertStatus(200);
+        $sheetView->assertSee('Reactionary');
+        $sheetView->assertSee('Courageous');
+        $sheetView->assertSee('Armor Master');
+        $sheetView->assertSee('sheetTraitName_uye', false);
+        $sheetView->assertSee('sheetTraitName_kidemli', false);
+        $sheetView->assertSee('sheetTraitName_uzman', false);
+
+        // Check Profile User Page View
+        $profileView = $this->actingAs($user)->get('/valiant-shade/pages/profile-user');
+        $profileView->assertStatus(200);
+        $profileView->assertSee('navs-traits', false);
+        $profileView->assertSee('tab-btn-traits', false);
+        $profileView->assertSee('function escapeHtml', false);
+        $profileView->assertSee('renderTraitsTab(initChar)', false);
+        $profileView->assertSee('3/3 Trait', false);
+
+        // Verify charactersData passed to the view has traits and sheetData populated
+        $viewCharsData = $profileView->viewData('charactersData');
+        $this->assertNotEmpty($viewCharsData);
+        $firstChar = collect($viewCharsData)->firstWhere('name', 'Sir Lancelot');
+        $this->assertNotNull($firstChar);
+        $this->assertArrayHasKey('traits', $firstChar);
+        $this->assertEquals('Reactionary', $firstChar['traits']['uye']['name']);
+        $this->assertEquals('Courageous', $firstChar['traits']['kidemli']['name']);
+        $this->assertEquals('Armor Master', $firstChar['traits']['uzman']['name']);
+    }
+
+    public function test_profile_user_resolves_gold_from_nested_sheet_data_money_gp(): void
+    {
+        $user = $this->createTestUser();
+
+        $hero = CharacterProfile::create([
+            'character_id' => 'char_gold_test_' . time(),
+            'user_id' => $user->id,
+            'character_name' => 'GoldHero',
+            'player_name' => $user->name,
+            'race' => 'Elf',
+            'class_name' => 'Wizard',
+            'level' => 3,
+            'rank' => 'Main',
+            'character_type' => 'Main',
+            'str' => 10, 'dex' => 14, 'con' => 12, 'int' => 18, 'wis' => 12, 'cha' => 10,
+            'hp' => 18, 'max_hp' => 18, 'hit_die' => 'd6',
+            'sheet_data' => [
+                'sheetData' => [
+                    'moneyGp' => 450,
+                    'traits' => [
+                        'uye' => ['name' => 'Scholar', 'desc' => '+1 Knowledge checks'],
+                        'kidemli' => ['name' => '', 'desc' => ''],
+                        'uzman' => ['name' => '', 'desc' => ''],
+                    ]
+                ]
+            ]
+        ]);
+
+        $response = $this->actingAs($user)->get('/valiant-shade/pages/profile-user');
+        $response->assertStatus(200);
+
+        $viewCharsData = $response->viewData('charactersData');
+        $charData = collect($viewCharsData)->firstWhere('name', 'GoldHero');
+        $this->assertNotNull($charData);
+        $this->assertEquals(450, $charData['gold']);
+        $this->assertEquals('Scholar', $charData['traits']['uye']['name']);
+        $response->assertSee('450 GP', false);
+        $response->assertSee('1/3 Trait', false);
+    }
+
+    public function test_get_claimable_characters_list_returns_json_and_filters(): void
+    {
+        $user = $this->createTestUser();
+
+        $c1 = \App\Models\Character::create([
+            'user_id' => $user->id,
+            'name' => 'Thoma Quickfire',
+            'current_level' => 12,
+            'total_xp' => 161506.57,
+            'character_type' => 'MAIN',
+            'status' => 'ACTIVE',
+            'allowance_sp' => 6560,
+        ]);
+
+        $c2 = \App\Models\Character::create([
+            'user_id' => $user->id,
+            'name' => 'Alden Lowlvl',
+            'current_level' => 2,
+            'total_xp' => 2500,
+            'character_type' => 'MAIN',
+            'status' => 'ACTIVE',
+            'allowance_sp' => 100,
+        ]);
+
+        $response = $this->actingAs($user)->getJson('/valiant-shade/character/claimable-list?q=Thoma');
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+        $chars = $response->json('characters');
+        $this->assertCount(1, $chars);
+        $this->assertEquals('Thoma Quickfire', $chars[0]['name']);
+        $this->assertEquals(12, $chars[0]['level']);
+    }
+
+    public function test_get_claimable_character_details_returns_feats_and_required_levels(): void
+    {
+        $user = $this->createTestUser();
+
+        $c = \App\Models\Character::create([
+            'user_id' => $user->id,
+            'name' => 'Thoma Quickfire',
+            'current_level' => 12,
+            'total_xp' => 161506.57,
+            'character_type' => 'MAIN',
+            'status' => 'ACTIVE',
+            'allowance_sp' => 6560,
+        ]);
+
+        \App\Models\CharacterInfo::create([
+            'character_id' => $c->id,
+            'class_and_level' => 'Alchemist(Grenadier)',
+            'race' => 'Human',
+            'strength' => 14,
+            'dexterity' => 16,
+            'constitution' => 14,
+            'intelligence' => 18,
+            'wisdom' => 12,
+            'charisma' => 10,
+        ]);
+
+        \App\Models\CharacterFeat::create([
+            'character_id' => $c->id,
+            'character_name' => $c->name,
+            'level' => 1,
+            'feat_name' => 'Point-Blank Shot',
+            'feat_type' => 'General',
+        ]);
+
+        $response = $this->actingAs($user)->getJson('/valiant-shade/character/claimable-details/' . $c->id);
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+        $charData = $response->json('character');
+        $this->assertEquals(12, $charData['level']);
+        $this->assertEquals('Alchemist', $charData['suggested_class']);
+        $this->assertEquals('Grenadier', $charData['suggested_archetype']);
+        $this->assertEquals([1, 3, 5, 7, 9, 11], $charData['required_feat_levels']);
+    }
+
+    public function test_claim_character_succeeds_without_feats_and_traits(): void
+    {
+        $user = $this->createTestUser();
+
+        $c = \App\Models\Character::create([
+            'user_id' => $user->id,
+            'name' => 'Thoma Quickfire',
+            'current_level' => 12,
+            'total_xp' => 161506.57,
+            'character_type' => 'MAIN',
+            'status' => 'ACTIVE',
+            'allowance_sp' => 6560,
+        ]);
+
+        // Attempt claim with no feats or traits provided
+        $response = $this->actingAs($user)->postJson('/valiant-shade/character/claim', [
+            'character_id' => $c->id,
+            'race' => 'Human',
+            'class_name' => 'Alchemist',
+            'str' => 14, 'dex' => 16, 'con' => 14, 'int' => 18, 'wis' => 12, 'cha' => 10,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+    }
+
+    public function test_claim_character_succeeds_with_empty_or_three_trait_names(): void
+    {
+        $initialOwner = $this->createTestUser('initial@valiantshade.com', 'Initial Owner');
+        $user = $this->createTestUser();
+
+        $c = \App\Models\Character::create([
+            'user_id' => $initialOwner->id,
+            'name' => 'Thoma Quickfire',
+            'current_level' => 12,
+            'total_xp' => 161506.57,
+            'character_type' => 'MAIN',
+            'status' => 'INACTIVE',
+            'allowance_sp' => 6560,
+        ]);
+
+        // Claim with 3 trait names only (no descriptions)
+        $response = $this->actingAs($user)->postJson('/valiant-shade/character/claim', [
+            'character_id' => $c->id,
+            'race' => 'Human',
+            'class_name' => 'Alchemist',
+            'archetype' => 'Grenadier',
+            'str' => 14, 'dex' => 16, 'con' => 14, 'int' => 18, 'wis' => 12, 'cha' => 10,
+            'traits' => [
+                'trait_1_name' => 'Reactionary',
+                'trait_2_name' => 'Armor Expert',
+                'trait_3_name' => 'Valiant Defender',
+            ],
+            'feats' => [
+                '1' => 'Point-Blank Shot',
+                '3' => 'Precise Shot',
+                '5' => 'Rapid Shot',
+                '7' => 'Close-Quarters Thrower',
+                '9' => 'Brew Potion',
+                '11' => 'Extra Discovery',
+            ],
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+
+        // Verify CharacterProfile created at level 12 with 3 traits
+        $profile = CharacterProfile::where('character_name', 'Thoma Quickfire')->first();
+        $this->assertNotNull($profile);
+        $this->assertEquals(12, $profile->level);
+        $this->assertEquals('Alchemist', $profile->class_name);
+        $this->assertEquals('Reactionary', $profile->sheet_data['traits']['trait_1']['name']);
+        $this->assertEquals('Armor Expert', $profile->sheet_data['traits']['trait_2']['name']);
+        $this->assertEquals('Valiant Defender', $profile->sheet_data['traits']['trait_3']['name']);
+        $this->assertEquals('Valiant Defender', $profile->sheet_data['traits']['uzman']['name']);
+        $response->assertJsonPath('success', true);
+
+        // Verify CharacterProfile created at level 12
+        $profile = CharacterProfile::where('character_name', 'Thoma Quickfire')->first();
+        $this->assertNotNull($profile);
+        $this->assertEquals(12, $profile->level);
+        $this->assertEquals('Alchemist', $profile->class_name);
+        $this->assertEquals('Grenadier', $profile->archetype);
+        $this->assertEquals($user->id, $profile->user_id);
+
+        // Verify active character set on user
+        $user->refresh();
+        $this->assertEquals('Thoma Quickfire', $user->current_character);
+
+        // Verify character in characters table updated
+        $c->refresh();
+        $this->assertEquals($user->id, $c->user_id);
+        $this->assertEquals('ACTIVE', $c->status);
+
+        // Verify feats persisted in character_feats
+        $this->assertDatabaseHas('character_feats', [
+            'character_id' => $c->id,
+            'level' => 1,
+            'feat_name' => 'Point-Blank Shot',
+        ]);
+        $this->assertDatabaseHas('character_feats', [
+            'character_id' => $c->id,
+            'level' => 11,
+            'feat_name' => 'Extra Discovery',
+        ]);
     }
 }
 

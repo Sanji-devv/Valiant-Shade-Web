@@ -13,7 +13,7 @@ class InventoryItem extends Model
     protected $table = 'inventory_items';
 
     protected $fillable = [
-        'user_id',
+        'character_id',
         'name',
         'quality',
         'type',
@@ -28,6 +28,7 @@ class InventoryItem extends Model
     protected function casts(): array
     {
         return [
+            'character_id' => 'integer',
             'quantity' => 'integer',
             'unit_price' => 'decimal:2',
             'total_price' => 'decimal:2',
@@ -36,9 +37,15 @@ class InventoryItem extends Model
         ];
     }
 
+    public function character(): BelongsTo
+    {
+        return $this->belongsTo(Character::class, 'character_id');
+    }
+
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        // Fallback for user ownership through character
+        return $this->character?->user() ?? $this->belongsTo(User::class);
     }
 
     /**

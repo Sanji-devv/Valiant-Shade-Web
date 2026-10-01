@@ -30,9 +30,9 @@
   left: 0;
   right: 0;
   z-index: 1070;
-  max-height: 270px;
+  max-height: 300px;
   overflow-y: auto;
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
   border-radius: 0.375rem;
   box-shadow: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.35);
   background: var(--bs-paper-bg, #2f3349);
@@ -453,7 +453,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     classDropdownMenu.addEventListener('wheel', function (e) {
       e.preventDefault();
-      classDropdownMenu.scrollTop += e.deltaY * 0.3;
+      classDropdownMenu.scrollTop += e.deltaY * 1.15;
     }, { passive: false });
 
     customClassOptions.forEach(function (opt) {
@@ -542,7 +542,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     raceDropdownMenu.addEventListener('wheel', function (e) {
       e.preventDefault();
-      raceDropdownMenu.scrollTop += e.deltaY * 0.3;
+      raceDropdownMenu.scrollTop += e.deltaY * 1.15;
     }, { passive: false });
 
     customRaceOptions.forEach(function (opt) {

@@ -11,7 +11,7 @@ class PlayerXpTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_xp_tracker_page_renders_with_seeded_excel_data_and_stats(): void
+    public function test_xp_tracker_page_renders_with_seeded_data_and_stats(): void
     {
         $user = User::factory()->create(['role' => 'User']);
 
@@ -220,18 +220,18 @@ class PlayerXpTest extends TestCase
         $delResp->assertStatus(403);
 
         // Reset forbidden for non-admin
-        $resetResp = $this->actingAs($user)->postJson('/valiant-shade/pages/xp-tracker/reset-excel');
+        $resetResp = $this->actingAs($user)->postJson('/valiant-shade/pages/xp-tracker/reset-defaults');
         $resetResp->assertStatus(403);
     }
 
-    public function test_admin_can_reset_to_original_excel_data(): void
+    public function test_admin_can_reset_to_original_data(): void
     {
         $admin = User::factory()->create(['role' => 'Admin']);
 
         PlayerXp::truncate();
         $this->assertEquals(0, PlayerXp::count());
 
-        $resetResp = $this->actingAs($admin)->postJson('/valiant-shade/pages/xp-tracker/reset-excel');
+        $resetResp = $this->actingAs($admin)->postJson('/valiant-shade/pages/xp-tracker/reset-defaults');
         $resetResp->assertStatus(200);
 
         $this->assertEquals(64, PlayerXp::count());

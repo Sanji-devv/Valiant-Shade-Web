@@ -48,7 +48,7 @@
     </button>
 
     @if($isAdmin)
-      <button type="button" class="btn btn-label-warning btn-sm rounded-pill waves-effect shadow-xs" id="btnResetExcel" title="{{ __('Reset to Original Master Sheet Data') }}">
+      <button type="button" class="btn btn-label-warning btn-sm rounded-pill waves-effect shadow-xs" id="btnResetDefaults" title="{{ __('Reset to Original Master Sheet Data') }}">
         <i class="icon-base ti tabler-rotate-clockwise-2 me-1"></i> {{ __('Reset') }}
       </button>
       <button type="button" class="btn btn-primary btn-sm rounded-pill waves-effect waves-light shadow-xs" data-bs-toggle="modal" data-bs-target="#modalAddItem">
@@ -345,7 +345,7 @@
             <td colspan="10" class="text-center py-5 text-body-secondary">
               <i class="icon-base ti tabler-package-off fs-1 mb-2 d-block text-muted"></i>
               <h6 class="fw-bold mb-1">No items found in inventory</h6>
-              <p class="text-body-secondary small mb-3">Add a new item or restore the original Excel inventory list.</p>
+              <p class="text-body-secondary small mb-3">Add a new item or restore the original inventory list.</p>
               @if($isAdmin)
                 <button type="button" class="btn btn-sm btn-primary rounded-pill waves-effect waves-light" data-bs-toggle="modal" data-bs-target="#modalAddItem">
                   <i class="icon-base ti tabler-plus me-1"></i> Add New Item
@@ -864,7 +864,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (isWand) {
       wandCharges = parseWandCharges(addQualityInput ? addQualityInput.value : '');
-      // Excel Wand formula: IF(F51="Wand", E51*H51/50*G51, H51*G51)
+      // Wand formula: IF(F51="Wand", E51*H51/50*G51, H51*G51)
       if (wandCharges <= 0) {
         totalGP = 0;
       } else {
@@ -1059,17 +1059,17 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // 7. Reset to Excel Defaults (Admin Only)
-  const btnReset = document.getElementById('btnResetExcel');
+  // 7. Reset to Defaults (Admin Only)
+  const btnReset = document.getElementById('btnResetDefaults');
   if (btnReset) {
     btnReset.addEventListener('click', function () {
-      if (!confirm('All inventory items will be reset to the original 31 Excel dataset. Do you confirm?')) {
+      if (!confirm('All inventory items will be reset to the original 31 dataset. Do you confirm?')) {
         return;
       }
 
       const form = document.createElement('form');
       form.method = 'POST';
-      form.action = `{{ route('valiant-shade.pages-inventory.reset-excel') }}`;
+      form.action = `{{ route('valiant-shade.pages-inventory.reset-defaults') }}`;
 
       const tokenInput = document.createElement('input');
       tokenInput.type = 'hidden';

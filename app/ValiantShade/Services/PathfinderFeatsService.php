@@ -409,11 +409,47 @@ class PathfinderFeatsService
     }
 
     /**
+     * Synchronize character feats to character profile sheet_data (both root and sheetData).
+     */
+    public function syncProfileFeatsSheetData(string $characterName): void
+    {
+        $profile = CharacterProfile::where('character_name', $characterName)->first();
+        if (!$profile) {
+            return;
+        }
+
+        $feats = CharacterFeat::where('character_name', $characterName)
+            ->orderBy('level')
+            ->orderBy('sort_order')
+            ->get();
+
+        $featList = [];
+        foreach ($feats as $f) {
+            $featList[] = [
+                'title'          => $f->feat_name,
+                'desc'           => $f->notes ?: '',
+                'category'       => $f->category,
+                'level'          => $f->level,
+                'slot_type'      => $f->slot_type,
+                'is_class_feat'  => (bool) $f->is_class_feat,
+            ];
+        }
+
+        $sheet = is_array($profile->sheet_data) ? $profile->sheet_data : (json_decode($profile->sheet_data, true) ?: []);
+        $sheet['feats'] = $featList;
+        if (isset($sheet['sheetData']) && is_array($sheet['sheetData'])) {
+            $sheet['sheetData']['feats'] = $featList;
+        }
+        $profile->sheet_data = $sheet;
+        $profile->save();
+    }
+
+    /**
      * Add a feat to a character.
      */
     public function storeFeat(array $data): CharacterFeat
     {
-        return CharacterFeat::create([
+        $feat = CharacterFeat::create([
             'character_name' => $data['character_name'],
             'level'          => $data['level'] ?? 1,
             'slot_type'      => $data['slot_type'] ?? CharacterFeat::SLOT_STANDARD,
@@ -425,6 +461,10 @@ class PathfinderFeatsService
             'is_class_feat'  => !empty($data['is_class_feat']) || in_array($data['slot_type'] ?? '', ['class_bonus', 'class_talent']),
             'sort_order'     => $data['sort_order'] ?? 0,
         ]);
+
+        $this->syncProfileFeatsSheetData($data['character_name']);
+
+        return $feat;
     }
 
     /**
@@ -444,6 +484,8 @@ class PathfinderFeatsService
             'is_class_feat'  => isset($data['is_class_feat']) ? (bool) $data['is_class_feat'] : $feat->is_class_feat,
         ]);
 
+        $this->syncProfileFeatsSheetData($feat->character_name);
+
         return $feat;
     }
 
@@ -453,7 +495,12 @@ class PathfinderFeatsService
     public function deleteFeat(int $id): bool
     {
         $feat = CharacterFeat::findOrFail($id);
-        return (bool) $feat->delete();
+        $charName = $feat->character_name;
+        $deleted = (bool) $feat->delete();
+        if ($deleted) {
+            $this->syncProfileFeatsSheetData($charName);
+        }
+        return $deleted;
     }
 
     /**
@@ -482,6 +529,49 @@ class PathfinderFeatsService
             'will_save'  => $data['will_save'] ?? $profile->will_save,
             'notes'      => $data['notes'] ?? $profile->notes,
         ]);
+
+        // Keep Character model current_level in sync if it exists
+        if (isset($data['level'])) {
+            \App\Models\Character::where('name', $characterName)->update(['current_level' => (int) $data['level']]);
+            if ($profile->character_id) {
+                \App\Models\Character::where('id', $profile->character_id)->update(['current_level' => (int) $data['level']]);
+            }
+        }
+
+        // Also ensure sheet_data root and nested sheetData have all updated stats
+        $sheet = is_array($profile->sheet_data) ? $profile->sheet_data : (json_decode($profile->sheet_data, true) ?: []);
+        $sheet['level'] = (int) $profile->level;
+        $sheet['class'] = $profile->class_name;
+        $sheet['className'] = $profile->class_name;
+        $sheet['classKey'] = strtolower($profile->class_name);
+        $sheet['race'] = $profile->race;
+        $sheet['notes'] = $profile->notes;
+        $sheet['hp'] = (int) $profile->hp;
+        $sheet['maxHp'] = (int) $profile->hp;
+        $sheet['currentHp'] = (int) $profile->hp;
+
+        if (isset($sheet['sheetData']) && is_array($sheet['sheetData'])) {
+            $sheet['sheetData']['level'] = (int) $profile->level;
+            $sheet['sheetData']['class'] = $profile->class_name;
+            $sheet['sheetData']['className'] = $profile->class_name;
+            $sheet['sheetData']['classKey'] = strtolower($profile->class_name);
+            $sheet['sheetData']['race'] = $profile->race;
+            $sheet['sheetData']['currentHp'] = (int) $profile->hp;
+            $sheet['sheetData']['maxHp'] = (int) $profile->hp;
+            $sheet['sheetData']['spellNotes'] = $profile->notes;
+            if (!isset($sheet['sheetData']['abilityScores'])) {
+                $sheet['sheetData']['abilityScores'] = [];
+            }
+            $sheet['sheetData']['abilityScores']['str'] = (int) $profile->str;
+            $sheet['sheetData']['abilityScores']['dex'] = (int) $profile->dex;
+            $sheet['sheetData']['abilityScores']['con'] = (int) $profile->con;
+            $sheet['sheetData']['abilityScores']['int'] = (int) $profile->int;
+            $sheet['sheetData']['abilityScores']['wis'] = (int) $profile->wis;
+            $sheet['sheetData']['abilityScores']['cha'] = (int) $profile->cha;
+        }
+
+        $profile->sheet_data = $sheet;
+        $profile->save();
 
         return $profile;
     }

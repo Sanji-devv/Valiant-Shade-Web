@@ -12,23 +12,20 @@
                 {{-- active menu method --}}
                 @php
                     $activeClass = null;
-                    $currentRouteName = Route::currentRouteName();
+                    $currentRouteName = Route::currentRouteName() ?? '';
+                    $routeWithoutPrefix = str_starts_with($currentRouteName, 'valiant-shade.') ? substr($currentRouteName, 14) : $currentRouteName;
 
-                    if ($currentRouteName === $menu->slug) {
+                    if ($currentRouteName === $menu->slug || $routeWithoutPrefix === $menu->slug) {
                         $activeClass = 'active';
                     } elseif (isset($menu->submenu)) {
-                        if (gettype($menu->slug) === 'array') {
-                            foreach ($menu->slug as $slug) {
-                                if (str_contains($currentRouteName, $slug) and strpos($currentRouteName, $slug) === 0) {
-                                    $activeClass = 'active';
+                        $slugs = is_array($menu->slug) ? $menu->slug : [$menu->slug];
+                        foreach ($slugs as $slug) {
+                            if (str_starts_with($routeWithoutPrefix, $slug) || str_starts_with($currentRouteName, $slug)) {
+                                if ($slug === 'dashboard' && $routeWithoutPrefix === 'dashboard-analytics') {
+                                    continue;
                                 }
-                            }
-                        } else {
-                            if (
-                                str_contains($currentRouteName, $menu->slug) and
-                                strpos($currentRouteName, $menu->slug) === 0
-                            ) {
                                 $activeClass = 'active';
+                                break;
                             }
                         }
                     }

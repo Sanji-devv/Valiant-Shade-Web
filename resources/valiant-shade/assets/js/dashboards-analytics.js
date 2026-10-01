@@ -17,12 +17,17 @@
     new Swiper(swiperWithPagination, {
       loop: true,
       autoplay: {
-        delay: 2500,
-        disableOnInteraction: false
+        delay: 5000,
+        disableOnInteraction: false,
+        pauseOnMouseEnter: true
       },
       pagination: {
         clickable: true,
         el: '.swiper-pagination'
+      },
+      navigation: {
+        nextEl: '.swiper-button-next',
+        prevEl: '.swiper-button-prev'
       }
     });
   }

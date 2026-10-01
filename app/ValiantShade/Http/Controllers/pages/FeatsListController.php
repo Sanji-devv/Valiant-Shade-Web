@@ -3,6 +3,7 @@
 namespace App\ValiantShade\Http\Controllers\pages;
 
 use App\ValiantShade\Http\Controllers\Controller;
+use App\ValiantShade\Services\CharacterTraitsService;
 use App\ValiantShade\Services\PathfinderFeatsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -10,10 +11,12 @@ use Illuminate\Http\Request;
 class FeatsListController extends Controller
 {
     protected PathfinderFeatsService $featsService;
+    protected CharacterTraitsService $traitsService;
 
-    public function __construct(PathfinderFeatsService $featsService)
+    public function __construct(PathfinderFeatsService $featsService, CharacterTraitsService $traitsService)
     {
         $this->featsService = $featsService;
+        $this->traitsService = $traitsService;
     }
 
     /**
@@ -33,6 +36,7 @@ class FeatsListController extends Controller
         }
 
         $dossier = $this->featsService->getCharacterDossier($selectedChar);
+        $traitsProgression = $this->traitsService->getCharacterTraitsProgression($selectedChar, $dossier['profile'] ?? null);
         $masterTable = $this->featsService->getMasterFeatsTable($sortBy);
         $library = $this->featsService->getCommonFeatsLibrary();
         $activeView = $request->query('view', 'dossier'); // 'dossier' (orange sheet) or 'table' (google sheet)
@@ -41,6 +45,7 @@ class FeatsListController extends Controller
             'characters',
             'selectedChar',
             'dossier',
+            'traitsProgression',
             'masterTable',
             'library',
             'activeView',
@@ -192,6 +197,53 @@ class FeatsListController extends Controller
             'success' => true,
             'message' => __('Character and all associated feats deleted successfully.'),
             'next_character' => $nextChar,
+        ]);
+    }
+
+    /**
+     * Save an assigned trait for a character in a specific slot (Üye, Kıdemli, Uzman).
+     */
+    public function saveTrait(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'character_name' => ['required', 'string'],
+            'slot_key'       => ['required', 'string', 'in:uye,kidemli,uzman'],
+            'trait_name'     => ['required', 'string', 'max:255'],
+            'category'       => ['nullable', 'string', 'max:100'],
+            'description'    => ['nullable', 'string', 'max:1000'],
+            'source_url'     => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $res = $this->traitsService->saveTrait($validated['character_name'], $validated['slot_key'], $validated);
+        return response()->json($res, $res['status'] ?? 200);
+    }
+
+    /**
+     * Clear an assigned trait from a character slot.
+     */
+    public function clearTrait(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'character_name' => ['required', 'string'],
+            'slot_key'       => ['required', 'string', 'in:uye,kidemli,uzman'],
+        ]);
+
+        $res = $this->traitsService->clearTrait($validated['character_name'], $validated['slot_key']);
+        return response()->json($res, $res['status'] ?? 200);
+    }
+
+    /**
+     * Search the Pathfinder Traits Catalog.
+     */
+    public function searchTraits(Request $request): JsonResponse
+    {
+        $q = (string) $request->query('q', '');
+        $traits = $this->traitsService->searchCatalog($q, 100);
+
+        return response()->json([
+            'success' => true,
+            'traits'  => $traits,
+            'total'   => count($traits),
         ]);
     }
 }

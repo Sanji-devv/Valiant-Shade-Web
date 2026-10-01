@@ -37,25 +37,22 @@ $configData = \App\ValiantShade\Helpers\Helpers::appClasses();
     {{-- active menu method --}}
     @php
     $activeClass = null;
-    $currentRouteName = Route::currentRouteName();
+    $currentRouteName = Route::currentRouteName() ?? '';
+    $routeWithoutPrefix = str_starts_with($currentRouteName, 'valiant-shade.') ? substr($currentRouteName, 14) : $currentRouteName;
 
-    if ($currentRouteName === $menu->slug || $currentRouteName === 'valiant-shade.' . $menu->slug) {
-    $activeClass = 'active';
+    if ($currentRouteName === $menu->slug || $routeWithoutPrefix === $menu->slug) {
+      $activeClass = 'active';
     } elseif (isset($menu->submenu)) {
-    if (gettype($menu->slug) === 'array') {
-    foreach ($menu->slug as $slug) {
-    if (str_contains($currentRouteName, $slug) and strpos($currentRouteName, $slug) === 0) {
-    $activeClass = 'active open';
-    }
-    }
-    } else {
-    if (
-    str_contains($currentRouteName, $menu->slug) and
-    strpos($currentRouteName, $menu->slug) === 0
-    ) {
-    $activeClass = 'active open';
-    }
-    }
+      $slugs = is_array($menu->slug) ? $menu->slug : [$menu->slug];
+      foreach ($slugs as $slug) {
+        if (str_starts_with($routeWithoutPrefix, $slug) || str_starts_with($currentRouteName, $slug)) {
+          if ($slug === 'dashboard' && $routeWithoutPrefix === 'dashboard-analytics') {
+            continue;
+          }
+          $activeClass = 'active open';
+          break;
+        }
+      }
     }
     @endphp
 

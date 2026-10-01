@@ -33,6 +33,55 @@
   .cursor-pointer {
     cursor: pointer;
   }
+
+  /* Enhanced XP Tracker Table & Layout */
+  .xp-tracker-table {
+    table-layout: auto;
+    width: 100%;
+    margin-bottom: 0;
+  }
+  .xp-tracker-table thead th {
+    font-size: 0.74rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+    white-space: nowrap !important;
+    vertical-align: middle !important;
+  }
+  .xp-tracker-table tbody td {
+    padding-top: 0.65rem !important;
+    padding-bottom: 0.65rem !important;
+    vertical-align: middle !important;
+  }
+  .xp-tracker-table tbody tr {
+    transition: background-color 0.15s ease;
+  }
+  .xp-tracker-table tbody tr:hover {
+    background-color: rgba(115, 103, 240, 0.04) !important;
+  }
+  .table-responsive-xp {
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(115, 103, 240, 0.35) transparent;
+  }
+  .table-responsive-xp::-webkit-scrollbar {
+    height: 6px;
+  }
+  .table-responsive-xp::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.04);
+    border-radius: 4px;
+  }
+  .table-responsive-xp::-webkit-scrollbar-thumb {
+    background: rgba(115, 103, 240, 0.35);
+    border-radius: 4px;
+  }
+  .table-responsive-xp::-webkit-scrollbar-thumb:hover {
+    background: rgba(115, 103, 240, 0.65);
+  }
 </style>
 @endsection
 
@@ -105,9 +154,9 @@
         </ul>
       </div>
 
-      <!-- Reset to Excel -->
-      <button type="button" class="btn btn-label-warning btn-sm rounded-pill waves-effect shadow-xs" id="btnResetExcel" title="{{ __('Reset to Original Master Sheet Data') }}">
-        <i class="icon-base ti tabler-rotate-clockwise-2 me-1"></i> {{ __('Reset (Excel)') }}
+      <!-- Reset Defaults -->
+      <button type="button" class="btn btn-label-warning btn-sm rounded-pill waves-effect shadow-xs" id="btnResetDefaults" title="{{ __('Reset to Original Master Sheet Data') }}">
+        <i class="icon-base ti tabler-rotate-clockwise-2 me-1"></i> {{ __('Reset Defaults') }}
       </button>
 
       <!-- Add Adventurer Button (Opens Offcanvas Drawer like Demo-Vuexy) -->
@@ -295,106 +344,117 @@
 
 <!-- Main Content Area: Interactive Tabs & Filtering Bar -->
 <div class="card border shadow-none mb-4">
-  <!-- Card Header with Filters -->
-  <div class="card-header border-bottom p-3 d-flex flex-wrap justify-content-between align-items-center gap-3">
-    <!-- Filter Pills Navigation -->
-    <ul class="nav nav-pills card-header-pills flex-wrap" id="xpTrackerTabs" role="tablist">
-      <li class="nav-item" role="presentation">
-        <button class="nav-link active d-flex align-items-center gap-2 rounded-pill px-3 py-2 tab-filter-btn" data-filter="guild" id="tab-guild-btn" type="button">
-          <i class="icon-base ti tabler-shield-check fs-5"></i>
-          <span class="fw-semibold">{{ __('Active Roster (Guild Members)') }}</span>
-          <span class="badge rounded-pill bg-primary ms-1" id="badgeGuildCount">{{ $guildMembers->count() }}</span>
-        </button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link d-flex align-items-center gap-2 rounded-pill px-3 py-2 tab-filter-btn" data-filter="candidate" id="tab-candidates-btn" type="button">
-          <i class="icon-base ti tabler-user-plus fs-5"></i>
-          <span class="fw-semibold">{{ __('Candidates') }}</span>
-          <span class="badge rounded-pill bg-label-info ms-1" id="badgeCandidateCount">{{ $candidates->count() }}</span>
-        </button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link d-flex align-items-center gap-2 rounded-pill px-3 py-2 tab-filter-btn" data-filter="inactive" id="tab-inactives-btn" type="button">
-          <i class="icon-base ti tabler-user-off fs-5"></i>
-          <span class="fw-semibold">{{ __('Inactives') }}</span>
-          <span class="badge rounded-pill bg-label-dark ms-1" id="badgeInactiveCount">{{ $inactives->count() }}</span>
-        </button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link d-flex align-items-center gap-2 rounded-pill px-3 py-2 text-danger tab-filter-btn" data-filter="fallen" id="tab-fallen-btn" type="button">
-          <i class="icon-base ti tabler-tombstone fs-5"></i>
-          <span class="fw-semibold">{{ __('Hall of Fame (KIA / MIA)') }}</span>
-          <span class="badge rounded-pill bg-label-danger ms-1" id="badgeFallenCount">{{ $fallenAdventurers->count() }}</span>
-        </button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link d-flex align-items-center gap-2 rounded-pill px-3 py-2 tab-filter-btn" data-filter="all" id="tab-all-btn" type="button">
-          <i class="icon-base ti tabler-users fs-5"></i>
-          <span class="fw-semibold">{{ __('All Records') }}</span>
-          <span class="badge rounded-pill bg-label-secondary ms-1" id="badgeAllCount">{{ $allAdventurers->count() }}</span>
-        </button>
-      </li>
-    </ul>
+  <!-- Card Header with Filters (Organized 2-Row Clean Layout) -->
+  <div class="card-header border-bottom p-0">
+    <!-- Top Row: Filter Pills Navigation -->
+    <div class="p-3 pb-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <ul class="nav nav-pills card-header-pills flex-wrap gap-1" id="xpTrackerTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active d-flex align-items-center gap-2 rounded-pill px-3 py-2 tab-filter-btn" data-filter="guild" id="tab-guild-btn" type="button">
+            <i class="icon-base ti tabler-shield-check fs-5"></i>
+            <span class="fw-semibold">{{ __('Active Roster (Guild Members)') }}</span>
+            <span class="badge rounded-pill bg-primary ms-1" id="badgeGuildCount">{{ $guildMembers->count() }}</span>
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link d-flex align-items-center gap-2 rounded-pill px-3 py-2 tab-filter-btn" data-filter="candidate" id="tab-candidates-btn" type="button">
+            <i class="icon-base ti tabler-user-plus fs-5"></i>
+            <span class="fw-semibold">{{ __('Candidates') }}</span>
+            <span class="badge rounded-pill bg-label-info ms-1" id="badgeCandidateCount">{{ $candidates->count() }}</span>
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link d-flex align-items-center gap-2 rounded-pill px-3 py-2 tab-filter-btn" data-filter="inactive" id="tab-inactives-btn" type="button">
+            <i class="icon-base ti tabler-user-off fs-5"></i>
+            <span class="fw-semibold">{{ __('Inactives') }}</span>
+            <span class="badge rounded-pill bg-label-dark ms-1" id="badgeInactiveCount">{{ $inactives->count() }}</span>
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link d-flex align-items-center gap-2 rounded-pill px-3 py-2 text-danger tab-filter-btn" data-filter="fallen" id="tab-fallen-btn" type="button">
+            <i class="icon-base ti tabler-tombstone fs-5"></i>
+            <span class="fw-semibold">{{ __('Hall of Fame (KIA / MIA)') }}</span>
+            <span class="badge rounded-pill bg-label-danger ms-1" id="badgeFallenCount">{{ $fallenAdventurers->count() }}</span>
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link d-flex align-items-center gap-2 rounded-pill px-3 py-2 tab-filter-btn" data-filter="all" id="tab-all-btn" type="button">
+            <i class="icon-base ti tabler-users fs-5"></i>
+            <span class="fw-semibold">{{ __('All Records') }}</span>
+            <span class="badge rounded-pill bg-label-secondary ms-1" id="badgeAllCount">{{ $allAdventurers->count() }}</span>
+          </button>
+        </li>
+      </ul>
+    </div>
 
-    <!-- Quick Search, Checkbox Filters & Select Controls -->
-    <div class="d-flex align-items-center gap-2 flex-wrap flex-grow-1 justify-content-end">
-      <!-- Hide Inactive Switch -->
-      <div class="form-check form-switch mb-0 d-flex align-items-center me-1" title="{{ __('Hide Inactives') }}">
-        <input class="form-check-input me-1" type="checkbox" role="switch" id="chkHideInactive">
-        <label class="form-check-label small fw-semibold cursor-pointer" for="chkHideInactive">{{ __('Hide Inactives') }}</label>
+    <!-- Bottom Row: Filter Controls Bar -->
+    <div class="px-3 py-2_5 border-top d-flex flex-wrap justify-content-between align-items-center gap-3 bg-label-secondary bg-opacity-10">
+      <!-- Left: Switches -->
+      <div class="d-flex align-items-center gap-3 flex-wrap">
+        <div class="form-check form-switch mb-0 d-flex align-items-center" title="{{ __('Hide Inactives') }}">
+          <input class="form-check-input me-1_5 cursor-pointer" type="checkbox" role="switch" id="chkHideInactive">
+          <label class="form-check-label small fw-semibold cursor-pointer user-select-none" for="chkHideInactive">{{ __('Hide Inactives') }}</label>
+        </div>
+        <div class="vr my-1 opacity-25 d-none d-sm-block"></div>
+        <div class="form-check form-switch mb-0 d-flex align-items-center" title="{{ __('Hide Candidates') }}">
+          <input class="form-check-input me-1_5 cursor-pointer" type="checkbox" role="switch" id="chkHideCandidates">
+          <label class="form-check-label small fw-semibold cursor-pointer user-select-none" for="chkHideCandidates">{{ __('Hide Candidates') }}</label>
+        </div>
       </div>
 
-      <!-- Hide Candidates Switch -->
-      <div class="form-check form-switch mb-0 d-flex align-items-center me-2" title="{{ __('Hide Candidates') }}">
-        <input class="form-check-input me-1" type="checkbox" role="switch" id="chkHideCandidates">
-        <label class="form-check-label small fw-semibold cursor-pointer" for="chkHideCandidates">{{ __('Hide Candidates') }}</label>
+      <!-- Right: Search Input, Ranks, Levels, Clear -->
+      <div class="d-flex align-items-center gap-2 flex-wrap ms-auto">
+        <!-- Search Input -->
+        <div class="input-group input-group-merge input-group-sm" style="min-width: 170px; max-width: 220px;">
+          <span class="input-group-text"><i class="icon-base ti tabler-search fs-6"></i></span>
+          <input type="text" class="form-control" id="searchTable" placeholder="{{ __('Search character...') }}" value="{{ $filters['search'] ?? '' }}">
+        </div>
+
+        <!-- Rank Filter -->
+        <select class="form-select form-select-sm w-auto" id="filterRank" aria-label="Rütbe Filtresi">
+          <option value="">{{ __('All Ranks') }}</option>
+          @foreach($ranks as $rk)
+            <option value="{{ $rk }}" {{ ($filters['rank'] ?? '') === $rk ? 'selected' : '' }}>{{ $rk }}</option>
+          @endforeach
+        </select>
+
+        <!-- Level Filter -->
+        <select class="form-select form-select-sm w-auto" id="filterLevel" aria-label="Seviye Filtresi">
+          <option value="">Tüm Seviyeler</option>
+          @for($i = 1; $i <= 20; $i++)
+            <option value="{{ $i }}" {{ ($filters['level'] ?? '') == $i ? 'selected' : '' }}>Seviye {{ $i }}</option>
+          @endfor
+        </select>
+
+        <!-- Clear Filters Button -->
+        <button type="button" class="btn btn-sm btn-icon btn-label-secondary rounded-pill" id="btnClearFilters" title="Filtreleri Temizle">
+          <i class="icon-base ti tabler-refresh fs-6"></i>
+        </button>
       </div>
-
-      <!-- Search Input -->
-      <div class="input-group input-group-merge input-group-sm" style="min-width: 170px; max-width: 220px;">
-        <span class="input-group-text"><i class="icon-base ti tabler-search fs-6"></i></span>
-        <input type="text" class="form-control" id="searchTable" placeholder="{{ __('Search character...') }}" value="{{ $filters['search'] ?? '' }}">
-      </div>
-
-      <!-- Rank Filter -->
-      <select class="form-select form-select-sm w-auto" id="filterRank" aria-label="Rütbe Filtresi">
-        <option value="">{{ __('All Ranks') }}</option>
-        @foreach($ranks as $rk)
-          <option value="{{ $rk }}" {{ ($filters['rank'] ?? '') === $rk ? 'selected' : '' }}>{{ $rk }}</option>
-        @endforeach
-      </select>
-
-      <!-- Level Filter -->
-      <select class="form-select form-select-sm w-auto" id="filterLevel" aria-label="Seviye Filtresi">
-        <option value="">Tüm Seviyeler</option>
-        @for($i = 1; $i <= 20; $i++)
-          <option value="{{ $i }}" {{ ($filters['level'] ?? '') == $i ? 'selected' : '' }}>Seviye {{ $i }}</option>
-        @endfor
-      </select>
-
-      <!-- Clear Filters Button -->
-      <button type="button" class="btn btn-sm btn-icon btn-label-secondary rounded-pill" id="btnClearFilters" title="Filtreleri Temizle">
-        <i class="icon-base ti tabler-refresh fs-6"></i>
-      </button>
     </div>
   </div>
 
   <!-- VIEW 1: TABLE VIEW (DEFAULT) -->
   <div id="viewContainerTable">
-    <div class="table-responsive text-nowrap">
-      <table class="table table-hover align-middle mb-0" id="tableMainAdventurers">
+    <div class="table-responsive-xp">
+      <table class="table table-hover align-middle mb-0 xp-tracker-table" id="tableMainAdventurers">
         <thead class="table-light">
           <tr>
-            <th style="width: 40px;">
-              <input class="form-check-input" type="checkbox" id="checkSelectAll" title="Tümünü Seç">
+            <th style="width: 44px; min-width: 44px;" class="text-center ps-3">
+              <input class="form-check-input cursor-pointer" type="checkbox" id="checkSelectAll" title="Tümünü Seç">
             </th>
-            <th>Maceracı & Oyuncu</th>
-            <th class="text-center">Seviye & İlerleme</th>
-            <th class="text-center">Rütbe / Durum</th>
-            <th class="text-end">Toplam XP</th>
-            <th class="text-center">Görev</th>
-            <th>XP Dökümü (Görev / Rapor / Rütbe / Ekstra)</th>
-            <th class="text-end">İşlemler</th>
+            <th style="min-width: 175px;">Maceracı & Oyuncu</th>
+            <th class="text-center" style="min-width: 170px; width: 185px;">Seviye & İlerleme</th>
+            <th class="text-center" style="min-width: 100px; width: 110px;">Rütbe / Durum</th>
+            <th class="text-end" style="min-width: 105px; width: 115px;">Toplam XP</th>
+            <th class="text-center" style="min-width: 85px; width: 95px;">Görev</th>
+            <th style="min-width: 145px; width: 175px;">
+              <div class="d-flex align-items-center gap-1">
+                <span>XP Dökümü</span>
+                <i class="icon-base ti tabler-info-circle text-muted fs-6 cursor-pointer" data-bs-toggle="tooltip" data-bs-placement="top" title="Görev / Rapor / Rütbe / Ekstra Kazanımları"></i>
+              </div>
+            </th>
+            <th class="text-end pe-3" style="min-width: 135px; width: 140px;">İşlemler</th>
           </tr>
         </thead>
         <tbody class="table-border-bottom-0">
@@ -447,45 +507,45 @@
                 data-status="{{ $adv->status }}">
               
               <!-- Checkbox -->
-              <td>
-                <input class="form-check-input row-select-check" type="checkbox" value="{{ $adv->id }}" data-name="{{ $adv->character_name }}">
+              <td class="text-center ps-3" style="width: 44px;">
+                <input class="form-check-input row-select-check cursor-pointer" type="checkbox" value="{{ $adv->id }}" data-name="{{ $adv->character_name }}">
               </td>
 
               <!-- Character & Player -->
-              <td>
-                <div class="d-flex align-items-center gap-3">
-                  <div class="avatar avatar-sm cursor-pointer btn-open-profile" data-adventurer="{{ json_encode($adv) }}" title="Profili İncele">
-                    <span class="avatar-initial rounded-circle {{ $isFallen ? ($isKia ? 'bg-label-danger' : 'bg-label-warning') : 'bg-label-primary' }} fw-bold text-uppercase">
+              <td style="min-width: 175px;">
+                <div class="d-flex align-items-center gap-2_5">
+                  <div class="avatar avatar-sm cursor-pointer btn-open-profile flex-shrink-0" data-adventurer="{{ json_encode($adv) }}" title="Profili İncele">
+                    <span class="avatar-initial rounded-circle {{ $isFallen ? ($isKia ? 'bg-label-danger' : 'bg-label-warning') : 'bg-label-primary' }} fw-bold text-uppercase" style="font-size: 0.76rem;">
                       {{ mb_substr($adv->character_name, 0, 2) }}
                     </span>
                   </div>
-                  <div>
-                    <h6 class="mb-0 text-heading fw-bold cursor-pointer btn-open-profile" data-adventurer="{{ json_encode($adv) }}">
+                  <div class="text-truncate">
+                    <h6 class="mb-0 text-heading fw-bold cursor-pointer btn-open-profile text-truncate" data-adventurer="{{ json_encode($adv) }}" style="font-size: 0.88rem;">
                       {{ $adv->character_name }}
                     </h6>
-                    <small class="text-body-secondary d-flex align-items-center gap-1">
+                    <small class="text-body-secondary d-flex align-items-center gap-1 text-truncate" style="font-size: 0.75rem;">
                       <i class="icon-base ti tabler-user fs-7"></i>
-                      <span>{{ $adv->player_name ?: 'Bilinmiyor / Sahipsiz' }}</span>
+                      <span class="text-truncate">{{ $adv->player_name ?: 'Bilinmiyor / Sahipsiz' }}</span>
                     </small>
                   </div>
                 </div>
               </td>
 
-              <!-- Level & XP Progress Bar (129,141 / 145,000 XP) -->
-              <td class="text-center" style="min-width: 190px;">
-                <div class="d-flex flex-column" style="min-width: 180px;">
+              <!-- Level & XP Progress Bar -->
+              <td class="text-center" style="min-width: 170px; width: 185px;">
+                <div class="d-flex flex-column mx-auto" style="max-width: 185px;">
                   <div class="d-flex align-items-center justify-content-between mb-1">
-                    <span class="badge {{ $levelBadgeColor }} font-monospace fw-bold">Lv {{ $effectiveLevel }}</span>
-                    <span class="fw-bold font-monospace text-heading" style="font-size: 0.8rem;">
+                    <span class="badge {{ $levelBadgeColor }} font-monospace fw-bold px-1_5 py-0_5" style="font-size: 0.72rem;">Lv {{ $effectiveLevel }}</span>
+                    <span class="fw-bold font-monospace text-heading" style="font-size: 0.78rem;">
                       {{ $xpProgressLabel }}
                     </span>
                   </div>
-                  <div class="progress w-100 rounded-pill shadow-xs" style="height: 7px;" title="{{ $xpProgressLabel }} (%{{ $progressPercent }})">
+                  <div class="progress w-100 rounded-pill shadow-xs" style="height: 6px;" title="{{ $xpProgressLabel }} (%{{ $progressPercent }})">
                     <div class="progress-bar bg-primary progress-bar-animated-smooth" role="progressbar" style="width: {{ $progressPercent }}%;" aria-valuenow="{{ $progressPercent }}" aria-valuemin="0" aria-valuemax="100"></div>
                   </div>
                   <div class="d-flex justify-content-between align-items-center mt-1">
-                    <small class="text-body-secondary font-monospace" style="font-size: 0.72rem;">%{{ $progressPercent }}</small>
-                    <small class="text-body-secondary font-monospace" style="font-size: 0.72rem;">
+                    <small class="text-body-secondary font-monospace" style="font-size: 0.7rem;">%{{ $progressPercent }}</small>
+                    <small class="text-body-secondary font-monospace" style="font-size: 0.7rem;">
                       @if($effectiveLevel >= 20)
                         Maksimum
                       @else
@@ -504,74 +564,74 @@
               </td>
 
               <!-- Total XP -->
-              <td class="text-end">
-                <span class="fw-bold font-monospace text-heading fs-6">
+              <td class="text-end font-monospace" style="min-width: 105px; width: 115px;">
+                <span class="fw-bold text-heading fs-6">
                   {{ number_format($adv->total_xp) }}
                 </span>
                 <span class="text-body-secondary small ms-1">XP</span>
               </td>
 
               <!-- Sessions Count -->
-              <td class="text-center">
-                <span class="badge bg-label-secondary font-monospace rounded-pill">
+              <td class="text-center" style="min-width: 85px; width: 95px;">
+                <span class="badge bg-label-secondary font-monospace rounded-pill px-2 py-1" style="font-size: 0.74rem;">
                   {{ $adv->sessions_count }} Görev
                 </span>
               </td>
 
               <!-- XP Breakdown Pills -->
-              <td>
-                <div class="d-flex flex-wrap gap-1 align-items-center" style="max-width: 320px;">
+              <td style="min-width: 145px; width: 175px;">
+                <div class="d-flex flex-wrap gap-1 align-items-center" style="max-width: 175px;">
                   @if($adv->mission_xp > 0)
-                    <span class="badge bg-label-success rounded-pill font-monospace" title="Görev XP">
+                    <span class="badge bg-label-success rounded-pill font-monospace" style="font-size: 0.68rem;" title="Görev XP">
                       G: {{ number_format($adv->mission_xp) }}
                     </span>
                   @endif
                   @if($adv->report_xp > 0)
-                    <span class="badge bg-label-info rounded-pill font-monospace" title="Rapor XP">
+                    <span class="badge bg-label-info rounded-pill font-monospace" style="font-size: 0.68rem;" title="Rapor XP">
                       R: {{ number_format($adv->report_xp) }}
                     </span>
                   @endif
                   @if($adv->rank_xp > 0)
-                    <span class="badge bg-label-primary rounded-pill font-monospace" title="Rütbe Bonusu XP">
+                    <span class="badge bg-label-primary rounded-pill font-monospace" style="font-size: 0.68rem;" title="Rütbe Bonusu XP">
                       Rütbe: {{ number_format($adv->rank_xp) }}
                     </span>
                   @endif
                   @if($adv->extra_xp > 0)
-                    <span class="badge bg-label-warning rounded-pill font-monospace" title="Ekstra (EX) XP">
+                    <span class="badge bg-label-warning rounded-pill font-monospace" style="font-size: 0.68rem;" title="Ekstra (EX) XP">
                       EX: {{ number_format($adv->extra_xp) }}
                     </span>
                   @endif
                   @if($adv->bailiff_xp > 0)
-                    <span class="badge bg-label-danger rounded-pill font-monospace" title="Bailiff XP">
-                      Bailiff: {{ number_format($adv->bailiff_xp) }}
+                    <span class="badge bg-label-danger rounded-pill font-monospace" style="font-size: 0.68rem;" title="Bailiff XP">
+                      B: {{ number_format($adv->bailiff_xp) }}
                     </span>
                   @endif
                   @if($adv->bonus_xp > 0)
-                    <span class="badge bg-label-secondary rounded-pill font-monospace" title="Diğer Bonus XP">
+                    <span class="badge bg-label-secondary rounded-pill font-monospace" style="font-size: 0.68rem;" title="Diğer Bonus XP">
                       +{{ number_format($adv->bonus_xp) }}
                     </span>
                   @endif
-                  @if($adv->mission_xp == 0 && $adv->report_xp == 0 && $adv->rank_xp == 0 && $adv->extra_xp == 0)
-                    <span class="text-body-secondary small font-monospace">—</span>
+                  @if(($adv->mission_xp ?? 0) == 0 && ($adv->report_xp ?? 0) == 0 && ($adv->rank_xp ?? 0) == 0 && ($adv->extra_xp ?? 0) == 0 && ($adv->bailiff_xp ?? 0) == 0 && ($adv->bonus_xp ?? 0) == 0)
+                    <span class="text-body-secondary small font-monospace ps-1">—</span>
                   @endif
                 </div>
               </td>
 
               <!-- Actions -->
-              <td class="text-end">
+              <td class="text-end pe-3" style="min-width: 135px; width: 140px;">
                 <div class="d-flex align-items-center justify-content-end gap-1">
                   @if($isAdmin)
                     <!-- Quick XP Button -->
-                    <button type="button" class="btn btn-xs btn-label-success rounded-pill px-2 py-1 btn-quick-xp" 
+                    <button type="button" class="btn btn-xs btn-label-success rounded-pill px-2 py-1 btn-quick-xp d-inline-flex align-items-center" 
                             data-id="{{ $adv->id }}" 
                             data-name="{{ $adv->character_name }}" 
                             data-xp="{{ $adv->total_xp }}"
                             title="Hızlı XP Ver">
-                      <i class="icon-base ti tabler-plus fs-6 me-1"></i> XP
+                      <i class="icon-base ti tabler-plus fs-7 me-0_5"></i><span>XP</span>
                     </button>
 
                     <!-- Edit Button (Opens Offcanvas) -->
-                    <button type="button" class="btn btn-xs btn-label-primary rounded-pill px-2 py-1 btn-edit-adv" 
+                    <button type="button" class="btn btn-xs btn-icon btn-label-primary rounded-circle btn-edit-adv" 
                             data-adventurer="{{ json_encode($adv) }}"
                             title="Düzenle">
                       <i class="icon-base ti tabler-pencil fs-6"></i>
@@ -579,7 +639,7 @@
 
                     <!-- More Actions Dropdown -->
                     <div class="dropdown">
-                      <button class="btn btn-xs btn-icon btn-label-secondary rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                      <button class="btn btn-xs btn-icon btn-label-secondary rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Diğer İşlemler">
                         <i class="icon-base ti tabler-dots-vertical fs-6"></i>
                       </button>
                       <ul class="dropdown-menu dropdown-menu-end shadow-sm">
@@ -1909,12 +1969,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // Reset to Excel Defaults Button
-  const btnReset = document.getElementById('btnResetExcel');
+  // Reset to Defaults Button
+  const btnReset = document.getElementById('btnResetDefaults');
   if (btnReset) {
     btnReset.addEventListener('click', function() {
       Swal.fire({
-        title: 'Orijinal Excel Tablosuna Sıfırla?',
+        title: 'Orijinal Master Tablosuna Sıfırla?',
         text: 'Tüm mevcut kayıtlar silinecek ve ekran görüntüsündeki 64 maceracının orijinal verileri yeniden yüklenecektir!',
         icon: 'warning',
         showCancelButton: true,
@@ -1927,7 +1987,7 @@ document.addEventListener('DOMContentLoaded', function() {
         buttonsStyling: false
       }).then(result => {
         if (result.isConfirmed) {
-          fetch("{{ route('valiant-shade.pages-xp-tracker.reset-excel') }}", {
+          fetch("{{ route('valiant-shade.pages-xp-tracker.reset-defaults') }}", {
             method: 'POST',
             headers: {
               'X-CSRF-TOKEN': '{{ csrf_token() }}',

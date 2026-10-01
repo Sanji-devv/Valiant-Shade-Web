@@ -19,7 +19,7 @@ class AdventurerInfoTest extends TestCase
         app()->setLocale('tr');
     }
 
-    public function test_maceraci_info_page_renders_with_seeded_excel_data(): void
+    public function test_maceraci_info_page_renders_with_seeded_data(): void
     {
         $user = User::factory()->create(['role' => 'User']);
 
@@ -33,7 +33,7 @@ class AdventurerInfoTest extends TestCase
         $response->assertSee("Bailiff's");
         $response->assertDontSee('Rank Pool & Financial Distribution Analysis');
 
-        // Verify tabs order matches Excel from left to right:
+        // Verify tabs order matches Master Sheet from left to right:
         // 1. Maceracı Bilgileri -> 2. Ödenekler -> 3. Lonca Envanteri -> 4. Genel Sayfa
         $html = $response->getContent();
         $posRoster = strpos($html, 'id="tab-roster"');
@@ -46,7 +46,7 @@ class AdventurerInfoTest extends TestCase
         $this->assertTrue($posAllowances < $posInventory);
         $this->assertTrue($posInventory < $posOverview);
 
-        // Check Guild Level 12 and 546 points from Excel
+        // Check Guild Level 12 and 546 points from Master Sheet
         $response->assertSee('Lonca Seviyesi');
         $response->assertSee('12');
         $response->assertSee('546');
@@ -174,7 +174,7 @@ class AdventurerInfoTest extends TestCase
         $this->assertEquals(700, GuildSetting::get('next_level_points'));
     }
 
-    public function test_admin_can_reset_to_excel_defaults(): void
+    public function test_admin_can_reset_to_defaults(): void
     {
         $admin = User::factory()->create(['role' => 'Admin']);
 
@@ -183,7 +183,7 @@ class AdventurerInfoTest extends TestCase
         GuildSetting::set('guild_level', 99);
 
         // Reset
-        $response = $this->actingAs($admin)->postJson('/valiant-shade/pages/maceraci-info/reset-excel');
+        $response = $this->actingAs($admin)->postJson('/valiant-shade/pages/maceraci-info/reset-defaults');
 
         $response->assertStatus(200);
         $response->assertJson(['success' => true]);

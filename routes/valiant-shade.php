@@ -16,6 +16,7 @@ use App\ValiantShade\Http\Controllers\authentications\LoginBasic;
 use App\ValiantShade\Http\Controllers\authentications\RegisterBasic;
 use App\ValiantShade\Http\Controllers\authentications\LogoutController;
 use App\ValiantShade\Http\Controllers\apps\UserList;
+use App\ValiantShade\Http\Controllers\pages\GuildNewsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -45,6 +46,10 @@ Route::get('/character/sheet', [CharacterSheet::class, 'index'])->name('valiant-
 Route::post('/character/sheet/save', [CharacterSheet::class, 'save'])->name('valiant-shade.character-sheet.save');
 Route::get('/character/sheet/data', [CharacterSheet::class, 'data'])->name('valiant-shade.character-sheet.data');
 Route::post('/character/create', [UserProfile::class, 'createCharacter'])->name('valiant-shade.character.create');
+Route::get('/character/claimable-list', [UserProfile::class, 'getClaimableCharacters'])->name('valiant-shade.character.claimable-list');
+Route::get('/character/claimable-details/{id}', [UserProfile::class, 'getClaimableCharacterDetails'])->name('valiant-shade.character.claimable-details');
+Route::get('/character/traits', [UserProfile::class, 'getTraits'])->name('valiant-shade.character.traits');
+Route::post('/character/claim', [UserProfile::class, 'claimCharacter'])->name('valiant-shade.character.claim');
 Route::post('/character/delete/{id}', [UserProfile::class, 'deleteCharacter'])->name('valiant-shade.character.delete');
 Route::delete('/character/{id}', [UserProfile::class, 'deleteCharacter'])->name('valiant-shade.character.destroy');
 Route::post('/character/set-active', [UserProfile::class, 'setActiveCharacter'])->name('valiant-shade.character.set-active');
@@ -53,7 +58,16 @@ Route::post('/pages/inventory', [Inventory::class, 'store'])->name('valiant-shad
 Route::put('/pages/inventory/{id}', [Inventory::class, 'update'])->name('valiant-shade.pages-inventory.update');
 Route::delete('/pages/inventory/{id}', [Inventory::class, 'destroy'])->name('valiant-shade.pages-inventory.destroy');
 Route::post('/pages/inventory/reset-excel', [Inventory::class, 'resetExcel'])->name('valiant-shade.pages-inventory.reset-excel');
+Route::post('/pages/inventory/reset-defaults', [Inventory::class, 'resetExcel'])->name('valiant-shade.pages-inventory.reset-defaults');
 Route::post('/pages/inventory/vault', [Inventory::class, 'updateVault'])->name('valiant-shade.pages-inventory.vault');
+
+// Guild News & Announcements Editor Routes
+Route::get('/pages/guild-news', [GuildNewsController::class, 'index'])->name('valiant-shade.pages-guild-news');
+Route::post('/pages/guild-news', [GuildNewsController::class, 'store'])->name('valiant-shade.pages-guild-news.store');
+Route::post('/pages/guild-news/reset-defaults', [GuildNewsController::class, 'resetDefaults'])->name('valiant-shade.pages-guild-news.reset-defaults');
+Route::post('/pages/guild-news/{id}', [GuildNewsController::class, 'update'])->name('valiant-shade.pages-guild-news.update');
+Route::delete('/pages/guild-news/{id}', [GuildNewsController::class, 'destroy'])->name('valiant-shade.pages-guild-news.destroy');
+Route::post('/pages/guild-news/{id}/toggle', [GuildNewsController::class, 'toggleActive'])->name('valiant-shade.pages-guild-news.toggle');
 
 // Player XP Tracker Routes
 Route::get('/pages/xp-tracker', [PlayerXpController::class, 'index'])->name('valiant-shade.pages-xp-tracker');
@@ -65,6 +79,7 @@ Route::post('/pages/xp-tracker/batch-xp', [PlayerXpController::class, 'batchQuic
 Route::post('/pages/xp-tracker/bulk-status', [PlayerXpController::class, 'bulkStatus'])->name('valiant-shade.pages-xp-tracker.bulk-status');
 Route::post('/pages/xp-tracker/{id}/status', [PlayerXpController::class, 'changeStatus'])->name('valiant-shade.pages-xp-tracker.status');
 Route::post('/pages/xp-tracker/reset-excel', [PlayerXpController::class, 'resetExcel'])->name('valiant-shade.pages-xp-tracker.reset-excel');
+Route::post('/pages/xp-tracker/reset-defaults', [PlayerXpController::class, 'resetExcel'])->name('valiant-shade.pages-xp-tracker.reset-defaults');
 
 // Adventurer Info (Executive Dashboard / Lonca Genel Özet) Routes
 Route::get('/pages/adventurer-info', [\App\ValiantShade\Http\Controllers\pages\AdventurerInfoController::class, 'index'])->name('valiant-shade.pages-adventurer-info');
@@ -81,7 +96,9 @@ Route::post('/pages/adventurer-info/guild-level', [\App\ValiantShade\Http\Contro
 Route::post('/pages/maceraci-info/guild-level', [\App\ValiantShade\Http\Controllers\pages\AdventurerInfoController::class, 'updateGuildLevel'])->name('valiant-shade.pages-maceraci-info.guild-level');
 
 Route::post('/pages/adventurer-info/reset-excel', [\App\ValiantShade\Http\Controllers\pages\AdventurerInfoController::class, 'resetExcel'])->name('valiant-shade.pages-adventurer-info.reset-excel');
+Route::post('/pages/adventurer-info/reset-defaults', [\App\ValiantShade\Http\Controllers\pages\AdventurerInfoController::class, 'resetExcel'])->name('valiant-shade.pages-adventurer-info.reset-defaults');
 Route::post('/pages/maceraci-info/reset-excel', [\App\ValiantShade\Http\Controllers\pages\AdventurerInfoController::class, 'resetExcel'])->name('valiant-shade.pages-maceraci-info.reset-excel');
+Route::post('/pages/maceraci-info/reset-defaults', [\App\ValiantShade\Http\Controllers\pages\AdventurerInfoController::class, 'resetExcel'])->name('valiant-shade.pages-maceraci-info.reset-defaults');
 
 // Medieval Quest Board (Lonca Görev Panosu) Routes
 Route::get('/pages/quest-board', [\App\ValiantShade\Http\Controllers\pages\QuestBoardController::class, 'index'])->name('valiant-shade.pages-quest-board');
@@ -94,17 +111,59 @@ Route::get('/pages/quest-reports', [\App\ValiantShade\Http\Controllers\pages\Que
 Route::get('/pages/gorev-raporlari', [\App\ValiantShade\Http\Controllers\pages\QuestReportsController::class, 'index'])->name('valiant-shade.pages-gorev-raporlari');
 Route::post('/pages/quest-reports', [\App\ValiantShade\Http\Controllers\pages\QuestReportsController::class, 'store'])->name('valiant-shade.pages-quest-reports.store');
 Route::get('/pages/quest-reports/{id}', [\App\ValiantShade\Http\Controllers\pages\QuestReportsController::class, 'show'])->name('valiant-shade.pages-quest-reports.show');
+Route::post('/pages/quest-reports/{id}/distribute-xp', [\App\ValiantShade\Http\Controllers\pages\QuestReportsController::class, 'distributeXp'])->name('valiant-shade.pages-quest-reports.distribute-xp');
+Route::post('/pages/quest-reports/reset-defaults', [\App\ValiantShade\Http\Controllers\pages\QuestReportsController::class, 'resetDefaults'])->name('valiant-shade.pages-quest-reports.reset-defaults');
+Route::post('/pages/quest-reports/reset-excel', [\App\ValiantShade\Http\Controllers\pages\QuestReportsController::class, 'resetExcel'])->name('valiant-shade.pages-quest-reports.reset-excel');
+Route::get('/pages/quest-reports-pool', [\App\ValiantShade\Http\Controllers\pages\QuestReportsController::class, 'getGuildPool'])->name('valiant-shade.pages-quest-reports.guild-pool.get');
+Route::post('/pages/quest-reports-pool/update', [\App\ValiantShade\Http\Controllers\pages\QuestReportsController::class, 'updateGuildPool'])->name('valiant-shade.pages-quest-reports.guild-pool.update');
+Route::post('/pages/quest-reports-pool/reset', [\App\ValiantShade\Http\Controllers\pages\QuestReportsController::class, 'resetGuildPool'])->name('valiant-shade.pages-quest-reports.guild-pool.reset');
+Route::post('/pages/quest-reports/guild-pool/update', [\App\ValiantShade\Http\Controllers\pages\QuestReportsController::class, 'updateGuildPool']);
+Route::post('/pages/quest-reports/guild-pool/reset', [\App\ValiantShade\Http\Controllers\pages\QuestReportsController::class, 'resetGuildPool']);
 
-// Pathfinder 1E Feats List & Character Progression Routes
-Route::get('/pages/feats', [\App\ValiantShade\Http\Controllers\pages\FeatsListController::class, 'index'])->name('valiant-shade.pages-feats-list');
-Route::get('/pages/feats-list', [\App\ValiantShade\Http\Controllers\pages\FeatsListController::class, 'index']);
-Route::get('/pages/feat-listesi', [\App\ValiantShade\Http\Controllers\pages\FeatsListController::class, 'index']);
+// Pathfinder 1E Feat and Traits & Character Progression Routes
+Route::get('/pages/featntrait', [\App\ValiantShade\Http\Controllers\pages\FeatsListController::class, 'index'])->name('valiant-shade.pages-featntrait');
+Route::get('/pages/feats', function (\Illuminate\Http\Request $request) {
+    $qs = $request->getQueryString();
+    return redirect()->to('/valiant-shade/pages/featntrait' . ($qs ? '?' . $qs : ''), 301);
+})->name('valiant-shade.pages-feats-list');
+Route::get('/pages/feats-list', function (\Illuminate\Http\Request $request) {
+    $qs = $request->getQueryString();
+    return redirect()->to('/valiant-shade/pages/featntrait' . ($qs ? '?' . $qs : ''), 301);
+});
+Route::get('/pages/feats-listesi', function (\Illuminate\Http\Request $request) {
+    $qs = $request->getQueryString();
+    return redirect()->to('/valiant-shade/pages/featntrait' . ($qs ? '?' . $qs : ''), 301);
+});
+Route::get('/pages/feats-and-traits', function (\Illuminate\Http\Request $request) {
+    $qs = $request->getQueryString();
+    return redirect()->to('/valiant-shade/pages/featntrait' . ($qs ? '?' . $qs : ''), 301);
+})->name('valiant-shade.pages-feats-and-traits');
+
+// Feat & Trait Action Routes (/pages/featntrait)
+Route::post('/pages/featntrait', [\App\ValiantShade\Http\Controllers\pages\FeatsListController::class, 'store'])->name('valiant-shade.pages-featntrait.store');
+Route::put('/pages/featntrait/{id}', [\App\ValiantShade\Http\Controllers\pages\FeatsListController::class, 'update'])->name('valiant-shade.pages-featntrait.update');
+Route::delete('/pages/featntrait/{id}', [\App\ValiantShade\Http\Controllers\pages\FeatsListController::class, 'destroy'])->name('valiant-shade.pages-featntrait.destroy');
+Route::delete('/pages/featntrait/character/delete', [\App\ValiantShade\Http\Controllers\pages\FeatsListController::class, 'deleteCharacter'])->name('valiant-shade.pages-featntrait.character.destroy');
+Route::post('/pages/featntrait/stats', [\App\ValiantShade\Http\Controllers\pages\FeatsListController::class, 'updateStats'])->name('valiant-shade.pages-featntrait.stats');
+Route::post('/pages/featntrait/reset-excel', [\App\ValiantShade\Http\Controllers\pages\FeatsListController::class, 'resetExcel'])->name('valiant-shade.pages-featntrait.reset-excel');
+Route::post('/pages/featntrait/reset-defaults', [\App\ValiantShade\Http\Controllers\pages\FeatsListController::class, 'resetExcel'])->name('valiant-shade.pages-featntrait.reset-defaults');
+
+// Legacy Aliases (/pages/feats)
 Route::post('/pages/feats', [\App\ValiantShade\Http\Controllers\pages\FeatsListController::class, 'store'])->name('valiant-shade.pages-feats.store');
 Route::put('/pages/feats/{id}', [\App\ValiantShade\Http\Controllers\pages\FeatsListController::class, 'update'])->name('valiant-shade.pages-feats.update');
 Route::delete('/pages/feats/{id}', [\App\ValiantShade\Http\Controllers\pages\FeatsListController::class, 'destroy'])->name('valiant-shade.pages-feats.destroy');
 Route::delete('/pages/feats/character/delete', [\App\ValiantShade\Http\Controllers\pages\FeatsListController::class, 'deleteCharacter'])->name('valiant-shade.pages-feats.character.destroy');
 Route::post('/pages/feats/stats', [\App\ValiantShade\Http\Controllers\pages\FeatsListController::class, 'updateStats'])->name('valiant-shade.pages-feats.stats');
 Route::post('/pages/feats/reset-excel', [\App\ValiantShade\Http\Controllers\pages\FeatsListController::class, 'resetExcel'])->name('valiant-shade.pages-feats.reset-excel');
+Route::post('/pages/feats/reset-defaults', [\App\ValiantShade\Http\Controllers\pages\FeatsListController::class, 'resetExcel'])->name('valiant-shade.pages-feats.reset-defaults');
+
+// Character Traits Routes (Guild Rank Progression: Üye, Kıdemli, Uzman)
+Route::post('/pages/traits/save', [\App\ValiantShade\Http\Controllers\pages\FeatsListController::class, 'saveTrait'])->name('valiant-shade.pages-traits.save');
+Route::post('/pages/traits/clear', [\App\ValiantShade\Http\Controllers\pages\FeatsListController::class, 'clearTrait'])->name('valiant-shade.pages-traits.clear');
+Route::get('/pages/traits/search', [\App\ValiantShade\Http\Controllers\pages\FeatsListController::class, 'searchTraits'])->name('valiant-shade.pages-traits.search');
+Route::post('/pages/featntrait/traits/save', [\App\ValiantShade\Http\Controllers\pages\FeatsListController::class, 'saveTrait'])->name('valiant-shade.pages-featntrait.traits.save');
+Route::post('/pages/featntrait/traits/clear', [\App\ValiantShade\Http\Controllers\pages\FeatsListController::class, 'clearTrait'])->name('valiant-shade.pages-featntrait.traits.clear');
+Route::get('/pages/featntrait/traits/search', [\App\ValiantShade\Http\Controllers\pages\FeatsListController::class, 'searchTraits'])->name('valiant-shade.pages-featntrait.traits.search');
 
 // Authentication
 Route::get('/auth/login-basic', [LoginBasic::class, 'index'])->name('valiant-shade.auth-login-basic');

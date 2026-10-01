@@ -17,7 +17,7 @@ class InventoryTest extends TestCase
         app()->setLocale('en');
     }
 
-    public function test_inventory_page_renders_with_seeded_excel_items_and_silver_currency(): void
+    public function test_inventory_page_renders_with_seeded_items_and_silver_currency(): void
     {
         $user = User::factory()->create(['role' => 'User']);
 
@@ -57,7 +57,7 @@ class InventoryTest extends TestCase
         $createResponse->assertStatus(403);
 
         // Cannot reset
-        $resetResponse = $this->actingAs($user)->post('/valiant-shade/pages/inventory/reset-excel');
+        $resetResponse = $this->actingAs($user)->post('/valiant-shade/pages/inventory/reset-defaults');
         $resetResponse->assertStatus(403);
     }
 
@@ -132,7 +132,7 @@ class InventoryTest extends TestCase
         $this->assertDatabaseMissing('inventory_items', ['id' => $item->id]);
     }
 
-    public function test_admin_can_reset_to_excel_defaults(): void
+    public function test_admin_can_reset_to_defaults(): void
     {
         $admin = User::factory()->create(['role' => 'Admin']);
 
@@ -140,7 +140,7 @@ class InventoryTest extends TestCase
         InventoryItem::truncate();
         $this->assertEquals(0, InventoryItem::count());
 
-        $response = $this->actingAs($admin)->post('/valiant-shade/pages/inventory/reset-excel');
+        $response = $this->actingAs($admin)->post('/valiant-shade/pages/inventory/reset-defaults');
 
         $response->assertRedirect('/valiant-shade/pages/inventory');
         $this->assertEquals(31, InventoryItem::count());
@@ -248,7 +248,7 @@ class InventoryTest extends TestCase
         ]);
     }
 
-    public function test_wand_charges_excel_formula_calculations(): void
+    public function test_wand_charges_formula_calculations(): void
     {
         $admin = User::factory()->create(['role' => 'Admin']);
 

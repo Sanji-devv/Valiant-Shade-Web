@@ -318,19 +318,24 @@ class PlayerXpController extends Controller
     }
 
     /**
-     * Reset to original Excel data.
+     * Reset to original Master data.
      */
-    public function resetExcel(Request $request): JsonResponse
+    public function resetDefaults(Request $request): JsonResponse
     {
         if ($response = $this->checkAdmin($request)) {
             return $response;
         }
 
-        $this->service->resetToExcelDefaults();
+        $this->service->resetToDefaults();
 
         return response()->json([
             'success' => true,
-            'message' => 'Player XP Tracker has been reset to the original Google Sheet dataset (64 adventurers).',
+            'message' => 'Player XP Tracker has been reset to the original master dataset (64 adventurers).',
         ]);
+    }
+
+    public function resetExcel(Request $request): JsonResponse
+    {
+        return $this->resetDefaults($request);
     }
 }

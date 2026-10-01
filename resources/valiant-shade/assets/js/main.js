@@ -242,6 +242,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (languageDropdown.length) {
     let dropdownItems = languageDropdown[0].querySelectorAll('.dropdown-item');
+    const dropdownActiveItem = languageDropdown[0].querySelector('.dropdown-item.active');
     if (dropdownActiveItem && dropdownActiveItem.dataset && dropdownActiveItem.dataset.textDirection) {
       directionChange(dropdownActiveItem.dataset.textDirection);
     }

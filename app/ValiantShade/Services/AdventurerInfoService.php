@@ -26,7 +26,7 @@ class AdventurerInfoService
                 $currentPoints = (int) GuildSetting::get('current_level_points', 454);
             }
         } catch (\Throwable $e) {
-            // Fall back to static Excel values
+            // Fall back to static master values
         }
 
         $totalLevelTarget = $currentPoints + $nextLevelPoints;
@@ -130,41 +130,41 @@ class AdventurerInfoService
         $pools = [
             [
                 'rank' => 'Bailiff',
-                'pool' => 170612.50,
-                'average' => 34122.50,
+                'pool' => 176112.50,
+                'average' => 35222.50,
                 'members_count' => 5,
                 'color' => 'primary',
                 'badge' => 'bg-label-primary',
             ],
             [
                 'rank' => 'Uzman',
-                'pool' => 2014897.76,
-                'average' => 91586.26,
-                'members_count' => 22,
+                'pool' => 1972006.77,
+                'average' => 98600.34,
+                'members_count' => 20,
                 'color' => 'success',
                 'badge' => 'bg-label-success',
             ],
             [
                 'rank' => 'Kıdemli',
-                'pool' => 427124.91,
-                'average' => 19414.77,
-                'members_count' => 22,
+                'pool' => 512436.29,
+                'average' => 22279.84,
+                'members_count' => 23,
                 'color' => 'warning',
                 'badge' => 'bg-label-warning',
             ],
             [
                 'rank' => 'Üye',
-                'pool' => 27289.51,
-                'average' => 1516.08,
-                'members_count' => 18,
+                'pool' => 29091.43,
+                'average' => 1385.31,
+                'members_count' => 21,
                 'color' => 'info',
                 'badge' => 'bg-label-info',
             ],
             [
                 'rank' => 'Clerk',
-                'pool' => 198000.00,
+                'pool' => 201300.00,
                 'average' => 3300.00,
-                'members_count' => 60,
+                'members_count' => 61,
                 'color' => 'secondary',
                 'badge' => 'bg-label-secondary',
             ],
@@ -172,15 +172,15 @@ class AdventurerInfoService
                 'rank' => 'Aday',
                 'pool' => 0.00,
                 'average' => 0.00,
-                'members_count' => 0,
+                'members_count' => 280,
                 'color' => 'dark',
                 'badge' => 'bg-label-dark',
             ],
             [
                 'rank' => 'Inaktif/Gezgin',
-                'pool' => 563305.30,
-                'average' => 5167.94,
-                'members_count' => 109,
+                'pool' => 571095.51,
+                'average' => 5239.41,
+                'members_count' => 229,
                 'color' => 'danger',
                 'badge' => 'bg-label-danger',
             ],
@@ -200,6 +200,98 @@ class AdventurerInfoService
      */
     public function getAdventurersRoster(array $filters = []): Collection
     {
+        // Fast Progression Level Thresholds
+        $thresholds = [
+            0 => 0, 1 => 0, 2 => 1300, 3 => 3300, 4 => 6000, 5 => 10000,
+            6 => 15000, 7 => 23000, 8 => 34000, 9 => 50000, 10 => 71000,
+            11 => 105000, 12 => 145000, 13 => 210000, 14 => 295000, 15 => 425000,
+            16 => 600000, 17 => 850000, 18 => 1200000, 19 => 1700000, 20 => 2400000,
+        ];
+
+        try {
+            if (class_exists(\App\Models\Character::class) && \App\Models\Character::count() > 0) {
+                $query = \App\Models\Character::whereIn('status', ['ACTIVE', 'INACTIVE', 'TRAVELER'])
+                    ->with(['rank', 'user'])
+                    ->orderByDesc('total_xp');
+
+                if (!empty($filters['search'])) {
+                    $term = $filters['search'];
+                    $query->where(function ($q) use ($term) {
+                        $q->where('name', 'ilike', "%{$term}%")
+                          ->orWhereHas('user', function ($uq) use ($term) {
+                              $uq->where('real_name', 'ilike', "%{$term}%")
+                                 ->orWhere('name', 'ilike', "%{$term}%");
+                          });
+                    });
+                }
+
+                if (!empty($filters['rank'])) {
+                    $query->whereHas('rank', function ($rq) use ($filters) {
+                        $rq->where('name', $filters['rank']);
+                    });
+                }
+
+                if (!empty($filters['level'])) {
+                    $query->where('current_level', (int) $filters['level']);
+                }
+
+                $chars = $query->get();
+                if ($chars->isNotEmpty()) {
+                    $items = collect();
+                    foreach ($chars as $idx => $c) {
+                        $xp = (float) $c->total_xp;
+                        $level = max(1, (int) $c->current_level);
+                        $rankName = $c->rank?->name ?? 'Aday';
+                        $currentBase = $thresholds[$level] ?? 0;
+                        $nextTarget = $thresholds[$level + 1] ?? ($currentBase + 100000);
+                        $span = max(1, $nextTarget - $currentBase);
+                        $currentInLevel = max(0, $xp - $currentBase);
+                        $percent = min(100, round(($currentInLevel / $span) * 100, 1));
+                        $remaining = max(0, $nextTarget - $xp);
+
+                        $badgeColor = match ($rankName) {
+                            'Bailiff' => 'bg-label-primary',
+                            'Uzman' => 'bg-label-success',
+                            'Kıdemli' => 'bg-label-warning',
+                            'Üye' => 'bg-label-info',
+                            'Clerk' => 'bg-label-secondary',
+                            'Inaktif' => 'bg-label-danger',
+                            'Gezgin' => 'bg-label-dark',
+                            default => 'bg-label-secondary',
+                        };
+
+                        $items->push((object) [
+                            'id' => $c->id,
+                            'character_name' => $c->name,
+                            'player_name' => $c->user?->real_name ?? $c->user?->name ?? 'Adventurer',
+                            'rank' => $rankName,
+                            'level' => $level,
+                            'effective_level' => $level,
+                            'total_xp' => $xp,
+                            'sessions_count' => $c->questParticipants()->count() ?: 1,
+                            'rank_badge' => $badgeColor,
+                            'progress_percent' => $percent,
+                            'next_level_xp' => $nextTarget,
+                            'progress_label' => number_format($xp) . ' / ' . number_format($nextTarget) . ' XP',
+                            'xp_progress' => [
+                                'current_xp' => $xp,
+                                'current_level_base' => $currentBase,
+                                'next_level_xp' => $nextTarget,
+                                'current_in_level' => $currentInLevel,
+                                'needed_for_level' => $span,
+                                'percent' => $percent,
+                                'remaining_xp' => $remaining,
+                                'is_max' => false,
+                            ],
+                        ]);
+                    }
+                    return $items;
+                }
+            }
+        } catch (\Throwable $e) {
+            // Fallback to static roster below
+        }
+
         $rawRoster = [
             ['character_name' => 'Bart',            'total_xp' => 400287, 'rank' => 'Uzman',   'level' => 14, 'player_name' => 'Turgut'],
             ['character_name' => 'Warlock',         'total_xp' => 175839, 'rank' => 'Uzman',   'level' => 12, 'player_name' => 'Mete'],
@@ -233,14 +325,6 @@ class AdventurerInfoService
             ['character_name' => 'Argus',           'total_xp' => 43487,  'rank' => 'Gezgin',  'level' => 8,  'player_name' => 'Cem'],
             ['character_name' => 'DC',              'total_xp' => 39063,  'rank' => 'Gezgin',  'level' => 8,  'player_name' => 'Can'],
             ['character_name' => 'Dabria',          'total_xp' => 37336,  'rank' => 'Inaktif', 'level' => 8,  'player_name' => 'Buse'],
-        ];
-
-        // Fast Progression Level Thresholds
-        $thresholds = [
-            0 => 0, 1 => 0, 2 => 1300, 3 => 3300, 4 => 6000, 5 => 10000,
-            6 => 15000, 7 => 23000, 8 => 34000, 9 => 50000, 10 => 71000,
-            11 => 105000, 12 => 145000, 13 => 210000, 14 => 295000, 15 => 425000,
-            16 => 600000, 17 => 850000, 18 => 1200000, 19 => 1700000, 20 => 2400000,
         ];
 
         $items = collect();
@@ -320,6 +404,82 @@ class AdventurerInfoService
      */
     public function getAllowances(array $filters = []): array
     {
+        try {
+            if (class_exists(\App\Models\Character::class) && \App\Models\Character::where('allowance_sp', '>', 0)->count() > 0) {
+                $query = \App\Models\Character::where('allowance_sp', '>', 0)
+                    ->with('rank')
+                    ->orderByDesc('allowance_sp');
+
+                if (!empty($filters['search'])) {
+                    $term = $filters['search'];
+                    $query->where('name', 'ilike', "%{$term}%");
+                }
+
+                if (!empty($filters['rank'])) {
+                    $query->whereHas('rank', function ($rq) use ($filters) {
+                        $rq->where('name', $filters['rank']);
+                    });
+                }
+
+                if (!empty($filters['level'])) {
+                    $query->where('current_level', (int) $filters['level']);
+                }
+
+                $chars = $query->get();
+                if ($chars->isNotEmpty()) {
+                    $items = collect();
+                    $totalSp = 0;
+                    foreach ($chars as $c) {
+                        $sp = (float) $c->allowance_sp;
+                        $totalSp += $sp;
+                        $rankName = $c->rank?->name ?? 'Aday';
+                        $level = max(1, (int) $c->current_level);
+
+                        $badge = match ($rankName) {
+                            'Uzman' => 'bg-label-success',
+                            'Kıdemli' => 'bg-label-warning',
+                            default => 'bg-label-secondary',
+                        };
+
+                        $items->push((object) [
+                            'character_name' => $c->name,
+                            'allowance_sp' => $sp,
+                            'gp_equivalent' => round($sp / 10, 1),
+                            'rank' => $rankName,
+                            'level' => $level,
+                            'effective_level' => $level,
+                            'badge' => $badge,
+                        ]);
+                    }
+
+                    $count = $items->count();
+                    $averageSp = $count > 0 ? round($totalSp / $count, 1) : 0;
+                    $topEarner = $items->first();
+
+                    return [
+                        'items' => $items,
+                        'total_sp' => $totalSp,
+                        'total_gp' => round($totalSp / 10, 1),
+                        'average_sp' => $averageSp,
+                        'count' => $count,
+                        'top_earner' => $topEarner ? [
+                            'name' => $topEarner->character_name,
+                            'allowance_sp' => $topEarner->allowance_sp,
+                            'rank' => $topEarner->rank,
+                            'level' => $topEarner->effective_level,
+                        ] : [
+                            'name' => 'Bart',
+                            'allowance_sp' => 991787,
+                            'rank' => 'Uzman',
+                            'level' => 14,
+                        ],
+                    ];
+                }
+            }
+        } catch (\Throwable $e) {
+            // Fallback to static allowances below
+        }
+
         $rawAllowances = [
             ['character_name' => 'Bart',            'allowance_sp' => 991787, 'rank' => 'Uzman',   'level' => 14],
             ['character_name' => 'Kerrik',          'allowance_sp' => 553770, 'rank' => 'Uzman',   'level' => 12],
@@ -405,11 +565,51 @@ class AdventurerInfoService
     }
 
     /**
-     * Static summary of valuable armory & vault items from screenshot (Columns J-Q).
-     * 100% In-Memory: No DB queries to avoid table/column mismatches on PostgreSQL.
+     * Valuable armory & vault items summary (Columns J-Q).
+     * Reads from GuildVaultItem database table with fallback to static array.
      */
     public function getValuableInventorySummary(): array
     {
+        try {
+            if (class_exists(\App\Models\GuildVaultItem::class) && \App\Models\GuildVaultItem::count() > 0) {
+                $vaultItems = \App\Models\GuildVaultItem::all();
+                $items = collect();
+                $totalWorth = 0;
+                $totalGp = 0;
+                $totalCount = 0;
+
+                foreach ($vaultItems as $it) {
+                    $resale = (float)($it->market_value_sp ?: ($it->total_price_sp * 0.55));
+                    $gp = round($resale / 10, 1);
+                    $qty = max(1, (int)$it->quantity);
+
+                    $totalWorth += $resale;
+                    $totalGp += $gp;
+                    $totalCount += $qty;
+
+                    $items->push((object) [
+                        'name' => $it->item_name,
+                        'quality' => $it->quality,
+                        'type' => $it->item_type,
+                        'quantity' => $qty,
+                        'unit_price' => (float)$it->unit_price_sp,
+                        'total_price' => (float)$it->total_price_sp,
+                        'resale_price' => $resale,
+                        'gp_value' => $gp,
+                    ]);
+                }
+
+                return [
+                    'items' => $items,
+                    'total_worth_sp' => $totalWorth,
+                    'total_gp' => round($totalGp, 1),
+                    'total_items_count' => $totalCount,
+                ];
+            }
+        } catch (\Throwable $e) {
+            // Fallback to static items below
+        }
+
         $rawItems = [
             ['name' => 'Amulet of Natural Armor',               'quality' => '+2',      'type' => 'Gear',          'quantity' => 1, 'unit_price' => 80000,  'total_price' => 80000,  'resale_price' => 44000,   'gp_value' => 4400.0],
             ['name' => 'Amulet of Natural Armor',               'quality' => '+1',      'type' => 'Gear',          'quantity' => 2, 'unit_price' => 20000,  'total_price' => 40000,  'resale_price' => 22000,   'gp_value' => 1100.0],
@@ -536,7 +736,7 @@ class AdventurerInfoService
     {
         try {
             if (GuildBailiff::count() === 0 || PlayerXp::count() === 0) {
-                $this->resetToExcelDefaults();
+                $this->resetToDefaults();
             }
         } catch (\Throwable $e) {
             // In static mode, ignore
@@ -544,9 +744,9 @@ class AdventurerInfoService
     }
 
     /**
-     * Reset all data to the exact values in the Maceracı Info screenshot.
+     * Reset all data to the exact values in the Maceracı Info master data.
      */
-    public function resetToExcelDefaults(): void
+    public function resetToDefaults(): void
     {
         try {
             // 1. Guild Settings
@@ -581,9 +781,32 @@ class AdventurerInfoService
                     'status' => 'active',
                 ]);
             }
+            if (PlayerXp::where('character_name', 'Kerrik')->doesntExist()) {
+                PlayerXp::create([
+                    'character_name' => 'Kerrik',
+                    'allowance_sp' => 553770,
+                    'rank' => 'Uzman',
+                    'level' => 12,
+                    'total_xp' => 145624,
+                    'status' => 'active',
+                ]);
+            }
+
+            // 4. Run AdventurerInfoSeeder to ensure updated vault items are seeded
+            try {
+                $seeder = new \Database\Seeders\AdventurerInfoSeeder();
+                $seeder->run();
+            } catch (\Throwable $se) {
+                // Ignore if files missing
+            }
         } catch (\Throwable $e) {
             // Ignore if DB fails
         }
+    }
+
+    public function resetToExcelDefaults(): void
+    {
+        $this->resetToDefaults();
     }
 }
 

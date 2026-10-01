@@ -14,6 +14,134 @@ $configData = \App\ValiantShade\Helpers\Helpers::appClasses();
 @endsection
 @section('page-style')
 @vite('resources/valiant-shade/assets/vendor/scss/pages/cards-advance.scss', 'static/valiant-shade/build')
+<style>
+  /* Guild News & Chronicles Slider */
+  .guild-news-swiper {
+    border-radius: var(--bs-border-radius);
+    overflow: hidden;
+    position: relative;
+    box-shadow: var(--bs-box-shadow);
+    background-color: #0f172a;
+    min-height: 330px;
+    height: 100%;
+  }
+  .guild-news-swiper .swiper-slide {
+    white-space: normal !important;
+    position: relative;
+    min-height: 330px;
+    height: 100%;
+    padding: 0 !important;
+    overflow: hidden;
+  }
+  .guild-news-slide-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    transform: scale(1);
+    transition: transform 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
+    z-index: 1;
+  }
+  .guild-news-swiper:hover .guild-news-slide-bg {
+    transform: scale(1.04);
+  }
+  .guild-news-slide-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.82) 50%, rgba(15, 23, 42, 0.45) 100%),
+                linear-gradient(to top, rgba(15, 23, 42, 0.96) 0%, rgba(15, 23, 42, 0.3) 55%, transparent 100%);
+    z-index: 2;
+  }
+  .guild-news-slide-content {
+    position: relative;
+    z-index: 3;
+    padding: 1.5rem 1.75rem;
+    height: 100%;
+    min-height: 330px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .guild-stat-card {
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(8px);
+    border-radius: 8px;
+    padding: 0.55rem 0.75rem;
+    transition: all 0.25s ease;
+  }
+  .guild-stat-card:hover {
+    background: rgba(30, 41, 59, 0.85);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+  }
+  .guild-news-nav-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(6px);
+    color: #ffffff !important;
+    opacity: 0;
+    transition: all 0.25s ease;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+  }
+  .guild-news-swiper:hover .guild-news-nav-btn {
+    opacity: 0.85;
+  }
+  .guild-news-nav-btn:hover {
+    opacity: 1 !important;
+    background: rgba(15, 23, 42, 0.95);
+    border-color: rgba(255, 255, 255, 0.6);
+    color: #fbbf24 !important;
+    box-shadow: 0 0 12px rgba(251, 191, 36, 0.4);
+  }
+  .guild-news-nav-btn::after {
+    font-size: 13px !important;
+    font-weight: 800;
+  }
+  .guild-news-swiper .swiper-pagination-bullets {
+    inset-block: 1.25rem auto;
+    inset-inline: auto 1.25rem;
+    text-align: end;
+    z-index: 10;
+  }
+  .guild-news-swiper .swiper-pagination-bullet {
+    background: rgba(255, 255, 255, 0.4) !important;
+    width: 8px;
+    height: 8px;
+    opacity: 1 !important;
+    transition: all 0.3s ease;
+  }
+  .guild-news-swiper .swiper-pagination-bullet-active {
+    background: #ffffff !important;
+    width: 22px;
+    border-radius: 4px;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+  }
+  .guild-news-tag-badge {
+    background: rgba(15, 23, 42, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: #ffffff !important;
+    font-size: 0.76rem;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    padding: 0.28rem 0.65rem !important;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  }
+  .guild-news-tag-badge .guild-news-tag-text {
+    color: #ffffff !important;
+    font-weight: 600;
+  }
+</style>
 @endsection
 @section('vendor-script')
 @vite(['resources/valiant-shade/assets/vendor/libs/apex-charts/apexcharts.js',
@@ -27,141 +155,95 @@ $configData = \App\ValiantShade\Helpers\Helpers::appClasses();
 
 @section('content')
 <div class="row g-6">
-  <!-- Website Analytics -->
+  <!-- Guild News & Chronicles Slider -->
   <div class="col-xl-6 col">
-    <div class="swiper-container swiper-container-horizontal swiper swiper-card-advance-bg"
+    <div class="swiper-container swiper-container-horizontal swiper guild-news-swiper"
       id="swiper-with-pagination-cards">
+
       <div class="swiper-wrapper">
+        @forelse($guildNews as $newsItem)
         <div class="swiper-slide">
-          <div class="row">
-            <div class="col-12">
-              <h5 class="text-white mb-0">Website Analytics</h5>
-              <small>Total 28.5% Conversion Rate</small>
+          <div class="guild-news-slide-bg" style="background-image: url('{{ $newsItem->image_asset }}');"></div>
+          <div class="guild-news-slide-overlay"></div>
+          <div class="guild-news-slide-content">
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-2 flex-wrap" style="padding-right: 48px;">
+                <span class="badge bg-{{ $newsItem->badge_color ?? 'primary' }} text-white fw-bold px-2 py-1">
+                  <i class="{{ $newsItem->category_icon ?: 'icon-base ti tabler-trophy' }} me-1"></i> {{ __($newsItem->category) }}
+                </span>
+                @if($newsItem->tag)
+                <span class="guild-news-tag-badge">
+                  <i class="{{ $newsItem->tag_icon ?: 'icon-base ti tabler-sparkles' }} me-1 text-{{ $newsItem->badge_color ?? 'warning' }}"></i>
+                  <span class="guild-news-tag-text">{{ __($newsItem->tag) }}</span>
+                </span>
+                @endif
+                @if($newsItem->date_text)
+                <span class="text-white-50 small ms-auto d-none d-md-inline-block">
+                  <i class="icon-base ti tabler-clock me-1"></i> {{ __($newsItem->date_text) }}
+                </span>
+                @endif
+              </div>
+              <h4 class="text-white fw-bold mb-2" style="text-shadow: 0 2px 6px rgba(0,0,0,0.6); line-height: 1.3;">
+                {{ $newsItem->title }}
+              </h4>
+              <p class="text-white-50 mb-3 small" style="max-width: 92%; line-height: 1.5;">
+                {{ $newsItem->description }}
+              </p>
             </div>
-            <div class="row">
-              <div class="col-lg-7 col-md-9 col-12 order-2 order-md-1 pt-md-9">
-                <h6 class="text-white mt-0 mt-md-3 mb-4">Traffic</h6>
-                <div class="row">
-                  <div class="col-6">
-                    <ul class="list-unstyled mb-0">
-                      <li class="d-flex mb-4 align-items-center">
-                        <p class="mb-0 fw-medium me-2 website-analytics-text-bg">28%</p>
-                        <p class="mb-0">Sessions</p>
-                      </li>
-                      <li class="d-flex align-items-center">
-                        <p class="mb-0 fw-medium me-2 website-analytics-text-bg">1.2k</p>
-                        <p class="mb-0">Leads</p>
-                      </li>
-                    </ul>
+
+            <div>
+              @if(!empty($newsItem->stats) && is_array($newsItem->stats))
+              <div class="row g-2 mb-3">
+                @foreach($newsItem->stats as $stat)
+                <div class="col-sm-3 col-6">
+                  <div class="guild-stat-card">
+                    <div class="{{ $stat['color'] ?? 'text-warning' }} fw-bold fs-6">{{ $stat['value'] ?? '' }}</div>
+                    <div class="text-white-50" style="font-size: 0.72rem;">{{ __($stat['label'] ?? '') }}</div>
                   </div>
-                  <div class="col-6">
-                    <ul class="list-unstyled mb-0">
-                      <li class="d-flex mb-4 align-items-center">
-                        <p class="mb-0 fw-medium me-2 website-analytics-text-bg">3.1k</p>
-                        <p class="mb-0">Page Views</p>
-                      </li>
-                      <li class="d-flex align-items-center">
-                        <p class="mb-0 fw-medium me-2 website-analytics-text-bg">12%</p>
-                        <p class="mb-0">Conversions</p>
-                      </li>
-                    </ul>
-                  </div>
                 </div>
+                @endforeach
               </div>
-              <div class="col-lg-5 col-md-3 col-12 order-1 order-md-2 my-4 my-md-0 text-center">
-                <img src="{{ asset('static/demo-vuexy/assets/img/illustrations/card-website-analytics-1.png') }}" alt="Website Analytics"
-                  height="150" class="card-website-analytics-img" />
+              @endif
+
+              <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                @if(!empty($newsItem->button_text))
+                <a href="{{ $newsItem->button_url ? url($newsItem->button_url) : 'javascript:void(0);' }}" class="btn btn-sm btn-{{ $newsItem->button_color ?? 'primary' }} d-inline-flex align-items-center gap-1 shadow-sm">
+                  <i class="{{ $newsItem->button_icon ?: 'icon-base ti tabler-shield-check' }}"></i>
+                  <span>{{ __($newsItem->button_text) }}</span>
+                </a>
+                @endif
+                @if(!empty($newsItem->location_badge))
+                <span class="text-white-50 small">
+                  <i class="icon-base ti tabler-map-pin me-1 text-{{ $newsItem->badge_color ?? 'warning' }}"></i> {{ __($newsItem->location_badge) }}
+                </span>
+                @endif
               </div>
             </div>
           </div>
         </div>
+        @empty
+        <!-- Fallback if no news items -->
         <div class="swiper-slide">
-          <div class="row">
-            <div class="col-12">
-              <h5 class="text-white mb-0">Website Analytics</h5>
-              <small>Total 28.5% Conversion Rate</small>
-            </div>
-            <div class="col-lg-7 col-md-9 col-12 order-2 order-md-1 pt-md-9">
-              <h6 class="text-white mt-0 mt-md-3 mb-4">Spending</h6>
-              <div class="row">
-                <div class="col-6">
-                  <ul class="list-unstyled mb-0">
-                    <li class="d-flex mb-4 align-items-center">
-                      <p class="mb-0 fw-medium me-2 website-analytics-text-bg">12h</p>
-                      <p class="mb-0">Spend</p>
-                    </li>
-                    <li class="d-flex align-items-center">
-                      <p class="mb-0 fw-medium me-2 website-analytics-text-bg">127</p>
-                      <p class="mb-0">Order</p>
-                    </li>
-                  </ul>
-                </div>
-                <div class="col-6">
-                  <ul class="list-unstyled mb-0">
-                    <li class="d-flex mb-4 align-items-center">
-                      <p class="mb-0 fw-medium me-2 website-analytics-text-bg">18</p>
-                      <p class="mb-0">Order Size</p>
-                    </li>
-                    <li class="d-flex align-items-center">
-                      <p class="mb-0 fw-medium me-2 website-analytics-text-bg">2.3k</p>
-                      <p class="mb-0">Items</p>
-                    </li>
-                  </ul>
-                </div>
+          <div class="guild-news-slide-bg" style="background-image: url('{{ asset('static/valiant-shade/assets/img/news/guild_dragon_quest.jpg') }}');"></div>
+          <div class="guild-news-slide-overlay"></div>
+          <div class="guild-news-slide-content">
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-2 flex-wrap" style="padding-right: 75px;">
+                <span class="badge bg-warning text-dark fw-bold px-2 py-1"><i class="icon-base ti tabler-trophy me-1"></i> {{ __('Sefer Zaferi') }}</span>
               </div>
-            </div>
-            <div class="col-lg-5 col-md-3 col-12 order-1 order-md-2 my-4 my-md-0 text-center">
-              <img src="{{ asset('static/demo-vuexy/assets/img/illustrations/card-website-analytics-2.png') }}" alt="Website Analytics"
-                height="150" class="card-website-analytics-img" />
+              <h4 class="text-white fw-bold mb-2">{{ __('Ejderha Zirvesi ve Antik Harabeler Fethi Tamamlandı!') }}</h4>
+              <p class="text-white-50 mb-3 small">{{ __("Kıdemli keşif birliğimiz Kadim Ejderha Ignis'i dize getirdi.") }}</p>
             </div>
           </div>
         </div>
-        <div class="swiper-slide">
-          <div class="row">
-            <div class="col-12">
-              <h5 class="text-white mb-0">Website Analytics</h5>
-              <small>Total 28.5% Conversion Rate</small>
-            </div>
-            <div class="col-lg-7 col-md-9 col-12 order-2 order-md-1 pt-md-9">
-              <h6 class="text-white mt-0 mt-md-3 mb-4">Revenue Sources</h6>
-              <div class="row">
-                <div class="col-6">
-                  <ul class="list-unstyled mb-0">
-                    <li class="d-flex mb-4 align-items-center">
-                      <p class="mb-0 fw-medium me-2 website-analytics-text-bg">268</p>
-                      <p class="mb-0">Direct</p>
-                    </li>
-                    <li class="d-flex align-items-center">
-                      <p class="mb-0 fw-medium me-2 website-analytics-text-bg">62</p>
-                      <p class="mb-0">Referral</p>
-                    </li>
-                  </ul>
-                </div>
-                <div class="col-6">
-                  <ul class="list-unstyled mb-0">
-                    <li class="d-flex mb-4 align-items-center">
-                      <p class="mb-0 fw-medium me-2 website-analytics-text-bg">890</p>
-                      <p class="mb-0">Organic</p>
-                    </li>
-                    <li class="d-flex align-items-center">
-                      <p class="mb-0 fw-medium me-2 website-analytics-text-bg">1.2k</p>
-                      <p class="mb-0">Campaign</p>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-            <div class="col-lg-5 col-md-3 col-12 order-1 order-md-2 my-4 my-md-0 text-center">
-              <img src="{{ asset('static/demo-vuexy/assets/img/illustrations/card-website-analytics-3.png') }}" alt="Website Analytics"
-                height="150" class="card-website-analytics-img" />
-            </div>
-          </div>
-        </div>
+        @endforelse
       </div>
       <div class="swiper-pagination"></div>
+      <div class="swiper-button-prev guild-news-nav-btn"></div>
+      <div class="swiper-button-next guild-news-nav-btn"></div>
     </div>
   </div>
-  <!--/ Website Analytics -->
+  <!--/ Guild News & Chronicles Slider -->
 
   <!-- Average Daily Sales -->
   <div class="col-xl-3 col-sm-6">

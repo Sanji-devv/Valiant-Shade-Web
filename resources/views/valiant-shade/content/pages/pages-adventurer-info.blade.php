@@ -64,8 +64,8 @@
         <i class="icon-base ti tabler-crown me-1"></i> {{ __('Guild Level') }}
       </button>
 
-      <!-- Reset to Excel Defaults -->
-      <button type="button" class="btn btn-label-warning btn-sm rounded-pill waves-effect shadow-xs" id="btnResetMaceraciExcel" title="{{ __('Reset to Original Master Sheet Data') }}">
+      <!-- Reset to Master Defaults -->
+      <button type="button" class="btn btn-label-warning btn-sm rounded-pill waves-effect shadow-xs" id="btnResetMaceraciDefaults" title="{{ __('Reset to Original Master Sheet Data') }}">
         <i class="icon-base ti tabler-rotate-clockwise-2 me-1"></i> {{ __('Reset (Master Sheet)') }}
       </button>
     @else
@@ -829,8 +829,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // 9. Reset to Master Sheet Excel Defaults
-  const btnReset = document.getElementById('btnResetMaceraciExcel');
+  // 9. Reset to Master Sheet Defaults
+  const btnReset = document.getElementById('btnResetMaceraciDefaults');
   if (btnReset) {
     btnReset.addEventListener('click', function() {
       Swal.fire({
@@ -847,7 +847,7 @@ document.addEventListener('DOMContentLoaded', function() {
         buttonsStyling: false
       }).then(result => {
         if (result.isConfirmed) {
-          fetch("{{ route('valiant-shade.pages-adventurer-info.reset-excel') }}", {
+          fetch("{{ route('valiant-shade.pages-adventurer-info.reset-defaults') }}", {
             method: 'POST',
             headers: {
               'X-CSRF-TOKEN': '{{ csrf_token() }}',

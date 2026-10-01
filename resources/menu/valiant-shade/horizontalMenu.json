@@ -38,6 +38,11 @@
                     "slug": "pages-inventory"
                 },
                 {
+                    "url": "/valiant-shade/pages/guild-news",
+                    "name": "Guild News",
+                    "slug": "pages-guild-news"
+                },
+                {
                     "url": "/valiant-shade/pages/xp-tracker",
                     "name": "Player XP Tracker",
                     "slug": "pages-xp-tracker"
@@ -58,9 +63,9 @@
                     "slug": "pages-quest-reports"
                 },
                 {
-                    "url": "/valiant-shade/pages/feats",
-                    "name": "Feats List",
-                    "slug": "pages-feats-list"
+                    "url": "/valiant-shade/pages/featntrait",
+                    "name": "Feat and Traits",
+                    "slug": ["pages-featntrait", "pages-feats-list"]
                 },
                 {
                     "url": "/valiant-shade/pages/account-settings-account",

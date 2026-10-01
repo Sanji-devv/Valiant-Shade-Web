@@ -13,10 +13,19 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->uuid('uuid')->nullable()->unique();
+            $table->string('username')->unique();
             $table->string('email')->unique();
+            $table->string('password')->nullable();
+            $table->string('password_hash')->nullable();
+            $table->string('real_name')->nullable();
+            $table->string('name')->nullable();
+            $table->enum('role', ['ADMIN', 'GM', 'PLAYER'])->default('PLAYER');
+            $table->tinyInteger('status')->default(2);
+            $table->unsignedBigInteger('active_main_character_id')->nullable()->index();
+            $table->unsignedBigInteger('active_clerk_character_id')->nullable()->index();
+            $table->string('current_character')->nullable();
             $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
             $table->rememberToken();
             $table->timestamps();
         });

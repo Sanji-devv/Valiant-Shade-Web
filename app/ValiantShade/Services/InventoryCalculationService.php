@@ -6,7 +6,7 @@ use App\ValiantShade\Contracts\InventoryCalculationServiceInterface;
 
 class InventoryCalculationService implements InventoryCalculationServiceInterface
 {
-    public const DEFAULT_RESALE_RATE = 0.55; // %55 as seen in the Excel sheet
+    public const DEFAULT_RESALE_RATE = 0.55; // 55% as seen in the master dataset
 
     public const MAX_WAND_CHARGES = 50;
 
@@ -51,7 +51,7 @@ class InventoryCalculationService implements InventoryCalculationServiceInterfac
 
         if ($isWand) {
             $charges = $this->parseWandCharges($quality);
-            // Excel formula: IF(F="Wand", E*H/50*G, H*G)
+            // Wand formula: IF(F="Wand", E*H/50*G, H*G)
             // If charges is 0, total price is 0
             if ($charges <= 0) {
                 $totalPrice = 0.0;

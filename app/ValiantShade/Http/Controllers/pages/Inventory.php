@@ -215,26 +215,31 @@ class Inventory extends Controller
     }
 
     /**
-     * Reset the entire inventory to the original Excel sample dataset (Admin only).
+     * Reset the entire inventory to the original sample dataset (Admin only).
      */
-    public function resetExcel(Request $request): JsonResponse|RedirectResponse
+    public function resetDefaults(Request $request): JsonResponse|RedirectResponse
     {
         if ($forbidden = $this->checkAdmin($request)) {
             return $forbidden;
         }
 
-        $this->inventoryService->resetToExcelDefaults();
+        $this->inventoryService->resetToDefaults();
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Inventory reset to original Excel list successfully.',
+                'message' => 'Inventory reset to original list successfully.',
                 'metrics' => $this->inventoryService->getMetrics('SP'),
                 'items' => $this->inventoryService->getItems(),
             ]);
         }
 
         return redirect()->route('valiant-shade.pages-inventory')
-            ->with('success', 'Inventory reset to original Excel list successfully.');
+            ->with('success', 'Inventory reset to original list successfully.');
+    }
+
+    public function resetExcel(Request $request): JsonResponse|RedirectResponse
+    {
+        return $this->resetDefaults($request);
     }
 }

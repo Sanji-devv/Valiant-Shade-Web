@@ -2,36 +2,56 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
-#[Fillable([
-    'name',
-    'email',
-    'password',
-    'uuid',
-    'role',
-    'status',
-    'current_character'
-])]
-#[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    protected $table = 'users';
+
+    protected $fillable = [
+        'username',
+        'email',
+        'password',
+        'password_hash',
+        'real_name',
+        'name',
+        'role',
+        'status',
+        'active_main_character_id',
+        'active_clerk_character_id',
+        'current_character',
+        'uuid',
+    ];
+
+    protected $hidden = [
+        'password',
+        'password_hash',
+        'remember_token',
+    ];
 
     protected static function booted(): void
     {
         static::creating(function (User $user) {
             if (empty($user->uuid)) {
                 $user->uuid = (string) Str::uuid();
+            }
+            if (empty($user->username) && !empty($user->email)) {
+                $user->username = Str::slug(explode('@', $user->email)[0], '_') . '_' . Str::random(4);
+            }
+            if (empty($user->name) && !empty($user->real_name)) {
+                $user->name = $user->real_name;
+            } elseif (empty($user->real_name) && !empty($user->name)) {
+                $user->real_name = $user->name;
             }
         });
     }
@@ -49,6 +69,29 @@ class User extends Authenticatable
         ];
     }
 
+    public function setPasswordAttribute($value): void
+    {
+        $hashed = Hash::needsRehash($value) ? Hash::make($value) : $value;
+        $this->attributes['password'] = $hashed;
+        $this->attributes['password_hash'] = $hashed;
+    }
+
+    public function setRealNameAttribute($value): void
+    {
+        $this->attributes['real_name'] = $value;
+        if (empty($this->attributes['name'])) {
+            $this->attributes['name'] = $value;
+        }
+    }
+
+    public function setNameAttribute($value): void
+    {
+        $this->attributes['name'] = $value;
+        if (empty($this->attributes['real_name'])) {
+            $this->attributes['real_name'] = $value;
+        }
+    }
+
     public function getProfilePhotoUrlAttribute(): string
     {
         if (request()->is('demo-vuexy*')) {
@@ -62,13 +105,41 @@ class User extends Authenticatable
         return asset('static/valiant-shade/assets/img/avatars/user.png');
     }
 
-    public function characters(): \Illuminate\Database\Eloquent\Relations\HasMany
+    /**
+     * Relationship: 1 User ──> N Characters (1:N)
+     */
+    public function characters(): HasMany
     {
-        return $this->hasMany(CharacterProfile::class, 'user_id');
+        return $this->hasMany(Character::class, 'user_id');
+    }
+
+    public function activeMainCharacter(): BelongsTo
+    {
+        return $this->belongsTo(Character::class, 'active_main_character_id');
+    }
+
+    public function activeClerkCharacter(): BelongsTo
+    {
+        return $this->belongsTo(Character::class, 'active_clerk_character_id');
+    }
+
+    public function graveyardRecords(): HasMany
+    {
+        return $this->hasMany(CharacterGraveyard::class, 'user_id');
     }
 
     public function isAdmin(): bool
     {
-        return $this->role === 'Admin';
+        return strtoupper($this->role ?? '') === 'ADMIN';
+    }
+
+    public function isGM(): bool
+    {
+        return strtoupper($this->role ?? '') === 'GM';
+    }
+
+    public function isPlayer(): bool
+    {
+        return strtoupper($this->role ?? '') === 'PLAYER';
     }
 }

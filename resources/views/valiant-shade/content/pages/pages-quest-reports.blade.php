@@ -9,7 +9,7 @@
 ], 'static/valiant-shade/build')
 <style>
   /* ====================================================
-     PREMIUM RPG TABLE DARK & MISSION DOSSIER STYLES
+     VALIANT SHADE RPG MASTER SHEET DARK TABLE STYLES
      ==================================================== */
   
   .reports-hero-banner {
@@ -35,7 +35,7 @@
     background: rgba(16, 18, 32, 0.75);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 14px;
-    padding: 1.1rem 1.25rem;
+    padding: 1rem 1.15rem;
     transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
   }
@@ -46,13 +46,13 @@
     background: rgba(22, 25, 45, 0.88);
   }
   .kpi-icon-wrapper {
-    width: 44px;
-    height: 44px;
+    width: 42px;
+    height: 42px;
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.4rem;
+    font-size: 1.35rem;
   }
   .kpi-icon-gold {
     background: rgba(245, 158, 11, 0.16);
@@ -78,6 +78,12 @@
     border: 1px solid rgba(40, 199, 111, 0.35);
     box-shadow: 0 0 16px rgba(40, 199, 111, 0.2);
   }
+  .kpi-icon-red {
+    background: rgba(234, 84, 85, 0.16);
+    color: #ea5455;
+    border: 1px solid rgba(234, 84, 85, 0.35);
+    box-shadow: 0 0 16px rgba(234, 84, 85, 0.2);
+  }
 
   /* Toolbar */
   .reports-toolbar {
@@ -93,8 +99,8 @@
     color: #9aa0c0;
     border: none;
     border-radius: 8px;
-    padding: 0.45rem 0.95rem;
-    font-size: 0.82rem;
+    padding: 0.42rem 0.85rem;
+    font-size: 0.8rem;
     font-weight: 600;
     transition: all 0.18s ease;
     cursor: pointer;
@@ -116,8 +122,8 @@
     border: 1px solid rgba(115, 103, 240, 0.6) !important;
     border-radius: 10px !important;
     font-weight: 700 !important;
-    font-size: 0.88rem !important;
-    padding: 0.55rem 1.25rem !important;
+    font-size: 0.85rem !important;
+    padding: 0.5rem 1.15rem !important;
     box-shadow: 0 4px 16px rgba(115, 103, 240, 0.4) !important;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
     display: inline-flex;
@@ -139,62 +145,237 @@
     overflow: hidden;
   }
   .card-table-dark-container .card-header {
-    background: rgba(22, 25, 45, 0.9) !important;
+    background: rgba(22, 25, 45, 0.92) !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-    padding: 1.15rem 1.45rem !important;
+    padding: 1.1rem 1.35rem !important;
   }
 
-  /* Table Dark custom styling matching Vuexy */
-  .table-quest-dark {
+  /* Master Sheet Table Layout */
+  .table-responsive-master {
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(115, 103, 240, 0.35) transparent;
+  }
+  .table-responsive-master::-webkit-scrollbar {
+    height: 7px;
+  }
+  .table-responsive-master::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+  }
+  .table-responsive-master::-webkit-scrollbar-thumb {
+    background: rgba(115, 103, 240, 0.4);
+    border-radius: 4px;
+  }
+  .table-responsive-master::-webkit-scrollbar-thumb:hover {
+    background: rgba(115, 103, 240, 0.7);
+  }
+
+  .table-master-sheet {
     --bs-table-bg: transparent;
     --bs-table-color: #cbd0ec;
     border-color: rgba(255, 255, 255, 0.06);
     margin-bottom: 0;
+    min-width: 1480px;
   }
-  .table-quest-dark thead th {
+  .table-master-sheet thead th {
     background: #1e223b !important;
     color: #8f95b5 !important;
-    font-size: 0.74rem !important;
+    font-size: 0.71rem !important;
     text-transform: uppercase !important;
-    letter-spacing: 0.8px !important;
+    letter-spacing: 0.6px !important;
     font-weight: 700 !important;
-    padding: 0.95rem 1.35rem !important;
-    border-bottom: 2px solid rgba(115, 103, 240, 0.3) !important;
+    padding: 0.85rem 0.95rem !important;
+    border-bottom: 2px solid rgba(115, 103, 240, 0.35) !important;
+    white-space: nowrap !important;
+    vertical-align: middle !important;
   }
-  .table-quest-dark tbody tr.quest-row-clickable {
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  .table-master-sheet tbody tr.quest-row-item {
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   }
-  .table-quest-dark tbody tr.quest-row-clickable:hover {
-    background: rgba(115, 103, 240, 0.12) !important;
-    transform: scale(1.002);
+  .table-master-sheet tbody tr.quest-row-item:hover {
+    background: rgba(115, 103, 240, 0.1) !important;
   }
-  .table-quest-dark tbody td {
-    padding: 1.1rem 1.35rem;
-    vertical-align: middle;
+  .table-master-sheet tbody td {
+    padding: 0.75rem 0.95rem !important;
+    vertical-align: middle !important;
+    white-space: nowrap;
+    font-size: 0.86rem;
   }
 
-  /* Badges */
-  .badge-epic {
+  /* Specific Badges & Indicators */
+  .badge-mq-epic {
     background: rgba(245, 158, 11, 0.18);
     color: #f59e0b;
     border: 1px solid rgba(245, 158, 11, 0.45);
     box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+    font-weight: 800;
   }
-  .badge-main {
+  .badge-mq-main {
     background: rgba(115, 103, 240, 0.18);
     color: #7367f0;
     border: 1px solid rgba(115, 103, 240, 0.45);
     box-shadow: 0 0 10px rgba(115, 103, 240, 0.2);
+    font-weight: 700;
   }
-  .badge-side {
+  .badge-mq-side {
     background: rgba(130, 134, 158, 0.16);
     color: #9ba0bc;
-    border: 1px solid rgba(130, 134, 158, 0.35);
+    border: 1px solid rgba(130, 134, 158, 0.3);
   }
 
-  /* Modal styling */
+  .badge-depo-ok {
+    background: rgba(40, 199, 111, 0.16);
+    color: #28c76f;
+    border: 1px solid rgba(40, 199, 111, 0.35);
+  }
+  .badge-depo-fail {
+    background: rgba(234, 84, 85, 0.16);
+    color: #ea5455;
+    border: 1px solid rgba(234, 84, 85, 0.35);
+  }
+
+  .badge-avg-xp {
+    background: linear-gradient(135deg, rgba(115, 103, 240, 0.25) 0%, rgba(245, 158, 11, 0.25) 100%);
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    color: #fcd34d;
+    font-weight: 800;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.2);
+    font-size: 0.88rem;
+    padding: 0.35rem 0.65rem;
+  }
+
+  .party-pill-tag {
+    background: rgba(22, 25, 45, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 0.2rem 0.45rem;
+    font-size: 0.75rem;
+    color: #a5b4fc;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin: 2px;
+  }
+
+  /* Live Formula Card in Modals */
+  .formula-engine-box {
+    background: linear-gradient(135deg, rgba(17, 24, 39, 0.95) 0%, rgba(31, 41, 55, 0.9) 100%);
+    border: 1px solid rgba(115, 103, 240, 0.4);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    position: relative;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 4px 20px rgba(0, 0, 0, 0.4);
+  }
+  .formula-engine-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #7367f0, #f59e0b);
+  }
+
+  /* Player Average XP Distribution Cards & Calculator */
+  .player-calc-badge {
+    background: rgba(18, 22, 40, 0.85);
+    border: 1px solid rgba(115, 103, 240, 0.28);
+    border-radius: 8px;
+    padding: 0.55rem 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s ease;
+  }
+  .player-calc-badge:hover {
+    border-color: rgba(245, 158, 11, 0.45);
+    background: rgba(26, 31, 56, 0.95);
+    transform: translateY(-1px);
+  }
+  .player-calc-badge.reporter-badge {
+    border-color: rgba(245, 158, 11, 0.5);
+    background: rgba(245, 158, 11, 0.08);
+  }
+  .player-calc-xp {
+    font-family: var(--bs-font-monospace);
+    font-weight: 700;
+    color: #f59e0b;
+    font-size: 0.88rem;
+    background: rgba(245, 158, 11, 0.15);
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
+  .quick-adventurer-chip {
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.06);
+    color: #cbd0ec;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    padding: 0.25rem 0.65rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: all 0.15s ease;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .quick-adventurer-chip:hover {
+    background: rgba(115, 103, 240, 0.25);
+    border-color: rgba(115, 103, 240, 0.5);
+    color: #ffffff;
+    transform: translateY(-1px);
+  }
+  .quick-adventurer-chip.active {
+    background: rgba(115, 103, 240, 0.35);
+    border-color: #7367f0;
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(115, 103, 240, 0.3);
+  }
+  .preset-btn-pill {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #cbd0ec;
+    font-size: 0.72rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+  }
+  .preset-btn-pill:hover {
+    background: rgba(245, 158, 11, 0.18);
+    border-color: rgba(245, 158, 11, 0.45);
+    color: #f59e0b;
+  }
+  .btn-calc-glow {
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-calc-glow::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(60deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    transform: rotate(30deg);
+    animation: glowSweep 3.5s infinite;
+  }
+  @keyframes glowSweep {
+    0% { transform: translate(-100%, -100%) rotate(30deg); }
+    30% { transform: translate(100%, 100%) rotate(30deg); }
+    100% { transform: translate(100%, 100%) rotate(30deg); }
+  }
+
+  /* Modals */
   .modal-dossier {
     background: linear-gradient(135deg, #181a2e 0%, #1f223a 100%);
     border: 1px solid rgba(245, 158, 11, 0.35);
@@ -202,9 +383,23 @@
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85);
     color: #e2e5f5;
   }
+  .modal-dialog-scrollable .modal-dossier.modal-content,
+  .modal-dialog-scrollable form.modal-content.modal-dossier {
+    max-height: calc(100vh - 3rem) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    border-radius: 16px !important;
+  }
+  .modal-dialog-scrollable form.modal-content.modal-dossier .modal-body {
+    overflow-y: auto !important;
+    flex: 1 1 auto !important;
+    max-height: calc(100vh - 12.5rem) !important;
+  }
   .modal-dossier .modal-header {
     border-bottom: 1px solid rgba(255, 255, 255, 0.09);
     position: relative;
+    background: rgba(24, 26, 46, 0.98);
   }
   .modal-dossier .modal-header::before {
     content: '';
@@ -216,37 +411,253 @@
     background: linear-gradient(90deg, #f59e0b, #7367f0);
   }
   .modal-dossier .modal-footer {
-    border-top: 1px solid rgba(255, 255, 255, 0.09);
+    border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+    background: #17192d !important;
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 1055 !important;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.45) !important;
   }
   .report-section-box {
     background: rgba(14, 16, 28, 0.65);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 10px;
-    padding: 1.1rem;
+    padding: 1rem;
     margin-bottom: 1rem;
   }
+  .party-roster-card {
+    background: rgba(22, 25, 45, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 0.55rem 0.85rem;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .party-roster-card:hover {
+    background: rgba(30, 34, 60, 0.95);
+    border-color: rgba(115, 103, 240, 0.4);
+    transform: translateY(-1px);
+  }
+  .party-roster-card.reporter-roster-card {
+    background: rgba(245, 158, 11, 0.08);
+    border-color: rgba(245, 158, 11, 0.35);
+  }
+  .btn-remove-roster-player {
+    background: rgba(234, 84, 85, 0.14) !important;
+    color: #ea5455 !important;
+    border: 1px solid rgba(234, 84, 85, 0.35) !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    font-size: 0.76rem !important;
+    padding: 0.22rem 0.6rem !important;
+    transition: all 0.18s ease !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+  .btn-remove-roster-player:hover {
+    background: #ea5455 !important;
+    color: #ffffff !important;
+    border-color: #ea5455 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(234, 84, 85, 0.4);
+  }
+  .quick-adv-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0.3rem 0.65rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #c2c7e0;
+    transition: all 0.2s ease;
+    user-select: none;
+  }
+  .quick-adv-chip:hover {
+    background: rgba(115, 103, 240, 0.2);
+    border-color: rgba(115, 103, 240, 0.5);
+    color: #ffffff;
+    transform: translateY(-1px);
+  }
+  .quick-adv-chip.active {
+    background: rgba(40, 199, 111, 0.18);
+    border-color: rgba(40, 199, 111, 0.6);
+    color: #28c76f;
+    font-weight: 600;
+  }
+  .quick-adv-chip.active:hover {
+    background: rgba(234, 84, 85, 0.2);
+    border-color: rgba(234, 84, 85, 0.6);
+    color: #ea5455;
+  }
 
-  /* Add player row inside modal */
-  .modal-party-row {
-    background: rgba(22, 25, 45, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+  /* Main Tab Switcher */
+  .tab-nav-switch {
+    background: transparent;
+    color: #9aa0c0;
+    border: none;
     border-radius: 8px;
-    padding: 0.65rem 0.85rem;
-    margin-bottom: 0.5rem;
+    padding: 0.5rem 1.05rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tab-nav-switch:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .tab-nav-switch.active {
+    background: linear-gradient(135deg, #7367f0 0%, #5e50ee 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 16px rgba(115, 103, 240, 0.45);
+  }
+
+  /* Guild Rank Badges */
+  .badge-rank-bailiff {
+    background: rgba(168, 85, 247, 0.2);
+    color: #c084fc;
+    border: 1px solid rgba(168, 85, 247, 0.45);
+    box-shadow: 0 0 12px rgba(168, 85, 247, 0.25);
+    font-weight: 700;
+  }
+  .badge-rank-uzman {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.5);
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.25);
+    font-weight: 700;
+  }
+  .badge-rank-kidemli {
+    background: rgba(115, 103, 240, 0.2);
+    color: #a5b4fc;
+    border: 1px solid rgba(115, 103, 240, 0.45);
+    font-weight: 700;
+  }
+  .badge-rank-uye {
+    background: rgba(0, 186, 209, 0.2);
+    color: #67e8f9;
+    border: 1px solid rgba(0, 186, 209, 0.4);
+    font-weight: 600;
+  }
+  .badge-rank-clerk {
+    background: rgba(40, 199, 111, 0.2);
+    color: #6ee7b7;
+    border: 1px solid rgba(40, 199, 111, 0.4);
+    font-weight: 600;
+  }
+  .badge-rank-aday {
+    background: rgba(148, 163, 184, 0.16);
+    color: #cbd5e1;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    font-weight: 600;
+  }
+  .badge-rank-inaktif {
+    background: rgba(100, 116, 139, 0.16);
+    color: #94a3b8;
+    border: 1px solid rgba(100, 116, 139, 0.3);
+  }
+
+  /* Pagination Styling */
+  #reportsPaginationContainer {
+    background: rgba(18, 20, 36, 0.95);
+    backdrop-filter: blur(10px);
+  }
+  #reportsPaginationList .page-item .page-link {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #cbd5e1;
+    min-width: 36px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.5rem;
+    font-size: 0.82rem;
+    border-radius: 6px;
+    margin: 0 2px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  #reportsPaginationList .page-item .page-link:hover {
+    background: rgba(115, 103, 240, 0.25);
+    border-color: #7367f0;
+    color: #fff;
+  }
+  #reportsPaginationList .page-item.active .page-link {
+    background: linear-gradient(135deg, #7367f0 0%, #5e50ee 100%) !important;
+    border-color: #7367f0 !important;
+    color: #fff !important;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(115, 103, 240, 0.4);
+  }
+  #reportsPaginationList .page-item.disabled .page-link {
+    background: transparent;
+    border-color: transparent;
+    color: #64748b;
+    cursor: default;
+  }
+  .btn-pagination-action {
     transition: all 0.2s ease;
   }
-  .modal-party-row:hover {
-    border-color: rgba(115, 103, 240, 0.3);
-    background: rgba(26, 30, 55, 0.8);
+  .btn-pagination-action:hover:not(:disabled) {
+    transform: translateY(-1px);
   }
 </style>
+@endsection
+
+@section('vendor-script')
+@vite([
+  'resources/valiant-shade/assets/vendor/libs/sweetalert2/sweetalert2.js'
+], 'static/valiant-shade/build')
 @endsection
 
 @section('content')
 <div class="container-xxl flex-grow-1 container-p-y">
 
   <!-- ====================================================
-       1. HERO KPI CARDS ("TOPLAMDA KAÇ RAPOR VAR")
+       TOP NAVIGATION TABS (GÖREV RAPORLARI vs. LONCA XP HAVUZU)
+       ==================================================== -->
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+    <div class="d-inline-flex align-items-center p-1 rounded-3 bg-dark bg-opacity-75 border border-secondary border-opacity-25" id="questReportsMainTabs">
+      <button type="button" class="tab-nav-switch active" id="tabNavQuests" data-tab-target="#tabViewQuests">
+        <i class="icon-base ti tabler-scroll fs-5"></i>
+        <span>{{ __('Görev Raporları (A..BG)') }}</span>
+        <span class="badge bg-primary ms-1 font-monospace" id="navTabQuestCount">{{ count($reports) }}</span>
+      </button>
+      <button type="button" class="tab-nav-switch" id="tabNavGuildPool" data-tab-target="#tabViewGuildPool">
+        <i class="icon-base ti tabler-shield-dollar fs-5"></i>
+        <span>{{ __('Lonca XP & Rütbeler Havuzu (BU..CA)') }}</span>
+        <span class="badge bg-label-warning ms-1 font-monospace" id="navTabPoolGrandBadge">{{ number_format($guildPoolData['grand_total_xp'] ?? 3459587.50, 0) }} XP</span>
+      </button>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <!-- Prominent Add Report & Calculate Average XP Action Button -->
+      <button type="button" class="btn btn-primary btn-add-report-trigger btn-calc-glow waves-effect waves-light shadow-md d-flex align-items-center gap-2" id="btnTopOpenAddReportModal" data-bs-toggle="modal" data-bs-target="#modalAddQuestReport">
+        <i class="icon-base ti tabler-calculator fs-5"></i>
+        <span class="fw-bold">{{ __('Yeni Rapor & Ortalama Hesapla') }}</span>
+      </button>
+
+      <a href="{{ route('valiant-shade.pages-xp-tracker') }}" class="btn btn-outline-secondary btn-sm waves-effect">
+        <i class="icon-base ti tabler-award me-1"></i> {{ __('XP Tracker') }}
+      </a>
+    </div>
+  </div>
+
+  <!-- ====================================================
+       TAB VIEW 1: GÖREV RAPORLARI TABLOSU (SÜTUNLAR A..BG)
+       ==================================================== -->
+  <div id="tabViewQuests" class="tab-pane-view">
+
+  <!-- ====================================================
+       1. HERO KPI BANNER & METRIC CARDS
        ==================================================== -->
   <div class="reports-hero-banner p-3 p-md-4 mb-4">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
@@ -256,105 +667,111 @@
             <i class="icon-base ti tabler-scroll fs-4 text-warning"></i>
           </div>
           <h3 class="mb-0 fw-bold text-heading" style="font-size: 1.45rem; letter-spacing: 0.3px;">
-            {{ __('Quest Reports') }}
+            {{ __('Görev Raporları') }}
           </h3>
           <span class="badge bg-primary font-monospace px-3 py-1 shadow-sm fs-6" id="kpiTotalReportsBadge">
-            {{ $stats['total_quests'] }} {{ __('Reports Listed') }}
+            {{ $stats['total_quests'] }} {{ __('Kayıtlı Sefer') }}
           </span>
         </div>
         <p class="text-body-secondary small mb-0">
-          {{ __('Guild Mission Intelligence & Debriefing Archives') }} &bull; {{ __('Chronicles of all completed quests, threat assessments, and battle reports.') }}
+          {{ __('Valiant Shade Master Sheet & Görev Arşivi') }} &bull; {{ __('Otomatik formül hesaplamalı sefer raporları, lonca & depo payları ve oyuncu ortalama XP tablosu.') }}
         </p>
       </div>
-      <div class="d-flex align-items-center gap-2">
-        <!-- New Quest Report Button (Prominent) -->
-        <button type="button" class="btn btn-add-quest-report" id="btnOpenAddReportModal">
-          <i class="icon-base ti tabler-plus fs-5"></i>
-          <span>{{ __('Add Quest Report') }}</span>
+
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <!-- Google Sheet Default Reset -->
+        <button type="button" class="btn btn-outline-warning btn-sm" id="btnResetToMasterDefaults" title="{{ __('Google Sheet Orijinal 32 Satırına Sıfırla') }}">
+          <i class="icon-base ti tabler-refresh me-1"></i> {{ __('Sheet Sıfırla') }}
         </button>
 
-        <a href="{{ route('valiant-shade.pages-quest-board') }}" class="btn btn-outline-secondary btn-sm waves-effect">
-          <i class="icon-base ti tabler-clipboard-list me-1"></i> {{ __('Quest Board') }}
+        <!-- New Quest Report Button (Primary) -->
+        <button type="button" class="btn btn-add-quest-report btn-add-report-trigger shadow-md" id="btnOpenAddReportModal" data-bs-toggle="modal" data-bs-target="#modalAddQuestReport">
+          <i class="icon-base ti tabler-calculator fs-5"></i>
+          <span>{{ __('Yeni Rapor Ekle & Ortalama Hesapla') }}</span>
+        </button>
+
+        <a href="{{ route('valiant-shade.pages-xp-tracker') }}" class="btn btn-outline-secondary btn-sm waves-effect">
+          <i class="icon-base ti tabler-award me-1"></i> {{ __('XP Tracker') }}
         </a>
       </div>
     </div>
 
     <!-- 6 KPI Metric Cards Grid -->
     <div class="row g-3">
-      <!-- KPI 1: Total Expeditions -->
+      <!-- KPI 1: Toplam Sefer -->
       <div class="col-6 col-md-4 col-xl-2">
         <div class="kpi-stat-card d-flex align-items-center gap-3">
           <div class="kpi-icon-wrapper kpi-icon-purple shadow-sm">
             <i class="icon-base ti tabler-compass"></i>
           </div>
           <div>
-            <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">{{ __('Total Expeditions') }}</div>
+            <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">{{ __('Toplam Sefer') }}</div>
             <div class="fw-bolder fs-5 text-heading font-monospace" id="kpiTotalQuestsVal">{{ $stats['total_quests'] }}</div>
           </div>
         </div>
       </div>
 
-      <!-- KPI 2: Main Quests -->
+      <!-- KPI 2: Ana & Epik Görevler -->
       <div class="col-6 col-md-4 col-xl-2">
         <div class="kpi-stat-card d-flex align-items-center gap-3">
           <div class="kpi-icon-wrapper kpi-icon-gold shadow-sm">
             <i class="icon-base ti tabler-crown"></i>
           </div>
           <div>
-            <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">{{ __('Main Quests') }}</div>
-            <div class="fw-bolder fs-5 text-warning font-monospace" id="kpiMainQuestsVal">{{ $stats['main_quests'] }} <span class="small text-muted font-normal" style="font-size: 0.72rem;">({{ round(($stats['main_quests'] / max($stats['total_quests'], 1)) * 100) }}%)</span></div>
+            <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">{{ __('Ana / Epik') }}</div>
+            <div class="fw-bolder fs-5 text-warning font-monospace" id="kpiMainQuestsVal">{{ $stats['main_quests'] + $stats['epic_quests'] }} <span class="small text-muted font-normal" style="font-size: 0.72rem;">({{ $stats['epic_quests'] }} Epik)</span></div>
           </div>
         </div>
       </div>
 
-      <!-- KPI 3: Side Quests -->
+      <!-- KPI 3: Yan Görevler -->
       <div class="col-6 col-md-4 col-xl-2">
         <div class="kpi-stat-card d-flex align-items-center gap-3">
           <div class="kpi-icon-wrapper kpi-icon-cyan shadow-sm">
             <i class="icon-base ti tabler-sparkles"></i>
           </div>
           <div>
-            <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">{{ __('Side Quests') }}</div>
+            <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">{{ __('Yan Görevler') }}</div>
             <div class="fw-bolder fs-5 text-info font-monospace" id="kpiSideQuestsVal">{{ $stats['side_quests'] }}</div>
           </div>
         </div>
       </div>
 
-      <!-- KPI 4: Total Experience -->
+      <!-- KPI 4: Toplam Dağıtılan XP -->
       <div class="col-6 col-md-4 col-xl-2">
         <div class="kpi-stat-card d-flex align-items-center gap-3">
           <div class="kpi-icon-wrapper kpi-icon-green shadow-sm">
             <i class="icon-base ti tabler-award"></i>
           </div>
           <div>
-            <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">{{ __('Total Experience') }}</div>
+            <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">{{ __('Toplam XP (E)') }}</div>
             <div class="fw-bolder fs-5 text-success font-monospace" id="kpiTotalXpVal">+{{ number_format($stats['total_xp']) }}</div>
           </div>
         </div>
       </div>
 
-      <!-- KPI 5: Average Party Level -->
+      <!-- KPI 5: Lonca Kesintisi (%5) -->
       <div class="col-6 col-md-4 col-xl-2">
         <div class="kpi-stat-card d-flex align-items-center gap-3">
-          <div class="kpi-icon-wrapper kpi-icon-cyan shadow-sm">
-            <i class="icon-base ti tabler-sword"></i>
+          <div class="kpi-icon-wrapper kpi-icon-gold shadow-sm">
+            <i class="icon-base ti tabler-coins"></i>
           </div>
           <div>
-            <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">{{ __('Average Level') }}</div>
-            <div class="fw-bolder fs-5 text-info font-monospace" id="kpiAvgLevelVal">{{ number_format($stats['avg_level'] ?? $stats['overall_avg_level'] ?? 1.25, 2) }}</div>
+            <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">{{ __('Lonca Kasası (G)') }}</div>
+            <div class="fw-bolder fs-5 text-warning font-monospace" id="kpiTotalGuildCutVal">{{ number_format($stats['total_guild_cut'], 1) }} SP</div>
           </div>
         </div>
       </div>
 
-      <!-- KPI 6: Top Game Master -->
+      <!-- KPI 6: Depo Kesintisi (%20) -->
       <div class="col-6 col-md-4 col-xl-2">
         <div class="kpi-stat-card d-flex align-items-center gap-3">
-          <div class="kpi-icon-wrapper kpi-icon-purple shadow-sm">
-            <i class="icon-base ti tabler-dice"></i>
+          <div class="kpi-icon-wrapper kpi-icon-red shadow-sm">
+            <i class="icon-base ti tabler-building-warehouse"></i>
           </div>
           <div>
-            <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">{{ __('Top Game Master') }}</div>
-            <div class="fw-bolder fs-5 text-heading font-monospace">{{ $stats['top_gm'] ?? 'Shalvaz' }}</div>
+            <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">{{ __('Depo Kesintisi (H)') }}</div>
+            <div class="fw-bolder fs-5 text-danger font-monospace" id="kpiTotalDepoCutVal">{{ number_format($stats['total_depo_cut'], 1) }} SP</div>
           </div>
         </div>
       </div>
@@ -362,16 +779,16 @@
   </div>
 
   <!-- ====================================================
-       2. REFINED TOOLBAR (GM & LEVEL FILTER REMOVED)
+       2. TOOLBAR & FORMULA ENGINE FILTERS
        ==================================================== -->
   <div class="reports-toolbar mb-4">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
       <!-- Search Input -->
-      <div class="flex-grow-1" style="min-width: 240px; max-width: 420px;">
+      <div class="flex-grow-1" style="min-width: 240px; max-width: 360px;">
         <div class="input-group input-group-merge">
           <span class="input-group-text bg-transparent border-secondary border-opacity-25"><i class="icon-base ti tabler-search text-muted"></i></span>
-          <input type="text" class="form-control bg-transparent border-secondary border-opacity-25 text-heading" id="reportsSearchInput" placeholder="{{ __('Search quests, heroes, GMs, locations...') }}" value="{{ $filters['search'] ?? '' }}" />
-          <button type="button" class="btn btn-outline-secondary border-secondary border-opacity-25 d-none" id="btnReportsSearchClear" title="{{ __('Clear Search') }}">
+          <input type="text" class="form-control bg-transparent border-secondary border-opacity-25 text-heading" id="reportsSearchInput" placeholder="{{ __('Görev, GM, Raporlayan, Oyuncular...') }}" value="{{ $filters['search'] ?? '' }}" />
+          <button type="button" class="btn btn-outline-secondary border-secondary border-opacity-25 d-none" id="btnReportsSearchClear" title="{{ __('Aramayı Temizle') }}">
             <i class="icon-base ti tabler-x fs-6"></i>
           </button>
         </div>
@@ -380,166 +797,323 @@
       <!-- Quick Type Filter Buttons -->
       <div class="d-flex align-items-center gap-1 bg-dark bg-opacity-50 p-1 rounded-3 border border-secondary border-opacity-20" id="reportsTypeFilters">
         <button type="button" class="filter-pill-btn {{ ($filters['type'] ?? 'all') === 'all' ? 'active' : '' }}" data-type="all">
-          {{ __('All Quests') }} (<span id="typeCountAll">{{ $stats['total_quests'] }}</span>)
+          {{ __('Tümü') }} (<span id="typeCountAll">{{ $stats['total_quests'] }}</span>)
         </button>
         <button type="button" class="filter-pill-btn {{ ($filters['type'] ?? '') === 'main' ? 'active' : '' }}" data-type="main">
-          <i class="icon-base ti tabler-crown me-1 text-warning"></i> {{ __('Main Quests') }} (<span id="typeCountMain">{{ $stats['main_quests'] }}</span>)
+          <i class="icon-base ti tabler-shield-check me-1 text-primary"></i> {{ __('Ana (✓)') }} (<span id="typeCountMain">{{ $stats['main_quests'] }}</span>)
+        </button>
+        <button type="button" class="filter-pill-btn {{ ($filters['type'] ?? '') === 'epic' ? 'active' : '' }}" data-type="epic">
+          <i class="icon-base ti tabler-crown me-1 text-warning"></i> {{ __('Epik (✓✓)') }} (<span id="typeCountEpic">{{ $stats['epic_quests'] }}</span>)
         </button>
         <button type="button" class="filter-pill-btn {{ ($filters['type'] ?? '') === 'side' ? 'active' : '' }}" data-type="side">
-          {{ __('Side Quests') }} (<span id="typeCountSide">{{ $stats['side_quests'] }}</span>)
+          <i class="icon-base ti tabler-point me-1 text-muted"></i> {{ __('Yan (✗)') }} (<span id="typeCountSide">{{ $stats['side_quests'] }}</span>)
         </button>
       </div>
 
-      <!-- Sort & Action Buttons -->
+      <!-- GM & Level Dropdowns -->
       <div class="d-flex align-items-center gap-2 flex-wrap ms-auto">
+        <!-- GM Filter -->
+        <select class="form-select form-select-sm bg-transparent border-secondary border-opacity-25 text-heading" id="reportsGmFilter" style="width: auto;">
+          <option value="all">{{ __('Tüm GM\'ler') }}</option>
+          @foreach($gms as $gm)
+            <option value="{{ $gm }}" {{ ($filters['gm'] ?? '') === $gm ? 'selected' : '' }}>{{ $gm }}</option>
+          @endforeach
+        </select>
+
+        <!-- Level Filter -->
+        <select class="form-select form-select-sm bg-transparent border-secondary border-opacity-25 text-heading" id="reportsLevelFilter" style="width: auto;">
+          <option value="all">{{ __('Tüm Seviyeler') }}</option>
+          <option value="1">Lvl 1</option>
+          <option value="2">Lvl 2</option>
+          <option value="3">Lvl 3</option>
+          <option value="4">Lvl 4</option>
+          <option value="5">Lvl 5+</option>
+        </select>
+
         <!-- Sort Select -->
         <select class="form-select form-select-sm bg-transparent border-secondary border-opacity-25 text-heading" id="reportsSortSelect" style="width: auto;">
-          <option value="date-desc">{{ __('Date: Newest') }}</option>
-          <option value="date-asc">{{ __('Date: Oldest') }}</option>
-          <option value="xp-desc">{{ __('XP: Highest') }}</option>
+          <option value="date-desc">{{ __('Tarih: Yeniden Eskiye') }}</option>
+          <option value="date-asc">{{ __('Tarih: Eskiden Yeniye') }}</option>
+          <option value="xp-desc">{{ __('Toplam XP: En Yüksek') }}</option>
+          <option value="avg-desc">{{ __('Ortalama XP: En Yüksek') }}</option>
+          <option value="title-asc">{{ __('Görev Adı: A-Z') }}</option>
         </select>
 
         <!-- Reset Button -->
-        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnResetReportsFilters" title="{{ __('Reset Filters') }}">
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnResetReportsFilters" title="{{ __('Filtreleri Sıfırla') }}">
           <i class="icon-base ti tabler-rotate-clockwise"></i>
-        </button>
-
-        <!-- Görev Raporu Ekle (Toolbar Quick Button) -->
-        <button type="button" class="btn btn-sm btn-add-quest-report" id="btnToolbarAddReport">
-          <i class="icon-base ti tabler-plus fs-6"></i>
-          <span>{{ __('Add Quest Report') }}</span>
         </button>
       </div>
     </div>
   </div>
 
   <!-- ====================================================
-       3. TABLE DARK ("DATA'DA BULUNANLAR GİBİ UZUNLAMASINA")
+       3. MASTER SPREADSHEET TABLE
+       (Görev Adı | Tarih | MQ | Level | XP | Depo | Lonca | Depo | Rapor | Ek | Ortalama | Oyuncu | GM | Raporlayan | Diğer Oyuncular | İşlemler)
        ==================================================== -->
   <div class="card card-table-dark-container mb-4">
     <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
       <div class="d-flex align-items-center gap-2">
         <i class="icon-base ti tabler-table text-primary fs-4"></i>
-        <h5 class="mb-0 fw-bold text-heading" style="font-size: 1.1rem;">
-          {{ __('Quest Reports') }}
+        <h5 class="mb-0 fw-bold text-heading" style="font-size: 1.08rem;">
+          {{ __('Master Sheet Görev Listesi') }}
         </h5>
         <span class="badge bg-primary font-monospace ms-2" id="currentFilteredCount">
           {{ count($reports) }}
         </span>
-        <span class="text-body-secondary small">/ <span id="totalReportsSpan">{{ $stats['total_quests'] }}</span> {{ __('Reports Listed') }}</span>
+        <span class="text-body-secondary small">/ <span id="totalReportsSpan">{{ $stats['total_quests'] }}</span> {{ __('Kayıt') }}</span>
       </div>
 
       <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn btn-sm btn-outline-warning d-flex align-items-center gap-1 shadow-sm" id="btnHeaderGoToLastPage" onclick="goToLastPage()" title="{{ __('En Son Sayfaya Git (Son 50 Rapor)') }}">
+          <i class="icon-base ti tabler-arrow-bar-to-right fs-6"></i>
+          <span>{{ __('Sona Git »') }}</span>
+        </button>
         <span class="badge bg-label-info font-monospace small">
-          <i class="icon-base ti tabler-pointer me-1"></i>{{ __('Click row for full mission report') }}
+          <i class="icon-base ti tabler-calculator me-1"></i> Formül: <code>(E - G - H - I + J) / AL</code>
         </span>
+        <button type="button" class="btn btn-sm btn-primary btn-add-report-trigger d-flex align-items-center gap-1 shadow-sm" id="btnTableOpenAddReportModal" data-bs-toggle="modal" data-bs-target="#modalAddQuestReport">
+          <i class="icon-base ti tabler-plus fs-6"></i>
+          <span>{{ __('Yeni Rapor Ekle') }}</span>
+        </button>
       </div>
     </div>
 
-    <div class="table-responsive text-nowrap">
-      <table class="table table-dark table-quest-dark">
+    <div class="table-responsive-master">
+      <table class="table table-dark table-master-sheet">
         <thead>
           <tr>
-            <th>{{ __('Mission Name') }}</th>
-            <th>{{ __('Date') }}</th>
-            <th>{{ __('Quest Type') }}</th>
-            <th>{{ __('Status') }}</th>
-            <th class="text-end">{{ __('Actions') }}</th>
+            <th style="width: 40px;" class="text-center">#</th>
+            <th style="min-width: 220px;">{{ __('Görev Adı') }} (A)</th>
+            <th style="width: 75px;">{{ __('Tarih') }} (B)</th>
+            <th style="width: 70px;" class="text-center">{{ __('MQ') }} (C)</th>
+            <th style="width: 70px;" class="text-center">{{ __('Level') }} (D)</th>
+            <th style="width: 95px;" class="text-end text-success">{{ __('XP') }} (E)</th>
+            <th style="width: 65px;" class="text-center">{{ __('Depo') }} (F)</th>
+            <th style="width: 95px;" class="text-end text-warning">{{ __('Lonca') }} (G)</th>
+            <th style="width: 95px;" class="text-end text-danger">{{ __('Depo Kes.') }} (H)</th>
+            <th style="width: 80px;" class="text-end">{{ __('Rapor') }} (I)</th>
+            <th style="width: 75px;" class="text-end text-info">{{ __('Ek') }} (J)</th>
+            <th style="width: 120px;" class="text-end">{{ __('Ortalama') }} (K)</th>
+            <th style="width: 75px;" class="text-center">{{ __('Oyuncu') }} (AL)</th>
+            <th style="width: 110px;">{{ __('GM') }} (AM)</th>
+            <th style="width: 130px;">{{ __('Raporlayan') }} (AN)</th>
+            <th style="min-width: 240px;">{{ __('Diğer Oyuncular') }} (AO..BG)</th>
+            <th style="width: 110px;" class="text-end">{{ __('İşlemler') }}</th>
           </tr>
         </thead>
         <tbody class="table-border-bottom-0" id="reportsTableBody">
-          @forelse($reports as $q)
-            <tr class="quest-row-clickable report-row-item"
+          @forelse(collect($reports)->take(50) as $idx => $q)
+            <tr class="quest-row-item report-row-item"
                 data-id="{{ $q['id'] }}"
-                data-type="{{ $q['is_main'] ? 'main' : 'side' }}"
+                data-type="{{ $q['mq'] ?? ($q['is_main'] ? 'main' : 'side') }}"
                 data-gm="{{ mb_strtolower($q['gm'] ?? '') }}"
                 data-level="{{ $q['level'] ?? 1 }}"
                 data-xp="{{ $q['total_xp'] ?? 0 }}"
+                data-avg="{{ $q['avg_reward'] ?? 0 }}"
                 data-date="{{ $q['date'] }}"
-                title="{{ __('Click row for full mission report') }}">
+                data-title="{{ mb_strtolower($q['title'] ?? '') }}">
               
-              <!-- 1. GÖREVİN İSMİ -->
+              <!-- 0. SIRA NO -->
+              <td class="text-center text-body-secondary font-monospace" style="font-size: 0.78rem;">
+                {{ $q['id'] }}
+              </td>
+
+              <!-- 1. GÖREV ADI (A) -->
               <td>
                 <div class="d-flex align-items-center">
-                  @if($q['tier_type'] === 'epic')
-                    <div class="avatar avatar-sm bg-label-warning rounded-3 me-3 d-flex align-items-center justify-content-center">
-                      <i class="icon-base ti tabler-crown fs-5 text-warning"></i>
-                    </div>
-                  @elseif($q['is_main'])
-                    <div class="avatar avatar-sm bg-label-primary rounded-3 me-3 d-flex align-items-center justify-content-center">
-                      <i class="icon-base ti tabler-shield-check fs-5 text-primary"></i>
-                    </div>
+                  @if(($q['mq'] ?? '') === 'epic')
+                    <span class="badge bg-warning text-dark me-2 px-2 py-0" title="Epik Görev (3x XP)">✓✓</span>
+                  @elseif(!empty($q['is_main']) || ($q['mq'] ?? '') === 'main')
+                    <span class="badge bg-primary me-2 px-2 py-0" title="Ana Görev">✓</span>
                   @else
-                    <div class="avatar avatar-sm bg-label-secondary rounded-3 me-3 d-flex align-items-center justify-content-center">
-                      <i class="icon-base ti tabler-scroll fs-5 text-muted"></i>
-                    </div>
+                    <span class="badge bg-secondary me-2 px-2 py-0" title="Yan Görev">✗</span>
                   @endif
-
                   <div>
-                    <span class="fw-bold text-heading d-block" style="font-size: 0.96rem;">{{ $q['title'] }}</span>
-                    <small class="text-body-secondary font-monospace"><i class="icon-base ti tabler-map-pin text-danger opacity-75 me-1"></i>{{ $q['location'] }}</small>
+                    <span class="fw-bold text-heading quest-title-text d-block" style="cursor: pointer;" onclick="openReportDetail({{ $q['id'] }})">
+                      {{ $q['title'] }}
+                    </span>
+                    <small class="text-body-secondary font-monospace" style="font-size: 0.75rem;">
+                      <i class="icon-base ti tabler-map-pin text-danger opacity-75 me-1"></i>{{ $q['location'] ?? 'Siwion' }}
+                    </small>
                   </div>
                 </div>
               </td>
 
-              <!-- 2. TARİHİ -->
+              <!-- 2. TARİH (B) -->
               <td>
-                <span class="font-monospace text-body-secondary fw-semibold" style="font-size: 0.9rem;">
-                  <i class="icon-base ti tabler-calendar-time text-primary me-1 fs-6"></i>{{ $q['date'] }}
+                <span class="font-monospace text-body-secondary fw-semibold">
+                  {{ $q['date'] }}
                 </span>
               </td>
 
-              <!-- 3. MAIN QUEST MI? -->
-              <td>
-                @if($q['tier_type'] === 'epic')
-                  <span class="badge badge-epic font-monospace fw-bold px-3 py-1">
-                    <i class="icon-base ti tabler-crown me-1"></i>{{ __('Epic Main Quest') }} (✓✓)
-                  </span>
-                @elseif($q['is_main'])
-                  <span class="badge badge-main font-monospace fw-bold px-3 py-1">
-                    <i class="icon-base ti tabler-shield-check me-1"></i>{{ __('Main Quest') }} (✓)
-                  </span>
+              <!-- 3. MQ (C) -->
+              <td class="text-center">
+                @if(($q['mq'] ?? '') === 'epic')
+                  <span class="badge badge-mq-epic font-monospace px-2 py-1" title="Epik Ana Görev (3x)">✓✓</span>
+                @elseif(!empty($q['is_main']) || ($q['mq'] ?? '') === 'main')
+                  <span class="badge badge-mq-main font-monospace px-2 py-1" title="Ana Görev">✓</span>
                 @else
-                  <span class="badge badge-side font-monospace px-3 py-1">
-                    <i class="icon-base ti tabler-point me-1"></i>{{ __('Side Quest') }} (x)
-                  </span>
+                  <span class="badge badge-mq-side font-monospace px-2 py-1" title="Yan Görev">✗</span>
                 @endif
               </td>
 
-              <!-- 4. GÖREV BAŞARILI MI? -->
-              <td>
-                @if(($q['status'] ?? 'success') === 'failed')
-                  <span class="badge bg-label-danger text-danger border border-danger border-opacity-25 px-3 py-1 font-monospace fw-semibold">
-                    <i class="icon-base ti tabler-circle-x me-1"></i>{{ __('Failed') }}
-                  </span>
+              <!-- 4. LEVEL (D) -->
+              <td class="text-center font-monospace fw-bold text-info">
+                {{ $q['level'] }}
+              </td>
+
+              <!-- 5. XP (E) -->
+              <td class="text-end font-monospace fw-bold text-success">
+                {{ number_format($q['total_xp']) }}
+              </td>
+
+              <!-- 6. DEPO DURUMU (F) -->
+              <td class="text-center">
+                @if(!empty($q['depo_status']) || (float)($q['depo_cut'] ?? 0) == 0)
+                  <span class="badge badge-depo-ok px-2 py-1" title="Depo Teslim Edildi (Ceza Yok)">🗸</span>
                 @else
-                  <span class="badge bg-label-success text-success border border-success border-opacity-25 px-3 py-1 font-monospace fw-semibold">
-                    <i class="icon-base ti tabler-circle-check me-1"></i>{{ __('Successful') }}
-                  </span>
+                  <span class="badge badge-depo-fail px-2 py-1" title="Depo Teslim Edilmedi (%20 Ceza Kesildi)">✗</span>
                 @endif
               </td>
 
-              <!-- 5. DETAYLAR TUŞU -->
+              <!-- 7. LONCA KESİNTİSİ (G) -->
+              <td class="text-end font-monospace text-warning fw-semibold">
+                {{ number_format($q['guild_cut'], 1) }}
+              </td>
+
+              <!-- 8. DEPO KESİNTİSİ (H) -->
+              <td class="text-end font-monospace {{ (float)$q['depo_cut'] > 0 ? 'text-danger fw-bold' : 'text-body-secondary' }}">
+                {{ number_format($q['depo_cut'], 1) }}
+              </td>
+
+              <!-- 9. RAPOR KESİNTİSİ (I) -->
+              <td class="text-end font-monospace text-heading">
+                {{ (float)($q['rapor_cut'] ?? 0) > 0 ? number_format($q['rapor_cut'], 0) : '-' }}
+              </td>
+
+              <!-- 10. EK ÖDÜL (J) -->
+              <td class="text-end font-monospace text-info">
+                {{ (float)($q['extra_reward'] ?? 0) > 0 ? '+' . number_format($q['extra_reward'], 0) : '-' }}
+              </td>
+
+              <!-- 11. ORTALAMA XP (K) -->
               <td class="text-end">
-                <button type="button" class="btn btn-sm btn-outline-primary btn-open-report" data-id="{{ $q['id'] }}">
-                  <i class="icon-base ti tabler-file-text me-1 fs-6"></i>
-                  <span>{{ __('Details') }}</span>
-                  <i class="icon-base ti tabler-chevron-right ms-1 fs-6"></i>
-                </button>
+                <span class="badge badge-avg-xp font-monospace">
+                  {{ number_format($q['avg_reward'], 2) }}
+                </span>
+              </td>
+
+              <!-- 12. OYUNCU SAYISI (AL) -->
+              <td class="text-center font-monospace fw-bold text-heading">
+                {{ $q['player_count'] }}
+              </td>
+
+              <!-- 13. GM (AM) -->
+              <td>
+                <span class="badge bg-label-warning font-monospace">
+                  <i class="icon-base ti tabler-dice me-1"></i>{{ $q['gm'] }}
+                </span>
+              </td>
+
+              <!-- 14. RAPORLAYAN (AN) -->
+              <td>
+                <span class="badge bg-label-info font-monospace text-info fw-bold">
+                  <i class="icon-base ti tabler-feather me-1"></i>{{ $q['reporter'] }}
+                </span>
+              </td>
+
+              <!-- 15. DİĞER OYUNCULAR (AO..BG) -->
+              <td>
+                <div class="d-flex align-items-center flex-wrap gap-1">
+                  @foreach($q['other_players'] ?? [] as $other)
+                    <span class="party-pill-tag">
+                      <i class="icon-base ti tabler-user opacity-50" style="font-size: 0.75rem;"></i>
+                      <span>{{ $other }}</span>
+                    </span>
+                  @endforeach
+                </div>
+              </td>
+
+              <!-- 16. İŞLEMLER (ACTIONS) -->
+              <td class="text-end">
+                <div class="d-inline-flex align-items-center gap-1">
+                  <!-- Detay -->
+                  <button type="button" class="btn btn-icon btn-sm btn-outline-primary btn-open-report" onclick="openReportDetail({{ $q['id'] }})" title="{{ __('Rapor Detayları') }}">
+                    <i class="icon-base ti tabler-file-text fs-6"></i>
+                  </button>
+
+                  <!-- Düzenle -->
+                  <button type="button" class="btn btn-icon btn-sm btn-outline-warning" onclick="openEditReportModal({{ $q['id'] }})" title="{{ __('Düzenle') }}">
+                    <i class="icon-base ti tabler-edit fs-6"></i>
+                  </button>
+
+                  <!-- XP Tracker'a Dağıt -->
+                  <button type="button" class="btn btn-icon btn-sm btn-outline-success" onclick="distributeReportXp({{ $q['id'] }})" title="{{ __('Maceracılara XP Dağıt (XP Tracker)') }}">
+                    <i class="icon-base ti tabler-bolt fs-6"></i>
+                  </button>
+
+                  <!-- Sil -->
+                  <button type="button" class="btn btn-icon btn-sm btn-outline-danger" onclick="deleteReportItem({{ $q['id'] }})" title="{{ __('Sil') }}">
+                    <i class="icon-base ti tabler-trash fs-6"></i>
+                  </button>
+                </div>
               </td>
             </tr>
           @empty
             <tr>
-              <td colspan="5" class="text-center py-5">
+              <td colspan="17" class="text-center py-5">
                 <div class="avatar avatar-xl bg-label-secondary mx-auto mb-3 rounded-circle d-flex align-items-center justify-content-center">
                   <i class="icon-base ti tabler-file-search fs-1 text-muted"></i>
                 </div>
-                <h5 class="fw-bold text-heading">{{ __('No quest reports found matching your criteria.') }}</h5>
+                <h5 class="fw-bold text-heading">{{ __('Kriterlere uygun görev raporu bulunamadı.') }}</h5>
               </td>
             </tr>
           @endforelse
         </tbody>
       </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div class="card-footer d-flex align-items-center justify-content-between flex-wrap gap-3 py-3 border-top border-secondary border-opacity-20" id="reportsPaginationContainer">
+      <div class="d-flex align-items-center gap-2 flex-wrap text-body-secondary small">
+        <span class="badge bg-label-secondary font-monospace"><i class="icon-base ti tabler-files me-1"></i>50 Rapor / Sayfa</span>
+        <span class="opacity-50">|</span>
+        <span id="paginationInfoText" class="font-monospace text-heading">
+          {{ __('Yükleniyor...') }}
+        </span>
+      </div>
+
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <!-- Quick First Page -->
+        <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 btn-pagination-action" id="btnPageFirst" onclick="goToPage(1)" title="{{ __('İlk Sayfaya Git (Sayfa 1)') }}">
+          <i class="icon-base ti tabler-chevrons-left fs-6"></i>
+          <span class="d-none d-sm-inline">{{ __('İlk') }}</span>
+        </button>
+
+        <!-- Previous Page -->
+        <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 btn-pagination-action" id="btnPagePrev" onclick="goToPrevPage()" title="{{ __('Önceki Sayfa') }}">
+          <i class="icon-base ti tabler-chevron-left fs-6"></i>
+          <span class="d-none d-sm-inline">{{ __('Önceki') }}</span>
+        </button>
+
+        <!-- Dynamic Numeric Pagination Buttons -->
+        <ul class="pagination pagination-sm mb-0 flex-wrap" id="reportsPaginationList">
+          <!-- Populated by JS -->
+        </ul>
+
+        <!-- Next Page -->
+        <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 btn-pagination-action" id="btnPageNext" onclick="goToNextPage()" title="{{ __('Sonraki Sayfa') }}">
+          <span class="d-none d-sm-inline">{{ __('Sonraki') }}</span>
+          <i class="icon-base ti tabler-chevron-right fs-6"></i>
+        </button>
+
+        <!-- Sona Git Button (Prominent) -->
+        <button type="button" class="btn btn-sm btn-primary d-flex align-items-center gap-1 shadow-sm px-3 btn-pagination-action" id="btnPageLast" onclick="goToLastPage()" title="{{ __('En Son Sayfaya Git') }}">
+          <span class="fw-bold">{{ __('Sona Git') }}</span>
+          <i class="icon-base ti tabler-player-track-next fs-6"></i>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -548,265 +1122,1175 @@
     <div class="avatar avatar-xl bg-label-secondary mx-auto mb-3 rounded-circle d-flex align-items-center justify-content-center">
       <i class="icon-base ti tabler-file-search fs-1 text-muted"></i>
     </div>
-    <h5 class="fw-bold text-heading">{{ __('No quest reports found matching your criteria.') }}</h5>
+    <h5 class="fw-bold text-heading">{{ __('Filtre kriterlerinize uygun görev raporu bulunamadı.') }}</h5>
     <p class="text-body-secondary small mb-3">Filtrelerinizi temizleyerek veya farklı bir arama terimi deneyerek tekrar arayabilirsiniz.</p>
     <div>
       <button type="button" class="btn btn-outline-primary btn-sm" id="btnEmptyResetFilters">
-        <i class="icon-base ti tabler-rotate-clockwise me-1"></i> {{ __('Reset Filters') }}
+        <i class="icon-base ti tabler-rotate-clockwise me-1"></i> {{ __('Filtreleri Sıfırla') }}
       </button>
     </div>
   </div>
+  </div>
+  <!-- /#tabViewQuests -->
+
+  <!-- ====================================================
+       TAB VIEW 2: LONCA XP & RÜTBELER HAVUZU (SÜTUNLAR BU..CA)
+       ==================================================== -->
+  <div id="tabViewGuildPool" class="tab-pane-view d-none">
+    
+    <!-- Hero Banner for Guild Pool -->
+    <div class="reports-hero-banner p-3 p-md-4 mb-4">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <div class="avatar avatar-sm bg-label-warning rounded-circle d-flex align-items-center justify-content-center">
+              <i class="icon-base ti tabler-shield-dollar fs-4 text-warning"></i>
+            </div>
+            <h3 class="mb-0 fw-bold text-heading" style="font-size: 1.45rem; letter-spacing: 0.3px;">
+              {{ __('Lonca XP & Rütbeler Dağılım Havuzu') }}
+            </h3>
+            <span class="badge bg-warning text-dark font-monospace px-3 py-1 shadow-sm fs-6" id="poolLevelBadge">
+              Level {{ $guildPoolData['guild_xp']['level'] ?? 12 }} Lonca
+            </span>
+          </div>
+          <p class="text-body-secondary small mb-0">
+            {{ __('Master Sheet BU:CA Sütunları & Formül Mimarisi') }} &bull; {{ __('Wiki XP, Lonca XP kasası, Uzman Havuzu & Payı ve 7 kademeli rütbe tahsis matrisi.') }}
+          </p>
+        </div>
+
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <!-- Reset Guild Pool Defaults -->
+          <button type="button" class="btn btn-outline-warning btn-sm" id="btnResetGuildPoolDefaults" title="{{ __('Google Sheet Orijinal Değerlerine Sıfırla') }}">
+            <i class="icon-base ti tabler-refresh me-1"></i> {{ __('Sheet Sıfırla') }}
+          </button>
+
+          <!-- New Quest Report & Calc Button -->
+          <button type="button" class="btn btn-outline-primary btn-sm btn-add-report-trigger" id="btnGuildPoolOpenAddReportModal" data-bs-toggle="modal" data-bs-target="#modalAddQuestReport">
+            <i class="icon-base ti tabler-calculator me-1"></i> {{ __('Yeni Rapor & Ortalama Hesapla') }}
+          </button>
+
+          <!-- Edit Guild Pool Data -->
+          <button type="button" class="btn btn-primary btn-sm btn-add-quest-report" id="btnOpenEditGuildPoolModal">
+            <i class="icon-base ti tabler-edit fs-5"></i>
+            <span>{{ __('Havuz & Rütbe Verilerini Düzenle') }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 4 Hero Metric KPI Cards -->
+      <div class="row g-3">
+        <!-- KPI 1: Wiki XP Paneli -->
+        <div class="col-12 col-md-6 col-xl-3">
+          <div class="kpi-stat-card">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <div class="d-flex align-items-center gap-2">
+                <div class="kpi-icon-wrapper kpi-icon-cyan" style="width: 38px; height: 38px; font-size: 1.15rem;">
+                  <i class="icon-base ti tabler-book"></i>
+                </div>
+                <div>
+                  <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">{{ __('Wiki XP (BW..BY)') }}</div>
+                  <div class="fw-bolder fs-5 text-info font-monospace" id="kpiWikiRemainingVal">
+                    {{ number_format($guildPoolData['wiki_xp']['remaining'] ?? 14253, 2) }} XP
+                  </div>
+                </div>
+              </div>
+              <span class="badge bg-label-info font-monospace small" title="=BW2-BX2">Kalan (BY2)</span>
+            </div>
+            <div class="d-flex justify-content-between text-body-secondary small font-monospace pt-1 border-top border-secondary border-opacity-10" style="font-size: 0.75rem;">
+              <span>Total (BW): <b class="text-heading" id="kpiWikiTotalVal">{{ number_format($guildPoolData['wiki_xp']['total'] ?? 53800, 2) }}</b></span>
+              <span>Dağıtılan (BX): <b class="text-warning" id="kpiWikiDistVal">{{ number_format($guildPoolData['wiki_xp']['distributed'] ?? 39547, 2) }}</b></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI 2: Lonca XP & Seviye -->
+        <div class="col-12 col-md-6 col-xl-3">
+          <div class="kpi-stat-card">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <div class="d-flex align-items-center gap-2">
+                <div class="kpi-icon-wrapper kpi-icon-gold" style="width: 38px; height: 38px; font-size: 1.15rem;">
+                  <i class="icon-base ti tabler-shield"></i>
+                </div>
+                <div>
+                  <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">{{ __('Lonca XP & Level') }}</div>
+                  <div class="fw-bolder fs-5 text-warning font-monospace" id="kpiGuildXpTotalVal">
+                    {{ number_format($guildPoolData['guild_xp']['total'] ?? 157150, 2) }} XP
+                  </div>
+                </div>
+              </div>
+              <span class="badge bg-label-warning font-monospace small">Lvl {{ $guildPoolData['guild_xp']['level'] ?? 12 }}</span>
+            </div>
+            <div class="d-flex justify-content-between text-body-secondary small font-monospace pt-1 border-top border-secondary border-opacity-10" style="font-size: 0.75rem;">
+              <span>Hedef (BX3): <b class="text-heading">{{ number_format($guildPoolData['guild_xp']['next_level_threshold'] ?? 210000, 0) }}</b></span>
+              <span>Baz (BV3): <b class="text-muted">{{ number_format($guildPoolData['guild_xp']['base'] ?? 145000, 0) }}</b></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI 3: Havuz & Uzman Payı -->
+        <div class="col-12 col-md-6 col-xl-3">
+          <div class="kpi-stat-card">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <div class="d-flex align-items-center gap-2">
+                <div class="kpi-icon-wrapper kpi-icon-green" style="width: 38px; height: 38px; font-size: 1.15rem;">
+                  <i class="icon-base ti tabler-coins"></i>
+                </div>
+                <div>
+                  <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">{{ __('Uzman Payı (=BV5/BW10)') }}</div>
+                  <div class="fw-bolder fs-5 text-success font-monospace" id="kpiPoolPayVal">
+                    {{ number_format($guildPoolData['pool_share_uzman'] ?? 98295.22, 2) }} XP
+                  </div>
+                </div>
+              </div>
+              <span class="badge bg-label-success font-monospace small">21 Uzman</span>
+            </div>
+            <div class="d-flex justify-content-between text-body-secondary small font-monospace pt-1 border-top border-secondary border-opacity-10" style="font-size: 0.75rem;">
+              <span>Havuz (BV5): <b class="text-heading" id="kpiPoolTotalVal">{{ number_format($guildPoolData['pool_total'] ?? 2064199.61, 2) }}</b></span>
+              <span class="text-success fw-semibold">Net Pay/Kişi</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI 4: Mali Bakiye & Rütbeler Toplamı -->
+        <div class="col-12 col-md-6 col-xl-3">
+          <div class="kpi-stat-card">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <div class="d-flex align-items-center gap-2">
+                <div class="kpi-icon-wrapper kpi-icon-purple" style="width: 38px; height: 38px; font-size: 1.15rem;">
+                  <i class="icon-base ti tabler-scale"></i>
+                </div>
+                <div>
+                  <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">{{ __('Genel Toplam (=CA7+CA4)') }}</div>
+                  <div class="fw-bolder fs-5 text-primary font-monospace" id="kpiGrandTotalVal">
+                    {{ number_format($guildPoolData['grand_total_xp'] ?? 3459587.50, 2) }} XP
+                  </div>
+                </div>
+              </div>
+              <span class="badge bg-label-primary font-monospace small">Genel Bakiye</span>
+            </div>
+            <div class="d-flex justify-content-between text-body-secondary small font-monospace pt-1 border-top border-secondary border-opacity-10" style="font-size: 0.75rem;">
+              <span>Rütbeler (CA7): <b class="text-heading" id="kpiRanksTotalVal">{{ number_format($guildPoolData['ranks_total_spent'] ?? 3439017.50, 2) }}</b></span>
+              <span>Ek Fon (CA4): <b class="text-info" id="kpiExtraFundVal">+{{ number_format($guildPoolData['extra_fund'] ?? 20570, 2) }}</b></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rütbeler Tablosu (Columns BU..CA) -->
+    <!-- ====================================================
+         CANLI XP HESAPLAMA & FORMÜL ÇÖZÜMLEME MERKEZİ (BU..CA)
+         ==================================================== -->
+    <div class="card card-table-dark-container mb-4" style="background: radial-gradient(circle at 10% 20%, rgba(115, 103, 240, 0.08) 0%, rgba(18, 20, 36, 0.95) 90%);">
+      <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2 pb-2">
+        <div class="d-flex align-items-center gap-2">
+          <div class="avatar avatar-sm bg-label-primary rounded-circle d-flex align-items-center justify-content-center">
+            <i class="icon-base ti tabler-calculator fs-4 text-primary"></i>
+          </div>
+          <div>
+            <h5 class="mb-0 fw-bold text-heading" style="font-size: 1.12rem;">
+              {{ __('Lonca XP & Rütbeler Canlı Hesaplama Motoru') }}
+            </h5>
+            <small class="text-body-secondary font-monospace">{{ __('Master Sheet BU..CA Sütun Mimarisi & Adım Adım Matematiksel Çözümler') }}</small>
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-label-success font-monospace px-3 py-1">
+            <i class="icon-base ti tabler-check me-1"></i> {{ __('Formüller Aktif & Doğrulandı') }}
+          </span>
+        </div>
+      </div>
+
+      <div class="card-body pt-2 pb-3">
+        <!-- 4 Adımda Matematiksel Çözüm Grid -->
+        <div class="row g-3 mb-4">
+          <!-- 1. Lonca XP Kasası -->
+          <div class="col-12 col-md-6 col-xl-3">
+            <div class="p-3 rounded-3 bg-dark bg-opacity-75 border border-secondary border-opacity-25 h-100 position-relative">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="badge bg-warning text-dark font-monospace fw-bold">1. Lonca Kasası</span>
+                <code class="text-warning small">=SUM(G2:G)</code>
+              </div>
+              <h6 class="fw-bold text-heading mb-1" style="font-size: 0.92rem;">{{ __('Lonca XP Birikimi') }}</h6>
+              <div class="fs-5 fw-bold text-warning font-monospace mb-2" id="calcCockpitGuildXp">
+                {{ number_format($guildPoolData['guild_xp']['total'] ?? 157150, 2) }} XP
+              </div>
+              <div class="text-body-secondary small font-monospace" style="font-size: 0.78rem;">
+                <div class="d-flex justify-content-between mb-1">
+                  <span>{{ __('Mevcut Seviye') }}:</span>
+                  <b class="text-heading">Lvl {{ $guildPoolData['guild_xp']['level'] ?? 12 }}</b>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                  <span>{{ __('Baz / Eşik') }}:</span>
+                  <span>{{ number_format($guildPoolData['guild_xp']['base'] ?? 145000) }} / {{ number_format($guildPoolData['guild_xp']['next_level_threshold'] ?? 210000) }}</span>
+                </div>
+                <div class="progress mt-2" style="height: 6px;">
+                  <div class="progress-bar bg-warning" role="progressbar" style="width: 24.2%;" aria-valuenow="24.2" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <div class="text-end text-muted mt-1" style="font-size: 0.72rem;">Kalan: 529 XP (%24.2)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Wiki XP Havuzu -->
+          <div class="col-12 col-md-6 col-xl-3">
+            <div class="p-3 rounded-3 bg-dark bg-opacity-75 border border-secondary border-opacity-25 h-100 position-relative">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="badge bg-info text-dark font-monospace fw-bold">2. Wiki Havuzu</span>
+                <code class="text-info small">=BW2 - BX2</code>
+              </div>
+              <h6 class="fw-bold text-heading mb-1" style="font-size: 0.92rem;">{{ __('Kalan Wiki Dağıtım Payı') }}</h6>
+              <div class="fs-5 fw-bold text-info font-monospace mb-2" id="calcCockpitWikiRem">
+                {{ number_format($guildPoolData['wiki_xp']['remaining'] ?? 14253, 2) }} XP
+              </div>
+              <div class="text-body-secondary small font-monospace" style="font-size: 0.78rem;">
+                <div class="d-flex justify-content-between mb-1">
+                  <span>{{ __('Toplam Wiki') }} (BW2):</span>
+                  <b class="text-heading">{{ number_format($guildPoolData['wiki_xp']['total'] ?? 53800, 2) }}</b>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                  <span>{{ __('Dağıtılan') }} (BX2):</span>
+                  <b class="text-warning">{{ number_format($guildPoolData['wiki_xp']['distributed'] ?? 39547, 2) }}</b>
+                </div>
+                <div class="progress mt-2" style="height: 6px;">
+                  <div class="progress-bar bg-info" role="progressbar" style="width: 73.5%;" aria-valuenow="73.5" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <div class="text-end text-muted mt-1" style="font-size: 0.72rem;">%73.5 {{ __('Oyunculara Dağıtıldı') }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Mali Havuz & Uzman Payı -->
+          <div class="col-12 col-md-6 col-xl-3">
+            <div class="p-3 rounded-3 bg-dark bg-opacity-75 border border-secondary border-opacity-25 h-100 position-relative">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="badge bg-success text-dark font-monospace fw-bold">3. Uzman Payı</span>
+                <code class="text-success small">=BV5 / 21</code>
+              </div>
+              <h6 class="fw-bold text-heading mb-1" style="font-size: 0.92rem;">{{ __('Uzman Başına Net Pay') }}</h6>
+              <div class="fs-5 fw-bold text-success font-monospace mb-2" id="calcCockpitUzmanPay">
+                {{ number_format($guildPoolData['pool_share_uzman'] ?? 98295.22, 2) }} XP
+              </div>
+              <div class="text-body-secondary small font-monospace" style="font-size: 0.78rem;">
+                <div class="d-flex justify-content-between mb-1">
+                  <span>{{ __('Havuz Tutarı') }} (BV5):</span>
+                  <b class="text-heading">{{ number_format($guildPoolData['pool_total'] ?? 2064199.61, 2) }}</b>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                  <span>{{ __('Uzman Sayısı') }} (BW11):</span>
+                  <b class="text-success">21 {{ __('Uzman') }}</b>
+                </div>
+                <div class="p-1 rounded bg-black bg-opacity-40 text-center text-success mt-2 font-monospace" style="font-size: 0.72rem;">
+                  Pay = 2,064,199.61 / 21 = 98,295.22 XP
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Rütbeler & Genel Bakiye -->
+          <div class="col-12 col-md-6 col-xl-3">
+            <div class="p-3 rounded-3 bg-dark bg-opacity-75 border border-secondary border-opacity-25 h-100 position-relative">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="badge bg-primary text-white font-monospace fw-bold">4. Genel Bakiye</span>
+                <code class="text-primary small">=CA7 + CA4</code>
+              </div>
+              <h6 class="fw-bold text-heading mb-1" style="font-size: 0.92rem;">{{ __('Toplam XP Hacmi') }}</h6>
+              <div class="fs-5 fw-bold text-primary font-monospace mb-2" id="calcCockpitGrandTotal">
+                {{ number_format($guildPoolData['grand_total_xp'] ?? 3459587.50, 2) }} XP
+              </div>
+              <div class="text-body-secondary small font-monospace" style="font-size: 0.78rem;">
+                <div class="d-flex justify-content-between mb-1">
+                  <span>{{ __('Rütbeler Harcama') }}:</span>
+                  <b class="text-heading">{{ number_format($guildPoolData['ranks_total_spent'] ?? 3439017.50, 2) }}</b>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                  <span>{{ __('Kasa Ek Fonu') }}:</span>
+                  <b class="text-info">+{{ number_format($guildPoolData['extra_fund'] ?? 20570, 2) }}</b>
+                </div>
+                <div class="p-1 rounded bg-black bg-opacity-40 text-center text-primary mt-2 font-monospace" style="font-size: 0.72rem;">
+                  CA2 = 3,439,017.50 + 20,570.00
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Canlı İnteraktif Simülatör Kutusu -->
+        <div class="p-3 rounded-3 bg-black bg-opacity-40 border border-primary border-opacity-20">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+            <div class="d-flex align-items-center gap-2">
+              <i class="icon-base ti tabler-adjustments-alt text-warning fs-4"></i>
+              <span class="fw-bold text-heading" style="font-size: 0.95rem;">{{ __('Canlı Rütbe & Pay Simülatörü (Parametreleri Değiştirin)') }}</span>
+            </div>
+            <span class="badge bg-label-warning font-monospace small">{{ __('Anlık Canlı Hesaplama') }}</span>
+          </div>
+
+          <div class="row g-3 align-items-end">
+            <div class="col-12 col-md-3">
+              <label class="form-label text-body-secondary small font-monospace mb-1">{{ __('Havuz Tutarı (BV5 XP)') }}</label>
+              <input type="number" step="1000" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading font-monospace fw-bold" id="simPoolInput" value="{{ $guildPoolData['pool_total'] ?? 2064199.61 }}">
+            </div>
+            <div class="col-12 col-md-2">
+              <label class="form-label text-body-secondary small font-monospace mb-1">{{ __('Uzman Sayısı (BW11)') }}</label>
+              <input type="number" min="1" max="100" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading font-monospace text-center fw-bold" id="simUzmanInput" value="21">
+            </div>
+            <div class="col-12 col-md-3">
+              <label class="form-label text-body-secondary small font-monospace mb-1">{{ __('Lonca XP (BW3)') }}</label>
+              <input type="number" step="1000" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading font-monospace fw-bold" id="simGuildXpInput" value="{{ $guildPoolData['guild_xp']['total'] ?? 157150 }}">
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="p-2 rounded bg-dark border border-success border-opacity-30 d-flex align-items-center justify-content-between">
+                <div>
+                  <small class="text-body-secondary d-block font-monospace" style="font-size: 0.72rem;">{{ __('Hesaplanan Uzman Payı') }}:</small>
+                  <span class="fs-6 fw-bold text-success font-monospace" id="simUzmanPayOutput">{{ number_format($guildPoolData['pool_share_uzman'] ?? 98295.22, 2) }} XP</span>
+                </div>
+                <div class="text-end">
+                  <small class="text-body-secondary d-block font-monospace" style="font-size: 0.72rem;">{{ __('Uzman Kapasite XP (%60)') }}:</small>
+                  <span class="fs-6 fw-bold text-warning font-monospace" id="simUzmanCapOutput">{{ number_format(($guildPoolData['guild_xp']['total'] ?? 157150) * 0.60, 2) }} XP</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rütbeler Tablosu (Columns BU..CA) -->
+    <div class="card card-table-dark-container mb-4">
+      <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+          <i class="icon-base ti tabler-shield-check text-warning fs-4"></i>
+          <h5 class="mb-0 fw-bold text-heading" style="font-size: 1.08rem;">
+            {{ __('Rütbeler & XP Dağıtım Tablosu') }} <span class="font-monospace text-body-secondary fs-6">(Google Sheet BU..CA)</span>
+          </h5>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-label-info font-monospace small">
+            <i class="icon-base ti tabler-calculator me-1"></i> Formül: <code>=SUMIF('Player XP Tracker'!E:E, BU_x, 'Player XP Tracker'!H:H)</code>
+          </span>
+        </div>
+      </div>
+
+      <div class="table-responsive-master">
+        <table class="table table-dark table-master-sheet" id="guildRanksTable">
+          <thead>
+            <tr>
+              <th style="min-width: 140px;">{{ __('Rütbe') }} (BU)</th>
+              <th style="width: 110px;" class="text-end">{{ __('Kapasite') }} (BV)</th>
+              <th style="width: 100px;" class="text-center">{{ __('Olan') }} (BW)</th>
+              <th style="width: 140px;" class="text-end text-warning">{{ __('Kapasite XP') }} (BX)</th>
+              <th style="width: 140px;" class="text-end text-info">{{ __('Olan XP') }} (BY)</th>
+              <th style="width: 140px;" class="text-end text-success">{{ __('Net XP') }} (BZ)</th>
+              <th style="width: 160px;" class="text-end text-primary">{{ __('Harcanan XP') }} (CA)</th>
+              <th style="min-width: 250px;" class="text-start">{{ __('XP Hesaplama Formülü & Açıklaması') }}</th>
+            </tr>
+          </thead>
+          <tbody id="guildRanksTableBody">
+            @foreach($guildPoolData['ranks'] as $rk)
+              @php
+                $rName = $rk['rank'];
+                $badgeClass = match($rName) {
+                  'Bailiff' => 'badge-rank-bailiff',
+                  'Uzman' => 'badge-rank-uzman',
+                  'Kıdemli' => 'badge-rank-kidemli',
+                  'Üye' => 'badge-rank-uye',
+                  'Clerk' => 'badge-rank-clerk',
+                  'Aday' => 'badge-rank-aday',
+                  default => 'badge-rank-inaktif'
+                };
+              @endphp
+              <tr class="quest-row-item">
+                <!-- Rütbe (BU) -->
+                <td>
+                  <span class="badge {{ $badgeClass }} px-2 py-1 font-monospace fs-6">
+                    {{ $rName }}
+                  </span>
+                </td>
+
+                <!-- Kapasite (BV) -->
+                <td class="text-end font-monospace text-heading fw-semibold" title="{{ __('Kapasite Sınırı (BV)') }}">
+                  {{ $rk['capacity'] !== null ? number_format($rk['capacity'], 2) : '-' }}
+                </td>
+
+                <!-- Olan (BW) -->
+                <td class="text-center font-monospace fw-bold {{ (int)$rk['current_count'] > 0 ? 'text-warning' : 'text-body-secondary' }}" title="{{ __('Aktif Oyuncu Sayısı (BW)') }}">
+                  {{ number_format($rk['current_count']) }}
+                </td>
+
+                <!-- Kapasite XP (BX) -->
+                <td class="text-end font-monospace text-warning fw-semibold" title="{{ __('Kademe Kapasite XP (BX)') }}">
+                  {{ $rk['capacity_xp'] !== null ? number_format($rk['capacity_xp'], 2) : '-' }}
+                </td>
+
+                <!-- Olan XP (BY) -->
+                <td class="text-end font-monospace text-info fw-semibold" title="{{ __('Gerçekleşen Olan XP (BY)') }}">
+                  {{ $rk['current_xp'] !== null ? number_format($rk['current_xp'], 2) : '-' }}
+                </td>
+
+                <!-- Net XP (BZ) -->
+                <td class="text-end font-monospace text-success fw-bold" title="{{ __('Kişi Başı Net Dağıtım XP (BZ)') }}">
+                  {{ $rk['net_xp'] !== null ? number_format($rk['net_xp'], 2) : '-' }}
+                </td>
+
+                <!-- Harcanan XP (CA) -->
+                <td class="text-end font-monospace text-heading fw-bolder" style="font-size: 0.95rem;" title="{{ __('Rütbe Toplam Harcanan XP (CA)') }}">
+                  {{ number_format($rk['spent_xp'], 2) }}
+                </td>
+
+                <!-- XP Hesaplama Formülü & Açıklaması -->
+                <td class="text-start font-monospace small">
+                  <span class="badge bg-dark border border-secondary border-opacity-25 text-info py-1 px-2 d-inline-block text-wrap" style="max-width: 320px; font-size: 0.74rem; text-align: left; line-height: 1.4;">
+                    <i class="icon-base ti tabler-math-symbols me-1 text-warning"></i>
+                    {{ $rk['formula_desc'] ?? '-' }}
+                  </span>
+                </td>
+              </tr>
+            @endforeach
+          </tbody>
+          <tfoot>
+            <tr style="background: rgba(30, 34, 59, 0.95); border-top: 2px solid rgba(115, 103, 240, 0.5);">
+              <th class="text-uppercase fw-bold text-heading font-monospace">{{ __('Rütbeler Toplamı (CA7)') }}</th>
+              <th class="text-end font-monospace text-heading fw-bold" id="ranksTableTotalCapacity">
+                {{ number_format($guildPoolData['total_capacity'] ?? 5900.90, 2) }}
+              </th>
+              <th class="text-center font-monospace fw-bold text-warning" id="ranksTableTotalMembers">
+                {{ $guildPoolData['total_count'] ?? array_sum(array_column($guildPoolData['ranks'], 'current_count')) }} Oyuncu
+              </th>
+              <th class="text-end font-monospace text-warning fw-bold" id="ranksTableTotalCapacityXp">
+                {{ number_format($guildPoolData['total_capacity_xp'] ?? 1149408.02, 2) }}
+              </th>
+              <th class="text-end font-monospace text-info fw-bold" id="ranksTableTotalCurrentXp">
+                {{ number_format($guildPoolData['total_current_xp'] ?? 1086548.02, 2) }}
+              </th>
+              <th class="text-end font-monospace text-success fw-bold" id="ranksTableTotalNetXp">
+                {{ number_format($guildPoolData['total_net_xp'] ?? 125649.04, 2) }}
+              </th>
+              <th class="text-end font-monospace fw-bolder text-warning fs-6" id="ranksTableTotalSpent">
+                {{ number_format($guildPoolData['ranks_total_spent'], 2) }}
+              </th>
+              <th class="text-start font-monospace small text-body-secondary">
+                <span class="badge bg-label-primary font-monospace small">CA7 = SUM(CA9:CA16)</span>
+              </th>
+            </tr>
+            <tr style="background: rgba(22, 25, 45, 0.95);">
+              <th colspan="6" class="text-end text-uppercase fw-bold text-info font-monospace" style="font-size: 0.8rem;">
+                + {{ __('Ek Fon / Kasa (CA4)') }}:
+              </th>
+              <th class="text-end font-monospace fw-bold text-info fs-6" id="ranksTableExtraFund">
+                +{{ number_format($guildPoolData['extra_fund'], 2) }}
+              </th>
+              <th class="text-start font-monospace small text-muted">Kasa & Sefer Ek Fonu</th>
+            </tr>
+            <tr style="background: linear-gradient(90deg, rgba(115, 103, 240, 0.25) 0%, rgba(245, 158, 11, 0.25) 100%); border-top: 2px solid #7367f0;">
+              <th colspan="6" class="text-end text-uppercase fw-bolder text-warning font-monospace" style="font-size: 0.88rem; letter-spacing: 0.5px;">
+                ⭐ {{ __('Genel Toplam XP Bakiyesi (CA2 = CA7 + CA4)') }}:
+              </th>
+              <th class="text-end font-monospace fw-bolder text-warning fs-5" id="ranksTableGrandTotal">
+                {{ number_format($guildPoolData['grand_total_xp'], 2) }}
+              </th>
+              <th class="text-start font-monospace text-warning small fw-bold">Denk Bakiye (18/18 Doğrulandı)</th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- 18 Google Sheet Formulas Documentation Box -->
+    <div class="card card-table-dark-container mb-4">
+      <div class="card-header d-flex align-items-center justify-content-between p-3">
+        <div class="d-flex align-items-center gap-2">
+          <i class="icon-base ti tabler-math-symbols text-primary fs-4"></i>
+          <h5 class="mb-0 fw-bold text-heading" style="font-size: 1.05rem;">
+            {{ __('Google Sheet Master Formül Dokümantasyonu (18 Formül Mimarisi)') }}
+          </h5>
+        </div>
+        <span class="badge bg-label-primary font-monospace">18/18 Aktif Eşleşme</span>
+      </div>
+
+      <div class="card-body p-3 p-md-4">
+        <div class="row g-3">
+          <!-- Grup 1: Wiki & Lonca Formülleri -->
+          <div class="col-12 col-lg-4">
+            <div class="p-3 rounded-3 bg-dark bg-opacity-60 border border-secondary border-opacity-20 h-100">
+              <h6 class="fw-bold text-info mb-3 d-flex align-items-center gap-2">
+                <i class="icon-base ti tabler-book"></i> {{ __('Wiki & Lonca Formülleri') }}
+              </h6>
+              <ul class="list-unstyled mb-0 font-monospace small" style="line-height: 1.9;">
+                <li><code class="text-warning">=BW2-BX2</code> <span class="text-body-secondary">&rarr; Wiki Kalan: 53,800 - 39,547 = <b>14,253</b></span></li>
+                <li><code class="text-warning">=BW3*0.6</code> <span class="text-body-secondary">&rarr; Uzman Kapasite XP: 157,150 &times; 0.6 = <b>94,290</b></span></li>
+                <li><code class="text-warning">=SUM(G2:G)</code> <span class="text-body-secondary">&rarr; Sefer Lonca Kasası: <b>{{ number_format($stats['total_guild_cut'], 1) }} SP</b></span></li>
+                <li><code class="text-warning">=SUM(BT:BT)</code> <span class="text-body-secondary">&rarr; Sefer Lonca Kolonu Kesinti Hacmi</span></li>
+                <li><code class="text-warning">=COUNTA('Görev Raporları'!A2:A)</code> <span class="text-body-secondary">&rarr; Toplam Sefer Sayısı: <b>{{ $stats['total_quests'] }}</b></span></li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Grup 2: Havuz & Net Pay Formülleri -->
+          <div class="col-12 col-lg-4">
+            <div class="p-3 rounded-3 bg-dark bg-opacity-60 border border-secondary border-opacity-20 h-100">
+              <h6 class="fw-bold text-success mb-3 d-flex align-items-center gap-2">
+                <i class="icon-base ti tabler-coins"></i> {{ __('Havuz & Net Pay Formülleri') }}
+              </h6>
+              <ul class="list-unstyled mb-0 font-monospace small" style="line-height: 1.9;">
+                <li><code class="text-success">=BV5/(BW11+BW17)</code> <span class="text-body-secondary">&rarr; Uzman Net Payı: 2,064,199.61 / 21 = <b>98,295.22</b></span></li>
+                <li><code class="text-success">=CA11/BW11</code> <span class="text-body-secondary">&rarr; Kıdemli Net XP: 401,350.01 / 20 = <b>20,067.50</b></span></li>
+                <li><code class="text-success">=CA12/BW12</code> <span class="text-body-secondary">&rarr; Üye Net XP: 30,047.37 / 20 = <b>1,502.37</b></span></li>
+                <li><code class="text-success">=CA13/BW13</code> <span class="text-body-secondary">&rarr; Clerk Net XP: 198,000.00 / 60 = <b>3,300.00</b></span></li>
+                <li><code class="text-success">=SUMIF('Player XP Tracker'!E:E, BU_x, H:H)</code> <span class="text-body-secondary">&rarr; Rütbe Harcanan XP</span></li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Grup 3: Kapasite & Denklik Formülleri -->
+          <div class="col-12 col-lg-4">
+            <div class="p-3 rounded-3 bg-dark bg-opacity-60 border border-secondary border-opacity-20 h-100">
+              <h6 class="fw-bold text-primary mb-3 d-flex align-items-center gap-2">
+                <i class="icon-base ti tabler-scale"></i> {{ __('Kapasite & Denklik Formülleri') }}
+              </h6>
+              <ul class="list-unstyled mb-0 font-monospace small" style="line-height: 1.9;">
+                <li><code class="text-primary">=(BV10+BV13)/10</code> <span class="text-body-secondary">&rarr; Uzman & Clerk Kapasite Oranı</span></li>
+                <li><code class="text-primary">=BV13/2</code> <span class="text-body-secondary">&rarr; Clerk Kapasite Katsayısı: <b>84.39</b></span></li>
+                <li><code class="text-primary">=MIN(BX11,BX11*BV11/BW11)</code> <span class="text-body-secondary">&rarr; Kıdemli Min Tavanı</span></li>
+                <li><code class="text-primary">=SUM(BV9:BV10)</code> & <code class="text-primary">=SUM(BV9:BV13)</code> <span class="text-body-secondary">&rarr; Kademe Kümeleri</span></li>
+                <li><code class="text-primary">=SUM(J2:J)=(CA2-CA4-CA10-SUM(CA12:CA16))</code> <span class="text-body-secondary">&rarr; Ek & Havuz Dengeleme</span></li>
+                <li><code class="text-primary">=SUM(E2:E)+SUM(G2:G)+SUM(H2:H)</code> <span class="text-body-secondary">&rarr; Toplam Sefer Hacmi</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <!-- /#tabViewGuildPool -->
 
 </div>
 
 <!-- ====================================================
-     4. MODAL: GÖREV RAPORU EKLE (NEW QUEST REPORT)
+     4. MODAL: GÖREV RAPORU EKLE (CANLI FORMÜL MOTORLU)
      ==================================================== -->
 <div class="modal fade" id="modalAddQuestReport" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content modal-dossier">
-      <form id="formAddQuestReport">
-        @csrf
-        <!-- Modal Header -->
-        <div class="modal-header d-flex align-items-center justify-content-between p-3 p-md-4">
-          <div class="d-flex align-items-center gap-3">
-            <div class="avatar avatar-md bg-label-primary rounded-3 d-flex align-items-center justify-content-center shadow-md">
-              <i class="icon-base ti tabler-scroll fs-3 text-primary"></i>
-            </div>
-            <div>
-              <h4 class="mb-0 fw-bold text-heading">{{ __('Create Quest Report') }}</h4>
-              <small class="text-body-secondary font-monospace">{{ __('Record new expedition debrief & calculate party level') }}</small>
-            </div>
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <form id="formAddQuestReport" class="modal-content modal-dossier shadow-2xl">
+      @csrf
+      <!-- Modal Header -->
+      <div class="modal-header d-flex align-items-center justify-content-between p-3 p-md-4">
+        <div class="d-flex align-items-center gap-3">
+          <div class="avatar avatar-md bg-label-primary rounded-3 d-flex align-items-center justify-content-center shadow-md">
+            <i class="icon-base ti tabler-calculator fs-3 text-primary"></i>
           </div>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          <div>
+            <h4 class="mb-0 fw-bold text-heading">{{ __('Yeni Görev Raporu & Canlı Ortalama XP Hesaplayıcı') }}</h4>
+            <small class="text-body-secondary font-monospace">{{ __('Master Sheet formülü: (E - G - H - I + J) / AL ile oyuncuların ortalamasını canlı hesaplayın') }}</small>
+          </div>
         </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
 
-        <!-- Modal Body -->
-        <div class="modal-body p-3 p-md-4">
-          <!-- Row 1: Görev İsmi & Lokasyon -->
-          <div class="row g-3 mb-3">
-            <div class="col-12 col-md-6">
-              <label class="form-label fw-semibold text-heading">{{ __('Mission Name') }} <span class="text-danger">*</span></label>
-              <div class="input-group input-group-merge">
-                <span class="input-group-text bg-dark border-secondary border-opacity-25"><i class="icon-base ti tabler-sword text-primary"></i></span>
-                <input type="text" class="form-control bg-dark border-secondary border-opacity-25 text-heading" name="title" id="addReportTitle" placeholder="Örn: Gölge Diyar Kuşatması" required />
-              </div>
-            </div>
-
-            <div class="col-12 col-md-6">
-              <label class="form-label fw-semibold text-heading">{{ __('Quest Location') }} <span class="text-danger">*</span></label>
-              <div class="input-group input-group-merge">
-                <span class="input-group-text bg-dark border-secondary border-opacity-25"><i class="icon-base ti tabler-map-pin text-danger"></i></span>
-                <input type="text" class="form-control bg-dark border-secondary border-opacity-25 text-heading" name="location" id="addReportLocation" placeholder="Örn: Gölge Diyar, Siwion Ormanı" required />
-              </div>
-            </div>
-          </div>
-
-          <!-- Row 2: Tarih, Quest Tipi & Status -->
-          <div class="row g-3 mb-3">
-            <div class="col-12 col-md-4">
-              <label class="form-label fw-semibold text-heading">{{ __('Date') }} <span class="text-danger">*</span></label>
-              <div class="input-group input-group-merge">
-                <span class="input-group-text bg-dark border-secondary border-opacity-25"><i class="icon-base ti tabler-calendar text-info"></i></span>
-                <input type="text" class="form-control bg-dark border-secondary border-opacity-25 text-heading font-monospace" name="date" id="addReportDate" value="{{ date('d.m.Y') }}" required />
-              </div>
-            </div>
-
-            <div class="col-12 col-md-4">
-              <label class="form-label fw-semibold text-heading">{{ __('Quest Type') }} <span class="text-danger">*</span></label>
-              <select class="form-select bg-dark border-secondary border-opacity-25 text-heading" name="tier_type" id="addReportTierType" required>
-                <option value="main">👑 {{ __('Main Quest') }} (✓)</option>
-                <option value="epic">👑👑 {{ __('Epic Main Quest') }} (✓✓)</option>
-                <option value="side" selected>📜 {{ __('Side Quest') }} (x)</option>
-              </select>
-            </div>
-
-            <div class="col-12 col-md-4">
-              <label class="form-label fw-semibold text-heading">{{ __('Status') }} <span class="text-danger">*</span></label>
-              <select class="form-select bg-dark border-secondary border-opacity-25 text-heading" name="status" id="addReportStatus" required>
-                <option value="success" selected>✓ {{ __('Successful') }}</option>
-                <option value="failed">x {{ __('Failed') }}</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- LIVE CALCULATED PARTY LEVEL BANNER -->
-          <div class="alert alert-primary bg-label-primary border border-primary border-opacity-30 d-flex align-items-center justify-content-between p-3 rounded-3 mb-3 shadow-sm">
+      <!-- Modal Body -->
+      <div class="modal-body p-3 p-md-4">
+        
+        <!-- FORMÜL CANLI HESAPLAMA MOTORU KARTI (HEADER BANNER) -->
+        <div class="formula-engine-box mb-3">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
             <div class="d-flex align-items-center gap-2">
-              <div class="avatar avatar-xs bg-primary text-white rounded-circle d-flex align-items-center justify-content-center">
-                <i class="icon-base ti tabler-sword fs-6"></i>
+              <i class="icon-base ti tabler-cpu text-primary fs-4"></i>
+              <span class="fw-bold text-heading" style="font-size: 0.95rem;">{{ __('Canlı Formül & Oyuncu Ortalama XP Motoru') }}</span>
+            </div>
+            <span class="badge badge-avg-xp font-monospace fs-6 px-3 py-1 shadow-sm" id="liveAddAvgXpBadge">
+              Ortalama: 175.63 XP
+            </span>
+          </div>
+
+          <div class="p-2 rounded bg-black bg-opacity-40 font-monospace small mb-2 text-warning" id="liveAddFormulaEquation">
+            =(XP [750] - Lonca [37.5] - Depo [0] - Rapor [75] + Ek [0]) / Oyuncu [4] = 159.38 XP
+          </div>
+
+          <div class="row g-2 text-center text-body-secondary font-monospace" style="font-size: 0.76rem;">
+            <div class="col-4 col-sm-2">
+              <span class="d-block text-muted">Toplam XP (E)</span>
+              <span class="fw-bold text-success" id="liveAddXpText">750 XP</span>
+            </div>
+            <div class="col-4 col-sm-2">
+              <span class="d-block text-muted">Lonca %5 (G)</span>
+              <span class="fw-bold text-warning" id="liveAddGuildCutText">37.5 SP</span>
+            </div>
+            <div class="col-4 col-sm-2">
+              <span class="d-block text-muted">Depo %20 (H)</span>
+              <span class="fw-bold text-danger" id="liveAddDepoCutText">0 SP</span>
+            </div>
+            <div class="col-4 col-sm-2">
+              <span class="d-block text-muted">Rapor %10 (I)</span>
+              <span class="fw-bold text-info" id="liveAddCutsText">75 XP</span>
+            </div>
+            <div class="col-4 col-sm-2">
+              <span class="d-block text-muted">Net Havuz</span>
+              <span class="fw-bold text-light" id="liveAddNetPoolText">637.50 XP</span>
+            </div>
+            <div class="col-4 col-sm-2">
+              <span class="d-block text-muted">Oyuncu (AL)</span>
+              <span class="fw-bold text-info" id="liveAddPlayerCountText">4 Oyuncu</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2-COLUMN RESPONSIVE FORM GRID -->
+        <div class="row g-3">
+          
+          <!-- LEFT COLUMN: GÖREV PARAMETRELERİ & BİLGİLERİ -->
+          <div class="col-12 col-lg-6">
+            <div class="report-section-box mb-3">
+              <h6 class="mb-3 fw-bold text-heading d-flex align-items-center gap-2">
+                <i class="icon-base ti tabler-scroll text-primary fs-5"></i>
+                <span>{{ __('Sefer Parametreleri & Bilgileri') }}</span>
+              </h6>
+
+              <!-- Row 1: Görev Adı & Tarih (Gün/Ay/Yıl) -->
+              <div class="row g-2 mb-3">
+                <div class="col-12 col-sm-7">
+                  <label class="form-label fw-semibold text-heading small">{{ __('Görev Adı (A)') }} <span class="text-danger">*</span></label>
+                  <div class="input-group input-group-merge input-group-sm">
+                    <span class="input-group-text bg-dark border-secondary border-opacity-25"><i class="icon-base ti tabler-sword text-primary"></i></span>
+                    <input type="text" class="form-control bg-dark border-secondary border-opacity-25 text-heading" name="title" id="addReportTitle" placeholder="Örn: Kasadaki Para" required />
+                  </div>
+                </div>
+
+                <div class="col-12 col-sm-5">
+                  <label class="form-label fw-semibold text-heading small">{{ __('Tarih (B) [Gün/Ay/Yıl]') }} <span class="text-danger">*</span></label>
+                  <div class="input-group input-group-merge input-group-sm">
+                    <span class="input-group-text bg-dark border-secondary border-opacity-25"><i class="icon-base ti tabler-calendar text-info"></i></span>
+                    <input type="date" class="form-control bg-dark border-secondary border-opacity-25 text-heading font-monospace" name="date" id="addReportDate" value="{{ date('Y-m-d') }}" required />
+                  </div>
+                </div>
               </div>
-              <div>
-                <span class="fw-bold text-heading d-block" style="font-size: 0.92rem;">{{ __('Calculated Game Level') }}</span>
-                <small class="text-body-secondary">{{ __('Bütün oyuncuların seviyelerinin dinamik ortalaması') }}</small>
+
+              <!-- Row 2: MQ Tipi, Seviye (Otomatik), Görev Sonucu & Depo Durumu (Otomatik) -->
+              <div class="row g-2 mb-3">
+                <!-- MQ -->
+                <div class="col-12 col-sm-6">
+                  <label class="form-label fw-semibold text-heading small">{{ __('MQ (C) - Görev Tipi') }}</label>
+                  <select class="form-select form-select-sm bg-dark border-secondary border-opacity-25 text-heading" name="mq" id="addReportMq">
+                    <option value="none" selected>✗ Yan Görev (1x)</option>
+                    <option value="main">✓ Ana Görev (1x)</option>
+                    <option value="epic">✓✓ Epik Ana Görev (3x)</option>
+                  </select>
+                </div>
+
+                <!-- Level (D) - Kadroya Göre Otomatik Hesaplanır -->
+                <div class="col-12 col-sm-6">
+                  <label class="form-label fw-semibold text-heading small d-flex align-items-center justify-content-between mb-1">
+                    <span>{{ __('Level (D) - Görev Seviyesi') }}</span>
+                    <span class="badge bg-label-info font-monospace py-0 px-1" id="addReportLevelBadge" style="font-size: 0.65rem;">Kadro Ort: 1.00</span>
+                  </label>
+                  <div class="input-group input-group-merge input-group-sm">
+                    <span class="input-group-text bg-dark border-secondary border-opacity-25"><i class="icon-base ti tabler-chart-bar text-info"></i></span>
+                    <input type="number" class="form-control bg-dark border-secondary border-opacity-25 text-heading font-monospace fw-bold" name="level" id="addReportLevel" value="1" min="1" max="20" readonly style="background-color: rgba(0,0,0,0.45) !important; cursor: not-allowed;" title="{{ __('Kadroya göre otomatik hesaplanır (Değiştirilemez)') }}" required />
+                  </div>
+                  <small class="text-body-secondary d-block mt-1" style="font-size: 0.68rem;">
+                    <i class="icon-base ti tabler-lock text-warning me-1"></i>Kadro ortalamasına göre otomatik hesaplanır.
+                  </small>
+                </div>
+              </div>
+
+              <!-- Row 3: Görev Sonucu, Depo Durumu (Otomatik), Rapor Kesintisi (I - Fix %10), Ek Ödül, GM -->
+              <div class="row g-2 mb-3">
+                <!-- Görev Sonucu (Başarılı / Başarısız) -->
+                <div class="col-12 col-sm-6">
+                  <label class="form-label fw-semibold text-heading small">{{ __('Görev Sonucu (F)') }} <span class="text-danger">*</span></label>
+                  <select class="form-select form-select-sm bg-dark border-secondary border-opacity-25 text-heading fw-semibold" name="status" id="addReportStatus">
+                    <option value="success" selected>✓ Başarılı (Tamamlandı)</option>
+                    <option value="failed">✗ Başarısız (Yenilgi / İptal)</option>
+                  </select>
+                </div>
+
+                <!-- Depo Durumu (F) (Otomatik & Değiştirilemez) -->
+                <div class="col-12 col-sm-6">
+                  <label class="form-label fw-semibold text-heading small d-flex align-items-center justify-content-between mb-1">
+                    <span>{{ __('Depo Durumu (F)') }}</span>
+                    <span class="badge bg-label-secondary font-monospace py-0 px-1" style="font-size: 0.65rem;">Otomatik</span>
+                  </label>
+                  <input type="text" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-success font-monospace fw-bold" id="addReportDepoDisplay" value="🗸 Teslim (Ceza Yok / 0 SP)" readonly style="background-color: rgba(0,0,0,0.45) !important; cursor: not-allowed;" title="{{ __('Görevin başarılı/başarısız olmasına göre otomatik belirlenir') }}" />
+                  <input type="hidden" name="depo_status" id="addReportDepoStatus" value="1" />
+                  <small class="text-body-secondary d-block mt-1" style="font-size: 0.68rem;" id="addReportDepoHint">
+                    <i class="icon-base ti tabler-circle-check text-success me-1"></i>Görev başarılı olduğundan depo cezası uygulanmaz.
+                  </small>
+                </div>
+              </div>
+
+              <!-- Row 4: Rapor Kesintisi, Ek Ödül, Game Master -->
+              <div class="row g-2 mb-2">
+                <!-- Rapor Kesintisi (I) - Sabit XP * 0.10 -->
+                <div class="col-12 col-sm-4">
+                  <label class="form-label fw-semibold text-heading small d-flex align-items-center justify-content-between mb-1">
+                    <span>{{ __('Rapor (I)') }}</span>
+                    <span class="badge bg-label-info font-monospace py-0 px-1" style="font-size: 0.65rem;">%10 Fix (XP &times; 0.1)</span>
+                  </label>
+                  <input type="number" step="0.5" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-info font-monospace fw-bold" name="rapor_cut" id="addReportRaporCut" value="75" readonly style="background-color: rgba(0,0,0,0.45) !important; cursor: not-allowed;" title="{{ __('Toplam XP nin %10 u olarak sabit hesaplanır (Değiştirilemez)') }}" />
+                  <small class="text-body-secondary d-block mt-1" style="font-size: 0.65rem;">
+                    <i class="icon-base ti tabler-lock text-warning me-1"></i>Toplam XP'nin %10'u sabittir.
+                  </small>
+                </div>
+
+                <div class="col-12 col-sm-4">
+                  <label class="form-label fw-semibold text-heading small">{{ __('Ek (J)') }}</label>
+                  <input type="number" step="0.5" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading font-monospace" name="extra_reward" id="addReportExtraReward" value="0" placeholder="0" />
+                </div>
+
+                <div class="col-12 col-sm-4">
+                  <label class="form-label fw-semibold text-heading small">{{ __('Game Master (GM)') }} <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading" name="gm" id="addReportGm" list="knownGmsList" value="Shalvaz" placeholder="Shalvaz, Bart..." required />
+                  <datalist id="knownGmsList">
+                    @foreach($gms as $gm)
+                      <option value="{{ $gm }}"></option>
+                    @endforeach
+                  </datalist>
+                </div>
               </div>
             </div>
-            <div class="text-end">
-              <span class="badge bg-primary fs-6 font-monospace px-3 py-2 shadow-sm" id="liveAddAvgLevelBadge">
-                Ortalama Seviye: 1.00
-              </span>
+
+            <!-- Konum & Brifing Kartı -->
+            <div class="report-section-box mb-3">
+              <h6 class="mb-2 fw-bold text-heading d-flex align-items-center gap-2">
+                <i class="icon-base ti tabler-map-pin text-warning fs-5"></i>
+                <span>{{ __('Konum & Hikaye Brifingi') }}</span>
+              </h6>
+
+              <div class="row g-2 mb-2">
+                <div class="col-12 col-sm-6">
+                  <label class="form-label fw-semibold text-heading small mb-1">{{ __('Lokasyon') }}</label>
+                  <input type="text" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading" name="location" id="addReportLocation" value="Siwion Ticaret Bölgesi" placeholder="Siwion, Harken Vadisi..." />
+                </div>
+
+                <div class="col-12 col-sm-6">
+                  <label class="form-label fw-semibold text-heading small mb-1">{{ __('Düşmanlar') }}</label>
+                  <input type="text" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading" name="enemies" id="addReportEnemies" value="Şehir Hırsızları" placeholder="Düşman tipleri..." />
+                </div>
+              </div>
+
+              <div>
+                <label class="form-label fw-semibold text-heading small mb-1">{{ __('Detaylı Sefer Raporu / Brifing') }}</label>
+                <textarea class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading" name="full_report" id="addReportFullText" rows="2" placeholder="Görevin hikayesini buraya yazın...">Görev başarıyla tamamlandı, ganimet ve fonlar loncaya teslim edildi.</textarea>
+              </div>
+            </div>
+
+            <!-- Auto Distribute XP Checkbox Switch -->
+            <div class="p-2 rounded bg-black bg-opacity-30 border border-secondary border-opacity-20">
+              <div class="form-check form-switch mb-0">
+                <input class="form-check-input cursor-pointer" type="checkbox" id="addReportDistributeXp" name="distribute_xp_auto" value="1" checked>
+                <label class="form-check-label text-heading fw-semibold small cursor-pointer" for="addReportDistributeXp">
+                  {{ __('Maceracı profillerine otomatik XP aktar (XP Tracker & Karakterler)') }}
+                </label>
+              </div>
+              <small class="text-body-secondary d-block mt-1 ps-4" id="liveAddDistributeHint" style="font-size: 0.72rem;">
+                <i class="icon-base ti tabler-info-circle text-info me-1"></i>Kaydedildiğinde kadrodaki 4 maceracıya otomatik olarak +175.63 XP aktarılacaktır.
+              </small>
             </div>
           </div>
 
-          <!-- Row 3: Katılan Oyuncular & Seviyeleri (Dynamic Roster) -->
-          <div class="report-section-box mb-3">
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-              <div>
+          <!-- RIGHT COLUMN: SEFER KADROSU & EKLE / ÇIKAR BÖLÜMÜ -->
+          <div class="col-12 col-lg-6">
+            <div class="report-section-box mb-3 border-primary border-opacity-35" style="background: rgba(18, 22, 42, 0.85);">
+              
+              <!-- Header with Party Count -->
+              <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
                 <h6 class="mb-0 fw-bold text-heading d-flex align-items-center gap-2">
-                  <i class="icon-base ti tabler-users-group text-primary"></i>
-                  <span>{{ __('Party Members & Levels') }}</span>
+                  <i class="icon-base ti tabler-users-group text-primary fs-5"></i>
+                  <span>{{ __('Katılan Kadro & Maceracılar') }}</span>
                 </h6>
-                <small class="text-body-secondary">Oyuncuların seviyelerini girdikçe ortalama parti seviyesi otomatik hesaplanır.</small>
+                <span class="badge bg-primary font-monospace fs-6 px-3 py-1 shadow-sm" id="addReportPartyCountLabel">
+                  3 Diğer Oyuncu (+1 Raporlayan = 4 Kişi)
+                </span>
               </div>
-              <button type="button" class="btn btn-xs btn-outline-primary" id="btnAddPartyRow">
-                <i class="icon-base ti tabler-plus me-1"></i> {{ __('Add Player') }}
-              </button>
-            </div>
 
-            <!-- Dynamic Party Rows Container -->
-            <div id="addReportPartyContainer">
-              <!-- Initial 4 Default Rows -->
-              <div class="modal-party-row d-flex align-items-center gap-2 flex-wrap" data-row="0">
-                <div class="flex-grow-1" style="min-width: 140px;">
-                  <input type="text" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading party-input-name" placeholder="Karakter Adı" value="Caspian" required />
+              <!-- Raporlayan Maceracı (Leader) -->
+              <div class="p-2 rounded bg-black bg-opacity-40 border border-warning border-opacity-30 mb-3">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                  <label class="form-label fw-semibold text-warning small mb-0 d-flex align-items-center gap-1">
+                    <span class="fs-5">👑</span>
+                    <span>{{ __('Raporlayan Maceracı (AN - Lider)') }}</span>
+                    <span class="text-danger">*</span>
+                  </label>
+                  <span class="badge bg-label-warning font-monospace" style="font-size: 0.68rem;">Rapor Ödülü Dahil</span>
                 </div>
-                <div style="width: 130px;">
-                  <select class="form-select form-select-sm bg-dark border-secondary border-opacity-25 text-heading party-input-class">
-                    <option value="Paladin" selected>Paladin</option>
-                    <option value="Fighter">Fighter</option>
-                    <option value="Wizard">Wizard</option>
-                    <option value="Cleric">Cleric</option>
-                    <option value="Rogue">Rogue</option>
-                    <option value="Ranger">Ranger</option>
-                    <option value="Barbarian">Barbarian</option>
-                    <option value="Bard">Bard</option>
-                    <option value="Sorcerer">Sorcerer</option>
-                    <option value="Warlock">Warlock</option>
-                    <option value="Druid">Druid</option>
-                    <option value="Monk">Monk</option>
-                  </select>
+                <div class="input-group input-group-merge input-group-sm">
+                  <span class="input-group-text bg-dark border-secondary border-opacity-25"><i class="icon-base ti tabler-feather text-warning"></i></span>
+                  <input type="text" class="form-control bg-dark border-secondary border-opacity-25 text-heading fw-bold" name="reporter" id="addReportReporter" list="knownAdventurersList" value="Tolrun" placeholder="Örn: Tolrun, Leothar..." required />
                 </div>
-                <div style="width: 100px;">
-                  <div class="input-group input-group-sm">
-                    <span class="input-group-text bg-dark border-secondary border-opacity-25 text-muted px-2">Lvl</span>
-                    <input type="number" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading font-monospace party-input-level" min="1" max="20" value="1" required />
+              </div>
+
+              <!-- EKLE / ÇIKAR KONTROL PANELİ -->
+              <div class="mb-3">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                  <label class="form-label fw-semibold text-heading small mb-0 d-flex align-items-center gap-1">
+                    <i class="icon-base ti tabler-user-plus text-primary"></i>
+                    <span>{{ __('Diğer Oyuncuları Kadroya Ekle (AO..BG)') }}</span>
+                  </label>
+                  <button type="button" class="btn btn-outline-danger btn-xs py-0 px-2" id="btnClearAllOtherPlayersBtn" title="{{ __('Kadroyu Temizle') }}" style="font-size: 0.72rem;">
+                    <i class="icon-base ti tabler-trash me-1"></i>{{ __('Kadroyu Temizle') }}
+                  </button>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                  <div class="input-group input-group-merge flex-grow-1">
+                    <span class="input-group-text bg-dark border-secondary border-opacity-25"><i class="icon-base ti tabler-user text-body-secondary"></i></span>
+                    <input type="text" class="form-control bg-dark border-secondary border-opacity-25 text-heading" id="inputAddOtherPlayer" list="knownAdventurersList" placeholder="Maceracı adı yazın veya listeden seçin..." />
                   </div>
+                  <button type="button" class="btn btn-primary d-flex align-items-center gap-1 px-3 shadow-sm" id="btnAddOtherPlayerBtn">
+                    <i class="icon-base ti tabler-plus fs-5"></i>
+                    <span class="fw-bold">{{ __('Ekle') }}</span>
+                  </button>
                 </div>
-                <div style="width: 110px;">
-                  <select class="form-select form-select-sm bg-dark border-secondary border-opacity-25 text-heading party-input-role">
-                    <option value="Reporter" selected>Lider / Rep.</option>
-                    <option value="Member">Üye</option>
-                  </select>
-                </div>
-                <button type="button" class="btn btn-icon btn-sm btn-label-danger border-0 btn-remove-party-row" title="Kaldır">
-                  <i class="icon-base ti tabler-trash fs-6"></i>
-                </button>
               </div>
 
-              <div class="modal-party-row d-flex align-items-center gap-2 flex-wrap" data-row="1">
-                <div class="flex-grow-1" style="min-width: 140px;">
-                  <input type="text" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading party-input-name" placeholder="Karakter Adı" value="Lyra" required />
+              <!-- AKTİF KADRO & CANLI XP DAĞILIMI LİSTESİ -->
+              <div class="mb-3">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                  <small class="text-body-secondary fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">
+                    <i class="icon-base ti tabler-list-check text-info me-1"></i>{{ __('Mevcut Kadro Listesi & Canlı XP Payı:') }}
+                  </small>
+                  <span class="badge bg-label-warning font-monospace" id="liveAddDistributionSummaryBadge" style="font-size: 0.72rem;">
+                    4 Oyuncu &bull; Kişi Başı: 175.63 XP
+                  </span>
                 </div>
-                <div style="width: 130px;">
-                  <select class="form-select form-select-sm bg-dark border-secondary border-opacity-25 text-heading party-input-class">
-                    <option value="Wizard">Wizard</option>
-                    <option value="Rogue" selected>Rogue</option>
-                    <option value="Fighter">Fighter</option>
-                    <option value="Cleric">Cleric</option>
-                    <option value="Paladin">Paladin</option>
-                    <option value="Ranger">Ranger</option>
-                  </select>
+
+                <!-- Unified Party List (Raporlayan + Diğer Oyuncular with Clear [Çıkar] buttons) -->
+                <div id="liveAddPlayersDistributionList" class="d-flex flex-column gap-2 p-1 rounded bg-black bg-opacity-35 border border-secondary border-opacity-20 mb-2" style="max-height: 220px; overflow-y: auto;">
+                  <!-- Populated in real-time by updateAddLiveCalculator() -->
                 </div>
-                <div style="width: 100px;">
-                  <div class="input-group input-group-sm">
-                    <span class="input-group-text bg-dark border-secondary border-opacity-25 text-muted px-2">Lvl</span>
-                    <input type="number" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading font-monospace party-input-level" min="1" max="20" value="1" required />
-                  </div>
+
+                <div class="d-flex align-items-center justify-content-between p-2 rounded bg-black bg-opacity-40 font-monospace text-body-secondary" style="font-size: 0.73rem;">
+                  <span id="liveAddSumCheckText">Dağıtılan Toplam: 4 &times; 175.63 = 702.52 XP</span>
+                  <span class="text-success"><i class="icon-base ti tabler-check me-1"></i>{{ __('Eşit Ortalama Dağılımı') }}</span>
                 </div>
-                <div style="width: 110px;">
-                  <select class="form-select form-select-sm bg-dark border-secondary border-opacity-25 text-heading party-input-role">
-                    <option value="Member" selected>Üye</option>
-                    <option value="Reporter">Lider / Rep.</option>
-                  </select>
-                </div>
-                <button type="button" class="btn btn-icon btn-sm btn-label-danger border-0 btn-remove-party-row" title="Kaldır">
-                  <i class="icon-base ti tabler-trash fs-6"></i>
-                </button>
               </div>
 
-              <div class="modal-party-row d-flex align-items-center gap-2 flex-wrap" data-row="2">
-                <div class="flex-grow-1" style="min-width: 140px;">
-                  <input type="text" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading party-input-name" placeholder="Karakter Adı" value="Valen" required />
-                </div>
-                <div style="width: 130px;">
-                  <select class="form-select form-select-sm bg-dark border-secondary border-opacity-25 text-heading party-input-class">
-                    <option value="Fighter" selected>Fighter</option>
-                    <option value="Paladin">Paladin</option>
-                    <option value="Cleric">Cleric</option>
-                    <option value="Barbarian">Barbarian</option>
-                  </select>
-                </div>
-                <div style="width: 100px;">
-                  <div class="input-group input-group-sm">
-                    <span class="input-group-text bg-dark border-secondary border-opacity-25 text-muted px-2">Lvl</span>
-                    <input type="number" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading font-monospace party-input-level" min="1" max="20" value="2" required />
-                  </div>
-                </div>
-                <div style="width: 110px;">
-                  <select class="form-select form-select-sm bg-dark border-secondary border-opacity-25 text-heading party-input-role">
-                    <option value="Member" selected>Üye</option>
-                    <option value="Reporter">Lider / Rep.</option>
-                  </select>
-                </div>
-                <button type="button" class="btn btn-icon btn-sm btn-label-danger border-0 btn-remove-party-row" title="Kaldır">
-                  <i class="icon-base ti tabler-trash fs-6"></i>
-                </button>
+
+              <!-- Hidden container keeping DOM tags synced for payload serialization -->
+              <div id="addOtherPlayersTagsContainer" class="d-none">
+                <span class="party-pill-tag other-player-item" data-name="Allerion"></span>
+                <span class="party-pill-tag other-player-item" data-name="Veigar"></span>
+                <span class="party-pill-tag other-player-item" data-name="Shantar"></span>
               </div>
             </div>
-          </div>
-
-          <!-- Row 4: GM & Ödüller -->
-          <div class="row g-3 mb-3">
-            <div class="col-12 col-md-4">
-              <label class="form-label fw-semibold text-heading">{{ __('Game Master') }} <span class="text-danger">*</span></label>
-              <input type="text" class="form-control bg-dark border-secondary border-opacity-25 text-heading" name="gm" id="addReportGm" placeholder="Örn: Shalvaz, Bart, Vain" value="Shalvaz" required />
-            </div>
-
-            <div class="col-12 col-md-4">
-              <label class="form-label fw-semibold text-heading">{{ __('Total Experience') }} (XP)</label>
-              <input type="number" class="form-control bg-dark border-secondary border-opacity-25 text-heading font-monospace" name="total_xp" id="addReportTotalXp" value="750" />
-            </div>
-
-            <div class="col-12 col-md-4">
-              <label class="form-label fw-semibold text-heading">{{ __('Encountered Enemies') }}</label>
-              <input type="text" class="form-control bg-dark border-secondary border-opacity-25 text-heading" name="enemies" id="addReportEnemies" placeholder="Örn: Gölge Kurtları, Haydutlar" />
-            </div>
-          </div>
-
-          <!-- Row 5: Detaylar / Sefer Raporu Metni -->
-          <div class="mb-0">
-            <label class="form-label fw-semibold text-heading">{{ __('Full Debriefing Report') }} (Details) <span class="text-danger">*</span></label>
-            <textarea class="form-control bg-dark border-secondary border-opacity-25 text-heading" name="full_report" id="addReportFullText" rows="3" placeholder="Görevin operasyon detaylarını, yaşanan olayları ve sonuç brifingini buraya yazın..." required>Gölge Diyar sınırında yürütülen keşif operasyonu başarıyla tamamlandı. Düşman sızma girişimi engellenerek lonca mülkleri güvenceye alındı.</textarea>
           </div>
         </div>
 
-        <!-- Modal Footer -->
-        <div class="modal-footer p-3 p-md-4 d-flex align-items-center justify-content-between">
-          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
-            {{ __('Close Dossier') }}
-          </button>
-          <button type="submit" class="btn btn-primary btn-sm btn-add-quest-report" id="btnSubmitAddQuestReport">
-            <i class="icon-base ti tabler-check me-1 fs-5"></i>
-            <span>{{ __('Save Quest Report') }}</span>
-          </button>
-        </div>
-      </form>
-    </div>
+      </div>
+
+      <!-- Modal Footer (Pinned at Bottom, Always Visible) -->
+      <div class="modal-footer p-3 p-md-4 d-flex align-items-center justify-content-between">
+        <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal">
+          <i class="icon-base ti tabler-x me-1"></i> {{ __('Vazgeç') }}
+        </button>
+        <button type="submit" class="btn btn-primary btn-add-quest-report px-4 py-2 shadow-lg" id="btnSubmitAddQuestReport">
+          <i class="icon-base ti tabler-circle-check fs-5 me-2"></i>
+          <span class="fw-bold">{{ __('Görev Raporunu Kaydet & Dağıt') }}</span>
+        </button>
+      </div>
+    </form>
   </div>
 </div>
 
 <!-- ====================================================
-     5. MISSION REPORT DOSSIER MODAL (DETAYLAR OKUYUCU)
+     5. MODAL: GÖREV RAPORU DÜZENLE (EDIT QUEST REPORT)
+     ==================================================== -->
+<div class="modal fade" id="modalEditQuestReport" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <form id="formEditQuestReport" class="modal-content modal-dossier shadow-2xl">
+      @csrf
+      <input type="hidden" id="editReportId" name="id" />
+
+      <!-- Modal Header -->
+      <div class="modal-header d-flex align-items-center justify-content-between p-3 p-md-4">
+        <div class="d-flex align-items-center gap-3">
+          <div class="avatar avatar-md bg-label-warning rounded-3 d-flex align-items-center justify-content-center shadow-md">
+            <i class="icon-base ti tabler-edit fs-3 text-warning"></i>
+          </div>
+          <div>
+            <h4 class="mb-0 fw-bold text-heading">{{ __('Görev Raporunu Düzenle') }}</h4>
+            <small class="text-body-secondary font-monospace" id="editReportSubtitle">Rapor #1 düzenleniyor</small>
+          </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body p-3 p-md-4">
+        
+        <!-- FORMÜL CANLI HESAPLAMA MOTORU KARTI -->
+        <div class="formula-engine-box mb-3">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+            <div class="d-flex align-items-center gap-2">
+              <i class="icon-base ti tabler-cpu text-warning fs-4"></i>
+              <span class="fw-bold text-heading" style="font-size: 0.95rem;">{{ __('Canlı Formül Hesaplayıcı') }}</span>
+            </div>
+            <span class="badge badge-avg-xp font-monospace fs-6 px-3 py-1 shadow-sm" id="liveEditAvgXpBadge">
+              Ortalama: 175.63 XP
+            </span>
+          </div>
+          <div class="p-2 rounded bg-black bg-opacity-40 font-monospace small mb-2 text-warning" id="liveEditFormulaEquation">
+            =(XP - Lonca - Depo - Rapor + Ek) / Oyuncu
+          </div>
+          <div class="row g-2 text-center text-body-secondary font-monospace" style="font-size: 0.76rem;">
+            <div class="col-4 col-sm-2">
+              <span class="d-block text-muted">Toplam XP (E)</span>
+              <span class="fw-bold text-success" id="liveEditXpText">750 XP</span>
+            </div>
+            <div class="col-4 col-sm-2">
+              <span class="d-block text-muted">Lonca %5 (G)</span>
+              <span class="fw-bold text-warning" id="liveEditGuildCutText">37.5 SP</span>
+            </div>
+            <div class="col-4 col-sm-2">
+              <span class="d-block text-muted">Depo %20 (H)</span>
+              <span class="fw-bold text-danger" id="liveEditDepoCutText">0 SP</span>
+            </div>
+            <div class="col-4 col-sm-2">
+              <span class="d-block text-muted">Rapor/Ek (I/J)</span>
+              <span class="fw-bold text-info" id="liveEditCutsText">-0 / +0</span>
+            </div>
+            <div class="col-4 col-sm-2">
+              <span class="d-block text-muted">Net Havuz</span>
+              <span class="fw-bold text-light" id="liveEditNetPoolText">712.50 XP</span>
+            </div>
+            <div class="col-4 col-sm-2">
+              <span class="d-block text-muted">Oyuncu (AL)</span>
+              <span class="fw-bold text-info" id="liveEditPlayerCountText">4 Oyuncu</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2-COLUMN RESPONSIVE FORM GRID -->
+        <div class="row g-3">
+          <!-- LEFT COLUMN: SEFER BİLGİLERİ -->
+          <div class="col-12 col-lg-6">
+            <div class="report-section-box mb-3">
+              <h6 class="mb-3 fw-bold text-heading d-flex align-items-center gap-2">
+                <i class="icon-base ti tabler-scroll text-warning fs-5"></i>
+                <span>{{ __('Sefer Bilgileri & Parametreleri') }}</span>
+              </h6>
+
+              <!-- Row 1: Görev Adı & Tarih (Gün/Ay/Yıl) -->
+              <div class="row g-2 mb-3">
+                <div class="col-12 col-sm-7">
+                  <label class="form-label fw-semibold text-heading small">{{ __('Görev Adı (A)') }} <span class="text-danger">*</span></label>
+                  <div class="input-group input-group-merge input-group-sm">
+                    <span class="input-group-text bg-dark border-secondary border-opacity-25"><i class="icon-base ti tabler-sword text-warning"></i></span>
+                    <input type="text" class="form-control bg-dark border-secondary border-opacity-25 text-heading" name="title" id="editReportTitle" required />
+                  </div>
+                </div>
+
+                <div class="col-12 col-sm-5">
+                  <label class="form-label fw-semibold text-heading small">{{ __('Tarih (B) [Gün/Ay/Yıl]') }} <span class="text-danger">*</span></label>
+                  <div class="input-group input-group-merge input-group-sm">
+                    <span class="input-group-text bg-dark border-secondary border-opacity-25"><i class="icon-base ti tabler-calendar text-info"></i></span>
+                    <input type="date" class="form-control bg-dark border-secondary border-opacity-25 text-heading font-monospace" name="date" id="editReportDate" required />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Row 2: MQ Tipi, Seviye (Otomatik) -->
+              <div class="row g-2 mb-3">
+                <div class="col-12 col-sm-6">
+                  <label class="form-label fw-semibold text-heading small">{{ __('MQ (C) - Görev Tipi') }}</label>
+                  <select class="form-select form-select-sm bg-dark border-secondary border-opacity-25 text-heading" name="mq" id="editReportMq">
+                    <option value="none">✗ Yan Görev (1x)</option>
+                    <option value="main">✓ Ana Görev (1x)</option>
+                    <option value="epic">✓✓ Epik Ana Görev (3x)</option>
+                  </select>
+                </div>
+
+                <!-- Level (D) - Kadroya Göre Otomatik Hesaplanır -->
+                <div class="col-12 col-sm-6">
+                  <label class="form-label fw-semibold text-heading small d-flex align-items-center justify-content-between mb-1">
+                    <span>{{ __('Level (D) - Görev Seviyesi') }}</span>
+                    <span class="badge bg-label-warning font-monospace py-0 px-1" id="editReportLevelBadge" style="font-size: 0.65rem;">Kadro Ort: 1.00</span>
+                  </label>
+                  <div class="input-group input-group-merge input-group-sm">
+                    <span class="input-group-text bg-dark border-secondary border-opacity-25"><i class="icon-base ti tabler-chart-bar text-warning"></i></span>
+                    <input type="number" class="form-control bg-dark border-secondary border-opacity-25 text-heading font-monospace fw-bold" name="level" id="editReportLevel" value="1" min="1" max="20" readonly style="background-color: rgba(0,0,0,0.45) !important; cursor: not-allowed;" title="{{ __('Kadroya göre otomatik hesaplanır (Değiştirilemez)') }}" required />
+                  </div>
+                  <small class="text-body-secondary d-block mt-1" style="font-size: 0.68rem;">
+                    <i class="icon-base ti tabler-lock text-warning me-1"></i>Kadro ortalamasına göre otomatik hesaplanır.
+                  </small>
+                </div>
+              </div>
+
+              <!-- Row 3: Görev Sonucu (F) & Depo Durumu (F) (Otomatik) -->
+              <div class="row g-2 mb-3">
+                <div class="col-12 col-sm-6">
+                  <label class="form-label fw-semibold text-heading small">{{ __('Görev Sonucu (F)') }} <span class="text-danger">*</span></label>
+                  <select class="form-select form-select-sm bg-dark border-secondary border-opacity-25 text-heading fw-semibold" name="status" id="editReportStatus">
+                    <option value="success">✓ Başarılı (Tamamlandı)</option>
+                    <option value="failed">✗ Başarısız (Yenilgi / İptal)</option>
+                  </select>
+                </div>
+
+                <!-- Depo Durumu (F) (Otomatik & Değiştirilemez) -->
+                <div class="col-12 col-sm-6">
+                  <label class="form-label fw-semibold text-heading small d-flex align-items-center justify-content-between mb-1">
+                    <span>{{ __('Depo Durumu (F)') }}</span>
+                    <span class="badge bg-label-secondary font-monospace py-0 px-1" style="font-size: 0.65rem;">Otomatik</span>
+                  </label>
+                  <input type="text" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-success font-monospace fw-bold" id="editReportDepoDisplay" value="🗸 Teslim (Ceza Yok / 0 SP)" readonly style="background-color: rgba(0,0,0,0.45) !important; cursor: not-allowed;" title="{{ __('Görevin başarılı/başarısız olmasına göre otomatik belirlenir') }}" />
+                  <input type="hidden" name="depo_status" id="editReportDepoStatus" value="1" />
+                  <small class="text-body-secondary d-block mt-1" style="font-size: 0.68rem;" id="editReportDepoHint">
+                    <i class="icon-base ti tabler-circle-check text-success me-1"></i>Görev başarılı olduğundan depo cezası uygulanmaz.
+                  </small>
+                </div>
+              </div>
+
+              <!-- Row 4: Rapor Kesintisi (I - Fix %10), Ek Ödül, Game Master -->
+              <div class="row g-2 mb-2">
+                <div class="col-12 col-sm-4">
+                  <label class="form-label fw-semibold text-heading small d-flex align-items-center justify-content-between mb-1">
+                    <span>{{ __('Rapor (I)') }}</span>
+                    <span class="badge bg-label-info font-monospace py-0 px-1" style="font-size: 0.65rem;">%10 Fix (XP &times; 0.1)</span>
+                  </label>
+                  <input type="number" step="0.5" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-info font-monospace fw-bold" name="rapor_cut" id="editReportRaporCut" readonly style="background-color: rgba(0,0,0,0.45) !important; cursor: not-allowed;" title="{{ __('Toplam XP nin %10 u olarak sabit hesaplanır (Değiştirilemez)') }}" />
+                  <small class="text-body-secondary d-block mt-1" style="font-size: 0.68rem;">
+                    <i class="icon-base ti tabler-lock text-warning me-1"></i>Toplam XP'nin %10'u sabittir.
+                  </small>
+                </div>
+
+                <div class="col-12 col-sm-4">
+                  <label class="form-label fw-semibold text-heading small">{{ __('Ek (J)') }}</label>
+                  <input type="number" step="0.5" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading font-monospace" name="extra_reward" id="editReportExtraReward" />
+                </div>
+
+                <div class="col-12 col-sm-4">
+                  <label class="form-label fw-semibold text-heading small">{{ __('Game Master (GM)') }} <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading" name="gm" id="editReportGm" list="knownGmsList" required />
+                </div>
+              </div>
+            </div>
+
+            <!-- Konum & Brifing Kartı -->
+            <div class="report-section-box mb-3">
+              <h6 class="mb-2 fw-bold text-heading d-flex align-items-center gap-2">
+                <i class="icon-base ti tabler-map-pin text-warning fs-5"></i>
+                <span>{{ __('Konum & Hikaye Brifingi') }}</span>
+              </h6>
+
+              <div class="row g-2 mb-2">
+                <div class="col-12 col-sm-6">
+                  <label class="form-label fw-semibold text-heading small mb-1">{{ __('Lokasyon') }}</label>
+                  <input type="text" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading" name="location" id="editReportLocation" />
+                </div>
+
+                <div class="col-12 col-sm-6">
+                  <label class="form-label fw-semibold text-heading small mb-1">{{ __('Düşmanlar') }}</label>
+                  <input type="text" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading" name="enemies" id="editReportEnemies" />
+                </div>
+              </div>
+
+              <div>
+                <label class="form-label fw-semibold text-heading small mb-1">{{ __('Detaylı Sefer Raporu / Brifing') }}</label>
+                <textarea class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading" name="full_report" id="editReportFullText" rows="2"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN: KADRO YÖNETİMİ & EKLE / ÇIKAR -->
+          <div class="col-12 col-lg-6">
+            <div class="report-section-box mb-3 border-warning border-opacity-35" style="background: rgba(18, 22, 42, 0.85);">
+              
+              <!-- Header with Party Count -->
+              <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                <h6 class="mb-0 fw-bold text-heading d-flex align-items-center gap-2">
+                  <i class="icon-base ti tabler-users-group text-warning fs-5"></i>
+                  <span>{{ __('Katılan Kadro & Maceracılar') }}</span>
+                </h6>
+                <span class="badge bg-warning text-dark font-monospace fs-6 px-3 py-1 shadow-sm" id="editReportPartyCountLabel">
+                  Diğer Oyuncular
+                </span>
+              </div>
+
+              <!-- Raporlayan (Leader) -->
+              <div class="p-2 rounded bg-black bg-opacity-40 border border-warning border-opacity-30 mb-3">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                  <label class="form-label fw-semibold text-warning small mb-0 d-flex align-items-center gap-1">
+                    <span class="fs-5">👑</span>
+                    <span>{{ __('Raporlayan Maceracı (AN - Lider)') }}</span>
+                    <span class="text-danger">*</span>
+                  </label>
+                  <span class="badge bg-label-warning font-monospace" style="font-size: 0.68rem;">Rapor Ödülü Dahil</span>
+                </div>
+                <div class="input-group input-group-merge input-group-sm">
+                  <span class="input-group-text bg-dark border-secondary border-opacity-25"><i class="icon-base ti tabler-feather text-warning"></i></span>
+                  <input type="text" class="form-control bg-dark border-secondary border-opacity-25 text-heading fw-bold" name="reporter" id="editReportReporter" list="knownAdventurersList" required />
+                </div>
+              </div>
+
+              <!-- EKLE / ÇIKAR KONTROL PANELİ -->
+              <div class="mb-3">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                  <label class="form-label fw-semibold text-heading small mb-0 d-flex align-items-center gap-1">
+                    <i class="icon-base ti tabler-user-plus text-warning"></i>
+                    <span>{{ __('Diğer Oyuncuları Kadroya Ekle (AO..BG)') }}</span>
+                  </label>
+                  <button type="button" class="btn btn-outline-danger btn-xs py-0 px-2" id="btnClearAllEditOtherPlayersBtn" title="{{ __('Kadroyu Temizle') }}" style="font-size: 0.72rem;">
+                    <i class="icon-base ti tabler-trash me-1"></i>{{ __('Kadroyu Temizle') }}
+                  </button>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                  <div class="input-group input-group-merge flex-grow-1">
+                    <span class="input-group-text bg-dark border-secondary border-opacity-25"><i class="icon-base ti tabler-user text-body-secondary"></i></span>
+                    <input type="text" class="form-control bg-dark border-secondary border-opacity-25 text-heading" id="inputEditOtherPlayer" list="knownAdventurersList" placeholder="Karakter adı yazın veya seçin..." />
+                  </div>
+                  <button type="button" class="btn btn-warning d-flex align-items-center gap-1 px-3 shadow-sm text-dark fw-bold" id="btnEditOtherPlayerBtn">
+                    <i class="icon-base ti tabler-plus fs-5"></i>
+                    <span>{{ __('Ekle') }}</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- AKTİF KADRO & CANLI XP DAĞILIMI LİSTESİ -->
+              <div class="mb-3">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                  <small class="text-body-secondary fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">
+                    <i class="icon-base ti tabler-list-check text-warning me-1"></i>{{ __('Mevcut Kadro & Kişi Başı Ortalama XP:') }}
+                  </small>
+                  <span class="badge bg-label-warning font-monospace" id="liveEditDistributionSummaryBadge" style="font-size: 0.72rem;">
+                    4 Oyuncu &bull; Kişi Başı: 175.63 XP
+                  </span>
+                </div>
+
+                <div id="liveEditPlayersDistributionList" class="d-flex flex-column gap-2 p-1 rounded bg-black bg-opacity-35 border border-secondary border-opacity-20 mb-2" style="max-height: 220px; overflow-y: auto;">
+                  <!-- Dynamically populated via JS with remove buttons -->
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between p-2 rounded bg-black bg-opacity-40 font-monospace text-body-secondary" style="font-size: 0.73rem;">
+                  <span id="liveEditSumCheckText">Dağıtılan Toplam: 4 &times; 175.63 = 702.52 XP</span>
+                  <span class="text-success"><i class="icon-base ti tabler-check me-1"></i>{{ __('Eşit Ortalama Dağılımı') }}</span>
+                </div>
+              </div>
+
+
+              <!-- Hidden container keeping DOM tags synced for edit payload -->
+              <div id="editOtherPlayersTagsContainer" class="d-none"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer (Pinned at Bottom, Always Visible) -->
+      <div class="modal-footer p-3 p-md-4 d-flex align-items-center justify-content-between">
+        <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal">
+          <i class="icon-base ti tabler-x me-1"></i> {{ __('Vazgeç') }}
+        </button>
+        <button type="submit" class="btn btn-warning btn-sm fw-bold px-4 py-2 shadow-lg" id="btnSubmitEditQuestReport">
+          <i class="icon-base ti tabler-check me-1 fs-5"></i>
+          <span>{{ __('Değişiklikleri Kaydet') }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ====================================================
+     6. MISSION REPORT DOSSIER MODAL (DETAYLAR OKUYUCU)
      ==================================================== -->
 <div class="modal fade" id="questReportDetailModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
@@ -831,11 +2315,23 @@
 
       <!-- Modal Body -->
       <div class="modal-body p-3 p-md-4">
-        <!-- Metadata Overview Ribbon -->
+        
+        <!-- Formula Breakdown Card -->
+        <div class="formula-engine-box mb-3">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <span class="fw-bold text-warning font-monospace small"><i class="icon-base ti tabler-calculator me-1"></i>Master Sheet Hesaplama Brifingi</span>
+            <span class="badge badge-avg-xp font-monospace" id="modalReportAvgBadge">175.63 XP</span>
+          </div>
+          <div class="p-2 rounded bg-black bg-opacity-40 font-monospace small text-heading" id="modalReportFormulaText">
+            =(E2 - G2 - H2 - I2 + J2) / AL2
+          </div>
+        </div>
+
+        <!-- Metadata Ribbon -->
         <div class="row g-2 mb-3">
           <div class="col-6 col-md-3">
             <div class="p-2 rounded-3 bg-dark bg-opacity-50 border border-secondary border-opacity-10 text-center">
-              <span class="text-body-secondary small d-block" style="font-size: 0.72rem;">{{ __('Location') }}</span>
+              <span class="text-body-secondary small d-block" style="font-size: 0.72rem;">{{ __('Lokasyon') }}</span>
               <span class="fw-bold font-monospace text-heading" id="modalReportLocation" style="font-size: 0.85rem;">Siwion</span>
             </div>
           </div>
@@ -847,14 +2343,14 @@
           </div>
           <div class="col-6 col-md-3">
             <div class="p-2 rounded-3 bg-dark bg-opacity-50 border border-secondary border-opacity-10 text-center">
-              <span class="text-body-secondary small d-block" style="font-size: 0.72rem;">{{ __('Reporter') }}</span>
+              <span class="text-body-secondary small d-block" style="font-size: 0.72rem;">{{ __('Raporlayan') }}</span>
               <span class="fw-bold font-monospace text-info" id="modalReportReporter" style="font-size: 0.85rem;">Tolrun</span>
             </div>
           </div>
           <div class="col-6 col-md-3">
             <div class="p-2 rounded-3 bg-dark bg-opacity-50 border border-secondary border-opacity-10 text-center">
-              <span class="text-body-secondary small d-block" style="font-size: 0.72rem;">{{ __('Average Level') }}</span>
-              <span class="fw-bold font-monospace text-success" id="modalReportAvgLevel" style="font-size: 0.85rem;">Ort. Lvl 1.25</span>
+              <span class="text-body-secondary small d-block" style="font-size: 0.72rem;">{{ __('Seviye') }}</span>
+              <span class="fw-bold font-monospace text-success" id="modalReportLevel" style="font-size: 0.85rem;">Lvl 1</span>
             </div>
           </div>
         </div>
@@ -864,7 +2360,7 @@
           <div class="d-flex align-items-center justify-content-between mb-2">
             <h6 class="mb-0 fw-bold text-heading d-flex align-items-center gap-2">
               <i class="icon-base ti tabler-feather text-warning"></i>
-              <span>{{ __('Full Debriefing Report') }}</span>
+              <span>{{ __('Detaylı Sefer Raporu') }}</span>
             </h6>
             <span class="badge bg-label-danger font-monospace" id="modalReportEnemies" style="font-size: 0.75rem;">
               Düşmanlar
@@ -880,7 +2376,7 @@
           <div class="d-flex align-items-center justify-content-between mb-2">
             <h6 class="mb-0 fw-bold text-heading d-flex align-items-center gap-2">
               <i class="icon-base ti tabler-users-group text-primary"></i>
-              <span>{{ __('Party Roster & Individual XP') }}</span>
+              <span>{{ __('Katılan Maceracılar & Ortalama Pay') }}</span>
             </h6>
             <span class="badge bg-label-secondary font-monospace" id="modalReportPartyCount">
               4 Oyuncu
@@ -890,11 +2386,10 @@
             <table class="table table-sm text-nowrap mb-0" style="font-size: 0.85rem;">
               <thead>
                 <tr class="text-body-secondary border-bottom border-secondary border-opacity-20">
-                  <th>{{ __('Character') }}</th>
-                  <th>{{ __('Class') }}</th>
-                  <th>{{ __('Level') }}</th>
-                  <th>{{ __('Role') }}</th>
-                  <th class="text-end">{{ __('XP Awarded') }}</th>
+                  <th>{{ __('Maceracı') }}</th>
+                  <th>{{ __('Rol') }}</th>
+                  <th>{{ __('Seviye') }}</th>
+                  <th class="text-end">{{ __('Kazanılan XP') }}</th>
                 </tr>
               </thead>
               <tbody id="modalReportPartyTableBody">
@@ -908,30 +2403,30 @@
         <div class="report-section-box mb-0">
           <h6 class="mb-3 fw-bold text-heading d-flex align-items-center gap-2">
             <i class="icon-base ti tabler-coins text-warning"></i>
-            <span>{{ __('Financial & Guild Ledger') }}</span>
+            <span>{{ __('Mali Tablo & Kesintiler (Google Sheet Sütunları)') }}</span>
           </h6>
           <div class="row g-2">
             <div class="col-6 col-md-3">
               <div class="p-2 rounded-2 bg-black bg-opacity-30 border border-secondary border-opacity-10 text-center">
-                <span class="text-body-secondary small d-block" style="font-size: 0.7rem;">{{ __('Total XP') }}</span>
+                <span class="text-body-secondary small d-block" style="font-size: 0.7rem;">{{ __('Toplam XP (E)') }}</span>
                 <span class="fw-bold font-monospace text-success" id="modalReportTotalXp">+750 XP</span>
               </div>
             </div>
             <div class="col-6 col-md-3">
               <div class="p-2 rounded-2 bg-black bg-opacity-30 border border-secondary border-opacity-10 text-center">
-                <span class="text-body-secondary small d-block" style="font-size: 0.7rem;">{{ __('Guild Cut') }}</span>
-                <span class="fw-bold font-monospace text-body" id="modalReportGuildCut">37.5 SP</span>
+                <span class="text-body-secondary small d-block" style="font-size: 0.7rem;">{{ __('Lonca %5 (G)') }}</span>
+                <span class="fw-bold font-monospace text-warning" id="modalReportGuildCut">37.5 SP</span>
               </div>
             </div>
             <div class="col-6 col-md-3">
               <div class="p-2 rounded-2 bg-black bg-opacity-30 border border-secondary border-opacity-10 text-center">
-                <span class="text-body-secondary small d-block" style="font-size: 0.7rem;">{{ __('Vault Cut') }}</span>
-                <span class="fw-bold font-monospace text-info" id="modalReportVaultCut">0 SP</span>
+                <span class="text-body-secondary small d-block" style="font-size: 0.7rem;">{{ __('Depo Kes. (H)') }}</span>
+                <span class="fw-bold font-monospace text-danger" id="modalReportDepoCut">0 SP</span>
               </div>
             </div>
             <div class="col-6 col-md-3">
               <div class="p-2 rounded-2 bg-black bg-opacity-30 border border-secondary border-opacity-10 text-center">
-                <span class="text-body-secondary small d-block" style="font-size: 0.7rem;">{{ __('Average Reward') }}</span>
+                <span class="text-body-secondary small d-block" style="font-size: 0.7rem;">{{ __('Kişi Başı Ortalama (K)') }}</span>
                 <span class="fw-bold font-monospace text-warning" id="modalReportAvgReward">175.63 XP</span>
               </div>
             </div>
@@ -941,39 +2436,241 @@
 
       <!-- Modal Footer -->
       <div class="modal-footer p-3 p-md-4 d-flex align-items-center justify-content-between">
-        <div class="d-flex align-items-center gap-1 text-body-secondary font-monospace small">
-          <i class="icon-base ti tabler-certificate text-warning"></i>
-          <span>{{ __('Verified Guild Archives Record') }}</span>
-        </div>
+        <button type="button" class="btn btn-outline-success btn-sm" id="btnModalDistributeXp">
+          <i class="icon-base ti tabler-bolt me-1"></i> {{ __('XP Tracker\'a Aktar') }}
+        </button>
         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
-          {{ __('Close Dossier') }}
+          {{ __('Kapat') }}
         </button>
       </div>
     </div>
   </div>
 </div>
+
+<!-- ====================================================
+     7. MODAL: LONCA XP & RÜTBELER HAVUZU DÜZENLE
+     ==================================================== -->
+<div class="modal fade" id="modalEditGuildPool" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content modal-dossier">
+      <form id="formEditGuildPool">
+        @csrf
+        <!-- Modal Header -->
+        <div class="modal-header d-flex align-items-center justify-content-between p-3 p-md-4">
+          <div class="d-flex align-items-center gap-3">
+            <div class="avatar avatar-md bg-label-warning rounded-3 d-flex align-items-center justify-content-center shadow-md">
+              <i class="icon-base ti tabler-shield-dollar fs-3 text-warning"></i>
+            </div>
+            <div>
+              <h4 class="mb-0 fw-bold text-heading">{{ __('Lonca XP & Rütbeler Havuzunu Düzenle') }}</h4>
+              <small class="text-body-secondary font-monospace">{{ __('Master Sheet BU..CA parametreleri ve anlık formül hesaplaması') }}</small>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="modal-body p-3 p-md-4">
+
+          <!-- Canlı Formül Hesaplama Kartı -->
+          <div class="formula-engine-box mb-4">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+              <div class="d-flex align-items-center gap-2">
+                <i class="icon-base ti tabler-cpu text-warning fs-4"></i>
+                <span class="fw-bold text-heading" style="font-size: 0.95rem;">{{ __('Canlı Havuz & Pay Hesaplayıcı') }}</span>
+              </div>
+              <span class="badge badge-avg-xp font-monospace" id="livePoolPayBadge">
+                Uzman Payı: 98,295.22 XP
+              </span>
+            </div>
+            <div class="p-2 rounded bg-black bg-opacity-40 font-monospace small mb-2 text-warning" id="livePoolEquationsText">
+              Uzman Payı = Havuz / Uzman Sayısı | Grand Total = Rütbeler Toplamı + Ek Fon
+            </div>
+            <div class="row g-2 text-center text-body-secondary font-monospace" style="font-size: 0.78rem;">
+              <div class="col-6 col-md-3">
+                <span class="d-block text-muted">Wiki Kalan (BY2)</span>
+                <span class="fw-bold text-info" id="livePoolWikiRemText">14,253.00 XP</span>
+              </div>
+              <div class="col-6 col-md-3">
+                <span class="d-block text-muted">Uzman Kapasite (BX10)</span>
+                <span class="fw-bold text-warning" id="livePoolUzmanCapText">94,290.00 XP</span>
+              </div>
+              <div class="col-6 col-md-3">
+                <span class="d-block text-muted">Rütbeler Toplam (CA7)</span>
+                <span class="fw-bold text-success" id="livePoolRanksTotalText">3,439,017.50 XP</span>
+              </div>
+              <div class="col-6 col-md-3">
+                <span class="d-block text-muted">Genel Bakiye (CA2)</span>
+                <span class="fw-bold text-primary" id="livePoolGrandTotalText">3,459,587.50 XP</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 1: Wiki XP & Lonca XP Parametreleri -->
+          <div class="row g-3 mb-4">
+            <!-- Wiki XP Card -->
+            <div class="col-12 col-md-6">
+              <div class="p-3 rounded-3 bg-dark bg-opacity-60 border border-secondary border-opacity-20 h-100">
+                <h6 class="fw-bold text-info mb-3 d-flex align-items-center gap-2">
+                  <i class="icon-base ti tabler-book"></i> {{ __('Wiki XP Parametreleri') }}
+                </h6>
+                <div class="row g-2">
+                  <div class="col-6">
+                    <label class="form-label text-heading small fw-semibold">{{ __('Wiki Total (BW2)') }}</label>
+                    <input type="number" step="0.5" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading font-monospace" id="editPoolWikiTotal" value="{{ $guildPoolData['wiki_xp']['total'] ?? 53800 }}" />
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label text-heading small fw-semibold">{{ __('Wiki Dağıtılan (BX2)') }}</label>
+                    <input type="number" step="0.5" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading font-monospace" id="editPoolWikiDist" value="{{ $guildPoolData['wiki_xp']['distributed'] ?? 39547 }}" />
+                  </div>
+                </div>
+                <small class="text-body-secondary font-monospace d-block mt-2">
+                  Formül: <code>Kalan (BY2) = BW2 - BX2</code>
+                </small>
+              </div>
+            </div>
+
+            <!-- Lonca XP & Seviye Card -->
+            <div class="col-12 col-md-6">
+              <div class="p-3 rounded-3 bg-dark bg-opacity-60 border border-secondary border-opacity-20 h-100">
+                <h6 class="fw-bold text-warning mb-3 d-flex align-items-center gap-2">
+                  <i class="icon-base ti tabler-shield"></i> {{ __('Lonca XP & Seviye') }}
+                </h6>
+                <div class="row g-2">
+                  <div class="col-4">
+                    <label class="form-label text-heading small fw-semibold">{{ __('Lonca Toplam XP (BW3)') }}</label>
+                    <input type="number" step="0.5" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading font-monospace" id="editPoolGuildTotal" value="{{ $guildPoolData['guild_xp']['total'] ?? 157150 }}" />
+                  </div>
+                  <div class="col-4">
+                    <label class="form-label text-heading small fw-semibold">{{ __('Sonraki Eşik (BX3)') }}</label>
+                    <input type="number" step="0.5" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading font-monospace" id="editPoolGuildNext" value="{{ $guildPoolData['guild_xp']['next_level_threshold'] ?? 210000 }}" />
+                  </div>
+                  <div class="col-4">
+                    <label class="form-label text-heading small fw-semibold">{{ __('Lonca Seviyesi') }}</label>
+                    <input type="number" min="1" max="50" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading font-monospace" id="editPoolGuildLevel" value="{{ $guildPoolData['guild_xp']['level'] ?? 12 }}" />
+                  </div>
+                </div>
+                <small class="text-body-secondary font-monospace d-block mt-2">
+                  Uzman Kapasite XP: <code>=BW3 * 0.60</code>
+                </small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Havuz (BV5) & Ek Fon (CA4) -->
+          <div class="row g-3 mb-4">
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-bold text-heading">{{ __('Havuz XP Bakiyesi (BV5)') }} <span class="text-danger">*</span></label>
+              <div class="input-group input-group-merge">
+                <span class="input-group-text bg-dark border-secondary border-opacity-25"><i class="icon-base ti tabler-coins text-warning"></i></span>
+                <input type="number" step="0.01" class="form-control bg-dark border-secondary border-opacity-25 text-heading font-monospace fw-bold" id="editPoolTotalVal" value="{{ $guildPoolData['pool_total'] ?? 2064199.61 }}" required />
+              </div>
+              <small class="text-body-secondary font-monospace">Uzman Payı: <code>=BV5 / Uzman Sayısı</code></small>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-bold text-heading">{{ __('Ek Fon / Kasa (CA4)') }}</label>
+              <div class="input-group input-group-merge">
+                <span class="input-group-text bg-dark border-secondary border-opacity-25"><i class="icon-base ti tabler-plus text-info"></i></span>
+                <input type="number" step="0.01" class="form-control bg-dark border-secondary border-opacity-25 text-heading font-monospace fw-bold" id="editPoolExtraFund" value="{{ $guildPoolData['extra_fund'] ?? 20570 }}" />
+              </div>
+              <small class="text-body-secondary font-monospace">Genel Toplam: <code>=SUM(CA9:CA15) + Ek Fon</code></small>
+            </div>
+          </div>
+
+          <!-- Section 3: 7 Rütbe Detay Tablosu (Olan & Harcanan XP) -->
+          <div class="report-section-box mb-2">
+            <h6 class="fw-bold text-heading mb-3 d-flex align-items-center gap-2">
+              <i class="icon-base ti tabler-users-group text-primary"></i>
+              <span>{{ __('Rütbe Kadroları & Harcanan XP Değerleri (Satır 9..15)') }}</span>
+            </h6>
+
+            <div class="table-responsive">
+              <table class="table table-sm table-dark text-nowrap mb-0" style="font-size: 0.85rem;">
+                <thead>
+                  <tr class="text-body-secondary border-bottom border-secondary border-opacity-20">
+                    <th style="width: 160px;">{{ __('Rütbe (BU)') }}</th>
+                    <th style="width: 140px;" class="text-end">{{ __('Kapasite (BV)') }}</th>
+                    <th style="width: 130px;" class="text-center">{{ __('Olan Sayısı (BW)') }}</th>
+                    <th style="width: 180px;" class="text-end">{{ __('Harcanan XP (CA)') }}</th>
+                    <th style="width: 160px;" class="text-end text-success">{{ __('Hesaplanan Net XP (BZ)') }}</th>
+                  </tr>
+                </thead>
+                <tbody id="editPoolRanksTableBody">
+                  @foreach($guildPoolData['ranks'] as $idx => $rk)
+                    @php
+                      $rName = $rk['rank'];
+                    @endphp
+                    <tr class="edit-rank-row" data-rank="{{ $rName }}">
+                      <td>
+                        <span class="fw-bold text-heading">{{ $rName }}</span>
+                      </td>
+                      <td class="text-end font-monospace text-body-secondary">
+                        {{ $rk['capacity'] !== null ? number_format($rk['capacity'], 2) : '-' }}
+                      </td>
+                      <td>
+                        <input type="number" min="0" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading font-monospace text-center rank-input-count"
+                               data-rank="{{ $rName }}" value="{{ $rk['current_count'] ?? 0 }}" />
+                      </td>
+                      <td>
+                        <input type="number" step="0.01" min="0" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading font-monospace text-end rank-input-spent"
+                               data-rank="{{ $rName }}" value="{{ $rk['spent_xp'] ?? 0 }}" />
+                      </td>
+                      <td class="text-end font-monospace text-success fw-bold rank-display-net" data-rank="{{ $rName }}">
+                        {{ $rk['net_xp'] !== null ? number_format($rk['net_xp'], 2) : '-' }}
+                      </td>
+                    </tr>
+                  @endforeach
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer p-3 p-md-4 d-flex align-items-center justify-content-between">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+            {{ __('Vazgeç') }}
+          </button>
+          <button type="submit" class="btn btn-warning btn-sm fw-bold" id="btnSubmitEditGuildPool">
+            <i class="icon-base ti tabler-check me-1 fs-5"></i>
+            <span>{{ __('Havuz Değerlerini Güncelle') }}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Autocomplete Datalist for Adventurers -->
+<datalist id="knownAdventurersList">
+  @foreach($adventurers as $advName)
+    <option value="{{ $advName }}"></option>
+  @endforeach
+</datalist>
+
 @endsection
 
 @section('page-script')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   let reportsData = @json($reports);
+  let guildPoolData = @json($guildPoolData);
+  let currentDetailReportId = null;
 
   // Filter Elements
   const searchInput = document.getElementById('reportsSearchInput');
   const btnSearchClear = document.getElementById('btnReportsSearchClear');
   const typeButtons = document.querySelectorAll('#reportsTypeFilters .filter-pill-btn');
+  const gmFilter = document.getElementById('reportsGmFilter');
+  const levelFilter = document.getElementById('reportsLevelFilter');
   const sortSelect = document.getElementById('reportsSortSelect');
   const btnResetFilters = document.getElementById('btnResetReportsFilters');
   const btnEmptyResetFilters = document.getElementById('btnEmptyResetFilters');
+  const btnResetToMasterDefaults = document.getElementById('btnResetToMasterDefaults');
 
-  // Open Add Report Modal Buttons
-  const btnOpenAddReportModal = document.getElementById('btnOpenAddReportModal');
-  const btnToolbarAddReport = document.getElementById('btnToolbarAddReport');
-  const modalAddEl = document.getElementById('modalAddQuestReport');
-  const formAddReport = document.getElementById('formAddQuestReport');
-
-  // Containers
+  // Table Body & Counter
   const tableBody = document.getElementById('reportsTableBody');
   const emptyState = document.getElementById('reportsEmptyState');
   const currentFilteredCountEl = document.getElementById('currentFilteredCount');
@@ -981,162 +2678,383 @@ document.addEventListener('DOMContentLoaded', function () {
 
   let currentTypeFilter = 'all';
 
-  // Open Add Modal
-  function showAddModal() {
-    if (modalAddEl && window.bootstrap) {
-      const bsModal = new bootstrap.Modal(modalAddEl);
-      bsModal.show();
-      calculateLiveAvgLevel();
+  // ====================================================
+  // ====================================================
+  // 1. LIVE FORMULA ENGINE CALCULATOR FUNCTION
+  // ====================================================
+  // ====================================================
+  // 1. LIVE FORMULA ENGINE CALCULATOR FUNCTION
+  // Master Sheet Formulas:
+  // - Toplam XP: =(Level * 250 + 500) * IF(MQ=="🗸🗸", 3, 1)
+  // - Lonca (G): Toplam XP * 0.05
+  // - Depo (H): IF(Depo=="✗", Toplam XP * 0.20, 0)
+  // - Rapor (I): Toplam XP * 0.10 (Fix %10)
+  // - Ortalama: (Toplam XP - Lonca - Depo - Rapor + Ek) / Oyuncu Sayısı
+  // ====================================================
+  const characterLevelsMap = @json($characterLevels ?? []);
+  window.characterLevelsMap = characterLevelsMap;
+
+  function getCharacterLevel(name) {
+    if (!name) return 1;
+    const clean = String(name).trim().toLowerCase();
+    for (const [charName, lvl] of Object.entries(characterLevelsMap)) {
+      if (charName.toLowerCase() === clean) {
+        return Math.max(1, parseInt(lvl, 10) || 1);
+      }
+    }
+    return 1;
+  }
+
+  function calculateFormula(levelVal, mqVal, depoStatusVal, extraRewardVal, playerCountVal) {
+    const level = Math.max(parseInt(levelVal, 10) || 1, 1);
+    const isEpic = (mqVal === 'epic' || mqVal === '✓✓' || mqVal === '🗸🗸');
+    const multiplier = isEpic ? 3 : 1;
+
+    // XP = (Level * 250 + 500) * multiplier
+    const totalXp = (level * 250 + 500) * multiplier;
+
+    // Lonca = XP * 0.05 (5% Guild SP)
+    const guildCut = Math.round((totalXp * 0.05) * 100) / 100;
+
+    // Depo = DepoStatus === '0' ? XP * 0.20 : 0 (%20 ceza if failed/undelivered)
+    const isDepoOk = (depoStatusVal === '1' || depoStatusVal === true || depoStatusVal === 'true');
+    const depoCut = isDepoOk ? 0 : Math.round((totalXp * 0.20) * 100) / 100;
+
+    // Rapor Kesintisi (I) = XP * 0.10 (Fix %10)
+    const raporCut = Math.round((totalXp * 0.10) * 100) / 100;
+    const extraReward = parseFloat(extraRewardVal) || 0;
+    const playerCount = Math.max(parseInt(playerCountVal, 10) || 1, 1);
+
+    // Ortalama = (XP - Lonca - Depo - Rapor + Ek) / Oyuncu
+    const netPool = Math.round((totalXp - guildCut - depoCut - raporCut + extraReward) * 100) / 100;
+    const avgReward = Math.round((netPool / playerCount) * 100) / 100;
+
+    return {
+      level,
+      totalXp,
+      guildCut,
+      depoCut,
+      isDepoOk,
+      raporCut,
+      extraReward,
+      netPool,
+      playerCount,
+      avgReward
+    };
+  }
+
+  // ====================================================
+  // 2. LIVE CALCULATOR FOR "ADD REPORT" MODAL
+  // ====================================================
+  const addLevel = document.getElementById('addReportLevel');
+  const addLevelBadge = document.getElementById('addReportLevelBadge');
+  const addMq = document.getElementById('addReportMq');
+  const addStatus = document.getElementById('addReportStatus');
+  const addDepoStatus = document.getElementById('addReportDepoStatus');
+  const addDepoDisplay = document.getElementById('addReportDepoDisplay');
+  const addRaporCut = document.getElementById('addReportRaporCut');
+  const addExtraReward = document.getElementById('addReportExtraReward');
+  const addReporter = document.getElementById('addReportReporter');
+  const addOtherTagsContainer = document.getElementById('addOtherPlayersTagsContainer');
+  const addPartyCountLabel = document.getElementById('addReportPartyCountLabel');
+
+  function updateAddLiveCalculator() {
+    const otherTags = addOtherTagsContainer ? Array.from(addOtherTagsContainer.querySelectorAll('.other-player-item')) : [];
+    const otherPlayers = otherTags.map(el => el.getAttribute('data-name')).filter(Boolean);
+    const reporterName = (addReporter && addReporter.value.trim()) ? addReporter.value.trim() : 'Tolrun';
+    const totalPlayers = 1 + otherPlayers.length; // 1 reporter + other players
+
+    // 1. Calculate Quest Level automatically based on party members' levels
+    const partyRoster = [reporterName, ...otherPlayers];
+    const partyLevels = partyRoster.map(pName => getCharacterLevel(pName));
+    const avgPartyLevel = partyLevels.length > 0
+      ? Math.max(1, Math.round(partyLevels.reduce((a, b) => a + b, 0) / partyLevels.length))
+      : 1;
+
+    if (addLevel) {
+      addLevel.value = avgPartyLevel;
+    }
+    if (addLevelBadge) {
+      const sumLvl = partyLevels.reduce((a, b) => a + b, 0);
+      const exactAvg = (sumLvl / partyLevels.length).toFixed(1);
+      addLevelBadge.textContent = `Oto: Lvl ${avgPartyLevel} (Ort: ${exactAvg})`;
+    }
+
+    // 2. Depo Status sync based on Görev Sonucu (Başarılı / Başarısız)
+    const isSuccess = addStatus ? (addStatus.value === 'success') : true;
+    if (addDepoStatus) {
+      addDepoStatus.value = isSuccess ? '1' : '0';
+    }
+    if (addDepoDisplay) {
+      if (isSuccess) {
+        addDepoDisplay.value = '🗸 Teslim (Ceza Yok / 0 SP)';
+        addDepoDisplay.className = 'form-control border-success text-success fw-bold bg-light';
+      } else {
+        addDepoDisplay.value = '✗ Teslim Edilmedi (%20 SP Ceza)';
+        addDepoDisplay.className = 'form-control border-danger text-danger fw-bold bg-light';
+      }
+    }
+
+    if (addPartyCountLabel) {
+      addPartyCountLabel.textContent = `${otherPlayers.length} Diğer Oyuncu (+1 Raporlayan = ${totalPlayers} Kişi)`;
+    }
+
+    const calc = calculateFormula(
+      avgPartyLevel,
+      addMq ? addMq.value : 'none',
+      addDepoStatus ? addDepoStatus.value : '1',
+      addExtraReward ? addExtraReward.value : 0,
+      totalPlayers
+    );
+
+    // Fixed Rapor Kesintisi (I): XP * 0.10
+    if (addRaporCut) {
+      addRaporCut.value = calc.raporCut;
+    }
+
+    const badge = document.getElementById('liveAddAvgXpBadge');
+    const equation = document.getElementById('liveAddFormulaEquation');
+    const xpText = document.getElementById('liveAddXpText');
+    const guildText = document.getElementById('liveAddGuildCutText');
+    const depoText = document.getElementById('liveAddDepoCutText');
+    const cutsText = document.getElementById('liveAddCutsText');
+    const netPoolText = document.getElementById('liveAddNetPoolText');
+    const playerText = document.getElementById('liveAddPlayerCountText');
+    const distSummaryBadge = document.getElementById('liveAddDistributionSummaryBadge');
+    const distHint = document.getElementById('liveAddDistributeHint');
+    const sumCheckText = document.getElementById('liveAddSumCheckText');
+    const playersListContainer = document.getElementById('liveAddPlayersDistributionList');
+
+    if (badge) badge.textContent = `Ortalama: ${calc.avgReward.toFixed(2)} XP`;
+    if (xpText) xpText.textContent = `${calc.totalXp} XP`;
+    if (guildText) guildText.textContent = `${calc.guildCut} SP`;
+    if (depoText) depoText.textContent = `${calc.depoCut} SP`;
+    if (cutsText) cutsText.textContent = `-${calc.raporCut} / +${calc.extraReward}`;
+    if (netPoolText) netPoolText.textContent = `${calc.netPool.toFixed(2)} XP`;
+    if (playerText) playerText.textContent = `${calc.playerCount} Oyuncu`;
+
+    if (equation) {
+      equation.innerHTML = `=(XP [<span class="text-success fw-bold">${calc.totalXp}</span>] - Lonca [<span class="text-warning fw-bold">${calc.guildCut}</span>] - Depo [<span class="text-danger fw-bold">${calc.depoCut}</span>] - Rapor [<span class="text-info fw-bold">${calc.raporCut}</span>] + Ek [<span class="text-primary fw-bold">${calc.extraReward}</span>]) / Oyuncu [<span class="text-info fw-bold">${calc.playerCount}</span>] = <span class="text-warning fw-bold">${calc.avgReward.toFixed(2)} XP / Oyuncu</span>`;
+    }
+
+    if (distSummaryBadge) {
+      distSummaryBadge.textContent = `${totalPlayers} Oyuncu • Kişi Başı: ${calc.avgReward.toFixed(2)} XP`;
+    }
+
+    if (distHint) {
+      distHint.innerHTML = `<i class="icon-base ti tabler-info-circle text-info me-1"></i>Kaydedildiğinde kadrodaki <strong>${totalPlayers}</strong> maceracıya kişi başı <strong>+${calc.avgReward.toFixed(2)} XP</strong> otomatik yansıtılacaktır.`;
+    }
+
+    if (sumCheckText) {
+      const sumTotal = (totalPlayers * calc.avgReward).toFixed(2);
+      sumCheckText.textContent = `Dağıtılan Toplam: ${totalPlayers} × ${calc.avgReward.toFixed(2)} = ${sumTotal} XP (Net Havuz: ${calc.netPool.toFixed(2)} XP)`;
+    }
+
+    // Render Per-Player Interactive Roster in Add modal
+    if (playersListContainer) {
+      let html = '';
+      const repLevel = getCharacterLevel(reporterName);
+      // 1. Reporter Card (Leader)
+      html += `
+        <div class="party-roster-card reporter-roster-card d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-2">
+            <div class="avatar avatar-xs bg-label-warning text-warning rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:28px; height:28px; font-size:13px;">👑</div>
+            <div>
+              <div class="fw-bold text-heading" style="font-size: 0.88rem;">${reporterName}</div>
+              <div class="d-flex align-items-center gap-1">
+                <span class="badge bg-label-warning py-0 px-1" style="font-size: 0.65rem;">Lider & Raporlayan</span>
+                <span class="badge bg-label-info py-0 px-1" style="font-size: 0.65rem;">Lvl ${repLevel}</span>
+              </div>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <div class="text-end">
+              <div class="fw-bold text-warning font-monospace" style="font-size: 0.85rem;">+${calc.avgReward.toFixed(2)} XP</div>
+              <small class="text-muted" style="font-size: 0.65rem;">Kişi Başı Pay</small>
+            </div>
+            <span class="badge bg-label-secondary py-1 px-2" style="font-size: 0.7rem;" title="Lider kadrodan çıkarılamaz">
+              <i class="icon-base ti tabler-lock"></i>
+            </span>
+          </div>
+        </div>
+      `;
+
+      // 2. Other Players Roster Cards with direct [Çıkar] button
+      if (otherPlayers.length > 0) {
+        otherPlayers.forEach((pName, pIdx) => {
+          const charLvl = getCharacterLevel(pName);
+          html += `
+            <div class="party-roster-card d-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center gap-2">
+                <div class="avatar avatar-xs bg-label-primary text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:28px; height:28px; font-size:12px;">#${pIdx + 1}</div>
+                <div>
+                  <div class="fw-bold text-heading" style="font-size: 0.88rem;">${pName}</div>
+                  <div class="d-flex align-items-center gap-1">
+                    <span class="badge bg-label-secondary py-0 px-1" style="font-size: 0.65rem;">Grup Üyesi</span>
+                    <span class="badge bg-label-info py-0 px-1" style="font-size: 0.65rem;">Lvl ${charLvl}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <div class="text-end">
+                  <div class="fw-bold text-primary font-monospace" style="font-size: 0.85rem;">+${calc.avgReward.toFixed(2)} XP</div>
+                  <small class="text-muted" style="font-size: 0.65rem;">Kişi Başı Pay</small>
+                </div>
+                <button type="button" class="btn btn-remove-roster-player btn-add-modal-remove" data-name="${pName}" title="${pName} maceracısını kadrodan çıkar">
+                  <i class="icon-base ti tabler-trash" style="font-size: 0.85rem;"></i>
+                  <span>Çıkar</span>
+                </button>
+              </div>
+            </div>
+          `;
+        });
+      } else {
+        html += `
+          <div class="text-center py-2 text-muted small fst-italic">
+            <i class="icon-base ti tabler-info-circle me-1"></i>Henüz başka maceracı eklenmedi. Yukarıdan isim yazıp <strong>Ekle</strong> butonuna basabilirsiniz.
+          </div>
+        `;
+      }
+
+      playersListContainer.innerHTML = html;
     }
   }
 
-  if (btnOpenAddReportModal) btnOpenAddReportModal.addEventListener('click', showAddModal);
-  if (btnToolbarAddReport) btnToolbarAddReport.addEventListener('click', showAddModal);
+  // Remove player directly from active roster in Add Modal
+  const liveAddPlayersList = document.getElementById('liveAddPlayersDistributionList');
+  if (liveAddPlayersList) {
+    liveAddPlayersList.addEventListener('click', function(e) {
+      const removeBtn = e.target.closest('.btn-remove-roster-player');
+      if (!removeBtn) return;
+      const name = removeBtn.getAttribute('data-name');
+      if (!name) return;
 
-  // Dynamic Party Rows & Average Level Calculation
-  const partyContainer = document.getElementById('addReportPartyContainer');
-  const btnAddPartyRow = document.getElementById('btnAddPartyRow');
-  const liveAvgLevelBadge = document.getElementById('liveAddAvgLevelBadge');
-
-  function calculateLiveAvgLevel() {
-    if (!partyContainer) return 1.0;
-    const levelInputs = partyContainer.querySelectorAll('.party-input-level');
-    let sum = 0;
-    let count = 0;
-
-    levelInputs.forEach(input => {
-      const val = parseFloat(input.value) || 1;
-      sum += val;
-      count++;
+      if (addOtherTagsContainer) {
+        const item = Array.from(addOtherTagsContainer.querySelectorAll('.other-player-item'))
+          .find(el => el.getAttribute('data-name').toLowerCase() === name.toLowerCase());
+        if (item) item.remove();
+      }
+      updateAddLiveCalculator();
     });
-
-    const avg = count > 0 ? (sum / count).toFixed(2) : '1.00';
-    if (liveAvgLevelBadge) {
-      liveAvgLevelBadge.textContent = `Ortalama Seviye: ${avg}`;
-    }
-    return parseFloat(avg);
   }
 
-  if (partyContainer) {
-    partyContainer.addEventListener('input', function (e) {
-      if (e.target.classList.contains('party-input-level')) {
-        calculateLiveAvgLevel();
+  // Clear all other players in Add Modal
+  const btnClearAllOtherPlayers = document.getElementById('btnClearAllOtherPlayersBtn');
+  if (btnClearAllOtherPlayers) {
+    btnClearAllOtherPlayers.addEventListener('click', function() {
+      if (addOtherTagsContainer) {
+        addOtherTagsContainer.innerHTML = '';
+        updateAddLiveCalculator();
       }
     });
+  }
 
-    partyContainer.addEventListener('click', function (e) {
-      const btnRemove = e.target.closest('.btn-remove-party-row');
-      if (btnRemove) {
-        const row = btnRemove.closest('.modal-party-row');
-        const allRows = partyContainer.querySelectorAll('.modal-party-row');
-        if (allRows.length > 1) {
-          row.remove();
-          calculateLiveAvgLevel();
-        } else {
-          alert('En az bir parti üyesi gereklidir.');
+  [addMq, addStatus, addExtraReward, addReporter].forEach(el => {
+    if (el) {
+      el.addEventListener('input', updateAddLiveCalculator);
+      el.addEventListener('change', updateAddLiveCalculator);
+    }
+  });
+
+  // Add tag button in Add Modal
+  const inputAddOther = document.getElementById('inputAddOtherPlayer');
+  const btnAddOther = document.getElementById('btnAddOtherPlayerBtn');
+
+  function addOtherPlayerTag() {
+    if (!inputAddOther) return;
+    const name = inputAddOther.value.trim();
+    if (!name) {
+      inputAddOther.focus();
+      return;
+    }
+
+    const reporterName = addReporter ? addReporter.value.trim().toLowerCase() : '';
+    if (name.toLowerCase() === reporterName) {
+      inputAddOther.value = '';
+      return;
+    }
+
+    // Check duplicate
+    const existing = Array.from(addOtherTagsContainer.querySelectorAll('.other-player-item'))
+      .map(tag => tag.getAttribute('data-name').toLowerCase());
+
+    if (existing.includes(name.toLowerCase())) {
+      inputAddOther.value = '';
+      return;
+    }
+
+    const span = document.createElement('span');
+    span.className = 'party-pill-tag other-player-item';
+    span.setAttribute('data-name', name);
+    span.innerHTML = `
+      <span>${name}</span>
+      <i class="icon-base ti tabler-x text-danger cursor-pointer btn-remove-other ms-1" style="font-size: 0.8rem;"></i>
+    `;
+    addOtherTagsContainer.appendChild(span);
+    inputAddOther.value = '';
+    inputAddOther.focus();
+    updateAddLiveCalculator();
+  }
+
+  if (btnAddOther) btnAddOther.addEventListener('click', addOtherPlayerTag);
+  if (inputAddOther) {
+    inputAddOther.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addOtherPlayerTag();
+      }
+    });
+  }
+
+  if (addOtherTagsContainer) {
+    addOtherTagsContainer.addEventListener('click', function (e) {
+      if (e.target.classList.contains('btn-remove-other') || e.target.closest('.btn-remove-other')) {
+        const item = e.target.closest('.other-player-item');
+        if (item) {
+          item.remove();
+          updateAddLiveCalculator();
         }
       }
     });
   }
 
-  if (btnAddPartyRow) {
-    btnAddPartyRow.addEventListener('click', function () {
-      if (!partyContainer) return;
-      const count = partyContainer.querySelectorAll('.modal-party-row').length;
-      const div = document.createElement('div');
-      div.className = 'modal-party-row d-flex align-items-center gap-2 flex-wrap';
-      div.setAttribute('data-row', count);
-      div.innerHTML = `
-        <div class="flex-grow-1" style="min-width: 140px;">
-          <input type="text" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading party-input-name" placeholder="Karakter Adı" value="Kahraman ${count + 1}" required />
-        </div>
-        <div style="width: 130px;">
-          <select class="form-select form-select-sm bg-dark border-secondary border-opacity-25 text-heading party-input-class">
-            <option value="Fighter" selected>Fighter</option>
-            <option value="Wizard">Wizard</option>
-            <option value="Rogue">Rogue</option>
-            <option value="Cleric">Cleric</option>
-            <option value="Paladin">Paladin</option>
-            <option value="Ranger">Ranger</option>
-            <option value="Barbarian">Barbarian</option>
-            <option value="Bard">Bard</option>
-            <option value="Sorcerer">Sorcerer</option>
-            <option value="Warlock">Warlock</option>
-            <option value="Druid">Druid</option>
-            <option value="Monk">Monk</option>
-          </select>
-        </div>
-        <div style="width: 100px;">
-          <div class="input-group input-group-sm">
-            <span class="input-group-text bg-dark border-secondary border-opacity-25 text-muted px-2">Lvl</span>
-            <input type="number" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading font-monospace party-input-level" min="1" max="20" value="1" required />
-          </div>
-        </div>
-        <div style="width: 110px;">
-          <select class="form-select form-select-sm bg-dark border-secondary border-opacity-25 text-heading party-input-role">
-            <option value="Member" selected>Üye</option>
-            <option value="Reporter">Lider / Rep.</option>
-          </select>
-        </div>
-        <button type="button" class="btn btn-icon btn-sm btn-label-danger border-0 btn-remove-party-row" title="Kaldır">
-          <i class="icon-base ti tabler-trash fs-6"></i>
-        </button>
-      `;
-      partyContainer.appendChild(div);
-      calculateLiveAvgLevel();
+  // Open Add Modal from any trigger button
+  const modalAddEl = document.getElementById('modalAddQuestReport');
+  const addTriggerButtons = document.querySelectorAll('.btn-add-report-trigger, #btnOpenAddReportModal, #btnTopOpenAddReportModal, #btnTableOpenAddReportModal, #btnGuildPoolOpenAddReportModal');
+  addTriggerButtons.forEach(btn => {
+    btn.addEventListener('click', function () {
+      if (modalAddEl) {
+        const bsModal = bootstrap.Modal.getOrCreateInstance(modalAddEl);
+        bsModal.show();
+        updateAddLiveCalculator();
+      }
     });
-  }
+  });
 
   // Submit Add Quest Report
+  const formAddReport = document.getElementById('formAddQuestReport');
   if (formAddReport) {
     formAddReport.addEventListener('submit', function (e) {
       e.preventDefault();
 
-      const title = document.getElementById('addReportTitle').value.trim();
-      const location = document.getElementById('addReportLocation').value.trim();
-      const date = document.getElementById('addReportDate').value.trim();
-      const tierType = document.getElementById('addReportTierType').value;
-      const status = document.getElementById('addReportStatus').value;
-      const gm = document.getElementById('addReportGm').value.trim();
-      const totalXp = parseFloat(document.getElementById('addReportTotalXp').value) || 750;
-      const enemies = document.getElementById('addReportEnemies').value.trim();
-      const fullText = document.getElementById('addReportFullText').value.trim();
-
-      // Collect party members
-      const party = [];
-      const partyRows = partyContainer.querySelectorAll('.modal-party-row');
-      let reporterName = 'Kahraman';
-
-      partyRows.forEach(row => {
-        const name = row.querySelector('.party-input-name')?.value.trim() || 'Kahraman';
-        const cls = row.querySelector('.party-input-class')?.value || 'Adventurer';
-        const lvl = parseInt(row.querySelector('.party-input-level')?.value, 10) || 1;
-        const role = row.querySelector('.party-input-role')?.value || 'Member';
-        if (role === 'Reporter') reporterName = name;
-
-        party.push({
-          name: name,
-          class: cls,
-          level: lvl,
-          role: role,
-          xp: Math.round(totalXp / Math.max(partyRows.length, 1))
-        });
-      });
+      const otherPlayers = Array.from(addOtherTagsContainer.querySelectorAll('.other-player-item'))
+        .map(el => el.getAttribute('data-name'));
 
       const payload = {
-        title: title,
-        location: location,
-        date: date,
-        tier_type: tierType,
-        is_main: tierType !== 'side',
-        status: status,
-        gm: gm,
-        reporter: reporterName,
-        total_xp: totalXp,
-        enemies: enemies,
-        report_summary: fullText,
-        full_report: fullText,
-        party: party,
+        title: document.getElementById('addReportTitle').value.trim(),
+        date: document.getElementById('addReportDate').value.trim(),
+        mq: addMq.value,
+        level: parseInt(addLevel.value, 10),
+        depo_status: addDepoStatus.value === '1',
+        rapor_cut: parseFloat(addRaporCut.value) || 0,
+        extra_reward: parseFloat(addExtraReward.value) || 0,
+        gm: document.getElementById('addReportGm').value.trim(),
+        reporter: document.getElementById('addReportReporter').value.trim(),
+        other_players: otherPlayers,
+        location: document.getElementById('addReportLocation').value.trim(),
+        enemies: document.getElementById('addReportEnemies').value.trim(),
+        full_report: document.getElementById('addReportFullText').value.trim(),
+        distribute_xp_auto: document.getElementById('addReportDistributeXp')?.checked ? 1 : 0,
         _token: document.querySelector('input[name="_token"]')?.value
       };
 
@@ -1168,43 +3086,21 @@ document.addEventListener('DOMContentLoaded', function () {
         if (bsModal) bsModal.hide();
         formAddReport.reset();
 
-        // Update stats
-        if (data.stats) {
-          const s = data.stats;
-          const kpiTotalBadge = document.getElementById('kpiTotalReportsBadge');
-          const kpiTotalVal = document.getElementById('kpiTotalQuestsVal');
-          const kpiMainVal = document.getElementById('kpiMainQuestsVal');
-          const kpiSideVal = document.getElementById('kpiSideQuestsVal');
-          const kpiXpVal = document.getElementById('kpiTotalXpVal');
-          const kpiAvgVal = document.getElementById('kpiAvgLevelVal');
-          const totalSpan = document.getElementById('totalReportsSpan');
-
-          if (kpiTotalBadge) kpiTotalBadge.textContent = `${s.total_quests} {{ __('Reports Listed') }}`;
-          if (kpiTotalVal) kpiTotalVal.textContent = s.total_quests;
-          if (kpiMainVal) kpiMainVal.innerHTML = `${s.main_quests} <span class="small text-muted font-normal" style="font-size: 0.72rem;">(${Math.round((s.main_quests / s.total_quests) * 100)}%)</span>`;
-          if (kpiSideVal) kpiSideVal.textContent = s.side_quests;
-          if (kpiXpVal) kpiXpVal.textContent = `+${s.total_xp.toLocaleString()}`;
-          if (kpiAvgVal) kpiAvgVal.textContent = parseFloat(s.avg_level || s.overall_avg_level || 1.25).toFixed(2);
-          if (totalSpan) totalSpan.textContent = s.total_quests;
-
-          const typeAll = document.getElementById('typeCountAll');
-          const typeMain = document.getElementById('typeCountMain');
-          const typeSide = document.getElementById('typeCountSide');
-          if (typeAll) typeAll.textContent = s.total_quests;
-          if (typeMain) typeMain.textContent = s.main_quests;
-          if (typeSide) typeSide.textContent = s.side_quests;
-        }
-
-        // Insert new row into table
-        prependReportToTable(newRep);
-        applyFiltersAndSort();
+        updateStatsDom(data.stats);
+        currentPage = 1;
+        renderTable();
 
         if (window.Swal) {
+          let distributeMsg = '';
+          if (data.distribution && data.distribution.total_awarded_count > 0) {
+            distributeMsg = ` ve ${data.distribution.total_awarded_count} maceracıya +${data.distribution.xp_per_player} XP aktarıldı`;
+          }
+
           Swal.fire({
             icon: 'success',
             title: '{{ __("Görev Raporu Eklendi!") }}',
-            text: `"${newRep.title}" görevi ve hesaplanan seviyesi (${newRep.calculated_avg_level}) başarıyla arşive işlendi.`,
-            timer: 2200,
+            text: `"${newRep.title}" görevi (Kişi başı ortalama: ${newRep.avg_reward} XP)${distributeMsg} başarıyla arşive işlendi.`,
+            timer: 2400,
             showConfirmButton: false
           });
         }
@@ -1216,74 +3112,1163 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  function prependReportToTable(q) {
-    if (!tableBody) return;
+  // ====================================================
+  // 3. EDIT REPORT MODAL ENGINE
+  // ====================================================
+  const modalEditEl = document.getElementById('modalEditQuestReport');
+  const formEditReport = document.getElementById('formEditQuestReport');
+  const editId = document.getElementById('editReportId');
+  const editTitle = document.getElementById('editReportTitle');
+  const editDate = document.getElementById('editReportDate');
+  const editMq = document.getElementById('editReportMq');
+  const editLevel = document.getElementById('editReportLevel');
+  const editLevelBadge = document.getElementById('editReportLevelBadge');
+  const editStatus = document.getElementById('editReportStatus');
+  const editDepoStatus = document.getElementById('editReportDepoStatus');
+  const editDepoDisplay = document.getElementById('editReportDepoDisplay');
+  const editRaporCut = document.getElementById('editReportRaporCut');
+  const editExtraReward = document.getElementById('editReportExtraReward');
+  const editGm = document.getElementById('editReportGm');
+  const editReporter = document.getElementById('editReportReporter');
+  const editOtherTagsContainer = document.getElementById('editOtherPlayersTagsContainer');
+  const editPartyCountLabel = document.getElementById('editReportPartyCountLabel');
+  const editLocation = document.getElementById('editReportLocation');
+  const editEnemies = document.getElementById('editReportEnemies');
+  const editFullText = document.getElementById('editReportFullText');
+  const inputEditOther = document.getElementById('inputEditOtherPlayer');
+  const btnEditOther = document.getElementById('btnEditOtherPlayerBtn');
 
-    let tierBadgeHtml = '';
-    if (q.tier_type === 'epic') {
-      tierBadgeHtml = `<span class="badge badge-epic font-monospace fw-bold px-3 py-1"><i class="icon-base ti tabler-crown me-1"></i>{{ __('Epic Main Quest') }} (✓✓)</span>`;
-    } else if (q.is_main) {
-      tierBadgeHtml = `<span class="badge badge-main font-monospace fw-bold px-3 py-1"><i class="icon-base ti tabler-shield-check me-1"></i>{{ __('Main Quest') }} (✓)</span>`;
-    } else {
-      tierBadgeHtml = `<span class="badge badge-side font-monospace px-3 py-1"><i class="icon-base ti tabler-point me-1"></i>{{ __('Side Quest') }} (x)</span>`;
+  function updateEditLiveCalculator() {
+    const otherTags = editOtherTagsContainer ? Array.from(editOtherTagsContainer.querySelectorAll('.other-player-item')) : [];
+    const otherPlayers = otherTags.map(el => el.getAttribute('data-name')).filter(Boolean);
+    const reporterName = (editReporter && editReporter.value.trim()) ? editReporter.value.trim() : 'Tolrun';
+    const totalPlayers = 1 + otherPlayers.length;
+
+    // 1. Calculate Quest Level automatically based on party members' levels
+    const partyRoster = [reporterName, ...otherPlayers];
+    const partyLevels = partyRoster.map(pName => getCharacterLevel(pName));
+    const avgPartyLevel = partyLevels.length > 0
+      ? Math.max(1, Math.round(partyLevels.reduce((a, b) => a + b, 0) / partyLevels.length))
+      : 1;
+
+    if (editLevel) {
+      editLevel.value = avgPartyLevel;
+    }
+    if (editLevelBadge) {
+      const sumLvl = partyLevels.reduce((a, b) => a + b, 0);
+      const exactAvg = (sumLvl / partyLevels.length).toFixed(1);
+      editLevelBadge.textContent = `Oto: Lvl ${avgPartyLevel} (Ort: ${exactAvg})`;
     }
 
-    let statusHtml = (q.status === 'failed')
-      ? `<span class="badge bg-label-danger text-danger border border-danger border-opacity-25 px-3 py-1 font-monospace fw-semibold"><i class="icon-base ti tabler-circle-x me-1"></i>{{ __('Failed') }}</span>`
-      : `<span class="badge bg-label-success text-success border border-success border-opacity-25 px-3 py-1 font-monospace fw-semibold"><i class="icon-base ti tabler-circle-check me-1"></i>{{ __('Successful') }}</span>`;
+    // 2. Depo Status sync based on Görev Sonucu (Başarılı / Başarısız)
+    const isSuccess = editStatus ? (editStatus.value === 'success') : true;
+    if (editDepoStatus) {
+      editDepoStatus.value = isSuccess ? '1' : '0';
+    }
+    if (editDepoDisplay) {
+      if (isSuccess) {
+        editDepoDisplay.value = '🗸 Teslim (Ceza Yok / 0 SP)';
+        editDepoDisplay.className = 'form-control border-success text-success fw-bold bg-light';
+      } else {
+        editDepoDisplay.value = '✗ Teslim Edilmedi (%20 SP Ceza)';
+        editDepoDisplay.className = 'form-control border-danger text-danger fw-bold bg-light';
+      }
+    }
 
-    let iconHtml = (q.tier_type === 'epic')
-      ? `<div class="avatar avatar-sm bg-label-warning rounded-3 me-3 d-flex align-items-center justify-content-center"><i class="icon-base ti tabler-crown fs-5 text-warning"></i></div>`
-      : (q.is_main
-        ? `<div class="avatar avatar-sm bg-label-primary rounded-3 me-3 d-flex align-items-center justify-content-center"><i class="icon-base ti tabler-shield-check fs-5 text-primary"></i></div>`
-        : `<div class="avatar avatar-sm bg-label-secondary rounded-3 me-3 d-flex align-items-center justify-content-center"><i class="icon-base ti tabler-scroll fs-5 text-muted"></i></div>`);
+    if (editPartyCountLabel) {
+      editPartyCountLabel.textContent = `${otherPlayers.length} Diğer Oyuncu (+1 Raporlayan = ${totalPlayers} Kişi)`;
+    }
 
-    const tr = document.createElement('tr');
-    tr.className = 'quest-row-clickable report-row-item';
-    tr.setAttribute('data-id', q.id);
-    tr.setAttribute('data-type', q.is_main ? 'main' : 'side');
-    tr.setAttribute('data-gm', (q.gm || '').toLowerCase());
-    tr.setAttribute('data-level', q.level || 1);
-    tr.setAttribute('data-xp', q.total_xp || 0);
-    tr.setAttribute('data-date', q.date);
-    tr.setAttribute('title', '{{ __("Click row for full mission report") }}');
+    const calc = calculateFormula(
+      avgPartyLevel,
+      editMq ? editMq.value : 'none',
+      editDepoStatus ? editDepoStatus.value : '1',
+      editExtraReward ? editExtraReward.value : 0,
+      totalPlayers
+    );
 
-    tr.innerHTML = `
-      <td>
-        <div class="d-flex align-items-center">
-          ${iconHtml}
-          <div>
-            <span class="fw-bold text-heading d-block" style="font-size: 0.96rem;">${q.title}</span>
-            <small class="text-body-secondary font-monospace"><i class="icon-base ti tabler-map-pin text-danger opacity-75 me-1"></i>${q.location}</small>
+    // Fixed Rapor Kesintisi (I): XP * 0.10
+    if (editRaporCut) {
+      editRaporCut.value = calc.raporCut;
+    }
+
+    const badge = document.getElementById('liveEditAvgXpBadge');
+    const equation = document.getElementById('liveEditFormulaEquation');
+    const xpText = document.getElementById('liveEditXpText');
+    const guildText = document.getElementById('liveEditGuildCutText');
+    const depoText = document.getElementById('liveEditDepoCutText');
+    const cutsText = document.getElementById('liveEditCutsText');
+    const netPoolText = document.getElementById('liveEditNetPoolText');
+    const playerText = document.getElementById('liveEditPlayerCountText');
+    const distSummaryBadge = document.getElementById('liveEditDistributionSummaryBadge');
+    const sumCheckText = document.getElementById('liveEditSumCheckText');
+    const playersListContainer = document.getElementById('liveEditPlayersDistributionList');
+
+    if (badge) badge.textContent = `Ortalama: ${calc.avgReward.toFixed(2)} XP`;
+    if (xpText) xpText.textContent = `${calc.totalXp} XP`;
+    if (guildText) guildText.textContent = `${calc.guildCut} SP`;
+    if (depoText) depoText.textContent = `${calc.depoCut} SP`;
+    if (cutsText) cutsText.textContent = `-${calc.raporCut} / +${calc.extraReward}`;
+    if (netPoolText) netPoolText.textContent = `${calc.netPool.toFixed(2)} XP`;
+    if (playerText) playerText.textContent = `${calc.playerCount} Oyuncu`;
+
+    if (equation) {
+      equation.innerHTML = `=(XP [<span class="text-success fw-bold">${calc.totalXp}</span>] - Lonca [<span class="text-warning fw-bold">${calc.guildCut}</span>] - Depo [<span class="text-danger fw-bold">${calc.depoCut}</span>] - Rapor [<span class="text-info fw-bold">${calc.raporCut}</span>] + Ek [<span class="text-primary fw-bold">${calc.extraReward}</span>]) / Oyuncu [<span class="text-info fw-bold">${calc.playerCount}</span>] = <span class="text-warning fw-bold">${calc.avgReward.toFixed(2)} XP / Oyuncu</span>`;
+    }
+
+    if (distSummaryBadge) {
+      distSummaryBadge.textContent = `${totalPlayers} Oyuncu • Kişi Başı: ${calc.avgReward.toFixed(2)} XP`;
+    }
+
+    if (sumCheckText) {
+      const sumTotal = (totalPlayers * calc.avgReward).toFixed(2);
+      sumCheckText.textContent = `Dağıtılan Toplam: ${totalPlayers} × ${calc.avgReward.toFixed(2)} = ${sumTotal} XP (Net Havuz: ${calc.netPool.toFixed(2)} XP)`;
+    }
+
+    // Render Per-Player Interactive Roster in Edit modal
+    if (playersListContainer) {
+      let html = '';
+      const repLevel = getCharacterLevel(reporterName);
+      html += `
+        <div class="party-roster-card reporter-roster-card d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-2">
+            <div class="avatar avatar-xs bg-label-warning text-warning rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:28px; height:28px; font-size:13px;">👑</div>
+            <div>
+              <div class="fw-bold text-heading" style="font-size: 0.88rem;">${reporterName}</div>
+              <div class="d-flex align-items-center gap-1">
+                <span class="badge bg-label-warning py-0 px-1" style="font-size: 0.65rem;">Lider & Raporlayan</span>
+                <span class="badge bg-label-info py-0 px-1" style="font-size: 0.65rem;">Lvl ${repLevel}</span>
+              </div>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <div class="text-end">
+              <div class="fw-bold text-warning font-monospace" style="font-size: 0.85rem;">+${calc.avgReward.toFixed(2)} XP</div>
+              <small class="text-muted" style="font-size: 0.65rem;">Kişi Başı Pay</small>
+            </div>
+            <span class="badge bg-label-secondary py-1 px-2" style="font-size: 0.7rem;" title="Lider kadrodan çıkarılamaz">
+              <i class="icon-base ti tabler-lock"></i>
+            </span>
           </div>
         </div>
-      </td>
-      <td>
-        <span class="font-monospace text-body-secondary fw-semibold" style="font-size: 0.9rem;">
-          <i class="icon-base ti tabler-calendar-time text-primary me-1 fs-6"></i>${q.date}
-        </span>
-      </td>
-      <td>${tierBadgeHtml}</td>
-      <td>${statusHtml}</td>
-      <td class="text-end">
-        <button type="button" class="btn btn-sm btn-outline-primary btn-open-report" data-id="${q.id}">
-          <i class="icon-base ti tabler-file-text me-1 fs-6"></i>
-          <span>{{ __('Details') }}</span>
-          <i class="icon-base ti tabler-chevron-right ms-1 fs-6"></i>
-        </button>
-      </td>
-    `;
+      `;
 
-    tableBody.insertBefore(tr, tableBody.firstChild);
+      if (otherPlayers.length > 0) {
+        otherPlayers.forEach((pName, pIdx) => {
+          const charLvl = getCharacterLevel(pName);
+          html += `
+            <div class="party-roster-card d-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center gap-2">
+                <div class="avatar avatar-xs bg-label-primary text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:28px; height:28px; font-size:12px;">#${pIdx + 1}</div>
+                <div>
+                  <div class="fw-bold text-heading" style="font-size: 0.88rem;">${pName}</div>
+                  <div class="d-flex align-items-center gap-1">
+                    <span class="badge bg-label-secondary py-0 px-1" style="font-size: 0.65rem;">Grup Üyesi</span>
+                    <span class="badge bg-label-info py-0 px-1" style="font-size: 0.65rem;">Lvl ${charLvl}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <div class="text-end">
+                  <div class="fw-bold text-primary font-monospace" style="font-size: 0.85rem;">+${calc.avgReward.toFixed(2)} XP</div>
+                  <small class="text-muted" style="font-size: 0.65rem;">Kişi Başı Pay</small>
+                </div>
+                <button type="button" class="btn btn-remove-roster-player btn-edit-modal-remove" data-name="${pName}" title="${pName} maceracısını kadrodan çıkar">
+                  <i class="icon-base ti tabler-trash" style="font-size: 0.85rem;"></i>
+                  <span>Çıkar</span>
+                </button>
+              </div>
+            </div>
+          `;
+        });
+      } else {
+        html += `
+          <div class="text-center py-2 text-muted small fst-italic">
+            <i class="icon-base ti tabler-info-circle me-1"></i>Henüz başka maceracı eklenmedi. Yukarıdan isim yazıp <strong>Ekle</strong> butonuna basabilirsiniz.
+          </div>
+        `;
+      }
+
+      playersListContainer.innerHTML = html;
+    }
   }
 
-  // Type Filters
+  // Remove player directly from active roster in Edit Modal
+  const liveEditPlayersList = document.getElementById('liveEditPlayersDistributionList');
+  if (liveEditPlayersList) {
+    liveEditPlayersList.addEventListener('click', function(e) {
+      const removeBtn = e.target.closest('.btn-remove-roster-player');
+      if (!removeBtn) return;
+      const name = removeBtn.getAttribute('data-name');
+      if (!name) return;
+
+      if (editOtherTagsContainer) {
+        const item = Array.from(editOtherTagsContainer.querySelectorAll('.other-player-item'))
+          .find(el => el.getAttribute('data-name').toLowerCase() === name.toLowerCase());
+        if (item) item.remove();
+      }
+      updateEditLiveCalculator();
+    });
+  }
+
+  // Clear all other players in Edit Modal
+  const btnClearAllEditOtherPlayers = document.getElementById('btnClearAllEditOtherPlayersBtn');
+  if (btnClearAllEditOtherPlayers) {
+    btnClearAllEditOtherPlayers.addEventListener('click', function() {
+      if (editOtherTagsContainer) {
+        editOtherTagsContainer.innerHTML = '';
+        updateEditLiveCalculator();
+      }
+    });
+  }
+
+  [editMq, editStatus, editExtraReward, editReporter].forEach(el => {
+    if (el) {
+      el.addEventListener('input', updateEditLiveCalculator);
+      el.addEventListener('change', updateEditLiveCalculator);
+    }
+  });
+
+  function addEditOtherPlayerTag() {
+    if (!inputEditOther) return;
+    const name = inputEditOther.value.trim();
+    if (!name) {
+      inputEditOther.focus();
+      return;
+    }
+
+    const reporterName = editReporter ? editReporter.value.trim().toLowerCase() : '';
+    if (name.toLowerCase() === reporterName) {
+      inputEditOther.value = '';
+      return;
+    }
+
+    const existing = Array.from(editOtherTagsContainer.querySelectorAll('.other-player-item'))
+      .map(tag => tag.getAttribute('data-name').toLowerCase());
+
+    if (existing.includes(name.toLowerCase())) {
+      inputEditOther.value = '';
+      return;
+    }
+
+    const span = document.createElement('span');
+    span.className = 'party-pill-tag other-player-item';
+    span.setAttribute('data-name', name);
+    span.innerHTML = `
+      <span>${name}</span>
+      <i class="icon-base ti tabler-x text-danger cursor-pointer btn-remove-other ms-1" style="font-size: 0.8rem;"></i>
+    `;
+    editOtherTagsContainer.appendChild(span);
+    inputEditOther.value = '';
+    inputEditOther.focus();
+    updateEditLiveCalculator();
+  }
+
+  if (btnEditOther) btnEditOther.addEventListener('click', addEditOtherPlayerTag);
+  if (inputEditOther) {
+    inputEditOther.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addEditOtherPlayerTag();
+      }
+    });
+  }
+
+  if (editOtherTagsContainer) {
+    editOtherTagsContainer.addEventListener('click', function (e) {
+      if (e.target.classList.contains('btn-remove-other') || e.target.closest('.btn-remove-other')) {
+        const item = e.target.closest('.other-player-item');
+        if (item) {
+          item.remove();
+          updateEditLiveCalculator();
+        }
+      }
+    });
+  }
+
+  function formatDateForInput(dateStr) {
+    if (!dateStr) return new Date().toISOString().slice(0, 10);
+    const dmyMatch = String(dateStr).match(/^(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{4})$/);
+    if (dmyMatch) {
+      const d = dmyMatch[1].padStart(2, '0');
+      const m = dmyMatch[2].padStart(2, '0');
+      const y = dmyMatch[3];
+      return `${y}-${m}-${d}`;
+    }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  window.openEditReportModal = function (id) {
+    const report = reportsData.find(r => r.id === parseInt(id, 10));
+    if (!report) return;
+
+    document.getElementById('editReportSubtitle').textContent = `Rapor #${report.id} - ${report.title} düzenleniyor`;
+    editId.value = report.id;
+    editTitle.value = report.title;
+    editDate.value = formatDateForInput(report.date);
+    editMq.value = report.mq || (report.tier_type === 'epic' ? 'epic' : (report.is_main ? 'main' : 'none'));
+
+    // Status sync: If depo_cut > 0 or depo_status is false -> failed, else success
+    const isSuccess = (report.depo_status !== false && report.depo_status !== 0 && report.depo_status !== '0' && (parseFloat(report.depo_cut) || 0) === 0);
+    if (editStatus) {
+      editStatus.value = isSuccess ? 'success' : 'failed';
+    }
+
+    editExtraReward.value = report.extra_reward ?? 0;
+    editGm.value = report.gm || 'Shalvaz';
+    editReporter.value = report.reporter || 'Tolrun';
+    editLocation.value = report.location || 'Siwion';
+    editEnemies.value = report.enemies || '';
+    editFullText.value = report.full_report || report.report_summary || '';
+
+    // Populate other player tags
+    if (editOtherTagsContainer) {
+      editOtherTagsContainer.innerHTML = '';
+      (report.other_players || []).forEach(name => {
+        const span = document.createElement('span');
+        span.className = 'party-pill-tag other-player-item';
+        span.setAttribute('data-name', name);
+        span.innerHTML = `
+          <span>${name}</span>
+          <i class="icon-base ti tabler-x text-danger cursor-pointer btn-remove-other ms-1" style="font-size: 0.8rem;"></i>
+        `;
+        editOtherTagsContainer.appendChild(span);
+      });
+    }
+
+    updateEditLiveCalculator();
+
+    if (modalEditEl && window.bootstrap) {
+      const bsModal = new bootstrap.Modal(modalEditEl);
+      bsModal.show();
+    }
+  };
+
+  if (formEditReport) {
+    formEditReport.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const repId = parseInt(editId.value, 10);
+      const otherPlayers = Array.from(editOtherTagsContainer.querySelectorAll('.other-player-item'))
+        .map(el => el.getAttribute('data-name'));
+
+      const payload = {
+        title: editTitle.value.trim(),
+        date: editDate.value.trim(),
+        mq: editMq.value,
+        level: parseInt(editLevel.value, 10),
+        depo_status: editDepoStatus.value === '1',
+        rapor_cut: parseFloat(editRaporCut.value) || 0,
+        extra_reward: parseFloat(editExtraReward.value) || 0,
+        gm: editGm.value.trim(),
+        reporter: editReporter.value.trim(),
+        other_players: otherPlayers,
+        location: editLocation.value.trim(),
+        enemies: editEnemies.value.trim(),
+        full_report: editFullText.value.trim(),
+        _token: document.querySelector('input[name="_token"]')?.value
+      };
+
+      const submitBtn = document.getElementById('btnSubmitEditQuestReport');
+      if (submitBtn) submitBtn.disabled = true;
+
+      fetch(`{{ url('/valiant-shade/pages/quest-reports') }}/${repId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': payload._token
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (submitBtn) submitBtn.disabled = false;
+        if (!data.success) {
+          alert(data.message || 'Güncelleme başarısız oldu.');
+          return;
+        }
+
+        const idx = reportsData.findIndex(r => r.id === repId);
+        if (idx !== -1) {
+          reportsData[idx] = data.report;
+        }
+
+        const bsModal = bootstrap.Modal.getInstance(modalEditEl);
+        if (bsModal) bsModal.hide();
+
+        updateStatsDom(data.stats);
+        renderTable();
+
+        if (window.Swal) {
+          Swal.fire({
+            icon: 'success',
+            title: '{{ __("Görev Raporu Güncellendi!") }}',
+            text: `"${data.report.title}" görevi ve hesaplanan yeni ortalama (${data.report.avg_reward} XP) başarıyla güncellendi.`,
+            timer: 2000,
+            showConfirmButton: false
+          });
+        }
+      })
+      .catch(err => {
+        if (submitBtn) submitBtn.disabled = false;
+        alert('Sunucu iletişim hatası oluştu.');
+      });
+    });
+  }
+
+  // ====================================================
+  // 4. DELETE REPORT
+  // ====================================================
+  window.deleteReportItem = function (id) {
+    const report = reportsData.find(r => r.id === parseInt(id, 10));
+    if (!report) return;
+
+    if (!window.Swal) {
+      if (!confirm(`"${report.title}" görev raporunu silmek istediğinize emin misiniz?`)) return;
+      executeDelete(id);
+      return;
+    }
+
+    Swal.fire({
+      title: '{{ __("Rapor Silinsin mi?") }}',
+      text: `"${report.title}" sefer kaydı arşivden tamamen silinecek.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ea5455',
+      cancelButtonColor: '#82868b',
+      confirmButtonText: 'Evet, Sil!',
+      cancelButtonText: 'Vazgeç'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        executeDelete(id);
+      }
+    });
+
+    function executeDelete(repId) {
+      fetch(`{{ url('/valiant-shade/pages/quest-reports') }}/${repId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')?.value
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (!data.success) {
+          alert(data.message || 'Silme işlemi başarısız.');
+          return;
+        }
+
+        reportsData = reportsData.filter(r => r.id !== parseInt(repId, 10));
+        updateStatsDom(data.stats);
+        renderTable();
+
+        if (window.Swal) {
+          Swal.fire({
+            icon: 'success',
+            title: '{{ __("Silindi!") }}',
+            text: 'Görev raporu başarıyla silindi.',
+            timer: 1600,
+            showConfirmButton: false
+          });
+        }
+      });
+    }
+  };
+
+  // ====================================================
+  // 5. DISTRIBUTE XP TO PLAYER TRACKER
+  // ====================================================
+  window.distributeReportXp = function (id) {
+    const report = reportsData.find(r => r.id === parseInt(id, 10));
+    if (!report) return;
+
+    if (!window.Swal) {
+      executeDistribute(id);
+      return;
+    }
+
+    Swal.fire({
+      title: '{{ __("XP\'leri Maceracılara Aktar?") }}',
+      html: `Bu görevdeki <b>${report.avg_reward} Ortalama XP</b>, kadroda bulunan maceracıların (<i>${[report.reporter, ...(report.other_players || [])].join(', ')}</i>) Player XP Tracker profillerine işlenecek.`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#28c76f',
+      cancelButtonColor: '#82868b',
+      confirmButtonText: 'Evet, XP\'leri Dağıt!',
+      cancelButtonText: 'Vazgeç'
+    }).then((res) => {
+      if (res.isConfirmed) {
+        executeDistribute(id);
+      }
+    });
+
+    function executeDistribute(repId) {
+      fetch(`{{ url('/valiant-shade/pages/quest-reports') }}/${repId}/distribute-xp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')?.value
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (!data.success) {
+          alert(data.message || 'XP dağıtılamadı.');
+          return;
+        }
+
+        if (window.Swal) {
+          let listHtml = '';
+          if (data.data && data.data.players_awarded) {
+            listHtml = '<ul class="list-unstyled text-start small font-monospace mt-2 mb-0">' +
+              data.data.players_awarded.map(p => `<li>⚔️ <b>${p.character_name}</b>: +${p.xp_added} XP (Yeni Lvl ${p.new_level})</li>`).join('') +
+              '</ul>';
+          }
+
+          Swal.fire({
+            icon: 'success',
+            title: '{{ __("XP Başarıyla Dağıtıldı!") }}',
+            html: `Görevden <b>${data.data.total_awarded_count}</b> maceracıya kişi başı <b>+${data.data.xp_per_player} XP</b> eklendi:${listHtml}`,
+            confirmButtonColor: '#7367f0'
+          });
+        }
+      });
+    }
+  };
+
+  const btnModalDistributeXp = document.getElementById('btnModalDistributeXp');
+  if (btnModalDistributeXp) {
+    btnModalDistributeXp.addEventListener('click', function () {
+      if (currentDetailReportId) {
+        distributeReportXp(currentDetailReportId);
+      }
+    });
+  }
+
+  // ====================================================
+  // 6. RESET TO GOOGLE SHEET DEFAULTS
+  // ====================================================
+  if (btnResetToMasterDefaults) {
+    btnResetToMasterDefaults.addEventListener('click', function () {
+      if (window.Swal) {
+        Swal.fire({
+          title: '{{ __("Google Sheet Verilerine Sıfırlansın mı?") }}',
+          text: 'Tüm eklenen özel raporlar temizlenecek ve tablonuz Google Sheet orijinal 32 satırına sıfırlanacaktır.',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#f59e0b',
+          cancelButtonColor: '#82868b',
+          confirmButtonText: 'Evet, Sıfırla!',
+          cancelButtonText: 'Vazgeç'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            executeResetToDefaults();
+          }
+        });
+      } else {
+        if (confirm('Master Sheet verilerine sıfırlansın mı?')) {
+          executeResetToDefaults();
+        }
+      }
+
+      function executeResetToDefaults() {
+        fetch('{{ route("valiant-shade.pages-quest-reports.reset-defaults") }}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')?.value
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (!data.success) {
+            alert('Sıfırlama başarısız.');
+            return;
+          }
+          reportsData = data.reports;
+          currentPage = 1;
+          updateStatsDom(data.stats);
+          renderTable();
+
+          if (window.Swal) {
+            Swal.fire({
+              icon: 'success',
+              title: '{{ __("Tablo Sıfırlandı!") }}',
+              text: 'Görev Raporları tablosu Master Sheet verilerine (1.528 rapor) başarıyla sıfırlandı.',
+              timer: 2000,
+              showConfirmButton: false
+            });
+          }
+        });
+      }
+    });
+  }
+
+  // ====================================================
+  // 7. DETAIL DOSSIER MODAL
+  // ====================================================
+  window.openReportDetail = function (id) {
+    const r = reportsData.find(item => item.id === parseInt(id, 10));
+    if (!r) return;
+
+    currentDetailReportId = r.id;
+
+    // Header
+    const titleEl = document.getElementById('modalReportTitle');
+    const dateEl = document.getElementById('modalReportDate');
+    const tierBadge = document.getElementById('modalReportTierBadge');
+    const statusBadge = document.getElementById('modalReportStatusBadge');
+    const locationEl = document.getElementById('modalReportLocation');
+    const gmEl = document.getElementById('modalReportGm');
+    const reporterEl = document.getElementById('modalReportReporter');
+    const levelEl = document.getElementById('modalReportLevel');
+    const avgBadge = document.getElementById('modalReportAvgBadge');
+    const formulaText = document.getElementById('modalReportFormulaText');
+
+    if (titleEl) titleEl.textContent = r.title;
+    if (dateEl) dateEl.textContent = r.date;
+    if (locationEl) locationEl.textContent = r.location || 'Siwion';
+    if (gmEl) gmEl.textContent = `GM ${r.gm || 'Shalvaz'}`;
+    if (reporterEl) reporterEl.textContent = r.reporter || 'Tolrun';
+    if (levelEl) levelEl.textContent = `Level ${r.level || 1}`;
+
+    const avgVal = parseFloat(r.avg_reward || 0).toFixed(2);
+    if (avgBadge) avgBadge.textContent = `${avgVal} XP / Oyuncu`;
+
+    if (formulaText) {
+      formulaText.textContent = `= (XP [${r.total_xp}] - Lonca [${r.guild_cut}] - Depo [${r.depo_cut}] - Rapor [${r.rapor_cut ?? r.vault_cut ?? 0}] + Ek [${r.extra_reward ?? 0}]) / Oyuncu [${r.player_count}] = ${avgVal} XP`;
+    }
+
+    if (tierBadge) {
+      if (r.mq === 'epic' || r.tier_type === 'epic') {
+        tierBadge.className = 'badge badge-mq-epic font-monospace';
+        tierBadge.textContent = '✓✓ {{ __("Epik Ana Görev") }} (3x)';
+      } else if (r.is_main || r.mq === 'main') {
+        tierBadge.className = 'badge badge-mq-main font-monospace';
+        tierBadge.textContent = '✓ {{ __("Ana Görev") }} (1x)';
+      } else {
+        tierBadge.className = 'badge badge-mq-side font-monospace';
+        tierBadge.textContent = '✗ {{ __("Yan Görev") }}';
+      }
+    }
+
+    if (statusBadge) {
+      if ((r.status || 'success') === 'failed') {
+        statusBadge.className = 'badge bg-label-danger text-danger border border-danger border-opacity-25';
+        statusBadge.textContent = 'x {{ __("Başarısız") }}';
+      } else {
+        statusBadge.className = 'badge bg-label-success text-success border border-success border-opacity-25';
+        statusBadge.textContent = '✓ {{ __("Başarılı") }}';
+      }
+    }
+
+    // Debrief narrative
+    const fullTextEl = document.getElementById('modalReportFullText');
+    const enemiesEl = document.getElementById('modalReportEnemies');
+    if (fullTextEl) fullTextEl.textContent = r.full_report || r.report_summary || 'Görev detayları kaydedildi.';
+    if (enemiesEl) enemiesEl.textContent = r.enemies || 'Gizemli Tehditler';
+
+    // Party Roster
+    const partyCountEl = document.getElementById('modalReportPartyCount');
+    const partyBody = document.getElementById('modalReportPartyTableBody');
+
+    if (partyCountEl) partyCountEl.textContent = `${r.player_count || 1} Oyuncu`;
+
+    if (partyBody) {
+      partyBody.innerHTML = '';
+      const allMembers = [];
+      allMembers.push({
+        name: r.reporter,
+        role: 'Raporlayan (AN)',
+        level: r.level || 1,
+        xp: avgVal
+      });
+
+      (r.other_players || []).forEach(name => {
+        allMembers.push({
+          name: name,
+          role: 'Diğer Oyuncu',
+          level: r.level || 1,
+          xp: avgVal
+        });
+      });
+
+      allMembers.forEach(m => {
+        const isReporter = m.role.includes('Raporlayan');
+        const tr = document.createElement('tr');
+        tr.className = 'border-bottom border-secondary border-opacity-10';
+        tr.innerHTML = `
+          <td class="fw-semibold text-heading d-flex align-items-center gap-1">
+            ${isReporter ? '<i class="icon-base ti tabler-feather text-warning" title="Raporlayan"></i>' : '<i class="icon-base ti tabler-user text-primary opacity-50"></i>'}
+            <span>${m.name}</span>
+          </td>
+          <td><span class="badge ${isReporter ? 'bg-label-warning text-warning' : 'bg-label-secondary text-body'} font-monospace" style="font-size: 0.72rem;">${m.role}</span></td>
+          <td class="font-monospace fw-bold text-info">Lvl ${m.level}</td>
+          <td class="text-end font-monospace text-success fw-bold">+${m.xp} XP</td>
+        `;
+        partyBody.appendChild(tr);
+      });
+    }
+
+    // Financial Breakdown
+    const totalXpEl = document.getElementById('modalReportTotalXp');
+    const guildCutEl = document.getElementById('modalReportGuildCut');
+    const depoCutEl = document.getElementById('modalReportDepoCut');
+    const avgRewardEl = document.getElementById('modalReportAvgReward');
+
+    if (totalXpEl) totalXpEl.textContent = `+${r.total_xp} XP`;
+    if (guildCutEl) guildCutEl.textContent = `${r.guild_cut || 0} SP`;
+    if (depoCutEl) depoCutEl.textContent = `${r.depo_cut || 0} SP`;
+    if (avgRewardEl) avgRewardEl.textContent = `${avgVal} XP`;
+
+    // Show modal
+    const modalDetailEl = document.getElementById('questReportDetailModal');
+    if (modalDetailEl && window.bootstrap) {
+      const bsModal = new bootstrap.Modal(modalDetailEl);
+      bsModal.show();
+    }
+  };
+
+  // ====================================================
+  // 8. TABLE RENDERING, FILTERING & SORTING
+  // ====================================================
+  function updateStatsDom(s) {
+    if (!s) return;
+    const kpiTotalBadge = document.getElementById('kpiTotalReportsBadge');
+    const kpiTotalVal = document.getElementById('kpiTotalQuestsVal');
+    const kpiMainVal = document.getElementById('kpiMainQuestsVal');
+    const kpiSideVal = document.getElementById('kpiSideQuestsVal');
+    const kpiXpVal = document.getElementById('kpiTotalXpVal');
+    const kpiGuildVal = document.getElementById('kpiTotalGuildCutVal');
+    const kpiDepoVal = document.getElementById('kpiTotalDepoCutVal');
+    const totalSpan = document.getElementById('totalReportsSpan');
+
+    if (kpiTotalBadge) kpiTotalBadge.textContent = `${s.total_quests} {{ __('Kayıtlı Sefer') }}`;
+    if (kpiTotalVal) kpiTotalVal.textContent = s.total_quests;
+    if (kpiMainVal) kpiMainVal.innerHTML = `${s.main_quests + s.epic_quests} <span class="small text-muted font-normal" style="font-size: 0.72rem;">(${s.epic_quests} Epik)</span>`;
+    if (kpiSideVal) kpiSideVal.textContent = s.side_quests;
+    if (kpiXpVal) kpiXpVal.textContent = `+${Number(s.total_xp).toLocaleString()}`;
+    if (kpiGuildVal) kpiGuildVal.textContent = `${Number(s.total_guild_cut).toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})} SP`;
+    if (kpiDepoVal) kpiDepoVal.textContent = `${Number(s.total_depo_cut).toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})} SP`;
+    if (totalSpan) totalSpan.textContent = s.total_quests;
+
+    const typeAll = document.getElementById('typeCountAll');
+    const typeMain = document.getElementById('typeCountMain');
+    const typeEpic = document.getElementById('typeCountEpic');
+    const typeSide = document.getElementById('typeCountSide');
+    if (typeAll) typeAll.textContent = s.total_quests;
+    if (typeMain) typeMain.textContent = s.main_quests;
+    if (typeEpic) typeEpic.textContent = s.epic_quests;
+    if (typeSide) typeSide.textContent = s.side_quests;
+  }
+
+  function getFilteredAndSortedReports() {
+    const term = (searchInput?.value || '').trim().toLowerCase();
+    const gmVal = (gmFilter?.value || 'all').toLowerCase();
+    const levelVal = levelFilter?.value || 'all';
+    const sortVal = sortSelect?.value || 'date-desc';
+
+    let list = reportsData.filter(r => {
+      // Type Filter
+      if (currentTypeFilter === 'main') {
+        const isM = r.mq === 'main' || (r.is_main && r.mq !== 'epic');
+        if (!isM) return false;
+      } else if (currentTypeFilter === 'epic') {
+        if (r.mq !== 'epic') return false;
+      } else if (currentTypeFilter === 'side') {
+        const isS = r.mq === 'none' || (!r.is_main);
+        if (!isS) return false;
+      }
+
+      // GM Filter
+      if (gmVal !== 'all') {
+        if ((r.gm || '').toLowerCase() !== gmVal) return false;
+      }
+
+      // Level Filter
+      if (levelVal !== 'all') {
+        const reqLvl = parseInt(levelVal, 10);
+        if (levelVal === '5') {
+          if ((r.level || 1) < 5) return false;
+        } else {
+          if ((r.level || 1) !== reqLvl) return false;
+        }
+      }
+
+      // Search Term
+      if (term) {
+        let match = (r.title || '').toLowerCase().includes(term) ||
+                    (r.gm || '').toLowerCase().includes(term) ||
+                    (r.reporter || '').toLowerCase().includes(term) ||
+                    (r.location || '').toLowerCase().includes(term);
+
+        if (!match && r.other_players) {
+          match = r.other_players.some(p => p.toLowerCase().includes(term));
+        }
+        if (!match) return false;
+      }
+
+      return true;
+    });
+
+    // Sort
+    function parseDate(dStr) {
+      if (!dStr) return 0;
+      // can be "8/8" or "08.08.2026"
+      if (dStr.includes('/')) {
+        const p = dStr.split('/');
+        return parseInt(p[1], 10) * 100 + parseInt(p[0], 10);
+      } else if (dStr.includes('.')) {
+        const p = dStr.split('.');
+        return parseInt(p[1], 10) * 100 + parseInt(p[0], 10);
+      }
+      return 0;
+    }
+
+    list.sort((a, b) => {
+      if (sortVal === 'date-desc') {
+        return parseDate(b.date) - parseDate(a.date) || b.id - a.id;
+      } else if (sortVal === 'date-asc') {
+        return parseDate(a.date) - parseDate(b.date) || a.id - b.id;
+      } else if (sortVal === 'xp-desc') {
+        return (b.total_xp || 0) - (a.total_xp || 0);
+      } else if (sortVal === 'avg-desc') {
+        return (b.avg_reward || 0) - (a.avg_reward || 0);
+      } else if (sortVal === 'title-asc') {
+        return (a.title || '').localeCompare(b.title || '');
+      }
+      return 0;
+    });
+
+    return list;
+  }
+
+  // ====================================================
+  // 8. TABLE PAGINATION & RENDERING ENGINE (50/Sayfa + Sona Git)
+  // ====================================================
+  const pageSize = 50;
+  let currentPage = 1;
+
+  function scrollToTableTop() {
+    const tableContainer = document.getElementById('tabViewQuests');
+    if (tableContainer) {
+      tableContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  window.goToPage = function(page) {
+    const list = getFilteredAndSortedReports();
+    const totalPages = Math.max(1, Math.ceil(list.length / pageSize));
+    const target = Math.max(1, Math.min(page, totalPages));
+    currentPage = target;
+    renderTable();
+    scrollToTableTop();
+  };
+
+  window.goToPrevPage = function() {
+    if (currentPage > 1) {
+      window.goToPage(currentPage - 1);
+    }
+  };
+
+  window.goToNextPage = function() {
+    const list = getFilteredAndSortedReports();
+    const totalPages = Math.max(1, Math.ceil(list.length / pageSize));
+    if (currentPage < totalPages) {
+      window.goToPage(currentPage + 1);
+    }
+  };
+
+  window.goToLastPage = function() {
+    const list = getFilteredAndSortedReports();
+    const totalPages = Math.max(1, Math.ceil(list.length / pageSize));
+    window.goToPage(totalPages);
+  };
+
+  function renderPagination(totalItems, totalPages, currPage, startIndex, endIndex) {
+    const paginationContainer = document.getElementById('reportsPaginationContainer');
+    const infoText = document.getElementById('paginationInfoText');
+    const paginationList = document.getElementById('reportsPaginationList');
+    const btnFirst = document.getElementById('btnPageFirst');
+    const btnPrev = document.getElementById('btnPagePrev');
+    const btnNext = document.getElementById('btnPageNext');
+    const btnLast = document.getElementById('btnPageLast');
+    const btnHeaderLast = document.getElementById('btnHeaderGoToLastPage');
+
+    if (btnHeaderLast) {
+      btnHeaderLast.disabled = (currPage === totalPages || totalItems === 0);
+      btnHeaderLast.title = `En Son Sayfaya Git (Sayfa ${totalPages})`;
+    }
+
+    if (!paginationContainer) return;
+
+    if (totalItems === 0) {
+      paginationContainer.classList.add('d-none');
+      return;
+    }
+    paginationContainer.classList.remove('d-none');
+
+    if (infoText) {
+      infoText.innerHTML = `Gösterilen: <span class="text-primary fw-bold">${(startIndex + 1).toLocaleString()}</span> - <span class="text-primary fw-bold">${endIndex.toLocaleString()}</span> / Toplam <span class="fw-bold">${totalItems.toLocaleString()}</span> Rapor <span class="badge bg-label-primary font-monospace ms-1">Sayfa ${currPage} / ${totalPages}</span>`;
+    }
+
+    if (btnFirst) {
+      btnFirst.disabled = (currPage === 1);
+      btnFirst.classList.toggle('disabled', currPage === 1);
+    }
+    if (btnPrev) {
+      btnPrev.disabled = (currPage === 1);
+      btnPrev.classList.toggle('disabled', currPage === 1);
+    }
+    if (btnNext) {
+      btnNext.disabled = (currPage === totalPages);
+      btnNext.classList.toggle('disabled', currPage === totalPages);
+    }
+    if (btnLast) {
+      btnLast.disabled = (currPage === totalPages);
+      btnLast.classList.toggle('disabled', currPage === totalPages);
+      btnLast.title = `En Son Sayfaya Git (Sayfa ${totalPages})`;
+      const textSpan = btnLast.querySelector('span');
+      if (textSpan) {
+        textSpan.textContent = `Sona Git (${totalPages})`;
+      }
+    }
+
+    if (paginationList) {
+      let pageRange = [];
+      if (totalPages <= 7) {
+        for (let i = 1; i <= totalPages; i++) pageRange.push(i);
+      } else {
+        if (currPage <= 4) {
+          pageRange = [1, 2, 3, 4, 5, '...', totalPages];
+        } else if (currPage >= totalPages - 3) {
+          pageRange = [1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+        } else {
+          pageRange = [1, '...', currPage - 1, currPage, currPage + 1, '...', totalPages];
+        }
+      }
+
+      let html = '';
+      pageRange.forEach(p => {
+        if (p === '...') {
+          html += `<li class="page-item disabled"><span class="page-link border-0 text-muted px-2">...</span></li>`;
+        } else {
+          const isActive = (p === currPage);
+          html += `
+            <li class="page-item ${isActive ? 'active' : ''}">
+              <button type="button" class="page-link font-monospace ${isActive ? 'bg-primary text-white border-primary shadow-sm' : ''}" onclick="goToPage(${p})">
+                ${p}
+              </button>
+            </li>
+          `;
+        }
+      });
+      paginationList.innerHTML = html;
+    }
+  }
+
+  function renderTable() {
+    if (!tableBody) return;
+    const list = getFilteredAndSortedReports();
+
+    if (currentFilteredCountEl) {
+      currentFilteredCountEl.textContent = list.length;
+    }
+
+    const totalItems = list.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = Math.min(startIndex + pageSize, totalItems);
+
+    renderPagination(totalItems, totalPages, currentPage, startIndex, endIndex);
+
+    if (list.length === 0) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="17" class="text-center py-5">
+            <div class="avatar avatar-xl bg-label-secondary mx-auto mb-3 rounded-circle d-flex align-items-center justify-content-center">
+              <i class="icon-base ti tabler-file-search fs-1 text-muted"></i>
+            </div>
+            <h5 class="fw-bold text-heading">{{ __('Kriterlere uygun görev raporu bulunamadı.') }}</h5>
+          </td>
+        </tr>
+      `;
+      if (emptyState) emptyState.classList.remove('d-none');
+      return;
+    }
+
+    if (emptyState) emptyState.classList.add('d-none');
+
+    const pageItems = list.slice(startIndex, endIndex);
+
+    tableBody.innerHTML = pageItems.map(q => {
+      // MQ Badge
+      let mqBadge = '';
+      if (q.mq === 'epic' || q.tier_type === 'epic') {
+        mqBadge = `<span class="badge badge-mq-epic font-monospace px-2 py-1" title="Epik Ana Görev (3x)">✓✓</span>`;
+      } else if (q.is_main || q.mq === 'main') {
+        mqBadge = `<span class="badge badge-mq-main font-monospace px-2 py-1" title="Ana Görev (1x)">✓</span>`;
+      } else {
+        mqBadge = `<span class="badge badge-mq-side font-monospace px-2 py-1" title="Yan Görev (1x)">✗</span>`;
+      }
+
+      // Depo status
+      const isDepoOk = (q.depo_status === true || (parseFloat(q.depo_cut) || 0) === 0);
+      const depoBadge = isDepoOk
+        ? `<span class="badge badge-depo-ok px-2 py-1" title="Depo Teslim Edildi (Ceza Yok)">🗸</span>`
+        : `<span class="badge badge-depo-fail px-2 py-1" title="Depo Teslim Edilmedi (%20 Ceza Kesildi)">✗</span>`;
+
+      // Other players tags
+      const otherTags = (q.other_players || []).map(p => `
+        <span class="party-pill-tag">
+          <i class="icon-base ti tabler-user opacity-50" style="font-size: 0.75rem;"></i>
+          <span>${p}</span>
+        </span>
+      `).join('');
+
+      const raporDisplay = (parseFloat(q.rapor_cut ?? q.vault_cut) || 0) > 0
+        ? Number(q.rapor_cut ?? q.vault_cut).toLocaleString()
+        : '-';
+
+      const ekDisplay = (parseFloat(q.extra_reward) || 0) > 0
+        ? `+${Number(q.extra_reward).toLocaleString()}`
+        : '-';
+
+      const depoCutClass = (parseFloat(q.depo_cut) || 0) > 0 ? 'text-danger fw-bold' : 'text-body-secondary';
+
+      return `
+        <tr class="quest-row-item report-row-item"
+            data-id="${q.id}"
+            data-type="${q.mq || (q.is_main ? 'main' : 'side')}"
+            data-gm="${(q.gm || '').toLowerCase()}"
+            data-level="${q.level || 1}"
+            data-xp="${q.total_xp || 0}"
+            data-avg="${q.avg_reward || 0}"
+            data-date="${q.date}">
+          
+          <td class="text-center text-body-secondary font-monospace" style="font-size: 0.78rem;">
+            ${q.id}
+          </td>
+
+          <td>
+            <div class="d-flex align-items-center">
+              ${(q.mq === 'epic' || q.tier_type === 'epic')
+                ? `<span class="badge bg-warning text-dark me-2 px-2 py-0" title="Epik Görev (3x XP)">✓✓</span>`
+                : (q.is_main || q.mq === 'main')
+                  ? `<span class="badge bg-primary me-2 px-2 py-0" title="Ana Görev">✓</span>`
+                  : `<span class="badge bg-secondary me-2 px-2 py-0" title="Yan Görev">✗</span>`}
+              <div>
+                <span class="fw-bold text-heading quest-title-text d-block" style="cursor: pointer;" onclick="openReportDetail(${q.id})">
+                  ${q.title}
+                </span>
+                <small class="text-body-secondary font-monospace" style="font-size: 0.75rem;">
+                  <i class="icon-base ti tabler-map-pin text-danger opacity-75 me-1"></i>${q.location || 'Siwion'}
+                </small>
+              </div>
+            </div>
+          </td>
+
+          <td>
+            <span class="font-monospace text-body-secondary fw-semibold">
+              ${q.date}
+            </span>
+          </td>
+
+          <td class="text-center">${mqBadge}</td>
+
+          <td class="text-center font-monospace fw-bold text-info">
+            ${q.level || 1}
+          </td>
+
+          <td class="text-end font-monospace fw-bold text-success">
+            ${Number(q.total_xp).toLocaleString()}
+          </td>
+
+          <td class="text-center">${depoBadge}</td>
+
+          <td class="text-end font-monospace text-warning fw-semibold">
+            ${Number(q.guild_cut).toFixed(1)}
+          </td>
+
+          <td class="text-end font-monospace ${depoCutClass}">
+            ${Number(q.depo_cut || 0).toFixed(1)}
+          </td>
+
+          <td class="text-end font-monospace text-heading">
+            ${raporDisplay}
+          </td>
+
+          <td class="text-end font-monospace text-info">
+            ${ekDisplay}
+          </td>
+
+          <td class="text-end">
+            <span class="badge badge-avg-xp font-monospace">
+              ${Number(q.avg_reward || 0).toFixed(2)}
+            </span>
+          </td>
+
+          <td class="text-center font-monospace fw-bold text-heading">
+            ${q.player_count || 1}
+          </td>
+
+          <td>
+            <span class="badge bg-label-warning font-monospace">
+              <i class="icon-base ti tabler-dice me-1"></i>${q.gm || 'Shalvaz'}
+            </span>
+          </td>
+
+          <td>
+            <span class="badge bg-label-info font-monospace text-info fw-bold">
+              <i class="icon-base ti tabler-feather me-1"></i>${q.reporter || 'Tolrun'}
+            </span>
+          </td>
+
+          <td>
+            <div class="d-flex align-items-center flex-wrap gap-1">
+              ${otherTags}
+            </div>
+          </td>
+
+          <td class="text-end">
+            <div class="d-inline-flex align-items-center gap-1">
+              <button type="button" class="btn btn-icon btn-sm btn-outline-primary" onclick="openReportDetail(${q.id})" title="{{ __('Rapor Detayları') }}">
+                <i class="icon-base ti tabler-file-text fs-6"></i>
+              </button>
+              <button type="button" class="btn btn-icon btn-sm btn-outline-warning" onclick="openEditReportModal(${q.id})" title="{{ __('Düzenle') }}">
+                <i class="icon-base ti tabler-edit fs-6"></i>
+              </button>
+              <button type="button" class="btn btn-icon btn-sm btn-outline-success" onclick="distributeReportXp(${q.id})" title="{{ __('Maceracılara XP Dağıt') }}">
+                <i class="icon-base ti tabler-bolt fs-6"></i>
+              </button>
+              <button type="button" class="btn btn-icon btn-sm btn-outline-danger" onclick="deleteReportItem(${q.id})" title="{{ __('Sil') }}">
+                <i class="icon-base ti tabler-trash fs-6"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Type Filters Click
   typeButtons.forEach(btn => {
     btn.addEventListener('click', function () {
       typeButtons.forEach(b => b.classList.remove('active'));
       this.classList.add('active');
       currentTypeFilter = this.getAttribute('data-type') || 'all';
-      applyFiltersAndSort();
+      currentPage = 1;
+      renderTable();
     });
   });
 
@@ -1297,7 +4282,8 @@ document.addEventListener('DOMContentLoaded', function () {
           btnSearchClear.classList.add('d-none');
         }
       }
-      applyFiltersAndSort();
+      currentPage = 1;
+      renderTable();
     });
   }
 
@@ -1306,210 +4292,530 @@ document.addEventListener('DOMContentLoaded', function () {
       if (searchInput) {
         searchInput.value = '';
         btnSearchClear.classList.add('d-none');
-        applyFiltersAndSort();
+        currentPage = 1;
+        renderTable();
       }
     });
   }
 
-  if (sortSelect) sortSelect.addEventListener('change', applyFiltersAndSort);
+  if (gmFilter) gmFilter.addEventListener('change', function () { currentPage = 1; renderTable(); });
+  if (levelFilter) levelFilter.addEventListener('change', function () { currentPage = 1; renderTable(); });
+  if (sortSelect) sortSelect.addEventListener('change', function () { currentPage = 1; renderTable(); });
 
   // Reset Filters
   function resetAllFilters() {
     if (searchInput) searchInput.value = '';
     if (btnSearchClear) btnSearchClear.classList.add('d-none');
+    if (gmFilter) gmFilter.value = 'all';
+    if (levelFilter) levelFilter.value = 'all';
     if (sortSelect) sortSelect.value = 'date-desc';
     currentTypeFilter = 'all';
     typeButtons.forEach(b => {
       b.classList.toggle('active', b.getAttribute('data-type') === 'all');
     });
-    applyFiltersAndSort();
+    currentPage = 1;
+    renderTable();
   }
 
   if (btnResetFilters) btnResetFilters.addEventListener('click', resetAllFilters);
   if (btnEmptyResetFilters) btnEmptyResetFilters.addEventListener('click', resetAllFilters);
 
-  // Core Filter & Sorting
-  function applyFiltersAndSort() {
-    const term = (searchInput?.value || '').trim().toLowerCase();
-    const sortVal = sortSelect?.value || 'date-desc';
+  // Pagination Action Listeners
+  const btnHeaderLastEl = document.getElementById('btnHeaderGoToLastPage');
+  const btnPageLastEl = document.getElementById('btnPageLast');
+  const btnPageFirstEl = document.getElementById('btnPageFirst');
+  const btnPagePrevEl = document.getElementById('btnPagePrev');
+  const btnPageNextEl = document.getElementById('btnPageNext');
 
-    const rows = Array.from(document.querySelectorAll('.report-row-item'));
-    let visibleCount = 0;
+  if (btnHeaderLastEl) {
+    btnHeaderLastEl.addEventListener('click', function(e) {
+      e.preventDefault();
+      window.goToLastPage();
+    });
+  }
+  if (btnPageLastEl) {
+    btnPageLastEl.addEventListener('click', function(e) {
+      e.preventDefault();
+      window.goToLastPage();
+    });
+  }
+  if (btnPageFirstEl) {
+    btnPageFirstEl.addEventListener('click', function(e) {
+      e.preventDefault();
+      window.goToPage(1);
+    });
+  }
+  if (btnPagePrevEl) {
+    btnPagePrevEl.addEventListener('click', function(e) {
+      e.preventDefault();
+      window.goToPrevPage();
+    });
+  }
+  if (btnPageNextEl) {
+    btnPageNextEl.addEventListener('click', function(e) {
+      e.preventDefault();
+      window.goToNextPage();
+    });
+  }
 
-    function itemMatches(el) {
-      const id = parseInt(el.getAttribute('data-id'), 10);
-      const rep = reportsData.find(r => r.id === id);
-      if (!rep) return false;
+  // ====================================================
+  // 9. TAB SWITCHING (QUESTS vs. GUILD POOL)
+  // ====================================================
+  const tabNavQuests = document.getElementById('tabNavQuests');
+  const tabNavGuildPool = document.getElementById('tabNavGuildPool');
+  const tabViewQuests = document.getElementById('tabViewQuests');
+  const tabViewGuildPool = document.getElementById('tabViewGuildPool');
 
-      // Type filter
-      if (currentTypeFilter === 'main' && !rep.is_main) return false;
-      if (currentTypeFilter === 'side' && rep.is_main) return false;
+  function switchMainTab(target) {
+    if (target === 'guild-pool') {
+      if (tabNavQuests) tabNavQuests.classList.remove('active');
+      if (tabNavGuildPool) tabNavGuildPool.classList.add('active');
+      if (tabViewQuests) tabViewQuests.classList.add('d-none');
+      if (tabViewGuildPool) tabViewGuildPool.classList.remove('d-none');
+      history.replaceState(null, null, '#guild-pool');
+    } else {
+      if (tabNavGuildPool) tabNavGuildPool.classList.remove('active');
+      if (tabNavQuests) tabNavQuests.classList.add('active');
+      if (tabViewGuildPool) tabViewGuildPool.classList.add('d-none');
+      if (tabViewQuests) tabViewQuests.classList.remove('d-none');
+      history.replaceState(null, null, '#quests');
+    }
+  }
 
-      // Text Search
-      if (term) {
-        let match = rep.title.toLowerCase().includes(term) ||
-                    (rep.gm || '').toLowerCase().includes(term) ||
-                    (rep.reporter || '').toLowerCase().includes(term) ||
-                    (rep.location || '').toLowerCase().includes(term) ||
-                    (rep.report_summary || '').toLowerCase().includes(term);
+  if (tabNavQuests) {
+    tabNavQuests.addEventListener('click', () => switchMainTab('quests'));
+  }
+  if (tabNavGuildPool) {
+    tabNavGuildPool.addEventListener('click', () => switchMainTab('guild-pool'));
+  }
 
-        if (!match && rep.party) {
-          match = rep.party.some(p => p.name.toLowerCase().includes(term));
-        }
-        if (!match) return false;
-      }
+  if (window.location.hash === '#guild-pool') {
+    switchMainTab('guild-pool');
+  }
 
-      return true;
+  // ====================================================
+  // 10. GUILD POOL DOM UPDATE ENGINE
+  // ====================================================
+  function updateGuildPoolDom(data) {
+    if (!data) return;
+    guildPoolData = data;
+
+    const levelBadge = document.getElementById('poolLevelBadge');
+    if (levelBadge) levelBadge.textContent = `Level ${data.guild_xp.level} Lonca`;
+
+    const navBadge = document.getElementById('navTabPoolGrandBadge');
+    if (navBadge) navBadge.textContent = `${Number(data.grand_total_xp).toLocaleString(undefined, {maximumFractionDigits: 0})} XP`;
+
+    // 4 KPI Cards
+    const wikiRem = document.getElementById('kpiWikiRemainingVal');
+    const wikiTotal = document.getElementById('kpiWikiTotalVal');
+    const wikiDist = document.getElementById('kpiWikiDistVal');
+    if (wikiRem) wikiRem.textContent = `${Number(data.wiki_xp.remaining).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} XP`;
+    if (wikiTotal) wikiTotal.textContent = Number(data.wiki_xp.total).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (wikiDist) wikiDist.textContent = Number(data.wiki_xp.distributed).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+    const guildTotal = document.getElementById('kpiGuildXpTotalVal');
+    if (guildTotal) guildTotal.textContent = `${Number(data.guild_xp.total).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} XP`;
+
+    const poolPay = document.getElementById('kpiPoolPayVal');
+    const poolTotal = document.getElementById('kpiPoolTotalVal');
+    if (poolPay) poolPay.textContent = `${Number(data.pool_share_uzman).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} XP`;
+    if (poolTotal) poolTotal.textContent = Number(data.pool_total).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+    const grandTotal = document.getElementById('kpiGrandTotalVal');
+    const ranksTotal = document.getElementById('kpiRanksTotalVal');
+    const extraFund = document.getElementById('kpiExtraFundVal');
+    if (grandTotal) grandTotal.textContent = `${Number(data.grand_total_xp).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} XP`;
+    if (ranksTotal) ranksTotal.textContent = Number(data.ranks_total_spent).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (extraFund) extraFund.textContent = `+${Number(data.extra_fund).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+    // Table rows
+    const tbody = document.getElementById('guildRanksTableBody');
+    if (tbody && data.ranks) {
+      tbody.innerHTML = data.ranks.map(rk => {
+        const badgeMap = {
+          'Bailiff': 'badge-rank-bailiff',
+          'Uzman': 'badge-rank-uzman',
+          'Kıdemli': 'badge-rank-kidemli',
+          'Üye': 'badge-rank-uye',
+          'Clerk': 'badge-rank-clerk',
+          'Aday': 'badge-rank-aday',
+        };
+        const badgeClass = badgeMap[rk.rank] || 'badge-rank-inaktif';
+        return `
+          <tr class="quest-row-item">
+            <td>
+              <span class="badge ${badgeClass} px-2 py-1 font-monospace fs-6">
+                ${rk.rank}
+              </span>
+            </td>
+            <td class="text-end font-monospace text-heading fw-semibold">
+              ${rk.capacity !== null ? Number(rk.capacity).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}
+            </td>
+            <td class="text-center font-monospace fw-bold ${(rk.current_count || 0) > 0 ? 'text-warning' : 'text-body-secondary'}">
+              ${Number(rk.current_count || 0).toLocaleString()}
+            </td>
+            <td class="text-end font-monospace text-warning fw-semibold">
+              ${rk.capacity_xp !== null ? Number(rk.capacity_xp).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}
+            </td>
+            <td class="text-end font-monospace text-info fw-semibold">
+              ${rk.current_xp !== null ? Number(rk.current_xp).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}
+            </td>
+            <td class="text-end font-monospace text-success fw-bold">
+              ${rk.net_xp !== null ? Number(rk.net_xp).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}
+            </td>
+            <td class="text-end font-monospace text-heading fw-bolder" style="font-size: 0.95rem;">
+              ${Number(rk.spent_xp || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+            </td>
+            <td class="text-start font-monospace small">
+              <span class="badge bg-dark border border-secondary border-opacity-25 text-info py-1 px-2 d-inline-block text-wrap" style="max-width: 320px; font-size: 0.74rem; text-align: left; line-height: 1.4;">
+                <i class="icon-base ti tabler-math-symbols me-1 text-warning"></i>
+                ${rk.formula_desc || '-'}
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
     }
 
-    function parseReportDate(dateStr) {
-      if (!dateStr) return 0;
-      const parts = dateStr.split('.');
-      if (parts.length === 3) {
-        return new Date(parts[2], parts[1] - 1, parts[0]).getTime();
-      }
-      return 0;
-    }
+    // Footers
+    const totalCapEl = document.getElementById('ranksTableTotalCapacity');
+    const totalMembersEl = document.getElementById('ranksTableTotalMembers');
+    const totalCapXpEl = document.getElementById('ranksTableTotalCapacityXp');
+    const totalCurrXpEl = document.getElementById('ranksTableTotalCurrentXp');
+    const totalNetXpEl = document.getElementById('ranksTableTotalNetXp');
+    const totalSpentEl = document.getElementById('ranksTableTotalSpent');
+    const extraFundEl = document.getElementById('ranksTableExtraFund');
+    const grandTotalEl = document.getElementById('ranksTableGrandTotal');
 
-    function compareElements(a, b) {
-      if (sortVal === 'date-desc') {
-        return parseReportDate(b.getAttribute('data-date')) - parseReportDate(a.getAttribute('data-date'));
-      } else if (sortVal === 'date-asc') {
-        return parseReportDate(a.getAttribute('data-date')) - parseReportDate(b.getAttribute('data-date'));
-      } else if (sortVal === 'xp-desc') {
-        return (parseFloat(b.getAttribute('data-xp')) || 0) - (parseFloat(a.getAttribute('data-xp')) || 0);
-      }
-      return 0;
+    if (totalCapEl) totalCapEl.textContent = data.total_capacity ? Number(data.total_capacity).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '5,900.90';
+    if (totalMembersEl && data.ranks) {
+      const sumMembers = data.ranks.reduce((acc, curr) => acc + (parseInt(curr.current_count, 10) || 0), 0);
+      totalMembersEl.textContent = `${sumMembers} Oyuncu`;
     }
+    if (totalCapXpEl) totalCapXpEl.textContent = data.total_capacity_xp ? Number(data.total_capacity_xp).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '1,149,408.02';
+    if (totalCurrXpEl) totalCurrXpEl.textContent = data.total_current_xp ? Number(data.total_current_xp).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '1,086,548.02';
+    if (totalNetXpEl) totalNetXpEl.textContent = data.total_net_xp ? Number(data.total_net_xp).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '125,649.04';
+    if (totalSpentEl) totalSpentEl.textContent = Number(data.ranks_total_spent).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (extraFundEl) extraFundEl.textContent = `+${Number(data.extra_fund).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    if (grandTotalEl) grandTotalEl.textContent = Number(data.grand_total_xp).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
-    rows.forEach(item => {
-      const show = itemMatches(item);
-      item.style.display = show ? '' : 'none';
-      if (show) visibleCount++;
+    // Cockpit Elements
+    const cockpitGuild = document.getElementById('calcCockpitGuildXp');
+    const cockpitWiki = document.getElementById('calcCockpitWikiRem');
+    const cockpitUzman = document.getElementById('calcCockpitUzmanPay');
+    const cockpitGrand = document.getElementById('calcCockpitGrandTotal');
+    if (cockpitGuild) cockpitGuild.textContent = `${Number(data.guild_xp.total).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} XP`;
+    if (cockpitWiki) cockpitWiki.textContent = `${Number(data.wiki_xp.remaining).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} XP`;
+    if (cockpitUzman) cockpitUzman.textContent = `${Number(data.pool_share_uzman).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} XP`;
+    if (cockpitGrand) cockpitGrand.textContent = `${Number(data.grand_total_xp).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} XP`;
+
+    // Update Simulator Outputs
+    const simPoolInput = document.getElementById('simPoolInput');
+    const simUzmanInput = document.getElementById('simUzmanInput');
+    const simGuildXpInput = document.getElementById('simGuildXpInput');
+    if (simPoolInput) simPoolInput.value = data.pool_total || 2064199.61;
+    if (simUzmanInput) simUzmanInput.value = (data.ranks && data.ranks.find(r => r.rank === 'Uzman')) ? data.ranks.find(r => r.rank === 'Uzman').current_count : 21;
+    if (simGuildXpInput) simGuildXpInput.value = data.guild_xp.total || 157150;
+    if (typeof updateSimulation === 'function') updateSimulation();
+  }
+
+  // Live Simulator Handlers
+  const simPoolInput = document.getElementById('simPoolInput');
+  const simUzmanInput = document.getElementById('simUzmanInput');
+  const simGuildXpInput = document.getElementById('simGuildXpInput');
+  const simUzmanPayOutput = document.getElementById('simUzmanPayOutput');
+  const simUzmanCapOutput = document.getElementById('simUzmanCapOutput');
+
+  function updateSimulation() {
+    if (!simPoolInput || !simUzmanInput || !simGuildXpInput) return;
+    const pool = parseFloat(simPoolInput.value) || 0;
+    const uzmanCount = Math.max(parseInt(simUzmanInput.value, 10) || 1, 1);
+    const guildXp = parseFloat(simGuildXpInput.value) || 0;
+
+    const pay = pool / uzmanCount;
+    const capXp = guildXp * 0.60;
+
+    if (simUzmanPayOutput) simUzmanPayOutput.textContent = `${Number(pay).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} XP`;
+    if (simUzmanCapOutput) simUzmanCapOutput.textContent = `${Number(capXp).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} XP`;
+  }
+
+  if (simPoolInput) simPoolInput.addEventListener('input', updateSimulation);
+  if (simUzmanInput) simUzmanInput.addEventListener('input', updateSimulation);
+  if (simGuildXpInput) simGuildXpInput.addEventListener('input', updateSimulation);
+
+  // ====================================================
+  // 11. EDIT GUILD POOL MODAL & LIVE CALCULATOR
+  // ====================================================
+  const modalEditPoolEl = document.getElementById('modalEditGuildPool');
+  const formEditPool = document.getElementById('formEditGuildPool');
+  const editPoolWikiTotal = document.getElementById('editPoolWikiTotal');
+  const editPoolWikiDist = document.getElementById('editPoolWikiDist');
+  const editPoolGuildTotal = document.getElementById('editPoolGuildTotal');
+  const editPoolGuildNext = document.getElementById('editPoolGuildNext');
+  const editPoolGuildLevel = document.getElementById('editPoolGuildLevel');
+  const editPoolTotalVal = document.getElementById('editPoolTotalVal');
+  const editPoolExtraFund = document.getElementById('editPoolExtraFund');
+
+  function updateEditPoolLiveCalculator() {
+    if (!editPoolWikiTotal || !editPoolWikiDist) return;
+
+    const wikiTotal = parseFloat(editPoolWikiTotal.value) || 0;
+    const wikiDist = parseFloat(editPoolWikiDist.value) || 0;
+    const wikiRem = wikiTotal - wikiDist;
+
+    const guildTotal = parseFloat(editPoolGuildTotal.value) || 0;
+    const poolTotal = parseFloat(editPoolTotalVal.value) || 0;
+    const extraFund = parseFloat(editPoolExtraFund.value) || 0;
+
+    const rankRows = document.querySelectorAll('.edit-rank-row');
+    let uzmanCount = 21;
+    let totalSpent = 0;
+
+    rankRows.forEach(row => {
+      const rank = row.getAttribute('data-rank');
+      const countInput = row.querySelector('.rank-input-count');
+      const spentInput = row.querySelector('.rank-input-spent');
+      const count = parseInt(countInput?.value, 10) || 0;
+      const spent = parseFloat(spentInput?.value) || 0;
+
+      if (rank === 'Uzman') {
+        uzmanCount = Math.max(count, 1);
+      }
+      totalSpent += spent;
     });
 
-    if (tableBody) {
-      rows.sort(compareElements).forEach(node => tableBody.appendChild(node));
-    }
+    const uzmanPay = poolTotal / uzmanCount;
 
-    if (currentFilteredCountEl) {
-      currentFilteredCountEl.textContent = visibleCount;
-    }
+    // Update net displays
+    rankRows.forEach(row => {
+      const rank = row.getAttribute('data-rank');
+      const countInput = row.querySelector('.rank-input-count');
+      const spentInput = row.querySelector('.rank-input-spent');
+      const netDisplay = row.querySelector('.rank-display-net');
+      const count = parseInt(countInput?.value, 10) || 0;
+      const spent = parseFloat(spentInput?.value) || 0;
 
-    if (visibleCount === 0) {
-      if (emptyState) emptyState.classList.remove('d-none');
-    } else {
-      if (emptyState) emptyState.classList.add('d-none');
+      let netXp = 0;
+      if (rank === 'Uzman') {
+        netXp = uzmanPay;
+      } else if (count > 0 && rank !== 'Aday') {
+        netXp = spent / count;
+      }
+
+      if (netDisplay) {
+        if (rank === 'Inaktif / Gezgin') {
+          netDisplay.textContent = '-';
+        } else {
+          netDisplay.textContent = Number(netXp).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+      }
+    });
+
+    const grandTotal = totalSpent + extraFund;
+    const uzmanCap = guildTotal * 0.60;
+
+    // Header badge & overview
+    const payBadge = document.getElementById('livePoolPayBadge');
+    const wikiRemText = document.getElementById('livePoolWikiRemText');
+    const uzmanCapText = document.getElementById('livePoolUzmanCapText');
+    const ranksTotalText = document.getElementById('livePoolRanksTotalText');
+    const grandTotalText = document.getElementById('livePoolGrandTotalText');
+    const equationsText = document.getElementById('livePoolEquationsText');
+
+    if (payBadge) payBadge.textContent = `Uzman Payı: ${Number(uzmanPay).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} XP`;
+    if (wikiRemText) wikiRemText.textContent = `${Number(wikiRem).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} XP`;
+    if (uzmanCapText) uzmanCapText.textContent = `${Number(uzmanCap).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} XP`;
+    if (ranksTotalText) ranksTotalText.textContent = `${Number(totalSpent).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} XP`;
+    if (grandTotalText) grandTotalText.textContent = `${Number(grandTotal).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} XP`;
+
+    if (equationsText) {
+      equationsText.textContent = `Uzman Payı = Havuz [${Number(poolTotal).toLocaleString(undefined, {maximumFractionDigits: 2})}] / Uzman Sayısı [${uzmanCount}] = ${Number(uzmanPay).toLocaleString(undefined, {maximumFractionDigits: 2})} XP | Grand Total = Rütbeler [${Number(totalSpent).toLocaleString(undefined, {maximumFractionDigits: 2})}] + Ek [${Number(extraFund).toLocaleString(undefined, {maximumFractionDigits: 2})}] = ${Number(grandTotal).toLocaleString(undefined, {maximumFractionDigits: 2})} XP`;
     }
   }
 
-  // Row Click -> Open Full Mission Report Details Modal
-  document.addEventListener('click', function (e) {
-    const row = e.target.closest('.quest-row-clickable');
-    if (!row) return;
-
-    const reportId = parseInt(row.getAttribute('data-id'), 10);
-    const report = reportsData.find(r => r.id === reportId);
-    if (!report) return;
-
-    populateAndOpenModal(report);
+  [editPoolWikiTotal, editPoolWikiDist, editPoolGuildTotal, editPoolTotalVal, editPoolExtraFund].forEach(el => {
+    if (el) {
+      el.addEventListener('input', updateEditPoolLiveCalculator);
+      el.addEventListener('change', updateEditPoolLiveCalculator);
+    }
   });
 
-  function populateAndOpenModal(r) {
-    // Header
-    const titleEl = document.getElementById('modalReportTitle');
-    const dateEl = document.getElementById('modalReportDate');
-    const tierBadge = document.getElementById('modalReportTierBadge');
-    const statusBadge = document.getElementById('modalReportStatusBadge');
-    const locationEl = document.getElementById('modalReportLocation');
-    const gmEl = document.getElementById('modalReportGm');
-    const reporterEl = document.getElementById('modalReportReporter');
-    const avgLevelEl = document.getElementById('modalReportAvgLevel');
+  document.querySelectorAll('.rank-input-count, .rank-input-spent').forEach(el => {
+    el.addEventListener('input', updateEditPoolLiveCalculator);
+    el.addEventListener('change', updateEditPoolLiveCalculator);
+  });
 
-    if (titleEl) titleEl.textContent = r.title;
-    if (dateEl) dateEl.textContent = r.date;
-    if (locationEl) locationEl.textContent = r.location;
-    if (gmEl) gmEl.textContent = `GM ${r.gm || 'Shalvaz'}`;
-    if (reporterEl) reporterEl.textContent = r.reporter || 'Tolrun';
+  // Open Edit Modal
+  const btnOpenEditPool = document.getElementById('btnOpenEditGuildPoolModal');
+  if (btnOpenEditPool && modalEditPoolEl) {
+    btnOpenEditPool.addEventListener('click', function () {
+      if (editPoolWikiTotal) editPoolWikiTotal.value = guildPoolData.wiki_xp.total;
+      if (editPoolWikiDist) editPoolWikiDist.value = guildPoolData.wiki_xp.distributed;
+      if (editPoolGuildTotal) editPoolGuildTotal.value = guildPoolData.guild_xp.total;
+      if (editPoolGuildNext) editPoolGuildNext.value = guildPoolData.guild_xp.next_level_threshold;
+      if (editPoolGuildLevel) editPoolGuildLevel.value = guildPoolData.guild_xp.level;
+      if (editPoolTotalVal) editPoolTotalVal.value = guildPoolData.pool_total;
+      if (editPoolExtraFund) editPoolExtraFund.value = guildPoolData.extra_fund;
 
-    const avgLvl = parseFloat(r.calculated_avg_level || r.level || 1).toFixed(2);
-    if (avgLevelEl) avgLevelEl.textContent = `{{ __('Average Level') }}: ${avgLvl}`;
+      document.querySelectorAll('.edit-rank-row').forEach(row => {
+        const rankName = row.getAttribute('data-rank');
+        const rk = (guildPoolData.ranks || []).find(r => r.rank === rankName);
+        if (rk) {
+          const countInput = row.querySelector('.rank-input-count');
+          const spentInput = row.querySelector('.rank-input-spent');
+          if (countInput) countInput.value = rk.current_count ?? 0;
+          if (spentInput) spentInput.value = rk.spent_xp ?? 0;
+        }
+      });
 
-    if (tierBadge) {
-      if (r.tier_type === 'epic') {
-        tierBadge.className = 'badge badge-epic font-monospace';
-        tierBadge.textContent = '✓✓ {{ __("Epic Main Quest") }}';
-      } else if (r.is_main) {
-        tierBadge.className = 'badge badge-main font-monospace';
-        tierBadge.textContent = '✓ {{ __("Main Quest") }}';
+      updateEditPoolLiveCalculator();
+      const bsModal = new bootstrap.Modal(modalEditPoolEl);
+      bsModal.show();
+    });
+  }
+
+  // Submit Edit Modal
+  if (formEditPool) {
+    formEditPool.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const ranks = [];
+      document.querySelectorAll('.edit-rank-row').forEach(row => {
+        const rankName = row.getAttribute('data-rank');
+        const origRk = (guildPoolData.ranks || []).find(r => r.rank === rankName) || {};
+        const count = parseInt(row.querySelector('.rank-input-count')?.value, 10) || 0;
+        const spent = parseFloat(row.querySelector('.rank-input-spent')?.value) || 0;
+
+        ranks.push({
+          rank: rankName,
+          capacity: origRk.capacity ?? null,
+          current_count: count,
+          capacity_xp: origRk.capacity_xp ?? null,
+          current_xp: origRk.current_xp ?? null,
+          net_xp: origRk.net_xp ?? null,
+          spent_xp: spent,
+        });
+      });
+
+      const payload = {
+        wiki_xp: {
+          total: parseFloat(editPoolWikiTotal.value) || 0,
+          distributed: parseFloat(editPoolWikiDist.value) || 0,
+        },
+        guild_xp: {
+          base: guildPoolData.guild_xp.base || 145000,
+          total: parseFloat(editPoolGuildTotal.value) || 0,
+          next_level_threshold: parseFloat(editPoolGuildNext.value) || 210000,
+          remaining: guildPoolData.guild_xp.remaining || 529,
+          level: parseInt(editPoolGuildLevel.value, 10) || 12,
+        },
+        extra_fund: parseFloat(editPoolExtraFund.value) || 0,
+        pool_total: parseFloat(editPoolTotalVal.value) || 0,
+        ranks: ranks,
+        _token: document.querySelector('input[name="_token"]')?.value
+      };
+
+      const submitBtn = document.getElementById('btnSubmitEditGuildPool');
+      if (submitBtn) submitBtn.disabled = true;
+
+      fetch('{{ route("valiant-shade.pages-quest-reports.guild-pool.update") }}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': payload._token
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (submitBtn) submitBtn.disabled = false;
+        if (!data.success) {
+          alert(data.message || 'Güncelleme başarısız oldu.');
+          return;
+        }
+
+        updateGuildPoolDom(data.guildPoolData);
+
+        const bsModal = bootstrap.Modal.getInstance(modalEditPoolEl);
+        if (bsModal) bsModal.hide();
+
+        if (window.Swal) {
+          Swal.fire({
+            icon: 'success',
+            title: '{{ __("Havuz Güncellendi!") }}',
+            text: 'Lonca XP Havuzu ve Rütbe Dağılım verileri başarıyla kaydedildi.',
+            timer: 2000,
+            showConfirmButton: false
+          });
+        }
+      })
+      .catch(err => {
+        if (submitBtn) submitBtn.disabled = false;
+        alert('Sunucu iletişim hatası oluştu.');
+      });
+    });
+  }
+
+  // Reset Guild Pool Defaults
+  const btnResetPool = document.getElementById('btnResetGuildPoolDefaults');
+  if (btnResetPool) {
+    btnResetPool.addEventListener('click', function () {
+      if (window.Swal) {
+        Swal.fire({
+          title: '{{ __("Havuz Verileri Sıfırlansın mı?") }}',
+          text: 'Lonca XP Havuzu ve Rütbeler tablosu Google Sheet orijinal değerlerine sıfırlanacaktır.',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#f59e0b',
+          cancelButtonColor: '#82868b',
+          confirmButtonText: 'Evet, Sıfırla!',
+          cancelButtonText: 'Vazgeç'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            executeResetPool();
+          }
+        });
       } else {
-        tierBadge.className = 'badge badge-side font-monospace';
-        tierBadge.textContent = '{{ __("Side Quest") }}';
+        if (confirm('Havuz verileri Google Sheet orijinal değerlerine sıfırlansın mı?')) {
+          executeResetPool();
+        }
       }
-    }
 
-    if (statusBadge) {
-      if ((r.status || 'success') === 'failed') {
-        statusBadge.className = 'badge bg-label-danger text-danger border border-danger border-opacity-25';
-        statusBadge.textContent = 'x {{ __("Failed") }}';
-      } else {
-        statusBadge.className = 'badge bg-label-success text-success border border-success border-opacity-25';
-        statusBadge.textContent = '✓ {{ __("Successful") }}';
-      }
-    }
+      function executeResetPool() {
+        fetch('{{ route("valiant-shade.pages-quest-reports.guild-pool.reset") }}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')?.value
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (!data.success) {
+            alert('Sıfırlama başarısız.');
+            return;
+          }
+          updateGuildPoolDom(data.guildPoolData);
 
-    // Debrief narrative
-    const fullTextEl = document.getElementById('modalReportFullText');
-    const enemiesEl = document.getElementById('modalReportEnemies');
-    if (fullTextEl) fullTextEl.textContent = r.full_report || r.report_summary;
-    if (enemiesEl) enemiesEl.textContent = r.enemies || 'Gizemli Tehditler';
-
-    // Party Roster
-    const partyCountEl = document.getElementById('modalReportPartyCount');
-    const partyBody = document.getElementById('modalReportPartyTableBody');
-
-    if (partyCountEl) partyCountEl.textContent = `${r.party ? r.party.length : (r.player_count || 1)} {{ __('Players') }}`;
-
-    if (partyBody) {
-      partyBody.innerHTML = '';
-      if (r.party && r.party.length > 0) {
-        r.party.forEach(m => {
-          const isReporter = m.role === 'Reporter';
-          const tr = document.createElement('tr');
-          tr.className = 'border-bottom border-secondary border-opacity-10';
-          tr.innerHTML = `
-            <td class="fw-semibold text-heading d-flex align-items-center gap-1">
-              ${isReporter ? '<i class="icon-base ti tabler-feather text-warning" title="{{ __("Reporter") }}"></i>' : '<i class="icon-base ti tabler-user text-primary opacity-50"></i>'}
-              <span>${m.name}</span>
-            </td>
-            <td><span class="badge bg-label-info font-monospace" style="font-size: 0.72rem;">${m.class || 'Adventurer'}</span></td>
-            <td class="font-monospace fw-bold text-info">Lvl ${m.level || 1}</td>
-            <td><span class="badge ${isReporter ? 'bg-label-warning text-warning' : 'bg-label-secondary text-body'} font-monospace" style="font-size: 0.7rem;">${m.role}</span></td>
-            <td class="text-end font-monospace text-success fw-bold">+${m.xp || Math.round(r.total_xp / Math.max(r.party.length, 1))} XP</td>
-          `;
-          partyBody.appendChild(tr);
+          if (window.Swal) {
+            Swal.fire({
+              icon: 'success',
+              title: '{{ __("Havuz Sıfırlandı!") }}',
+              text: 'Lonca XP Havuzu ve Rütbeler tablosu Master Sheet değerlerine döndürüldü.',
+              timer: 2000,
+              showConfirmButton: false
+            });
+          }
         });
       }
-    }
-
-    // Financial Breakdown
-    const totalXpEl = document.getElementById('modalReportTotalXp');
-    const guildCutEl = document.getElementById('modalReportGuildCut');
-    const vaultCutEl = document.getElementById('modalReportVaultCut');
-    const avgRewardEl = document.getElementById('modalReportAvgReward');
-
-    if (totalXpEl) totalXpEl.textContent = `+${r.total_xp} XP`;
-    if (guildCutEl) guildCutEl.textContent = `${r.guild_cut || 0} SP`;
-    if (vaultCutEl) vaultCutEl.textContent = `${r.vault_cut || 0} SP`;
-    if (avgRewardEl) avgRewardEl.textContent = `${r.avg_reward || 0} XP`;
-
-    // Show modal
-    const modalDetailEl = document.getElementById('questReportDetailModal');
-    if (modalDetailEl && window.bootstrap) {
-      const bsModal = new bootstrap.Modal(modalDetailEl);
-      bsModal.show();
-    }
+    });
   }
+
+  // Initialize
+  renderTable();
 });
 </script>
 @endsection

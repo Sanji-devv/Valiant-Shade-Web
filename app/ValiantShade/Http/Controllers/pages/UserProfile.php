@@ -38,6 +38,14 @@ class UserProfile extends Controller
       : collect();
 
     $charactersData = $characters->map(function ($c) use ($user) {
+      $sData = $c->sheet_data['sheetData'] ?? $c->sheet_data ?? [];
+      $traits = $sData['traits'] ?? ($c->sheet_data['traits'] ?? [
+        'uye' => ['name' => '', 'desc' => ''],
+        'kidemli' => ['name' => '', 'desc' => ''],
+        'uzman' => ['name' => '', 'desc' => ''],
+      ]);
+      $gold = $sData['moneyGp'] ?? ($c->sheet_data['money']['gp'] ?? 150);
+
       return [
         'id' => $c->character_id ?: (string) $c->id,
         'db_id' => $c->id,
@@ -59,8 +67,10 @@ class UserProfile extends Controller
         'int' => $c->int,
         'wis' => $c->wis,
         'cha' => $c->cha,
-        'gold' => ($c->sheet_data['money']['gp'] ?? 150),
+        'gold' => $gold,
         'active' => ($user && $user->current_character === $c->character_name),
+        'sheetData' => $sData,
+        'traits' => $traits,
       ];
     })->values();
 
@@ -249,6 +259,7 @@ class UserProfile extends Controller
       ],
       'currentHp' => $startingHp,
       'maxHp' => $startingHp,
+      'hpExtraMisc' => 0,
       'tempHp' => 0,
       'nonLethal' => 0,
       'hitDie' => $hitDie,
@@ -304,6 +315,11 @@ class UserProfile extends Controller
       'acItems' => [],
       'gear' => [],
       'feats' => [],
+      'traits' => [
+        'uye' => ['name' => '', 'desc' => ''],
+        'kidemli' => ['name' => '', 'desc' => ''],
+        'uzman' => ['name' => '', 'desc' => ''],
+      ],
       'specials' => $initialSpecials,
       'castingStat' => $castingStat,
       'spells' => ['castingStat' => $castingStat, 'slots' => [], 'list' => []],
@@ -410,5 +426,432 @@ class UserProfile extends Controller
     }
 
     return response()->json(['success' => false, 'message' => __('Character not found.')], 404);
+  }
+
+  /**
+   * Get list of claimable characters from the XP registry (characters table).
+   */
+  public function getClaimableCharacters(Request $request)
+  {
+    $search = $request->query('q', '');
+    $query = \App\Models\Character::with('rank')
+      ->orderBy('current_level', 'desc')
+      ->orderBy('total_xp', 'desc');
+
+    if (!empty($search)) {
+      $term = mb_strtolower(trim($search));
+      $query->whereRaw('LOWER(name) LIKE ?', ["%{$term}%"]);
+    }
+
+    $chars = $query->take(150)->get()->map(function ($c) {
+      return [
+        'id' => $c->id,
+        'name' => $c->name,
+        'level' => (int) $c->current_level,
+        'total_xp' => (float) $c->total_xp,
+        'character_type' => $c->character_type ?: 'MAIN',
+        'rank_name' => $c->rank?->name ?? 'Üye',
+        'allowance_sp' => (float) ($c->allowance_sp ?? 0),
+      ];
+    });
+
+    return response()->json([
+      'success' => true,
+      'characters' => $chars,
+    ]);
+  }
+
+  /**
+   * Get detailed progression, feats, stats, and requirements for a claimable character.
+   */
+  public function getClaimableCharacterDetails($idOrName)
+  {
+    $character = \App\Models\Character::with('rank')
+      ->where('id', is_numeric($idOrName) ? (int)$idOrName : 0)
+      ->orWhere('name', $idOrName)
+      ->first();
+
+    if (!$character) {
+      return response()->json([
+        'success' => false,
+        'message' => __('Character not found in XP registry.'),
+      ], 404);
+    }
+
+    $lvl = max(1, (int) $character->current_level);
+
+    // Existing feats from CharacterFeat
+    $feats = \App\Models\CharacterFeat::where('character_id', $character->id)
+      ->orWhere('character_name', $character->name)
+      ->orderBy('level')
+      ->get()
+      ->map(function ($f) {
+        return [
+          'level' => (int) $f->level,
+          'feat_name' => $f->feat_name,
+          'feat_type' => $f->feat_type ?: 'General',
+          'notes' => $f->notes,
+        ];
+      });
+
+    // Check if character_info or character_profile exists
+    $info = \App\Models\CharacterInfo::where('character_id', $character->id)->first();
+    $profile = \App\Models\CharacterProfile::where('character_name', $character->name)->first();
+
+    // Required odd-level feat slots: 1, 3, 5, ..., up to $lvl
+    $requiredFeatLevels = [];
+    for ($i = 1; $i <= $lvl; $i += 2) {
+      $requiredFeatLevels[] = $i;
+    }
+
+    $suggestedClass = 'Fighter';
+    $suggestedArchetype = '';
+
+    if ($info && !empty($info->class_and_level)) {
+      $cleanClassAndLvl = trim($info->class_and_level);
+      if (strpos($cleanClassAndLvl, '(') !== false) {
+        $parts = explode('(', $cleanClassAndLvl);
+        $suggestedClass = trim($parts[0]);
+        $suggestedArchetype = trim(str_replace(')', '', $parts[1]));
+      } else {
+        $suggestedClass = explode(' ', $cleanClassAndLvl)[0];
+      }
+    } elseif ($profile && !empty($profile->class_name)) {
+      $suggestedClass = $profile->class_name;
+      $suggestedArchetype = $profile->archetype ?: '';
+    } elseif ($feats->contains(function ($f) {
+      return stripos($f['feat_name'], 'Discovery') !== false || stripos($f['feat_name'], 'Extract') !== false || stripos($f['feat_name'], 'Brew Potion') !== false;
+    })) {
+      $suggestedClass = 'Alchemist';
+    } elseif ($feats->contains(function ($f) {
+      return stripos($f['feat_name'], 'Sneak Attack') !== false || stripos($f['feat_name'], 'Rogue Talent') !== false;
+    })) {
+      $suggestedClass = 'Rogue';
+    } elseif ($character->rank && strcasecmp($character->rank->name, 'Clerk') === 0) {
+      $suggestedClass = 'Expert';
+    }
+
+    return response()->json([
+      'success' => true,
+      'character' => [
+        'id' => $character->id,
+        'name' => $character->name,
+        'level' => $lvl,
+        'total_xp' => (float) $character->total_xp,
+        'rank' => $character->rank?->name ?? 'Üye',
+        'character_type' => $character->character_type ?: 'MAIN',
+        'allowance_sp' => (float) ($character->allowance_sp ?? 0),
+        'suggested_race' => $info?->race ?: ($profile?->race ?: 'Human'),
+        'suggested_class' => $suggestedClass,
+        'suggested_archetype' => $suggestedArchetype ?: ($profile?->archetype ?: ''),
+        'suggested_stats' => [
+          'str' => (int) ($info?->strength ?: ($profile?->str ?: 14)),
+          'dex' => (int) ($info?->dexterity ?: ($profile?->dex ?: 14)),
+          'con' => (int) ($info?->constitution ?: ($profile?->con ?: 14)),
+          'int' => (int) ($info?->intelligence ?: ($profile?->int ?: 14)),
+          'wis' => (int) ($info?->wisdom ?: ($profile?->wis ?: 10)),
+          'cha' => (int) ($info?->charisma ?: ($profile?->cha ?: 10)),
+        ],
+        'existing_feats' => $feats,
+        'required_feat_levels' => $requiredFeatLevels,
+      ],
+    ]);
+  }
+
+  /**
+   * Get all Pathfinder traits from enum catalog.
+   */
+  public function getTraits()
+  {
+    $traitsFile = file_exists(config_path('enums/traits.php'))
+      ? config_path('enums/traits.php')
+      : (file_exists(config_path('enums/pathfinder_traits.php')) ? config_path('enums/pathfinder_traits.php') : null);
+    $traits = $traitsFile ? require $traitsFile : [];
+
+    return response()->json([
+      'success' => true,
+      'traits' => $traits,
+      'total' => count($traits),
+    ]);
+  }
+
+  /**
+   * Claim an existing character from the XP registry at their real level.
+   * Enforces mandatory Class, Traits, and Feats up to their current level.
+   */
+  public function claimCharacter(Request $request)
+  {
+    $user = Auth::user();
+    if (!$user) {
+      return response()->json([
+        'success' => false,
+        'message' => __('Please sign in to claim a character.'),
+      ], 401);
+    }
+
+    $existingCount = \App\Models\CharacterProfile::where('user_id', $user->id)->count();
+    if ($existingCount >= 2) {
+      return response()->json([
+        'success' => false,
+        'message' => __('Character limit reached. Each player can have at most 2 characters (1 Main and 1 Clerk).'),
+      ], 422);
+    }
+
+    $validated = $request->validate([
+      'character_id' => ['required'],
+      'race' => ['required', 'string', 'max:50'],
+      'class_name' => ['required', 'string', 'max:50'],
+      'archetype' => ['nullable', 'string', 'max:50'],
+      'str' => ['required', 'integer', 'min:1', 'max:30'],
+      'dex' => ['required', 'integer', 'min:1', 'max:30'],
+      'con' => ['required', 'integer', 'min:1', 'max:30'],
+      'int' => ['required', 'integer', 'min:1', 'max:30'],
+      'wis' => ['required', 'integer', 'min:1', 'max:30'],
+      'cha' => ['required', 'integer', 'min:1', 'max:30'],
+      'traits' => ['nullable', 'array'],
+      'traits.trait_1_name' => ['nullable', 'string', 'max:100'],
+      'traits.trait_1_desc' => ['nullable', 'string', 'max:500'],
+      'traits.trait_2_name' => ['nullable', 'string', 'max:100'],
+      'traits.trait_2_desc' => ['nullable', 'string', 'max:500'],
+      'traits.trait_3_name' => ['nullable', 'string', 'max:100'],
+      'traits.trait_3_desc' => ['nullable', 'string', 'max:500'],
+      'traits.rank_trait_name' => ['nullable', 'string', 'max:100'],
+      'traits.rank_trait_desc' => ['nullable', 'string', 'max:500'],
+      'feats' => ['nullable', 'array'],
+    ]);
+
+    // Find the character from characters table
+    $character = \App\Models\Character::with('rank')
+      ->where('id', is_numeric($validated['character_id']) ? (int)$validated['character_id'] : 0)
+      ->orWhere('name', $validated['character_id'])
+      ->first();
+
+    if (!$character) {
+      return response()->json([
+        'success' => false,
+        'message' => __('Selected character was not found in the XP registry.'),
+      ], 404);
+    }
+
+    $charRankType = ($character->character_type === 'CLERK' || strcasecmp($character->rank?->name ?? '', 'Clerk') === 0) ? 'Clerk' : 'Main';
+
+    // Check if user already has this rank type
+    $rankTaken = \App\Models\CharacterProfile::where('user_id', $user->id)
+      ->where(function ($q) use ($charRankType) {
+        $q->where('rank', $charRankType)
+          ->orWhere('character_type', $charRankType);
+      })
+      ->exists();
+
+    if ($rankTaken) {
+      return response()->json([
+        'success' => false,
+        'message' => __("You already have a :rank character. You can only own one Main and one Clerk.", ['rank' => $charRankType]),
+      ], 422);
+    }
+
+    $lvl = max(1, (int) $character->current_level);
+
+    // Determine class hit die and starting HP at $lvl
+    $loadEnum = function ($file) {
+      $p1 = config_path('enums/' . $file);
+      if (file_exists($p1)) return require $p1;
+      $p2 = config_path('Enums/' . $file);
+      if (file_exists($p2)) return require $p2;
+      return [];
+    };
+    $pfClasses = $loadEnum('pathfinder_classes.php');
+    $classKey = strtolower($validated['class_name']);
+    $clsInfo = $pfClasses[$classKey] ?? [];
+    $hitDie = $clsInfo['hit_die'] ?? 'd10';
+    $hdNumber = (int) filter_var($hitDie, FILTER_SANITIZE_NUMBER_INT) ?: 10;
+    $conMod = (int) floor(($validated['con'] - 10) / 2);
+
+    // Standard Pathfinder HP calculation for level $lvl
+    $firstLevelHp = max(1, $hdNumber + $conMod);
+    $perLevelHp = max(1, (int)ceil($hdNumber / 2) + 1 + $conMod);
+    $totalMaxHp = $firstLevelHp + max(0, $lvl - 1) * $perLevelHp;
+
+    // BAB and Saves at $lvl
+    $babConfig = $loadEnum('bab.php');
+    $savesConfig = $loadEnum('classes_save.php');
+    $progressionsConfig = $loadEnum('class_progressions.php');
+    $babTableKey = $clsInfo['bab_table'] ?? 'bab_section_1';
+    $bab = $babConfig[$babTableKey][$lvl] ?? '+1';
+    $classSaves = $savesConfig[$classKey][$lvl] ?? ['fort' => '+2', 'ref' => '+0', 'will' => '+0'];
+    $castingStat = $progressionsConfig[$classKey]['casting_stat'] ?? 'none';
+
+    // Format traits (3 slots: Trait 1 / Üye, Trait 2 / Kıdemli, Trait 3 / Uzman)
+    $traitsInput = $validated['traits'] ?? [];
+    $t1Name = trim($traitsInput['trait_1_name'] ?? ($traitsInput['uye']['name'] ?? ''));
+    $t1Desc = trim($traitsInput['trait_1_desc'] ?? ($traitsInput['uye']['desc'] ?? ''));
+    $t2Name = trim($traitsInput['trait_2_name'] ?? ($traitsInput['kidemli']['name'] ?? ''));
+    $t2Desc = trim($traitsInput['trait_2_desc'] ?? ($traitsInput['kidemli']['desc'] ?? ''));
+    $t3Name = trim($traitsInput['trait_3_name'] ?? ($traitsInput['rank_trait_name'] ?? ($traitsInput['uzman']['name'] ?? '')));
+    $t3Desc = trim($traitsInput['trait_3_desc'] ?? ($traitsInput['rank_trait_desc'] ?? ($traitsInput['uzman']['desc'] ?? '')));
+
+    $formattedTraits = [
+      'trait_1' => [
+        'name' => $t1Name,
+        'desc' => $t1Desc,
+      ],
+      'trait_2' => [
+        'name' => $t2Name,
+        'desc' => $t2Desc,
+      ],
+      'trait_3' => [
+        'name' => $t3Name,
+        'desc' => $t3Desc,
+      ],
+      'rank_trait' => [
+        'name' => $t3Name,
+        'desc' => $t3Desc,
+      ],
+      'uye' => [
+        'name' => $t1Name,
+        'desc' => $t1Desc,
+      ],
+      'kidemli' => [
+        'name' => $t2Name,
+        'desc' => $t2Desc,
+      ],
+      'uzman' => [
+        'name' => $t3Name,
+        'desc' => $t3Desc,
+      ],
+    ];
+
+    // Format feats
+    $formattedFeats = [];
+    if (!empty($validated['feats']) && is_array($validated['feats'])) {
+      foreach ($validated['feats'] as $lvlKey => $fVal) {
+        $fName = is_array($fVal) ? ($fVal['name'] ?? '') : (string)$fVal;
+        $fType = is_array($fVal) ? ($fVal['type'] ?? 'General') : 'General';
+        if (!empty(trim($fName))) {
+          $formattedFeats[] = [
+            'level' => (int) $lvlKey,
+            'name' => trim($fName),
+            'type' => $fType,
+          ];
+          // Also persist/update in CharacterFeat
+          \App\Models\CharacterFeat::updateOrCreate(
+            [
+              'character_id' => $character->id,
+              'level' => (int) $lvlKey,
+            ],
+            [
+              'character_name' => $character->name,
+              'feat_name' => trim($fName),
+              'feat_type' => $fType,
+            ]
+          );
+        }
+      }
+    } else {
+      // Pull existing feats if any already exist for this character
+      $existingFeats = \App\Models\CharacterFeat::where('character_id', $character->id)->get();
+      foreach ($existingFeats as $ef) {
+        $formattedFeats[] = [
+          'level' => (int) $ef->level,
+          'name' => $ef->feat_name,
+          'type' => $ef->feat_type ?? 'General',
+        ];
+      }
+    }
+
+    $nextXpThreshold = \App\Models\LevelThreshold::where('level', '>', $lvl)->orderBy('level')->value('required_xp') ?? ((float)$character->total_xp + 50000);
+
+    // Initial sheet data at real level!
+    $sheetData = [
+      'charId' => (string) $character->id,
+      'name' => $character->name,
+      'player' => $user->name,
+      'alignment' => 'Neutral Good (NG)',
+      'level' => $lvl,
+      'classKey' => $classKey,
+      'className' => $clsInfo['name'] ?? ucfirst($validated['class_name']),
+      'archetype' => $validated['archetype'] ?? '',
+      'race' => $validated['race'],
+      'rank' => $charRankType,
+      'character_type' => $charRankType,
+      'guild_rank' => $character->rank?->name ?? 'Üye',
+      'size' => 'Medium',
+      'str' => $validated['str'],
+      'dex' => $validated['dex'],
+      'con' => $validated['con'],
+      'int' => $validated['int'],
+      'wis' => $validated['wis'],
+      'cha' => $validated['cha'],
+      'abilityScores' => [
+        'str' => $validated['str'],
+        'dex' => $validated['dex'],
+        'con' => $validated['con'],
+        'int' => $validated['int'],
+        'wis' => $validated['wis'],
+        'cha' => $validated['cha'],
+      ],
+      'currentHp' => $totalMaxHp,
+      'maxHp' => $totalMaxHp,
+      'hitDie' => $hitDie,
+      'bab' => $bab,
+      'fortBase' => (int) filter_var($classSaves['fort'] ?? '+2', FILTER_SANITIZE_NUMBER_INT),
+      'refBase' => (int) filter_var($classSaves['ref'] ?? '+0', FILTER_SANITIZE_NUMBER_INT),
+      'willBase' => (int) filter_var($classSaves['will'] ?? '+0', FILTER_SANITIZE_NUMBER_INT),
+      'acDex' => (int) floor(($validated['dex'] - 10) / 2),
+      'feats' => $formattedFeats,
+      'traits' => $formattedTraits,
+      'currentXp' => (float) $character->total_xp,
+      'nextLevelXp' => (float) $nextXpThreshold,
+      'money' => ['cp' => 0, 'sp' => (float)($character->allowance_sp ?? 0), 'gp' => 150 + round(($character->allowance_sp ?? 0)/10, 2), 'pp' => 0],
+    ];
+
+    // Create or update CharacterProfile
+    $profile = \App\Models\CharacterProfile::updateOrCreate(
+      ['character_name' => $character->name],
+      [
+        'character_id' => (string) $character->id,
+        'user_id' => $user->id,
+        'player_name' => $user->name,
+        'race' => $validated['race'],
+        'class_name' => $clsInfo['name'] ?? ucfirst($validated['class_name']),
+        'archetype' => $validated['archetype'] ?? '',
+        'level' => $lvl,
+        'rank' => $charRankType,
+        'character_type' => $charRankType,
+        'str' => $validated['str'],
+        'dex' => $validated['dex'],
+        'con' => $validated['con'],
+        'int' => $validated['int'],
+        'wis' => $validated['wis'],
+        'cha' => $validated['cha'],
+        'hp' => $totalMaxHp,
+        'max_hp' => $totalMaxHp,
+        'hit_die' => $hitDie,
+        'bab' => $bab,
+        'fort_save' => $classSaves['fort'] ?? '+2',
+        'ref_save' => $classSaves['ref'] ?? '+0',
+        'will_save' => $classSaves['will'] ?? '+0',
+        'sheet_data' => $sheetData,
+      ]
+    );
+
+    // Connect Character to User and make active
+    $character->user_id = $user->id;
+    $character->status = 'ACTIVE';
+    $character->save();
+
+    // Set current active character on user
+    $user->current_character = $character->name;
+    $user->save();
+
+    return response()->json([
+      'success' => true,
+      'message' => __(':name has been claimed and initialized at Level :level with :xp XP!', [
+        'name' => $character->name,
+        'level' => $lvl,
+        'xp' => number_format($character->total_xp, 2)
+      ]),
+      'character' => $profile,
+    ]);
   }
 }
