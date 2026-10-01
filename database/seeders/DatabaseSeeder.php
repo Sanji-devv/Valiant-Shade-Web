@@ -12,7 +12,7 @@ class DatabaseSeeder extends Seeder
             RankSeeder::class,
             LevelThresholdSeeder::class,
             AdminUserSeeder::class,
-            GuildNewsSeeder::class,
+            NewsSeeder::class,
         ]);
     }
 }

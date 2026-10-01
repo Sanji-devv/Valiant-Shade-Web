@@ -16,8 +16,9 @@
   if (swiperWithPagination) {
     new Swiper(swiperWithPagination, {
       loop: true,
+      speed: 1200,
       autoplay: {
-        delay: 5000,
+        delay: 9500,
         disableOnInteraction: false,
         pauseOnMouseEnter: true
       },

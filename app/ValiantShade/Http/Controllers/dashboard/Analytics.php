@@ -2,9 +2,10 @@
 
 namespace App\ValiantShade\Http\Controllers\dashboard;
 
-use App\Models\GuildNews;
+use App\Models\News;
 use App\ValiantShade\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class Analytics extends Controller
 {
@@ -12,8 +13,13 @@ class Analytics extends Controller
   {
     $guildNews = collect();
     try {
-      if (\Illuminate\Support\Facades\Schema::hasTable('guild_news')) {
-        $guildNews = GuildNews::where('is_active', true)
+      if (Schema::hasTable('news')) {
+        $guildNews = News::where('is_active', true)
+          ->orderBy('order', 'asc')
+          ->orderBy('created_at', 'desc')
+          ->get();
+      } elseif (Schema::hasTable('guild_news')) {
+        $guildNews = \App\Models\GuildNews::where('is_active', true)
           ->orderBy('order', 'asc')
           ->orderBy('created_at', 'desc')
           ->get();

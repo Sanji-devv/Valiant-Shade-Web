@@ -33,8 +33,10 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 
-# windows only files
+# Windows
 run-dev.bat
+run-dev.ps1
 start-db.bat
 stop-db.bat
 /PostgreSQL
+run-dev.sh

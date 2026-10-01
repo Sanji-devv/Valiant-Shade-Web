@@ -2,9 +2,9 @@
 
 namespace App\ValiantShade\Http\Controllers\pages;
 
-use App\Models\GuildNews;
+use App\Models\News;
 use App\ValiantShade\Http\Controllers\Controller;
-use Database\Seeders\GuildNewsSeeder;
+use Database\Seeders\NewsSeeder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,7 +17,7 @@ class GuildNewsController extends Controller
      */
     public function index(Request $request): View|JsonResponse
     {
-        $news = GuildNews::orderBy('order', 'asc')->orderBy('created_at', 'desc')->get();
+        $news = News::orderBy('order', 'asc')->orderBy('created_at', 'desc')->get();
 
         $presets = [
             [
@@ -35,6 +35,51 @@ class GuildNewsController extends Controller
                 'path' => 'static/valiant-shade/assets/img/news/guild_shadow_realm.jpg',
                 'url' => asset('static/valiant-shade/assets/img/news/guild_shadow_realm.jpg'),
             ],
+            [
+                'name' => 'Lonca Meclisi & Büyük Salon',
+                'path' => 'static/valiant-shade/assets/img/news/guild_hall_council.jpg',
+                'url' => asset('static/valiant-shade/assets/img/news/guild_hall_council.jpg'),
+            ],
+            [
+                'name' => 'Kadim Kütüphane & Büyü Kulesi',
+                'path' => 'static/valiant-shade/assets/img/news/guild_arcane_academy.jpg',
+                'url' => asset('static/valiant-shade/assets/img/news/guild_arcane_academy.jpg'),
+            ],
+            [
+                'name' => 'Büyük Arena & Lonca Turnuvası',
+                'path' => 'static/valiant-shade/assets/img/news/guild_arena_tournament.jpg',
+                'url' => asset('static/valiant-shade/assets/img/news/guild_arena_tournament.jpg'),
+            ],
+            [
+                'name' => 'Kutsal Ocak & Demirci Atölyesi',
+                'path' => 'static/valiant-shade/assets/img/news/guild_forge_armory.jpg',
+                'url' => asset('static/valiant-shade/assets/img/news/guild_forge_armory.jpg'),
+            ],
+            [
+                'name' => 'Kadim Dehlizler & Yeraltı Zindanı',
+                'path' => 'static/valiant-shade/assets/img/news/guild_dungeon_crypt.jpg',
+                'url' => asset('static/valiant-shade/assets/img/news/guild_dungeon_crypt.jpg'),
+            ],
+            [
+                'name' => 'Mistik Koruluk & Fısıldayan Orman',
+                'path' => 'static/valiant-shade/assets/img/news/guild_mystic_forest.jpg',
+                'url' => asset('static/valiant-shade/assets/img/news/guild_mystic_forest.jpg'),
+            ],
+            [
+                'name' => 'Fırtına Limanı & Deniz Seferi',
+                'path' => 'static/valiant-shade/assets/img/news/guild_port_expedition.jpg',
+                'url' => asset('static/valiant-shade/assets/img/news/guild_port_expedition.jpg'),
+            ],
+            [
+                'name' => 'Kutsal Mabet & Işık Sunağı',
+                'path' => 'static/valiant-shade/assets/img/news/guild_celestial_sanctuary.jpg',
+                'url' => asset('static/valiant-shade/assets/img/news/guild_celestial_sanctuary.jpg'),
+            ],
+            [
+                'name' => 'Cenaze & Ölmüş Maceracıları Uğurlama',
+                'path' => 'static/valiant-shade/assets/img/news/guild_heroes_funeral.jpg',
+                'url' => asset('static/valiant-shade/assets/img/news/guild_heroes_funeral.jpg'),
+            ],
         ];
 
         $iconOptions = [
@@ -48,6 +93,9 @@ class GuildNewsController extends Controller
             'icon-base ti tabler-speakerphone' => 'Hoparlör / Duyuru',
             'icon-base ti tabler-scroll' => 'Parşömen / Ferman',
             'icon-base ti tabler-users-group' => 'Takım / Grup',
+            'icon-base ti tabler-candle' => 'Mum / Anma',
+            'icon-base ti tabler-coffin' => 'Tabut / Cenaze',
+            'icon-base ti tabler-cross' => 'Anıt / Mezar',
             'icon-base ti tabler-clock' => 'Saat / Zaman',
             'icon-base ti tabler-calendar' => 'Takvim / Dönem',
             'icon-base ti tabler-map-pin' => 'Harita / Konum',
@@ -125,7 +173,7 @@ class GuildNewsController extends Controller
         // Process stats
         $stats = $this->sanitizeStats($request->input('stats', []));
 
-        $news = GuildNews::create([
+        $news = News::create([
             'title' => $validated['title'],
             'category' => $validated['category'],
             'badge_color' => $validated['badge_color'],
@@ -141,7 +189,7 @@ class GuildNewsController extends Controller
             'button_color' => $validated['button_color'] ?? 'primary',
             'button_icon' => !empty($validated['button_icon']) ? $validated['button_icon'] : 'icon-base ti tabler-shield-check',
             'location_badge' => $validated['location_badge'] ?? null,
-            'order' => $validated['order'] ?? (GuildNews::max('order') + 1),
+            'order' => $validated['order'] ?? (News::max('order') + 1),
             'is_active' => $request->has('is_active') ? (bool) $request->is_active : true,
         ]);
 
@@ -161,7 +209,7 @@ class GuildNewsController extends Controller
      */
     public function update(Request $request, int $id): RedirectResponse|JsonResponse
     {
-        $news = GuildNews::findOrFail($id);
+        $news = News::findOrFail($id);
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -241,7 +289,7 @@ class GuildNewsController extends Controller
      */
     public function destroy(int $id, Request $request): RedirectResponse|JsonResponse
     {
-        $news = GuildNews::findOrFail($id);
+        $news = News::findOrFail($id);
         $news->delete();
 
         if ($request->wantsJson() || $request->ajax()) {
@@ -259,7 +307,7 @@ class GuildNewsController extends Controller
      */
     public function toggleActive(int $id, Request $request): RedirectResponse|JsonResponse
     {
-        $news = GuildNews::findOrFail($id);
+        $news = News::findOrFail($id);
         $news->is_active = !$news->is_active;
         $news->save();
 
@@ -279,8 +327,8 @@ class GuildNewsController extends Controller
      */
     public function resetDefaults(Request $request): RedirectResponse|JsonResponse
     {
-        GuildNews::truncate();
-        $seeder = new GuildNewsSeeder();
+        News::truncate();
+        $seeder = new NewsSeeder();
         $seeder->run();
 
         if ($request->wantsJson() || $request->ajax()) {

@@ -386,6 +386,9 @@
                     <option value="icon-base ti tabler-speakerphone">Duyuru</option>
                     <option value="icon-base ti tabler-scroll">Parşömen</option>
                     <option value="icon-base ti tabler-users-group">Grup / Takım</option>
+                    <option value="icon-base ti tabler-candle">Mum / Anma</option>
+                    <option value="icon-base ti tabler-coffin">Tabut / Cenaze</option>
+                    <option value="icon-base ti tabler-cross">Anıt / Mezar</option>
                   </select>
                 </div>
               </div>
@@ -414,13 +417,16 @@
               </h6>
 
               <div class="mb-3">
-                <label class="form-label fw-bold d-block">{{ __('Hazır Fantastik Görsellerden Seçin') }}</label>
-                <div class="row g-2" id="presetsContainer">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                  <label class="form-label fw-bold mb-0">{{ __('Hazır Fantastik Görsellerden Seçin') }}</label>
+                  <span class="badge bg-label-primary rounded-pill">{{ count($presets) }} {{ __('Seçenek') }}</span>
+                </div>
+                <div class="row g-2 border rounded p-2 bg-label-secondary bg-opacity-25" id="presetsContainer" style="max-height: 310px; overflow-y: auto;">
                   @foreach($presets as $idx => $preset)
-                  <div class="col-4">
-                    <div class="preset-card {{ $idx === 0 ? 'active' : '' }}" data-path="{{ $preset['path'] }}" data-url="{{ $preset['url'] }}">
+                  <div class="col-md-3 col-sm-4 col-6">
+                    <div class="preset-card h-100 {{ $idx === 0 ? 'active' : '' }}" data-path="{{ $preset['path'] }}" data-url="{{ $preset['url'] }}" title="{{ $preset['name'] }}">
                       <div class="preset-thumb" style="background-image: url('{{ $preset['url'] }}');"></div>
-                      <div class="p-1 text-center bg-dark text-white text-truncate" style="font-size: 0.7rem;">
+                      <div class="p-1 text-center bg-dark text-white text-truncate" style="font-size: 0.68rem;">
                         {{ $preset['name'] }}
                       </div>
                     </div>

@@ -69,6 +69,14 @@ Route::post('/pages/guild-news/{id}', [GuildNewsController::class, 'update'])->n
 Route::delete('/pages/guild-news/{id}', [GuildNewsController::class, 'destroy'])->name('valiant-shade.pages-guild-news.destroy');
 Route::post('/pages/guild-news/{id}/toggle', [GuildNewsController::class, 'toggleActive'])->name('valiant-shade.pages-guild-news.toggle');
 
+// News Aliases
+Route::get('/pages/news', [GuildNewsController::class, 'index'])->name('valiant-shade.pages-news');
+Route::post('/pages/news', [GuildNewsController::class, 'store'])->name('valiant-shade.pages-news.store');
+Route::post('/pages/news/reset-defaults', [GuildNewsController::class, 'resetDefaults'])->name('valiant-shade.pages-news.reset-defaults');
+Route::post('/pages/news/{id}', [GuildNewsController::class, 'update'])->name('valiant-shade.pages-news.update');
+Route::delete('/pages/news/{id}', [GuildNewsController::class, 'destroy'])->name('valiant-shade.pages-news.destroy');
+Route::post('/pages/news/{id}/toggle', [GuildNewsController::class, 'toggleActive'])->name('valiant-shade.pages-news.toggle');
+
 // Player XP Tracker Routes
 Route::get('/pages/xp-tracker', [PlayerXpController::class, 'index'])->name('valiant-shade.pages-xp-tracker');
 Route::post('/pages/xp-tracker', [PlayerXpController::class, 'store'])->name('valiant-shade.pages-xp-tracker.store');

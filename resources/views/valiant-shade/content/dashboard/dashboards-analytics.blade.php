@@ -22,13 +22,13 @@ $configData = \App\ValiantShade\Helpers\Helpers::appClasses();
     position: relative;
     box-shadow: var(--bs-box-shadow);
     background-color: #0f172a;
-    min-height: 330px;
+    min-height: 440px;
     height: 100%;
   }
   .guild-news-swiper .swiper-slide {
     white-space: normal !important;
     position: relative;
-    min-height: 330px;
+    min-height: 440px;
     height: 100%;
     padding: 0 !important;
     overflow: hidden;
@@ -39,35 +39,35 @@ $configData = \App\ValiantShade\Helpers\Helpers::appClasses();
     background-size: cover;
     background-position: center;
     transform: scale(1);
-    transition: transform 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition: transform 1.2s cubic-bezier(0.25, 0.8, 0.25, 1);
     z-index: 1;
   }
   .guild-news-swiper:hover .guild-news-slide-bg {
-    transform: scale(1.04);
+    transform: scale(1.05);
   }
   .guild-news-slide-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.82) 50%, rgba(15, 23, 42, 0.45) 100%),
-                linear-gradient(to top, rgba(15, 23, 42, 0.96) 0%, rgba(15, 23, 42, 0.3) 55%, transparent 100%);
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.84) 48%, rgba(15, 23, 42, 0.5) 100%),
+                linear-gradient(to top, rgba(15, 23, 42, 0.97) 0%, rgba(15, 23, 42, 0.35) 60%, transparent 100%);
     z-index: 2;
   }
   .guild-news-slide-content {
     position: relative;
     z-index: 3;
-    padding: 1.5rem 1.75rem;
+    padding: 2.25rem 2.25rem;
     height: 100%;
-    min-height: 330px;
+    min-height: 440px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
   }
   .guild-stat-card {
-    background: rgba(15, 23, 42, 0.65);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.14);
     backdrop-filter: blur(8px);
-    border-radius: 8px;
-    padding: 0.55rem 0.75rem;
+    border-radius: 10px;
+    padding: 0.7rem 0.9rem;
     transition: all 0.25s ease;
   }
   .guild-stat-card:hover {
@@ -155,20 +155,20 @@ $configData = \App\ValiantShade\Helpers\Helpers::appClasses();
 
 @section('content')
 <div class="row g-6">
-  <!-- Guild News & Chronicles Slider -->
-  <div class="col-xl-6 col">
+  <!-- Guild News & Chronicles Slider (Enlarged) -->
+  <div class="col-xxl-7 col-xl-7 col-12">
     <div class="swiper-container swiper-container-horizontal swiper guild-news-swiper"
       id="swiper-with-pagination-cards">
 
       <div class="swiper-wrapper">
         @forelse($guildNews as $newsItem)
-        <div class="swiper-slide">
+        <div class="swiper-slide" data-swiper-autoplay="10000">
           <div class="guild-news-slide-bg" style="background-image: url('{{ $newsItem->image_asset }}');"></div>
           <div class="guild-news-slide-overlay"></div>
           <div class="guild-news-slide-content">
             <div>
-              <div class="d-flex align-items-center gap-2 mb-2 flex-wrap" style="padding-right: 48px;">
-                <span class="badge bg-{{ $newsItem->badge_color ?? 'primary' }} text-white fw-bold px-2 py-1">
+              <div class="d-flex align-items-center gap-2 mb-3 flex-wrap" style="padding-right: 65px;">
+                <span class="badge bg-{{ $newsItem->badge_color ?? 'primary' }} text-white fw-bold px-3 py-2 fs-6">
                   <i class="{{ $newsItem->category_icon ?: 'icon-base ti tabler-trophy' }} me-1"></i> {{ __($newsItem->category) }}
                 </span>
                 @if($newsItem->tag)
@@ -178,42 +178,42 @@ $configData = \App\ValiantShade\Helpers\Helpers::appClasses();
                 </span>
                 @endif
                 @if($newsItem->date_text)
-                <span class="text-white-50 small ms-auto d-none d-md-inline-block">
+                <span class="text-white-50 ms-auto d-none d-md-inline-block" style="font-size: 0.85rem;">
                   <i class="icon-base ti tabler-clock me-1"></i> {{ __($newsItem->date_text) }}
                 </span>
                 @endif
               </div>
-              <h4 class="text-white fw-bold mb-2" style="text-shadow: 0 2px 6px rgba(0,0,0,0.6); line-height: 1.3;">
+              <h3 class="text-white fw-bold mb-2 fs-3" style="text-shadow: 0 2px 8px rgba(0,0,0,0.7); line-height: 1.35;">
                 {{ $newsItem->title }}
-              </h4>
-              <p class="text-white-50 mb-3 small" style="max-width: 92%; line-height: 1.5;">
+              </h3>
+              <p class="text-white-50 mb-4 fs-6" style="max-width: 90%; line-height: 1.65;">
                 {{ $newsItem->description }}
               </p>
             </div>
 
             <div>
               @if(!empty($newsItem->stats) && is_array($newsItem->stats))
-              <div class="row g-2 mb-3">
+              <div class="row g-3 mb-4">
                 @foreach($newsItem->stats as $stat)
                 <div class="col-sm-3 col-6">
                   <div class="guild-stat-card">
-                    <div class="{{ $stat['color'] ?? 'text-warning' }} fw-bold fs-6">{{ $stat['value'] ?? '' }}</div>
-                    <div class="text-white-50" style="font-size: 0.72rem;">{{ __($stat['label'] ?? '') }}</div>
+                    <div class="{{ $stat['color'] ?? 'text-warning' }} fw-bold fs-5">{{ $stat['value'] ?? '' }}</div>
+                    <div class="text-white-50" style="font-size: 0.78rem;">{{ __($stat['label'] ?? '') }}</div>
                   </div>
                 </div>
                 @endforeach
               </div>
               @endif
 
-              <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+              <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-1">
                 @if(!empty($newsItem->button_text))
-                <a href="{{ $newsItem->button_url ? url($newsItem->button_url) : 'javascript:void(0);' }}" class="btn btn-sm btn-{{ $newsItem->button_color ?? 'primary' }} d-inline-flex align-items-center gap-1 shadow-sm">
-                  <i class="{{ $newsItem->button_icon ?: 'icon-base ti tabler-shield-check' }}"></i>
+                <a href="{{ $newsItem->button_url ? url($newsItem->button_url) : 'javascript:void(0);' }}" class="btn btn-{{ $newsItem->button_color ?? 'primary' }} d-inline-flex align-items-center gap-1 shadow-sm px-3 py-2 fw-medium">
+                  <i class="{{ $newsItem->button_icon ?: 'icon-base ti tabler-shield-check' }} me-1"></i>
                   <span>{{ __($newsItem->button_text) }}</span>
                 </a>
                 @endif
                 @if(!empty($newsItem->location_badge))
-                <span class="text-white-50 small">
+                <span class="text-white-50" style="font-size: 0.85rem;">
                   <i class="icon-base ti tabler-map-pin me-1 text-{{ $newsItem->badge_color ?? 'warning' }}"></i> {{ __($newsItem->location_badge) }}
                 </span>
                 @endif
@@ -223,16 +223,16 @@ $configData = \App\ValiantShade\Helpers\Helpers::appClasses();
         </div>
         @empty
         <!-- Fallback if no news items -->
-        <div class="swiper-slide">
+        <div class="swiper-slide" data-swiper-autoplay="10000">
           <div class="guild-news-slide-bg" style="background-image: url('{{ asset('static/valiant-shade/assets/img/news/guild_dragon_quest.jpg') }}');"></div>
           <div class="guild-news-slide-overlay"></div>
           <div class="guild-news-slide-content">
             <div>
-              <div class="d-flex align-items-center gap-2 mb-2 flex-wrap" style="padding-right: 75px;">
-                <span class="badge bg-warning text-dark fw-bold px-2 py-1"><i class="icon-base ti tabler-trophy me-1"></i> {{ __('Sefer Zaferi') }}</span>
+              <div class="d-flex align-items-center gap-2 mb-3 flex-wrap" style="padding-right: 75px;">
+                <span class="badge bg-warning text-dark fw-bold px-3 py-2 fs-6"><i class="icon-base ti tabler-trophy me-1"></i> {{ __('Sefer Zaferi') }}</span>
               </div>
-              <h4 class="text-white fw-bold mb-2">{{ __('Ejderha Zirvesi ve Antik Harabeler Fethi Tamamlandı!') }}</h4>
-              <p class="text-white-50 mb-3 small">{{ __("Kıdemli keşif birliğimiz Kadim Ejderha Ignis'i dize getirdi.") }}</p>
+              <h3 class="text-white fw-bold mb-2 fs-3">{{ __('Ejderha Zirvesi ve Antik Harabeler Fethi Tamamlandı!') }}</h3>
+              <p class="text-white-50 mb-4 fs-6">{{ __("Kıdemli keşif birliğimiz Kadim Ejderha Ignis'i dize getirdi.") }}</p>
             </div>
           </div>
         </div>
@@ -245,32 +245,35 @@ $configData = \App\ValiantShade\Helpers\Helpers::appClasses();
   </div>
   <!--/ Guild News & Chronicles Slider -->
 
-  <!-- Average Daily Sales -->
-  <div class="col-xl-3 col-sm-6">
-    <div class="card h-100">
-      <div class="card-header pb-0">
-        <h5 class="mb-3 card-title">Average Daily Sales</h5>
-        <p class="mb-0 text-body">Total Sales This Month</p>
-        <h4 class="mb-0">$28,450</h4>
-      </div>
-      <div class="card-body px-0">
-        <div id="averageDailySales"></div>
-      </div>
-    </div>
-  </div>
-  <!--/ Average Daily Sales -->
-
-  <!-- Sales Overview -->
-  <div class="col-xl-3 col-sm-6">
-    <div class="card h-100">
-      <div class="card-header">
-        <div class="d-flex justify-content-between">
-          <p class="mb-0 text-body">Sales Overview</p>
-          <p class="card-text fw-medium text-success">+18.2%</p>
+  <!-- Side Metrics (2 Cards in 5 Cols) -->
+  <div class="col-xxl-5 col-xl-5 col-12">
+    <div class="row g-6 h-100">
+      <!-- Average Daily Sales -->
+      <div class="col-sm-6 col-12">
+        <div class="card h-100">
+          <div class="card-header pb-0">
+            <h5 class="mb-3 card-title">Average Daily Sales</h5>
+            <p class="mb-0 text-body">Total Sales This Month</p>
+            <h4 class="mb-0">$28,450</h4>
+          </div>
+          <div class="card-body px-0">
+            <div id="averageDailySales"></div>
+          </div>
         </div>
-        <h4 class="card-title mb-1">$42.5k</h4>
       </div>
-      <div class="card-body">
+      <!--/ Average Daily Sales -->
+
+      <!-- Sales Overview -->
+      <div class="col-sm-6 col-12">
+        <div class="card h-100">
+          <div class="card-header">
+            <div class="d-flex justify-content-between">
+              <p class="mb-0 text-body">Sales Overview</p>
+              <p class="card-text fw-medium text-success">+18.2%</p>
+            </div>
+            <h4 class="card-title mb-1">$42.5k</h4>
+          </div>
+          <div class="card-body">
         <div class="row">
           <div class="col-4">
             <div class="d-flex gap-2 align-items-center mb-2">
@@ -308,6 +311,9 @@ $configData = \App\ValiantShade\Helpers\Helpers::appClasses();
       </div>
     </div>
   </div>
+    </div>
+  </div>
+  <!--/ Side Metrics -->
   <!--/ Sales Overview -->
 
   <!-- Earning Reports -->

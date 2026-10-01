@@ -57,7 +57,7 @@ class GuildNewsTest extends TestCase
         $response = $this->actingAs($this->user)->post('/valiant-shade/pages/guild-news', $payload);
         $response->assertRedirect('/valiant-shade/pages/guild-news');
 
-        $this->assertDatabaseHas('guild_news', [
+        $this->assertDatabaseHas('news', [
             'title' => 'Test Sefer Zaferi Bülteni',
             'category' => 'Özel Zafer',
         ]);
@@ -90,7 +90,7 @@ class GuildNewsTest extends TestCase
         $response = $this->actingAs($this->user)->post("/valiant-shade/pages/guild-news/{$news->id}", $updatePayload);
         $response->assertRedirect('/valiant-shade/pages/guild-news');
 
-        $this->assertDatabaseHas('guild_news', [
+        $this->assertDatabaseHas('news', [
             'id' => $news->id,
             'title' => 'Güncellenmiş Yeni Başlık',
             'category' => 'Güncel Duyuru',
@@ -112,7 +112,7 @@ class GuildNewsTest extends TestCase
         $response->assertStatus(200);
         $response->assertJson(['success' => true, 'is_active' => false]);
 
-        $this->assertDatabaseHas('guild_news', [
+        $this->assertDatabaseHas('news', [
             'id' => $news->id,
             'is_active' => false,
         ]);
@@ -132,7 +132,7 @@ class GuildNewsTest extends TestCase
         $response->assertStatus(200);
         $response->assertJson(['success' => true]);
 
-        $this->assertDatabaseMissing('guild_news', [
+        $this->assertDatabaseMissing('news', [
             'id' => $news->id,
         ]);
     }
