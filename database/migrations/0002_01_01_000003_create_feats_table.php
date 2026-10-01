@@ -17,6 +17,7 @@ return new class extends Migration
                 $table->text('benefit');
                 $table->text('normal_effect')->nullable();
                 $table->text('special')->nullable();
+                $table->text('external_url')->nullable();
                 $table->timestamps();
             });
         }

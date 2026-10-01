@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->nullable()->unique();
+
             $table->string('username')->unique();
             $table->string('email')->unique();
             $table->string('password')->nullable();
@@ -19,11 +20,10 @@ return new class extends Migration
             $table->string('display_name')->nullable();
             $table->enum('role', ['ADMIN', 'GM', 'PLAYER'])->default('PLAYER');
             $table->tinyInteger('status')->default(2);
-            $table->unsignedBigInteger('active_main_character_id')->nullable()->index();
-            $table->unsignedBigInteger('active_clerk_character_id')->nullable()->index();
-            $table->string('current_character')->nullable();
-            $table->timestamp('email_verified_at')->nullable();
+
             $table->rememberToken();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->softDeletes();
             $table->timestamps();
         });
 

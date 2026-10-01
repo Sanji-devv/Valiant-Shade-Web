@@ -8,23 +8,22 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('users_xp', function (Blueprint $table) {
+        Schema::create('user_xp', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-            $table->unsignedBigInteger('character_id')->nullable()->index();
-            $table->string('character_name')->nullable()->index();
-            $table->string('player_name')->nullable()->index();
 
             $table->decimal('total_xp', 12, 2)->default(0.00);
             $table->decimal('ex_char_xp', 12, 2)->default(0.00);
             $table->decimal('ex_bailiff_xp', 12, 2)->default(0.00);
             $table->decimal('wiki_xp', 12, 2)->default(0.00);
+
+            $table->softDeletes();
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('users_xp');
+        Schema::dropIfExists('user_xp');
     }
 };
