@@ -18,8 +18,8 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('password')->nullable();
             $table->string('password_hash')->nullable();
-            $table->string('real_name')->nullable();
             $table->string('name')->nullable();
+            $table->string('display_name')->nullable();
             $table->enum('role', ['ADMIN', 'GM', 'PLAYER'])->default('PLAYER');
             $table->tinyInteger('status')->default(2);
             $table->unsignedBigInteger('active_main_character_id')->nullable()->index();
