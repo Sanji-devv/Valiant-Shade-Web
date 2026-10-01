@@ -22,8 +22,8 @@ class UserProfile extends Controller
     $pfRaces = $loadEnum('pathfinder_races.php');
     $pfClasses = $loadEnum('pathfinder_classes.php');
     $bab = $loadEnum('bab.php');
-    $saves = $loadEnum('classes_save.php');
-    $progressions = $loadEnum('class_progressions.php');
+    $progressions = $pfClasses;
+    $saves = array_map(fn($c) => $c['saves'] ?? [], $progressions);
 
     $vault = \App\Models\GuildVault::firstOrCreate(
       ['name' => 'Ana Lonca Kasası'],
@@ -198,11 +198,10 @@ class UserProfile extends Controller
 
     // BAB and Saves at level 1
     $babConfig = $loadEnum('bab.php');
-    $savesConfig = $loadEnum('classes_save.php');
-    $progressionsConfig = $loadEnum('class_progressions.php');
+    $progressionsConfig = $pfClasses;
     $babTableKey = $clsInfo['bab_table'] ?? 'bab_section_1';
     $bab = $babConfig[$babTableKey][1] ?? '+1';
-    $classSaves = $savesConfig[$classKey][1] ?? ['fort' => '+2', 'ref' => '+0', 'will' => '+0'];
+    $classSaves = $progressionsConfig[$classKey]['saves'][1] ?? ['fort' => '+2', 'ref' => '+0', 'will' => '+0'];
     $castingStat = $progressionsConfig[$classKey]['casting_stat'] ?? 'none';
 
     $initialSpecials = [];
@@ -674,11 +673,10 @@ class UserProfile extends Controller
 
     // BAB and Saves at $lvl
     $babConfig = $loadEnum('bab.php');
-    $savesConfig = $loadEnum('classes_save.php');
-    $progressionsConfig = $loadEnum('class_progressions.php');
+    $progressionsConfig = $pfClasses;
     $babTableKey = $clsInfo['bab_table'] ?? 'bab_section_1';
     $bab = $babConfig[$babTableKey][$lvl] ?? '+1';
-    $classSaves = $savesConfig[$classKey][$lvl] ?? ['fort' => '+2', 'ref' => '+0', 'will' => '+0'];
+    $classSaves = $progressionsConfig[$classKey]['saves'][$lvl] ?? ['fort' => '+2', 'ref' => '+0', 'will' => '+0'];
     $castingStat = $progressionsConfig[$classKey]['casting_stat'] ?? 'none';
 
     // Format traits (3 slots: Trait 1 / Üye, Trait 2 / Kıdemli, Trait 3 / Uzman)

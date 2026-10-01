@@ -16,7 +16,7 @@ use App\ValiantShade\Http\Controllers\authentications\LoginBasic;
 use App\ValiantShade\Http\Controllers\authentications\RegisterBasic;
 use App\ValiantShade\Http\Controllers\authentications\LogoutController;
 use App\ValiantShade\Http\Controllers\apps\UserList;
-use App\ValiantShade\Http\Controllers\pages\GuildNewsController;
+use App\ValiantShade\Http\Controllers\pages\NewsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -61,21 +61,15 @@ Route::post('/pages/inventory/reset-excel', [Inventory::class, 'resetExcel'])->n
 Route::post('/pages/inventory/reset-defaults', [Inventory::class, 'resetExcel'])->name('valiant-shade.pages-inventory.reset-defaults');
 Route::post('/pages/inventory/vault', [Inventory::class, 'updateVault'])->name('valiant-shade.pages-inventory.vault');
 
-// Guild News & Announcements Editor Routes
-Route::get('/pages/guild-news', [GuildNewsController::class, 'index'])->name('valiant-shade.pages-guild-news');
-Route::post('/pages/guild-news', [GuildNewsController::class, 'store'])->name('valiant-shade.pages-guild-news.store');
-Route::post('/pages/guild-news/reset-defaults', [GuildNewsController::class, 'resetDefaults'])->name('valiant-shade.pages-guild-news.reset-defaults');
-Route::post('/pages/guild-news/{id}', [GuildNewsController::class, 'update'])->name('valiant-shade.pages-guild-news.update');
-Route::delete('/pages/guild-news/{id}', [GuildNewsController::class, 'destroy'])->name('valiant-shade.pages-guild-news.destroy');
-Route::post('/pages/guild-news/{id}/toggle', [GuildNewsController::class, 'toggleActive'])->name('valiant-shade.pages-guild-news.toggle');
-
-// News Aliases
-Route::get('/pages/news', [GuildNewsController::class, 'index'])->name('valiant-shade.pages-news');
-Route::post('/pages/news', [GuildNewsController::class, 'store'])->name('valiant-shade.pages-news.store');
-Route::post('/pages/news/reset-defaults', [GuildNewsController::class, 'resetDefaults'])->name('valiant-shade.pages-news.reset-defaults');
-Route::post('/pages/news/{id}', [GuildNewsController::class, 'update'])->name('valiant-shade.pages-news.update');
-Route::delete('/pages/news/{id}', [GuildNewsController::class, 'destroy'])->name('valiant-shade.pages-news.destroy');
-Route::post('/pages/news/{id}/toggle', [GuildNewsController::class, 'toggleActive'])->name('valiant-shade.pages-news.toggle');
+// News Routes
+Route::get('/pages/news', [NewsController::class, 'index'])->name('valiant-shade.pages-news');
+Route::get('/pages/news/{id}', [NewsController::class, 'show'])->name('valiant-shade.pages-news.show');
+Route::post('/pages/news', [NewsController::class, 'store'])->name('valiant-shade.pages-news.store');
+Route::post('/pages/news/reset-defaults', [NewsController::class, 'resetDefaults'])->name('valiant-shade.pages-news.reset-defaults');
+Route::post('/pages/news/{id}', [NewsController::class, 'update'])->name('valiant-shade.pages-news.update');
+Route::delete('/pages/news/{id}', [NewsController::class, 'destroy'])->name('valiant-shade.pages-news.destroy');
+Route::post('/pages/news/{id}/toggle', [NewsController::class, 'toggleActive'])->name('valiant-shade.pages-news.toggle');
+Route::redirect('/pages/guild-news', '/valiant-shade/pages/news');
 
 // Player XP Tracker Routes
 Route::get('/pages/xp-tracker', [PlayerXpController::class, 'index'])->name('valiant-shade.pages-xp-tracker');

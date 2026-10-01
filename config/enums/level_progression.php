@@ -10,7 +10,6 @@ return [
     | Oyuncuların tecrübe puanları (XP) ve seviye atlamaları bu tablo üzerinden takip edilir.
     |
     */
-
     'table' => [
         ['level' => 0,  'xp' => 0,       'failsafe' => 0],
         ['level' => 1,  'xp' => 0,       'failsafe' => 1],

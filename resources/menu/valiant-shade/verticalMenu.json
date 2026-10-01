@@ -60,10 +60,10 @@
             "url": "/valiant-shade/pages/inventory"
         },
         {
-            "name": "Guild News",
+            "name": "News",
             "icon": "menu-icon icon-base ti tabler-news",
-            "slug": "pages-guild-news",
-            "url": "/valiant-shade/pages/guild-news"
+            "slug": "pages-news",
+            "url": "/valiant-shade/pages/news"
         },
         {
             "name": "Player XP Tracker",

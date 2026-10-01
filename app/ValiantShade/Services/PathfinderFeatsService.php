@@ -329,7 +329,6 @@ class PathfinderFeatsService
         };
 
         $babTables = $loadEnum('bab.php');
-        $saveTables = $loadEnum('classes_save.php');
         $classesInfo = $loadEnum('pathfinder_classes.php');
 
         $classInfo = $classesInfo[$classSlug] ?? null;

@@ -1,12 +1,5 @@
 <?php
 
-/**
- * Pathfinder 1st Edition Races Enum & Data Collection
- * 
- * Auto-consolidated from individual race dataset.
- * Contains 64 official Pathfinder 1E races with ability modifiers, traits, and lore.
- */
-
 return [
     'human' => [
         'key' => 'human',

@@ -26,9 +26,9 @@ class CharacterSheet extends Controller
     $pfRaces = $loadEnum('pathfinder_races.php');
     $pfClasses = $loadEnum('pathfinder_classes.php');
     $bab = $loadEnum('bab.php');
-    $saves = $loadEnum('classes_save.php');
-    $progressions = $loadEnum('class_progressions.php');
-    $classSkills = $loadEnum('pathfinder_class_skills.php');
+    $progressions = $pfClasses;
+    $saves = array_map(fn($c) => $c['saves'] ?? [], $progressions);
+    $classSkills = array_map(fn($c) => $c['skills'] ?? [], $progressions);
     $armors = $loadEnum('pathfinder_armors.php');
     if (empty($armors)) {
       $armorsFile = config_path('enums/pathfinder_armors.json');

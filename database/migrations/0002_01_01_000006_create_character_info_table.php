@@ -12,8 +12,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('character_id')->unique()->constrained('characters')->cascadeOnDelete();
 
-            $table->string('class_and_level')->nullable();
-            $table->string('race')->nullable();
+            $table->string('class_and_level');
+            $table->string('race');
             $table->enum('alignment', ['LG', 'NG', 'CG', 'LN', 'TN', 'CN', 'LE', 'NE', 'CE']);
             $table->string('deity')->nullable();
             $table->string('size')->default('MEDIUM');

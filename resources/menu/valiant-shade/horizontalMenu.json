@@ -38,9 +38,9 @@
                     "slug": "pages-inventory"
                 },
                 {
-                    "url": "/valiant-shade/pages/guild-news",
-                    "name": "Guild News",
-                    "slug": "pages-guild-news"
+                    "url": "/valiant-shade/pages/news",
+                    "name": "News",
+                    "slug": "pages-news"
                 },
                 {
                     "url": "/valiant-shade/pages/xp-tracker",

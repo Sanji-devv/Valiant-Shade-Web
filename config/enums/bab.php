@@ -9,7 +9,6 @@ return [
     | - bab_section_2: Cleric, Rogue, Monk, Bard, Druid vb.
     | - bab_section_3: Wizard, Sorcerer vb.
     */
-
     'bab_section_1' => [
         1  => '+1',
         2  => '+2',

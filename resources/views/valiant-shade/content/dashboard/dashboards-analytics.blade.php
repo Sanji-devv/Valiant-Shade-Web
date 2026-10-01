@@ -161,7 +161,7 @@ $configData = \App\ValiantShade\Helpers\Helpers::appClasses();
       id="swiper-with-pagination-cards">
 
       <div class="swiper-wrapper">
-        @forelse($guildNews as $newsItem)
+        @forelse($news as $newsItem)
         <div class="swiper-slide" data-swiper-autoplay="10000">
           <div class="guild-news-slide-bg" style="background-image: url('{{ $newsItem->image_asset }}');"></div>
           <div class="guild-news-slide-overlay"></div>
