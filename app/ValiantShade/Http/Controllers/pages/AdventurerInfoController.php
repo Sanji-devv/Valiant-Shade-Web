@@ -21,7 +21,7 @@ class AdventurerInfoController extends Controller
      */
     protected function checkAdmin(Request $request): ?JsonResponse
     {
-        $isAdmin = auth()->check() && (auth()->user()->role === 'Admin' || (method_exists(auth()->user(), 'isAdmin') && auth()->user()->isAdmin()));
+        $isAdmin = auth()->user()?->hasPermission('guild.manage') ?? false;
         if (!$isAdmin) {
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
@@ -54,7 +54,7 @@ class AdventurerInfoController extends Controller
         $allowances = $this->service->getAllowances($filters);
         $inventorySummary = $this->service->getValuableInventorySummary();
         $ranks = PlayerXp::RANKS;
-        $isAdmin = auth()->check() && (auth()->user()->role === 'Admin' || (method_exists(auth()->user(), 'isAdmin') && auth()->user()->isAdmin()));
+        $isAdmin = auth()->user()?->hasPermission('guild.manage') ?? false;
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([

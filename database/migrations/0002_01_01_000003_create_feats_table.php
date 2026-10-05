@@ -12,12 +12,14 @@ return new class extends Migration
             Schema::create('feats', function (Blueprint $table) {
                 $table->id();
                 $table->string('name')->unique()->index();
-                $table->string('category')->default('GENERAL'); // COMBAT, GENERAL, METAMAGIC, ITEM_CREATION, RACIAL
+                $table->string('category')->nullable(); // COMBAT, GENERAL, METAMAGIC, ITEM_CREATION, RACIAL
                 $table->text('prerequisites')->nullable();
                 $table->text('benefit');
                 $table->text('normal_effect')->nullable();
                 $table->text('special')->nullable();
                 $table->text('external_url')->nullable();
+
+                $table->softDeletes();
                 $table->timestamps();
             });
         }

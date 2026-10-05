@@ -13,6 +13,8 @@ return new class extends Migration
             $table->string('name')->unique();
             $table->decimal('base_floor_xp', 12, 2)->default(0.00);
             $table->integer('hierarchy_order')->default(1);
+
+            $table->softDeletes();
             $table->timestamps();
         });
     }

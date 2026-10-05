@@ -27,6 +27,7 @@
 @section('page-script')
 <script>
   window.currentUserIsAdmin = {{ !empty($isAdmin) ? 'true' : 'false' }};
+  window.currentUserCanManageRoles = {{ !empty($canManageRoles) ? 'true' : 'false' }};
 </script>
 @vite('resources/valiant-shade/assets/js/app-user-list.js', 'static/valiant-shade/build')
 @endsection
@@ -130,7 +131,14 @@
 <!-- User List Table and Filters -->
 <div class="card">
   <div class="card-header border-bottom">
-    <h5 class="card-title mb-0">User Filters</h5>
+    <div class="d-flex align-items-center justify-content-between gap-3">
+      <h5 class="card-title mb-0">User Filters</h5>
+      @if ($canManageRoles)
+        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#roleManagementModal">
+          <i class="icon-base ti tabler-shield-cog me-1"></i>Manage Roles
+        </button>
+      @endif
+    </div>
     <div class="d-flex justify-content-between align-items-center row pt-4 gap-4 gap-md-0">
       <div class="col-md-6 user_role"></div>
       <div class="col-md-6 user_status"></div>
@@ -182,15 +190,15 @@
           <div class="form-text text-muted">User's active character in Valiant Shade</div>
         </div>
 
-        <!-- Role (3 Roles: Admin, Bailiff, User) -->
+        <!-- Role -->
         <div class="mb-6">
           <label class="form-label fw-semibold" for="user-role">User Role <span class="text-danger">*</span></label>
           <select id="user-role" name="userRole" class="form-select">
-            <option value="User" selected>User (Standard Member)</option>
-            <option value="Bailiff">Bailiff (Guard / Moderator)</option>
-            <option value="Admin">Admin (Administrator)</option>
+            @foreach ($roles as $role)
+              <option value="{{ $role->slug }}" @selected($role->slug === 'PLAYER')>{{ $role->name }}</option>
+            @endforeach
           </select>
-          <div class="form-text text-muted">Select one of the 3 valid system roles.</div>
+          <div class="form-text text-muted">Choose the role assigned to this user.</div>
         </div>
 
         <div class="pt-2">
@@ -204,5 +212,41 @@
       </form>
     </div>
   </div>
+
+  @if ($canManageRoles)
+    <div class="modal fade" id="roleManagementModal" tabindex="-1" aria-labelledby="roleManagementModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="roleManagementModalLabel">Role Management</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-5">
+              <div class="col-lg-5">
+                <h6>Roles</h6>
+                <div id="role-list" class="list-group"></div>
+              </div>
+              <div class="col-lg-7">
+                <form id="role-form">
+                  <input type="hidden" name="roleId" id="role-id">
+                  <div class="mb-4">
+                    <label class="form-label" for="role-name">Role name</label>
+                    <input class="form-control" id="role-name" name="name" maxlength="60" required>
+                  </div>
+                  <h6>Permissions</h6>
+                  <div id="role-permissions" class="d-grid gap-2"></div>
+                  <div class="d-flex gap-2 mt-5">
+                    <button class="btn btn-primary" type="submit"><i class="icon-base ti tabler-device-floppy me-1"></i>Save role</button>
+                    <button class="btn btn-label-secondary" type="button" id="new-role">New role</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  @endif
 </div>
 @endsection

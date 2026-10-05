@@ -20,7 +20,7 @@ class QuestBoardController extends Controller
      */
     protected function checkAdmin(Request $request): ?JsonResponse
     {
-        $isAdmin = auth()->check() && (auth()->user()->role === 'Admin' || (method_exists(auth()->user(), 'isAdmin') && auth()->user()->isAdmin()));
+        $isAdmin = auth()->user()?->hasPermission('quests.manage') ?? false;
         if (!$isAdmin) {
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
@@ -60,7 +60,7 @@ class QuestBoardController extends Controller
             'completed' => $this->service->getAllQuests(['status' => 'completed'])->count(),
         ];
 
-        $isAdmin = auth()->check() && (auth()->user()->role === 'Admin' || (method_exists(auth()->user(), 'isAdmin') && auth()->user()->isAdmin()));
+        $isAdmin = auth()->user()?->hasPermission('quests.manage') ?? false;
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([

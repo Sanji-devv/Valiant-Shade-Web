@@ -21,7 +21,7 @@ class PlayerXpController extends Controller
      */
     protected function checkAdmin(Request $request): ?JsonResponse
     {
-        $isAdmin = auth()->check() && (auth()->user()->role === 'Admin' || (method_exists(auth()->user(), 'isAdmin') && auth()->user()->isAdmin()));
+        $isAdmin = auth()->user()?->hasPermission('xp.manage') ?? false;
         if (!$isAdmin) {
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
@@ -74,7 +74,7 @@ class PlayerXpController extends Controller
         $ranks = PlayerXp::RANKS;
         $fastThresholds = PlayerXp::getXpThresholds();
         $xpFailsafes = PlayerXp::getXpFailsafes();
-        $isAdmin = auth()->check() && (auth()->user()->role === 'Admin' || (method_exists(auth()->user(), 'isAdmin') && auth()->user()->isAdmin()));
+        $isAdmin = auth()->user()?->hasPermission('xp.manage') ?? false;
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([

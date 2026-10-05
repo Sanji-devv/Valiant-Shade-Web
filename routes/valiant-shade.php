@@ -16,6 +16,7 @@ use App\ValiantShade\Http\Controllers\authentications\LoginBasic;
 use App\ValiantShade\Http\Controllers\authentications\RegisterBasic;
 use App\ValiantShade\Http\Controllers\authentications\LogoutController;
 use App\ValiantShade\Http\Controllers\apps\UserList;
+use App\ValiantShade\Http\Controllers\apps\RoleController;
 use App\ValiantShade\Http\Controllers\pages\NewsController;
 
 /*
@@ -180,6 +181,11 @@ Route::delete('/app/user/{id}', [UserList::class, 'destroy'])->name('valiant-sha
 Route::delete('/app/user/{id}/character', [UserList::class, 'destroyCharacter'])->name('valiant-shade.app-user-list.destroy-character');
 Route::post('/app/user/{id}/character/clear', [UserList::class, 'destroyCharacter'])->name('valiant-shade.app-user-list.clear-character');
 Route::post('/app/user/sync-character', [UserList::class, 'syncCharacter'])->name('valiant-shade.app-user-list.sync-character');
+Route::put('/app/user/{id}/role', [UserList::class, 'updateRole'])->name('valiant-shade.app-user-list.update-role');
+Route::get('/app/roles', [RoleController::class, 'index'])->name('valiant-shade.app-roles.index');
+Route::post('/app/roles', [RoleController::class, 'store'])->name('valiant-shade.app-roles.store');
+Route::put('/app/roles/{role}', [RoleController::class, 'update'])->name('valiant-shade.app-roles.update');
+Route::delete('/app/roles/{role}', [RoleController::class, 'destroy'])->name('valiant-shade.app-roles.destroy');
 Route::post('/logout', [LogoutController::class, 'logout'])->name('logout');
 Route::post('/auth/logout', [LogoutController::class, 'logout'])->name('valiant-shade.auth-logout');
 

@@ -56,6 +56,7 @@ return new class extends Migration
             $table->jsonb('feats_and_traits')->nullable();
             $table->jsonb('spellbook_or_prepared')->nullable();
 
+            $table->softDeletes();
             $table->timestamps();
         });
     }

@@ -28,7 +28,8 @@ return new class extends Migration
             $table->enum('status', ['DRAFT', 'PENDING', 'APPROVED'])->default('DRAFT');
             $table->text('report_summary')->nullable();
             $table->text('full_report')->nullable();
-
+            
+            $table->softDeletes();
             $table->timestamps();
         });
     }

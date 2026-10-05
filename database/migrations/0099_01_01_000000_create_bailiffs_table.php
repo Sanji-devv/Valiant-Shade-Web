@@ -6,15 +6,14 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-
     public function up(): void
     {
-        Schema::create('guild_bailiffs', function (Blueprint $table) {
+        Schema::create('bailiffs', function (Blueprint $table) {
             $table->id();
             $table->string('character_name');
-            $table->string('role');                  // Kahraman Kaynakları, Envanter, Lonca Temsilcisi, Questmaster, Arşivci, Disiplin, Oathkeeper
-            $table->string('assigned_date')->nullable(); // e.g. "14/7", "13/9"
-            $table->string('status')->default('active'); // active, on_leave, retired
+            $table->string('role');
+            $table->string('assigned_date')->nullable(); 
+            $table->string('status')->default('active');
             $table->integer('order_index')->default(0);
             $table->text('notes')->nullable();
             $table->timestamps();
@@ -27,6 +26,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('guild_bailiffs');
+        Schema::dropIfExists('bailiffs');
     }
 };

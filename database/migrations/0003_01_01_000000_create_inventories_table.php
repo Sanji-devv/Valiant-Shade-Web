@@ -17,6 +17,7 @@ return new class extends Migration
             $table->decimal('estimated_value', 14, 2)->default(0);
             $table->text('notes')->nullable();
 
+            $table->softDeletes();
             $table->timestamps();
         });
 

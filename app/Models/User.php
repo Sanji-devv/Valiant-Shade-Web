@@ -128,6 +128,28 @@ class User extends Authenticatable
         return $this->hasMany(CharacterGraveyard::class, 'user_id');
     }
 
+    public function roleDefinition(): BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'role', 'slug');
+    }
+
+    public function setRoleAttribute($value): void
+    {
+        $role = strtoupper(Str::slug((string) $value, '_'));
+        $this->attributes['role'] = match ($role) {
+            'ADMIN' => 'ADMIN',
+            'GM', 'GAME_MASTER', 'GAMEMASTER' => 'GM',
+            'BAILIFF' => 'BAILIFF',
+            'USER', 'PLAYER', '' => 'PLAYER',
+            default => $role,
+        };
+    }
+
+    public function hasPermission(string $permission): bool
+    {
+        return $this->roleDefinition?->hasPermission($permission) ?? false;
+    }
+
     public function isAdmin(): bool
     {
         return strtoupper($this->role ?? '') === 'ADMIN';

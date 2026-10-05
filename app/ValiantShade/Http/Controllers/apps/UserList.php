@@ -3,6 +3,7 @@
 namespace App\ValiantShade\Http\Controllers\apps;
 
 use App\Models\User;
+use App\Models\Role;
 use App\ValiantShade\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,13 +14,17 @@ class UserList extends Controller
 {
     public function index()
     {
+        abort_unless(auth()->user()?->hasPermission('users.manage') || auth()->user()?->hasPermission('roles.manage'), 403);
+
         $totalUsers = User::count();
-        $adminUsers = User::where('role', 'Admin')->count();
-        $bailiffUsers = User::where('role', 'Bailiff')->count();
-        $standardUsers = User::where('role', 'User')->count();
+        $adminUsers = User::where('role', 'ADMIN')->count();
+        $bailiffUsers = User::where('role', 'BAILIFF')->count();
+        $standardUsers = User::where('role', 'PLAYER')->count();
         $activeUsers = User::where('status', 2)->count();
         $pendingUsers = User::where('status', 1)->count();
-        $isAdmin = auth()->check() && auth()->user()->role === 'Admin';
+        $isAdmin = auth()->user()->hasPermission('users.manage');
+        $canManageRoles = auth()->user()->hasPermission('roles.manage');
+        $roles = Role::orderBy('id')->get();
 
         return view('valiant-shade.content.apps.app-user-list', compact(
             'totalUsers',
@@ -28,20 +33,27 @@ class UserList extends Controller
             'standardUsers',
             'activeUsers',
             'pendingUsers',
-            'isAdmin'
+            'isAdmin',
+            'canManageRoles',
+            'roles'
         ));
     }
 
     public function data(Request $request): JsonResponse
     {
+        if (!auth()->user()?->hasPermission('users.manage')) {
+            return response()->json(['data' => [], 'is_admin' => false, 'roles' => []]);
+        }
+
         $users = User::orderBy('id', 'desc')->get();
-        $isAdmin = auth()->check() && auth()->user()->role === 'Admin';
+        $isAdmin = auth()->user()->hasPermission('users.manage');
 
         $data = $users->map(function ($u) {
             return [
                 'id' => $u->id,
                 'full_name' => $u->name,
-                'role' => $u->role ?: 'User',
+                'role' => $u->roleDefinition?->name ?? $u->role,
+                'role_slug' => $u->role,
                 'username' => strtolower(explode('@', $u->email)[0]),
                 'email' => $u->email,
                 'current_character' => $u->current_character ?: '',
@@ -53,22 +65,22 @@ class UserList extends Controller
         return response()->json([
             'data' => $data,
             'is_admin' => $isAdmin,
+            'roles' => Role::orderBy('id')->get(['slug', 'name']),
         ]);
     }
 
     public function store(Request $request): JsonResponse
     {
+        abort_unless(auth()->user()?->hasPermission('users.manage'), 403);
+
         $validated = $request->validate([
             'userFullname' => ['required', 'string', 'max:100'],
             'userEmail' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'userRole' => ['nullable', 'in:Admin,Bailiff,User'],
+            'userRole' => ['nullable', 'exists:roles,slug'],
             'currentCharacter' => ['nullable', 'string', 'max:100'],
         ]);
 
-        $role = $validated['userRole'] ?? 'User';
-        if (!in_array($role, ['Admin', 'Bailiff', 'User'])) {
-            $role = 'User';
-        }
+        $role = $validated['userRole'] ?? 'PLAYER';
 
         $user = User::create([
             'name' => $validated['userFullname'],
@@ -88,13 +100,7 @@ class UserList extends Controller
 
     public function destroy($id): JsonResponse
     {
-        // Only users with Admin role can delete
-        if (!auth()->check() || auth()->user()->role !== 'Admin') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized action: Only Administrators can delete users.',
-            ], 403);
-        }
+        abort_unless(auth()->user()?->hasPermission('users.manage'), 403);
 
         $user = User::findOrFail($id);
 
@@ -127,7 +133,7 @@ class UserList extends Controller
             ], 404);
         }
 
-        $isAdmin = auth()->check() && auth()->user()->role === 'Admin';
+        $isAdmin = auth()->user()?->hasPermission('users.manage') ?? false;
         $isSelf = auth()->check() && auth()->id() === $user->id;
 
         if (!auth()->check() || (!$isAdmin && !$isSelf)) {
@@ -168,6 +174,25 @@ class UserList extends Controller
         return response()->json([
             'success' => true,
             'current_character' => $user->current_character,
+        ]);
+    }
+
+    public function updateRole(Request $request, int $id): JsonResponse
+    {
+        abort_unless(auth()->user()?->hasPermission('users.manage'), 403);
+
+        $validated = $request->validate([
+            'role' => ['required', 'exists:roles,slug'],
+        ]);
+
+        $user = User::findOrFail($id);
+        $user->role = $validated['role'];
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'role' => $user->role,
+            'role_name' => $user->roleDefinition?->name ?? $user->role,
         ]);
     }
 }

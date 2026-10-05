@@ -18,7 +18,7 @@ class Inventory extends Controller
      */
     protected function checkAdmin(Request $request): ?JsonResponse
     {
-        $isAdmin = auth()->check() && (auth()->user()->role === 'Admin' || (method_exists(auth()->user(), 'isAdmin') && auth()->user()->isAdmin()));
+        $isAdmin = auth()->user()?->hasPermission('inventory.manage') ?? false;
         if (!$isAdmin) {
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
@@ -55,7 +55,7 @@ class Inventory extends Controller
         $metrics = $this->inventoryService->getMetrics($currency);
         $categories = $this->inventoryService->getCategories();
         $vault = $this->inventoryService->getVault();
-        $isAdmin = auth()->check() && (auth()->user()->role === 'Admin' || (method_exists(auth()->user(), 'isAdmin') && auth()->user()->isAdmin()));
+        $isAdmin = auth()->user()?->hasPermission('inventory.manage') ?? false;
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([

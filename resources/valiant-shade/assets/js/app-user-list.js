@@ -18,6 +18,9 @@ document.addEventListener('DOMContentLoaded', function (e) {
   const userView = baseAppUrl + 'pages/profile-user';
   const dataUrl = baseAppUrl + 'app/user/list-data';
   const createUrl = baseAppUrl + 'app/user/create';
+  const rolesUrl = baseAppUrl + 'app/roles';
+  let availableRoles = [];
+  const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char]);
 
   const statusObj = {
     1: { title: 'Pending', label: 'Pending', class: 'bg-label-warning' },
@@ -39,6 +42,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
             currentUserIsAdmin = json.is_admin;
             window.currentUserIsAdmin = json.is_admin;
           }
+          availableRoles = json.roles || [];
           return json.data || [];
         }
       },
@@ -108,18 +112,15 @@ document.addEventListener('DOMContentLoaded', function (e) {
           }
         },
         {
-          // Role with 3 allowed roles: Admin, Bailiff, User
+          // Dynamic roles
           targets: 3,
           render: function (data, type, full, meta) {
-            const role = full['role'] || 'User';
-            const roleBadgeObj = {
-              Admin: '<i class="icon-base ti tabler-crown icon-md text-danger me-2"></i>',
-              Bailiff: '<i class="icon-base ti tabler-shield icon-md text-warning me-2"></i>',
-              User: '<i class="icon-base ti tabler-user icon-md text-primary me-2"></i>'
-            };
-
-            const iconHtml = roleBadgeObj[role] || '<i class="icon-base ti tabler-user icon-md text-secondary me-2"></i>';
-            return `<span class="text-truncate d-flex align-items-center text-heading fw-semibold">${iconHtml}${role}</span>`;
+            const role = full['role'] || 'Player';
+            if (currentUserIsAdmin) {
+              const options = availableRoles.map(item => `<option value="${escapeHtml(item.slug)}" ${item.slug === full['role_slug'] ? 'selected' : ''}>${escapeHtml(item.name)}</option>`).join('');
+              return `<select class="form-select form-select-sm user-role-select" data-id="${full.id}" aria-label="Role for ${escapeHtml(role)}">${options}</select>`;
+            }
+            return `<span class="text-truncate d-flex align-items-center text-heading fw-semibold"><i class="icon-base ti tabler-user icon-md text-secondary me-2"></i>${escapeHtml(role)}</span>`;
           }
         },
         {
@@ -323,18 +324,13 @@ document.addEventListener('DOMContentLoaded', function (e) {
       initComplete: function () {
         const api = this.api();
 
-        // 1. Role Filter (Only 3 Roles: Admin, Bailiff, User)
+        // 1. Role Filter
         const roleContainer = document.querySelector('.user_role');
         if (roleContainer) {
           const roleSelect = document.createElement('select');
           roleSelect.id = 'UserRoleFilter';
           roleSelect.className = 'form-select text-capitalize';
-          roleSelect.innerHTML = `
-            <option value="">All Roles (Admin, Bailiff, User)</option>
-            <option value="Admin">Admin</option>
-            <option value="Bailiff">Bailiff</option>
-            <option value="User">User</option>
-          `;
+          roleSelect.innerHTML = '<option value="">All Roles</option>' + availableRoles.map(role => `<option value="${escapeHtml(role.name)}">${escapeHtml(role.name)}</option>`).join('');
           roleContainer.appendChild(roleSelect);
           roleSelect.addEventListener('change', () => {
             const val = roleSelect.value ? `^${roleSelect.value}$` : '';
@@ -436,6 +432,103 @@ document.addEventListener('DOMContentLoaded', function (e) {
             alert('An error occurred while removing the character.');
           });
       }
+    });
+
+    document.addEventListener('change', function (event) {
+      const roleSelect = event.target.closest('.user-role-select');
+      if (!roleSelect) return;
+
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+      fetch(baseAppUrl + 'app/user/' + roleSelect.dataset.id + '/role', {
+        method: 'PUT',
+        headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: roleSelect.value })
+      }).then(response => {
+        if (!response.ok) throw new Error('Could not update user role.');
+        return response.json();
+      }).then(() => dt_user.ajax.reload(null, false)).catch(error => {
+        alert(error.message);
+        dt_user.ajax.reload(null, false);
+      });
+    });
+  }
+
+  const roleModal = document.getElementById('roleManagementModal');
+  const roleForm = document.getElementById('role-form');
+  if (roleModal && roleForm) {
+    const roleList = document.getElementById('role-list');
+    const permissionList = document.getElementById('role-permissions');
+    const roleName = document.getElementById('role-name');
+    const roleId = document.getElementById('role-id');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    const resetRoleForm = () => {
+      roleForm.reset();
+      roleId.value = '';
+      roleForm.querySelectorAll('[name="permissions[]"]').forEach(input => { input.checked = false; });
+    };
+
+    const loadRoles = () => fetch(rolesUrl, { headers: { 'Accept': 'application/json' } })
+      .then(response => {
+        if (!response.ok) throw new Error('Unable to load roles.');
+        return response.json();
+      })
+      .then(data => {
+        permissionList.innerHTML = Object.entries(data.permissions || {}).map(([key, label]) => `
+          <label class="form-check">
+            <input class="form-check-input" type="checkbox" name="permissions[]" value="${escapeHtml(key)}">
+            <span class="form-check-label">${escapeHtml(label)}</span>
+          </label>`).join('');
+        roleList.innerHTML = (data.roles || []).map(role => `
+          <div class="list-group-item d-flex align-items-center justify-content-between gap-2">
+            <button type="button" class="btn btn-link text-start p-0 role-edit" data-id="${role.id}">${escapeHtml(role.name)}</button>
+            ${role.is_system ? '' : `<button type="button" class="btn btn-text-danger btn-icon role-delete" data-id="${role.id}" title="Delete role"><i class="icon-base ti tabler-trash"></i></button>`}
+          </div>`).join('');
+        roleList.dataset.roles = JSON.stringify(data.roles || []);
+      });
+
+    roleModal.addEventListener('show.bs.modal', () => loadRoles().catch(error => alert(error.message)));
+    document.getElementById('new-role').addEventListener('click', resetRoleForm);
+
+    roleList.addEventListener('click', event => {
+      const editButton = event.target.closest('.role-edit');
+      const deleteButton = event.target.closest('.role-delete');
+      const roles = JSON.parse(roleList.dataset.roles || '[]');
+
+      if (editButton) {
+        const role = roles.find(item => String(item.id) === editButton.dataset.id);
+        if (!role) return;
+        resetRoleForm();
+        roleId.value = role.id;
+        roleName.value = role.name;
+        roleForm.querySelectorAll('[name="permissions[]"]').forEach(input => { input.checked = (role.permissions || []).includes(input.value); });
+      }
+
+      if (deleteButton && confirm('Delete this role?')) {
+        fetch(rolesUrl + '/' + deleteButton.dataset.id, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' } })
+          .then(response => response.json().then(data => ({ response, data })))
+          .then(({ response, data }) => {
+            if (!response.ok) throw new Error(data.message || 'Unable to delete role.');
+            loadRoles();
+            if (dt_user) dt_user.ajax.reload(null, false);
+          }).catch(error => alert(error.message));
+      }
+    });
+
+    roleForm.addEventListener('submit', event => {
+      event.preventDefault();
+      const permissions = Array.from(roleForm.querySelectorAll('[name="permissions[]"]:checked')).map(input => input.value);
+      const editing = Boolean(roleId.value);
+      fetch(editing ? rolesUrl + '/' + roleId.value : rolesUrl, {
+        method: editing ? 'PUT' : 'POST',
+        headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: roleName.value, permissions })
+      }).then(response => response.json().then(data => ({ response, data })))
+        .then(({ response, data }) => {
+          if (!response.ok) throw new Error(data.message || 'Unable to save role.');
+          resetRoleForm();
+          loadRoles();
+          if (dt_user) dt_user.ajax.reload(null, false);
+        }).catch(error => alert(error.message));
     });
   }
 
