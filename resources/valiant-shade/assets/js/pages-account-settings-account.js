@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
       deactivateAcc = document.querySelector('#formAccountDeactivation'),
       deactivateButton = deactivateAcc.querySelector('.deactivate-account');
 
-    // Form validation for Add new record
+    // Form validation for Account Settings
     if (formAccSettings) {
       const fv = FormValidation.formValidation(formAccSettings, {
         fields: {
@@ -21,10 +21,20 @@ document.addEventListener('DOMContentLoaded', function (e) {
               }
             }
           },
-          lastName: {
+          username: {
             validators: {
               notEmpty: {
-                message: 'Please enter last name'
+                message: 'Please enter username'
+              }
+            }
+          },
+          email: {
+            validators: {
+              notEmpty: {
+                message: 'Please enter email'
+              },
+              emailAddress: {
+                message: 'Please enter a valid email address'
               }
             }
           }
@@ -36,8 +46,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
             rowSelector: '.form-control-validation'
           }),
           submitButton: new FormValidation.plugins.SubmitButton(),
-          // Submit the form when all fields are valid
-          // defaultSubmit: new FormValidation.plugins.DefaultSubmit(),
+          defaultSubmit: new FormValidation.plugins.DefaultSubmit(),
           autoFocus: new FormValidation.plugins.AutoFocus()
         },
         init: instance => {
@@ -71,14 +80,11 @@ document.addEventListener('DOMContentLoaded', function (e) {
             onStatusChanged: function (areFieldsValid) {
               areFieldsValid
                 ? // Enable the submit button
-                  // so user has a chance to submit the form again
                   deactivateButton.removeAttribute('disabled')
                 : // Disable the submit button
                   deactivateButton.setAttribute('disabled', 'disabled');
             }
           }),
-          // Submit the form when all fields are valid
-          // defaultSubmit: new FormValidation.plugins.DefaultSubmit(),
           autoFocus: new FormValidation.plugins.AutoFocus()
         },
         init: instance => {
@@ -96,8 +102,9 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
     // Alert With Functional Confirm Button
     if (deactivateButton) {
-      deactivateButton.onclick = function () {
-        if (accountActivation.checked == true) {
+      deactivateButton.onclick = function (event) {
+        event.preventDefault();
+        if (accountActivation && accountActivation.checked == true) {
           Swal.fire({
             text: 'Are you sure you would like to deactivate your account?',
             icon: 'warning',
@@ -110,18 +117,11 @@ document.addEventListener('DOMContentLoaded', function (e) {
             buttonsStyling: false
           }).then(function (result) {
             if (result.value) {
-              Swal.fire({
-                icon: 'success',
-                title: 'Deleted!',
-                text: 'Your file has been deleted.',
-                customClass: {
-                  confirmButton: 'btn btn-success waves-effect waves-light'
-                }
-              });
+              deactivateAcc.submit();
             } else if (result.dismiss === Swal.DismissReason.cancel) {
               Swal.fire({
                 title: 'Cancelled',
-                text: 'Deactivation Cancelled!!',
+                text: 'Deactivation Cancelled!',
                 icon: 'error',
                 customClass: {
                   confirmButton: 'btn btn-success waves-effect waves-light'
@@ -169,15 +169,19 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
     if (accountUserImage) {
       const resetImage = accountUserImage.src;
-      fileInput.onchange = () => {
-        if (fileInput.files[0]) {
-          accountUserImage.src = window.URL.createObjectURL(fileInput.files[0]);
-        }
-      };
-      resetFileInput.onclick = () => {
-        fileInput.value = '';
-        accountUserImage.src = resetImage;
-      };
+      if (fileInput) {
+        fileInput.onchange = () => {
+          if (fileInput.files && fileInput.files[0]) {
+            accountUserImage.src = window.URL.createObjectURL(fileInput.files[0]);
+          }
+        };
+      }
+      if (resetFileInput && fileInput) {
+        resetFileInput.onclick = () => {
+          fileInput.value = '';
+          accountUserImage.src = resetImage;
+        };
+      }
     }
   })();
 });

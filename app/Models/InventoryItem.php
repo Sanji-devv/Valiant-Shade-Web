@@ -15,6 +15,8 @@ class InventoryItem extends Model
     protected $fillable = [
         'character_id',
         'name',
+        'display_name',
+        'slug',
         'quality',
         'type',
         'quantity',
@@ -24,6 +26,18 @@ class InventoryItem extends Model
         'buy_price',
         'notes',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (InventoryItem $item) {
+            if (empty($item->display_name)) {
+                $item->display_name = $item->name;
+            }
+            if (empty($item->slug)) {
+                $item->slug = \Illuminate\Support\Str::slug($item->name ?: 'item');
+            }
+        });
+    }
 
     protected function casts(): array
     {
@@ -65,10 +79,11 @@ class InventoryItem extends Model
     public function scopeSearch($query, ?string $term)
     {
         if (!empty($term)) {
-            return $query->where(function ($q) use ($term) {
-                $q->where('name', 'ilike', "%{$term}%")
-                  ->orWhere('quality', 'ilike', "%{$term}%")
-                  ->orWhere('notes', 'ilike', "%{$term}%");
+            $like = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+            return $query->where(function ($q) use ($term, $like) {
+                $q->where('name', $like, "%{$term}%")
+                  ->orWhere('quality', $like, "%{$term}%")
+                  ->orWhere('notes', $like, "%{$term}%");
             });
         }
         return $query;

@@ -12,13 +12,13 @@
             </div>
             <div>
               <h4 class="mb-0 fw-bold text-white d-flex align-items-center gap-2">
-                {{ __('XP Listesinden Karakter Sahiplen (Claim Character)') }}
-                <span class="badge bg-warning text-dark font-monospace fs-6 px-2 py-0_5">{{ __('Mevcut XP & Seviye') }}</span>
+                {{ __('Claim Character from XP List') }}
+                <span class="badge bg-warning text-dark font-monospace fs-6 px-2 py-0_5">{{ __('Existing XP & Level') }}</span>
               </h4>
-              <small class="claim-subtitle font-monospace">{{ __('Master Sheet XP listesindeki karakterinizi hak ettiği gerçek seviyesi, rütbesi ve birikmiş puanlarıyla başlatın.') }}</small>
+              <small class="claim-subtitle font-monospace">{{ __('Start your character from the Master Sheet XP list with their true level, rank and accumulated points.') }}</small>
             </div>
           </div>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{{ __('Close') }}"></button>
         </div>
 
         <!-- Modal Body -->
@@ -28,16 +28,16 @@
           <div class="alert claim-alert border d-flex align-items-center gap-3 mb-4" role="alert">
             <i class="icon-base ti tabler-shield-lock fs-3 text-warning flex-shrink-0"></i>
             <div class="small claim-alert-text">
-              <strong class="text-warning">{{ __('Önemli Kural & Bilgilendirme:') }}</strong>
-              {{ __('Seçtiğiniz karakter sıfırdan değil, XP listesindeki gerçek seviyesinden başlatılacaktır (Örn. Thoma Quickfire için doğrudan 12. Seviye). Karakterin Sınıf ve nitelik puanlarını onaylayarak profilinize ekleyebilirsiniz.') }}
+              <strong class="text-warning">{{ __('Important Rule & Notice:') }}</strong>
+              {{ __('Your chosen character will start at their true level from the XP list (e.g. Level 12 for Thoma Quickfire). Confirm class and ability scores to claim.') }}
             </div>
           </div>
 
-          <!-- Section 1: Karakter Seçimi (Autocomplete / Search) -->
+          <!-- Section 1: Character Selection (Autocomplete / Search) -->
           <div class="claim-panel-card p-3 mb-4">
             <label class="form-label fw-bold text-white fs-6 mb-2">
               <i class="icon-base ti tabler-user-search text-warning me-1"></i>
-              {{ __('1. Sahiplenilecek Karakteri Seçin (XP Kayıtları)') }} <span class="text-danger">*</span>
+              {{ __('1. Select Character to Claim (XP Records)') }} <span class="text-danger">*</span>
             </label>
 
             <div class="row g-2 align-items-center">
@@ -45,13 +45,13 @@
                 <div class="input-group input-group-merge">
                   <span class="input-group-text"><i class="icon-base ti tabler-search text-light"></i></span>
                   <input type="text" class="form-control font-monospace"
-                         id="claimSearchInput" placeholder="{{ __('Karakter adı yazın (Örn: Thoma Quickfire, Bart, Almira Blade, Kerrik...)') }}" autocomplete="off" />
-                  <button type="button" class="btn btn-warning btn-sm fw-bold px-3" id="btnClaimSearch">{{ __('Ara') }}</button>
+                         id="claimSearchInput" placeholder="{{ __('Type character name (e.g. Thoma Quickfire, Bart...)') }}" autocomplete="off" />
+                  <button type="button" class="btn btn-warning btn-sm fw-bold px-3" id="btnClaimSearch">{{ __('Search') }}</button>
                 </div>
               </div>
               <div class="col-12 col-md-4">
                 <select id="claimCharacterSelect" class="form-select font-monospace" required>
-                  <option value="" disabled selected>{{ __('Karakter seçiniz...') }}</option>
+                  <option value="" disabled selected>{{ __('Select a character...') }}</option>
                 </select>
               </div>
             </div>
@@ -75,26 +75,26 @@
               </div>
               <div class="row g-2 font-monospace small pt-2 border-top border-secondary border-opacity-30" style="font-size: 0.82rem;">
                 <div class="col-12 col-md-4">
-                  <span class="claim-label-dim d-block">{{ __('Rütbe:') }}</span>
+                  <span class="claim-label-dim d-block">{{ __('Rank:') }}</span>
                   <strong class="text-warning fs-6" id="claimCardRank">-</strong>
                 </div>
                 <div class="col-12 col-md-4">
-                  <span class="claim-label-dim d-block">{{ __('Karakter Tipi:') }}</span>
+                  <span class="claim-label-dim d-block">{{ __('Character Type:') }}</span>
                   <strong class="text-white fs-6" id="claimCardType">MAIN</strong>
                 </div>
                 <div class="col-12 col-md-4">
-                  <span class="claim-label-dim d-block">{{ __('Lonca Ödeneği:') }}</span>
+                  <span class="claim-label-dim d-block">{{ __('Guild Allowance:') }}</span>
                   <strong class="text-info fs-6" id="claimCardAllowance">0 SP</strong>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Section 2: Sınıf & Irk (Zorunlu) -->
+          <!-- Section 2: Class & Race (Required) -->
           <div class="row g-3 mb-4">
             <div class="col-12 col-md-4">
               <label class="form-label fw-bold text-white">
-                <i class="icon-base ti tabler-dna text-info me-1"></i> {{ __('Karakter Irkı (Race)') }} <span class="text-danger">*</span>
+                <i class="icon-base ti tabler-dna text-info me-1"></i> {{ __('Character Race') }} <span class="text-danger">*</span>
               </label>
               <select class="form-select text-white" id="claimCharRace" required>
                 @if(!empty($pfRaces))
@@ -115,7 +115,7 @@
 
             <div class="col-12 col-md-4">
               <label class="form-label fw-bold text-white">
-                <i class="icon-base ti tabler-swords text-info me-1"></i> {{ __('Karakter Sınıfı (Class)') }} <span class="text-danger">*</span>
+                <i class="icon-base ti tabler-swords text-info me-1"></i> {{ __('Character Class') }} <span class="text-danger">*</span>
               </label>
               <select class="form-select text-white" id="claimCharClass" required>
                 @if(!empty($pfClasses))
@@ -140,9 +140,9 @@
 
             <div class="col-12 col-md-4">
               <label class="form-label fw-semibold text-white">
-                <i class="icon-base ti tabler-crown text-warning me-1"></i> {{ __('Archetype (Alt Sınıf / Varsa)') }}
+                <i class="icon-base ti tabler-crown text-warning me-1"></i> {{ __('Archetype (Subclass / If any)') }}
               </label>
-              <input type="text" class="form-control text-white" id="claimCharArchetype" placeholder="{{ __('Örn: Grenadier, Mutagen Mauler...') }}" />
+              <input type="text" class="form-control text-white" id="claimCharArchetype" placeholder="{{ __('e.g. Grenadier, Mutagen Mauler...') }}" />
             </div>
           </div>
 
@@ -151,7 +151,7 @@
             <div class="d-flex align-items-center justify-content-between mb-3">
               <h6 class="fw-bold text-white mb-0 d-flex align-items-center gap-2 fs-5">
                 <i class="icon-base ti tabler-dice-6 text-warning fs-4"></i>
-                <span>{{ __('Nitelik Puanları (Ability Scores)') }} <span class="text-danger">*</span></span>
+                <span>{{ __('Ability Scores') }} <span class="text-danger">*</span></span>
               </h6>
               <button type="button" class="btn btn-warning btn-sm fw-bold px-3" id="btnClaimRollStats">
                 <i class="icon-base ti tabler-dice me-1"></i> {{ __('Standard Heroic Array (16, 14, 14, 12, 12, 10)') }}
@@ -175,11 +175,11 @@
             </div>
           </div>
 
-          <!-- Section 4: Canlı Savaş Önizlemesi (Seviye Hesabı) -->
+          <!-- Section 4: Live Combat Preview (Level Calculation) -->
           <div class="claim-preview-box p-3 rounded-3 text-center font-monospace" id="claimLiveStatsPreview">
             <div class="row g-2 small">
               <div class="col-3">
-                <span class="d-block claim-label-dim">{{ __('Başlangıç HP:') }}</span>
+                <span class="d-block claim-label-dim">{{ __('Starting HP:') }}</span>
                 <strong class="text-success fs-5" id="claimPreviewHp">100 HP</strong>
               </div>
               <div class="col-3">
@@ -191,7 +191,7 @@
                 <strong class="text-info fs-5" id="claimPreviewSaves">+8 / +4 / +4</strong>
               </div>
               <div class="col-3">
-                <span class="d-block claim-label-dim">{{ __('Başlangıç Seviyesi:') }}</span>
+                <span class="d-block claim-label-dim">{{ __('Starting Level:') }}</span>
                 <strong class="text-warning fs-5" id="claimPreviewLevel">Level 12</strong>
               </div>
             </div>
@@ -202,11 +202,11 @@
         <!-- Modal Footer -->
         <div class="modal-footer claim-modal-footer p-3 p-md-4 d-flex align-items-center justify-content-between">
           <button type="button" class="btn btn-outline-secondary btn-sm px-3 text-light" data-bs-dismiss="modal">
-            {{ __('Vazgeç') }}
+            {{ __('Cancel') }}
           </button>
           <button type="submit" class="btn btn-warning btn-sm fw-bold px-4 shadow-md" id="btnSubmitClaimCharacter">
             <i class="icon-base ti tabler-user-check me-1 fs-5"></i>
-            <span id="btnSubmitClaimText">{{ __('Karakteri Sahiplen & Seviye ile Başlat') }}</span>
+            <span id="btnSubmitClaimText">{{ __('Claim Character & Start at Level') }}</span>
           </button>
         </div>
       </form>
@@ -400,17 +400,17 @@ document.addEventListener('DOMContentLoaded', function () {
   function fetchClaimableCharacters(search = '') {
     const baseUrl = '{{ route("valiant-shade.character.claimable-list") }}';
     const url = baseUrl + (search ? '?q=' + encodeURIComponent(search) : '');
-    claimCharacterSelect.innerHTML = '<option value="" disabled selected>{{ __("Karakterler aranıyor...") }}</option>';
+    claimCharacterSelect.innerHTML = '<option value="" disabled selected>{{ __("Searching characters...") }}</option>';
 
     fetch(url)
       .then(r => r.json())
       .then(data => {
         if (data.success && Array.isArray(data.characters)) {
           if (data.characters.length === 0) {
-            claimCharacterSelect.innerHTML = '<option value="" disabled selected>{{ __("Karakter bulunamadı") }}</option>';
+            claimCharacterSelect.innerHTML = '<option value="" disabled selected>{{ __("No characters found") }}</option>';
             return;
           }
-          claimCharacterSelect.innerHTML = '<option value="" disabled selected>{{ __("Karakter seçiniz (Toplam: ") }}' + data.characters.length + ')...</option>';
+          claimCharacterSelect.innerHTML = '<option value="" disabled selected>{{ __("Select a character (Total: ") }}' + data.characters.length + ')...</option>';
           data.characters.forEach(c => {
             const opt = document.createElement('option');
             opt.value = c.id;
@@ -427,7 +427,7 @@ document.addEventListener('DOMContentLoaded', function () {
       })
       .catch(err => {
         console.error('Failed to load characters:', err);
-        claimCharacterSelect.innerHTML = '<option value="" disabled selected>{{ __("Yükleme başarısız") }}</option>';
+        claimCharacterSelect.innerHTML = '<option value="" disabled selected>{{ __("Loading failed") }}</option>';
       });
   }
 
@@ -470,14 +470,14 @@ document.addEventListener('DOMContentLoaded', function () {
       .then(r => r.json())
       .then(data => {
         if (!data.success || !data.character) {
-          alert(data.message || 'Karakter detayları alınamadı.');
+          alert(data.message || '{{ __("Could not retrieve character details.") }}');
           return;
         }
         renderClaimCharacter(data.character);
       })
       .catch(err => {
         console.error('Details error:', err);
-        alert('Karakter detayları yüklenirken sunucu hatası oluştu.');
+        alert('{{ __("Server error while loading character details.") }}');
       });
   }
 
@@ -492,10 +492,10 @@ document.addEventListener('DOMContentLoaded', function () {
     claimSelectedDossierCard.classList.remove('d-none');
 
     claimCardCharName.textContent = char.name;
-    claimCardPlayerRank.textContent = `${char.rank || 'Üye'} • ${char.character_type || 'MAIN'}`;
+    claimCardPlayerRank.textContent = `${char.rank || 'Member'} • ${char.character_type || 'MAIN'}`;
     claimCardLevelBadge.textContent = `Level ${char.level}`;
     claimCardXpBadge.textContent = `${Number(char.total_xp).toLocaleString()} XP`;
-    claimCardRank.textContent = char.rank || 'Üye';
+    claimCardRank.textContent = char.rank || 'Member';
     claimCardType.textContent = char.character_type || 'MAIN';
     claimCardAllowance.textContent = `${Number(char.allowance_sp).toLocaleString()} SP`;
 
@@ -641,7 +641,7 @@ document.addEventListener('DOMContentLoaded', function () {
     e.preventDefault();
 
     if (!activeClaimChar || !claimCharacterSelect.value) {
-      alert('Lütfen sahiplenmek istediğiniz bir karakteri seçiniz.');
+      alert('{{ __("Please select a character to claim.") }}');
       claimCharacterSelect.focus();
       return;
     }
@@ -649,12 +649,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const charRace = claimCharRace.value;
     const charClass = claimCharClass.value;
     if (!charRace) {
-      alert('Karakter Irkı (Race) seçilmesi zorunludur.');
+      alert('{{ __("Character Race is required.") }}');
       claimCharRace.focus();
       return;
     }
     if (!charClass) {
-      alert('Karakter Sınıfı (Class) seçilmesi zorunludur.');
+      alert('{{ __("Character Class is required.") }}');
       claimCharClass.focus();
       return;
     }
@@ -671,7 +671,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     for (const [k, v] of Object.entries(stats)) {
       if (isNaN(v) || v < 1 || v > 30) {
-        alert(`Lütfen geçerli bir ${k.toUpperCase()} değeri giriniz (1-30).`);
+        alert(`{{ __('Please enter a valid') }} ${k.toUpperCase()} {{ __('value (1-30).') }}`);
         document.getElementById('claimStat_' + k)?.focus();
         return;
       }
@@ -691,7 +691,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     btnSubmitClaimCharacter.disabled = true;
-    btnSubmitClaimText.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Karakter Sahipleniliyor...';
+    btnSubmitClaimText.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> {{ __("Claiming Character...") }}';
 
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
       || document.querySelector('#formClaimCharacter input[name="_token"]')?.value
@@ -712,21 +712,21 @@ document.addEventListener('DOMContentLoaded', function () {
         if (typeof Swal !== 'undefined') {
           Swal.fire({
             icon: 'success',
-            title: 'Karakter Sahiplenildi!',
-            text: body.message || `${activeClaimChar.name} başarıyla ${activeClaimChar.level}. seviyede profilinize eklendi!`,
+            title: '{{ __("Character Claimed!") }}',
+            text: body.message || `${activeClaimChar.name} {{ __("successfully claimed at level") }} ${activeClaimChar.level}!`,
             timer: 2000,
             showConfirmButton: false,
           }).then(() => window.location.reload());
         } else {
-          alert(body.message || `${activeClaimChar.name} başarıyla sahiplenildi!`);
+          alert(body.message || `${activeClaimChar.name} {{ __("successfully claimed!") }}`);
           window.location.reload();
         }
       } else {
         btnSubmitClaimCharacter.disabled = false;
-        btnSubmitClaimText.textContent = '{{ __("Karakteri Sahiplen & Seviye ile Başlat") }}';
-        const errMsg = body.message || (body.errors ? Object.values(body.errors).flat().join('\n') : 'Karakter sahiplenilemedi.');
+        btnSubmitClaimText.textContent = '{{ __("Claim Character & Start at Level") }}';
+        const errMsg = body.message || (body.errors ? Object.values(body.errors).flat().join('\n') : '{{ __("Failed to claim character.") }}');
         if (typeof Swal !== 'undefined') {
-          Swal.fire({ icon: 'error', title: 'Hata', text: errMsg });
+          Swal.fire({ icon: 'error', title: '{{ __("Error") }}', text: errMsg });
         } else {
           alert(errMsg);
         }
@@ -735,8 +735,8 @@ document.addEventListener('DOMContentLoaded', function () {
     .catch(err => {
       console.error('Claim submit error:', err);
       btnSubmitClaimCharacter.disabled = false;
-      btnSubmitClaimText.textContent = '{{ __("Karakteri Sahiplen & Seviye ile Başlat") }}';
-      alert('Sunucu ile bağlantı kurulamadı. Lütfen tekrar deneyiniz.');
+      btnSubmitClaimText.textContent = '{{ __("Claim Character & Start at Level") }}';
+      alert('{{ __("Could not connect to server. Please try again.") }}');
     });
   });
 });

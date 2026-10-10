@@ -185,14 +185,14 @@
                       </div>
                       <div>
                         <h6 class="mb-0 text-heading fw-bold">{{ $adv->character_name }}</h6>
-                        <small class="text-body-secondary">{{ $adv->player_name ?: 'Sahipsiz / GM' }}</small>
+                        <small class="text-body-secondary">{{ $adv->player_name ?: __('Unclaimed / GM') }}</small>
                       </div>
                     </div>
                   </td>
                   <!-- Clean Rank Badge, No Emojis -->
                   <td class="text-center">
                     <span class="badge {{ $rankColor }} rounded-pill px-3 py-1 font-monospace">
-                      {{ $adv->rank }}
+                      {{ __($adv->rank) }}
                     </span>
                   </td>
                   <td class="text-center">
@@ -221,7 +221,7 @@
         </div>
       </div>
 
-      <!-- ================= TAB 3: ÖDENEK & MAAŞ TAKİBİ (SP) ================= -->
+      <!-- ================= TAB 3: STIPEND & SALARY TRACKING (SP) ================= -->
       <div class="tab-pane fade" id="content-allowances" role="tabpanel">
         <div class="row g-4 mb-4">
           <div class="col-12 col-md-4">
@@ -329,7 +329,7 @@
         </div>
       </div>
 
-      <!-- ================= TAB 4: DEĞERLİ LONCA ENVANTERİ (KASA & DONANIM) ================= -->
+      <!-- ================= TAB 4: VALUABLE GUILD INVENTORY (VAULT & EQUIPMENT) ================= -->
       <div class="tab-pane fade" id="content-inventory" role="tabpanel">
         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
           <div>
@@ -567,7 +567,7 @@
       @csrf
       <div class="mb-3">
         <label class="form-label fw-semibold" for="inputAllowanceChar">{{ __('Character Name') }}</label>
-        <input type="text" class="form-control" id="inputAllowanceChar" name="character_name" placeholder="Örn: Bart, Kerrik..." required>
+        <input type="text" class="form-control" id="inputAllowanceChar" name="character_name" placeholder="{{ __('e.g. Bart, Kerrik...') }}" required>
       </div>
       <div class="mb-4">
         <label class="form-label fw-semibold" for="inputAllowanceSp">{{ __('Allowance Amount (SP)') }}</label>
@@ -603,11 +603,11 @@
           </div>
           <div class="mb-3">
             <label class="form-label fw-semibold" for="editBailiffRole">{{ __('Guild Role / Department') }}</label>
-            <input type="text" class="form-control" id="editBailiffRole" name="role" placeholder="Örn: Questmaster, Arşivci..." required>
+            <input type="text" class="form-control" id="editBailiffRole" name="role" placeholder="{{ __('e.g. Questmaster, Archivist...') }}" required>
           </div>
           <div class="mb-3">
             <label class="form-label fw-semibold" for="editBailiffDate">{{ __('Role Start Date') }}</label>
-            <input type="text" class="form-control font-monospace" id="editBailiffDate" name="assigned_date" placeholder="Örn: 14/7">
+            <input type="text" class="form-control font-monospace" id="editBailiffDate" name="assigned_date" placeholder="{{ __('e.g. 14/7') }}">
           </div>
         </div>
         <div class="modal-footer border-top p-3">
@@ -711,18 +711,18 @@ document.addEventListener('DOMContentLoaded', function() {
         if (data.success) {
           Swal.fire({
             icon: 'success',
-            title: 'Ödenek Güncellendi!',
+            title: "{{ __('Allowance Updated!') }}",
             text: data.message,
             timer: 1500,
             showConfirmButton: false
           }).then(() => location.reload());
         } else {
-          Swal.fire({ icon: 'error', title: 'Hata!', text: data.message });
+          Swal.fire({ icon: 'error', title: "{{ __('Error!') }}", text: data.message });
         }
       })
       .catch(() => {
         btn.disabled = false;
-        Swal.fire({ icon: 'error', title: 'Hata!', text: 'Ağ hatası oluştu.' });
+        Swal.fire({ icon: 'error', title: "{{ __('Error!') }}", text: "{{ __('A network error occurred.') }}" });
       });
     });
   }
@@ -769,18 +769,18 @@ document.addEventListener('DOMContentLoaded', function() {
         if (data.success) {
           Swal.fire({
             icon: 'success',
-            title: 'Bailiff Güncellendi!',
+            title: "{{ __('Bailiff Role Updated!') }}",
             text: data.message,
             timer: 1500,
             showConfirmButton: false
           }).then(() => location.reload());
         } else {
-          Swal.fire({ icon: 'error', title: 'Hata!', text: data.message });
+          Swal.fire({ icon: 'error', title: "{{ __('Error!') }}", text: data.message });
         }
       })
       .catch(() => {
         btn.disabled = false;
-        Swal.fire({ icon: 'error', title: 'Hata!', text: 'Ağ hatası oluştu.' });
+        Swal.fire({ icon: 'error', title: "{{ __('Error!') }}", text: "{{ __('A network error occurred.') }}" });
       });
     });
   }

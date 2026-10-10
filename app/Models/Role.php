@@ -2,18 +2,30 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Role extends Model
 {
-    protected $fillable = ['slug', 'name', 'permissions'];
+    protected $fillable = [
+        'slug',
+        'name',
+        'description',
+        'color',
+        'icon',
+        'priority',
+        'permissions',
+        'is_system',
+    ];
 
     protected function casts(): array
     {
         return [
             'permissions' => 'array',
             'is_system' => 'boolean',
+            'priority' => 'integer',
         ];
     }
 
@@ -29,9 +41,29 @@ class Role extends Model
         ];
     }
 
-    public function users(): HasMany
+    /**
+     * Many-to-many relationship with users (Discord-style multi-roles).
+     */
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'role_user')
+            ->withTimestamps();
+    }
+
+    /**
+     * Legacy single-role relationship.
+     */
+    public function legacyUsers(): HasMany
     {
         return $this->hasMany(User::class, 'role', 'slug');
+    }
+
+    /**
+     * Scope to order roles by authority (highest authority first).
+     */
+    public function scopeOrderedByAuthority(Builder $query): Builder
+    {
+        return $query->orderByDesc('priority')->orderBy('name');
     }
 
     public function hasPermission(string $permission): bool

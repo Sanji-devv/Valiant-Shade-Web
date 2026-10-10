@@ -52,6 +52,7 @@ class CompleteMasterSeeder extends Seeder
             ['email' => 'adventurers@valiantshade.com'],
             [
                 'name' => 'Valiant Adventurer',
+                'display_name' => 'Valiant Adventurer',
                 'real_name' => 'Valiant Adventurer',
                 'username' => 'valiant_adventurer',
                 'password' => bcrypt('123456'),
@@ -462,7 +463,8 @@ class CompleteMasterSeeder extends Seeder
                 $reportText = trim((string)($rRow['Rapor Metni'] ?? ''));
                 $lootFound = trim((string)($rRow['Görevde Bulunan  Eşyalar'] ?? ''));
 
-                $quest = Quest::where('title', 'ILIKE', "%{$qTitle}%")->first();
+                $like = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'pgsql' ? 'ILIKE' : 'LIKE';
+                $quest = Quest::where('title', $like, "%{$qTitle}%")->first();
                 if ($quest) {
                     if ($reportText !== '' && (empty($quest->full_report) || strlen($quest->full_report) < strlen($reportText))) {
                         $quest->full_report = $reportText;

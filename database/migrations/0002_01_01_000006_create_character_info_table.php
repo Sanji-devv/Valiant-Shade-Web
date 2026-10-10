@@ -12,11 +12,11 @@ return new class extends Migration
             $table->id();
             $table->foreignId('character_id')->unique()->constrained('characters')->cascadeOnDelete();
 
-            $table->string('class_and_level');
-            $table->string('race');
-            $table->enum('alignment', ['LG', 'NG', 'CG', 'LN', 'TN', 'CN', 'LE', 'NE', 'CE']);
+            $table->string('class_and_level')->nullable();
+            $table->string('race')->nullable();
+            $table->enum('alignment', ['LG', 'NG', 'CG', 'LN', 'TN', 'CN', 'LE', 'NE', 'CE'])->default('TN')->nullable();
             $table->string('deity')->nullable();
-            $table->string('size')->default('MEDIUM');
+            $table->string('size')->default('MEDIUM')->nullable();
 
             $table->integer('strength')->default(10);
             $table->integer('dexterity')->default(10);
@@ -25,7 +25,18 @@ return new class extends Migration
             $table->integer('wisdom')->default(10);
             $table->integer('charisma')->default(10);
 
+            $table->integer('str_mod')->default(0);
+            $table->integer('dex_mod')->default(0);
+            $table->integer('con_mod')->default(0);
+            $table->integer('int_mod')->default(0);
+            $table->integer('wis_mod')->default(0);
+            $table->integer('cha_mod')->default(0);
+            $table->jsonb('temp_ability_mods')->nullable();
+
             $table->integer('hp_max')->default(10);
+            $table->integer('hp_current')->default(10)->nullable();
+            $table->integer('temp_hp')->default(0)->nullable();
+            $table->integer('nonlethal_damage')->default(0)->nullable();
             $table->integer('armor_class_total')->default(10);
             $table->integer('touch_ac')->default(10);
             $table->integer('flat_footed_ac')->default(10);

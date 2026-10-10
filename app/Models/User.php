@@ -5,6 +5,7 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -23,6 +24,7 @@ class User extends Authenticatable
         'email',
         'password',
         'password_hash',
+        'display_name',
         'real_name',
         'name',
         'role',
@@ -48,10 +50,11 @@ class User extends Authenticatable
             if (empty($user->username) && !empty($user->email)) {
                 $user->username = Str::slug(explode('@', $user->email)[0], '_') . '_' . Str::random(4);
             }
-            if (empty($user->name) && !empty($user->real_name)) {
-                $user->name = $user->real_name;
-            } elseif (empty($user->real_name) && !empty($user->name)) {
-                $user->real_name = $user->name;
+            $displayName = $user->display_name ?: ($user->name ?: ($user->real_name ?: $user->username));
+            if (!empty($displayName)) {
+                $user->display_name = $displayName;
+                $user->name = $displayName;
+                $user->real_name = $displayName;
             }
         });
     }
@@ -76,20 +79,39 @@ class User extends Authenticatable
         $this->attributes['password_hash'] = $hashed;
     }
 
+    public function setDisplayNameAttribute($value): void
+    {
+        $this->attributes['display_name'] = $value;
+        $this->attributes['name'] = $value;
+        $this->attributes['real_name'] = $value;
+    }
+
     public function setRealNameAttribute($value): void
     {
+        $this->attributes['display_name'] = $value;
+        $this->attributes['name'] = $value;
         $this->attributes['real_name'] = $value;
-        if (empty($this->attributes['name'])) {
-            $this->attributes['name'] = $value;
-        }
     }
 
     public function setNameAttribute($value): void
     {
         $this->attributes['name'] = $value;
-        if (empty($this->attributes['real_name'])) {
-            $this->attributes['real_name'] = $value;
-        }
+        $this->attributes['display_name'] = $value;
+        $this->attributes['real_name'] = $value;
+    }
+
+    public function getDisplayNameAttribute(): string
+    {
+        return $this->attributes['display_name']
+            ?? $this->attributes['name']
+            ?? $this->attributes['real_name']
+            ?? $this->username
+            ?? '';
+    }
+
+    public function getRealNameAttribute(): string
+    {
+        return $this->display_name;
     }
 
     public function getProfilePhotoUrlAttribute(): string
@@ -128,6 +150,64 @@ class User extends Authenticatable
         return $this->hasMany(CharacterGraveyard::class, 'user_id');
     }
 
+    /**
+     * Many-to-many relationship: User <──> Roles (Discord-style multi-roles).
+     * Automatically sorted from highest authority (priority DESC) to lowest.
+     */
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(Role::class, 'role_user')
+            ->withTimestamps()
+            ->orderByDesc('priority')
+            ->orderBy('name');
+    }
+
+    /**
+     * Get all roles sorted by authority hierarchy (highest authority first).
+     */
+    public function getOrderedRolesAttribute()
+    {
+        $legacySlug = strtoupper((string) ($this->attributes['role'] ?? 'PLAYER'));
+        $fallback = collect([(object) [
+            'id' => 0,
+            'slug' => $legacySlug,
+            'name' => $legacySlug === 'ADMIN' ? 'Administrator' : ($legacySlug === 'GM' ? 'Game Master' : 'Player'),
+            'description' => null,
+            'color' => $legacySlug === 'ADMIN' ? '#ea5455' : ($legacySlug === 'GM' ? '#7367f0' : '#82868b'),
+            'icon' => $legacySlug === 'ADMIN' ? 'ti tabler-crown' : ($legacySlug === 'GM' ? 'ti tabler-wand' : 'ti tabler-user'),
+            'priority' => $legacySlug === 'ADMIN' ? 100 : ($legacySlug === 'GM' ? 80 : 10),
+            'permissions' => [],
+        ]]);
+
+        if (!$this->exists) {
+            return $fallback;
+        }
+
+        try {
+            $loaded = $this->relationLoaded('roles') ? $this->roles : $this->roles()->get();
+            if ($loaded->isNotEmpty()) {
+                return $loaded->sortByDesc('priority')->values();
+            }
+
+            $fallbackRole = Role::where('slug', $legacySlug)->first();
+            if ($fallbackRole) {
+                return collect([$fallbackRole]);
+            }
+        } catch (\Throwable $e) {
+            return $fallback;
+        }
+
+        return $fallback;
+    }
+
+    /**
+     * Highest authority role of the user (e.g. Admin if present, else GM, etc.).
+     */
+    public function getHighestRoleAttribute(): mixed
+    {
+        return $this->ordered_roles->first() ?: null;
+    }
+
     public function roleDefinition(): BelongsTo
     {
         return $this->belongsTo(Role::class, 'role', 'slug');
@@ -140,28 +220,137 @@ class User extends Authenticatable
             'ADMIN' => 'ADMIN',
             'GM', 'GAME_MASTER', 'GAMEMASTER' => 'GM',
             'BAILIFF' => 'BAILIFF',
+            'VETERAN' => 'VETERAN',
+            'MEMBER' => 'MEMBER',
             'USER', 'PLAYER', '' => 'PLAYER',
             default => $role,
         };
     }
 
+    /**
+     * Check if user has a specific role slug (e.g. 'ADMIN', 'GM').
+     */
+    public function hasRole(string|array $roleSlugs): bool
+    {
+        $slugs = array_map('strtoupper', (array) $roleSlugs);
+
+        // Check assigned roles
+        if ($this->relationLoaded('roles')) {
+            $userSlugs = $this->roles->pluck('slug')->map(fn($s) => strtoupper($s))->all();
+        } elseif ($this->exists) {
+            try {
+                $userSlugs = $this->roles()->pluck('slug')->map(fn($s) => strtoupper($s))->all();
+            } catch (\Throwable $e) {
+                $userSlugs = [];
+            }
+        } else {
+            $userSlugs = [];
+        }
+
+        foreach ($slugs as $slug) {
+            if (in_array($slug, $userSlugs, true)) {
+                return true;
+            }
+        }
+
+        // Fallback check against legacy role column
+        $legacy = strtoupper((string) ($this->attributes['role'] ?? ''));
+        return in_array($legacy, $slugs, true);
+    }
+
+    /**
+     * Assign a role to the user without duplication.
+     */
+    public function assignRole(Role|string $role): void
+    {
+        $roleModel = is_string($role) ? Role::where('slug', strtoupper($role))->first() : $role;
+        if ($roleModel) {
+            $this->roles()->syncWithoutDetaching([$roleModel->id]);
+            $this->updatePrimaryRole();
+        }
+    }
+
+    /**
+     * Remove a role from the user.
+     */
+    public function removeRole(Role|string $role): void
+    {
+        $roleModel = is_string($role) ? Role::where('slug', strtoupper($role))->first() : $role;
+        if ($roleModel) {
+            $this->roles()->detach($roleModel->id);
+            $this->updatePrimaryRole();
+        }
+    }
+
+    /**
+     * Sync user roles by slug or ID list.
+     */
+    public function syncRoles(array $roleIdentifiers): void
+    {
+        $ids = [];
+        foreach ($roleIdentifiers as $identifier) {
+            if (is_numeric($identifier)) {
+                $ids[] = (int) $identifier;
+            } else {
+                $role = Role::where('slug', strtoupper((string) $identifier))->first();
+                if ($role) {
+                    $ids[] = $role->id;
+                }
+            }
+        }
+
+        $this->roles()->sync($ids);
+        $this->updatePrimaryRole();
+    }
+
+    /**
+     * Keep legacy 'role' column synchronized with highest authority role.
+     */
+    public function updatePrimaryRole(): void
+    {
+        $highest = $this->roles()->orderByDesc('priority')->first();
+        if ($highest) {
+            $this->attributes['role'] = $highest->slug;
+            $this->saveQuietly();
+        }
+    }
+
     public function hasPermission(string $permission): bool
     {
-        return $this->roleDefinition?->hasPermission($permission) ?? false;
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        if ($this->exists) {
+            try {
+                $roles = $this->relationLoaded('roles') ? $this->roles : $this->roles()->get();
+                foreach ($roles as $role) {
+                    if ($role instanceof Role && $role->hasPermission($permission)) {
+                        return true;
+                    }
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        try {
+            return $this->roleDefinition?->hasPermission($permission) ?? false;
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     public function isAdmin(): bool
     {
-        return strtoupper($this->role ?? '') === 'ADMIN';
+        return $this->hasRole('ADMIN') || strtoupper($this->attributes['role'] ?? '') === 'ADMIN';
     }
 
     public function isGM(): bool
     {
-        return strtoupper($this->role ?? '') === 'GM';
+        return $this->hasRole('GM') || strtoupper($this->attributes['role'] ?? '') === 'GM';
     }
 
     public function isPlayer(): bool
     {
-        return strtoupper($this->role ?? '') === 'PLAYER';
+        return $this->hasRole('PLAYER') || strtoupper($this->attributes['role'] ?? '') === 'PLAYER';
     }
 }

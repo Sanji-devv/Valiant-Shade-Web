@@ -216,11 +216,13 @@ class AdventurerInfoService
 
                 if (!empty($filters['search'])) {
                     $term = $filters['search'];
-                    $query->where(function ($q) use ($term) {
-                        $q->where('name', 'ilike', "%{$term}%")
-                          ->orWhereHas('user', function ($uq) use ($term) {
-                              $uq->where('real_name', 'ilike', "%{$term}%")
-                                 ->orWhere('name', 'ilike', "%{$term}%");
+                    $like = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+                    $query->where(function ($q) use ($term, $like) {
+                        $q->where('name', $like, "%{$term}%")
+                          ->orWhereHas('user', function ($uq) use ($term, $like) {
+                              $uq->where('display_name', $like, "%{$term}%")
+                                 ->orWhere('name', $like, "%{$term}%")
+                                 ->orWhere('real_name', $like, "%{$term}%");
                           });
                     });
                 }
@@ -263,7 +265,7 @@ class AdventurerInfoService
                         $items->push((object) [
                             'id' => $c->id,
                             'character_name' => $c->name,
-                            'player_name' => $c->user?->real_name ?? $c->user?->name ?? 'Adventurer',
+                            'player_name' => $c->user?->display_name ?? $c->user?->name ?? 'Adventurer',
                             'rank' => $rankName,
                             'level' => $level,
                             'effective_level' => $level,
@@ -412,7 +414,8 @@ class AdventurerInfoService
 
                 if (!empty($filters['search'])) {
                     $term = $filters['search'];
-                    $query->where('name', 'ilike', "%{$term}%");
+                    $like = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+                    $query->where('name', $like, "%{$term}%");
                 }
 
                 if (!empty($filters['rank'])) {

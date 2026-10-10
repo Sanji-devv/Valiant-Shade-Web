@@ -16,7 +16,7 @@ class RoleController extends Controller
         $this->authorizeRoleManagement();
 
         return response()->json([
-            'roles' => Role::withCount('users')->orderBy('id')->get(),
+            'roles' => Role::withCount('users')->orderByDesc('priority')->orderBy('id')->get(),
             'permissions' => Role::permissionCatalog(),
         ]);
     }
@@ -35,6 +35,10 @@ class RoleController extends Controller
         $role = Role::create([
             'slug' => $slug,
             'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'color' => $validated['color'] ?? '#7367f0',
+            'icon' => $validated['icon'] ?? 'ti tabler-shield',
+            'priority' => (int) ($validated['priority'] ?? 10),
             'permissions' => $validated['permissions'] ?? [],
         ]);
 
@@ -52,6 +56,10 @@ class RoleController extends Controller
 
         $role->update([
             'name' => $validated['name'],
+            'description' => $validated['description'] ?? $role->description,
+            'color' => $validated['color'] ?? $role->color,
+            'icon' => $validated['icon'] ?? $role->icon,
+            'priority' => isset($validated['priority']) ? (int) $validated['priority'] : $role->priority,
             'permissions' => $validated['permissions'] ?? [],
         ]);
 
@@ -84,6 +92,10 @@ class RoleController extends Controller
     {
         return $request->validate([
             'name' => ['required', 'string', 'max:60'],
+            'description' => ['nullable', 'string', 'max:255'],
+            'color' => ['nullable', 'string', 'max:30'],
+            'icon' => ['nullable', 'string', 'max:50'],
+            'priority' => ['nullable', 'integer', 'min:0', 'max:100'],
             'permissions' => ['nullable', 'array'],
             'permissions.*' => ['string', Rule::in(array_keys(Role::permissionCatalog()))],
         ]);

@@ -1,6 +1,6 @@
 @extends('valiant-shade.layouts/layoutMaster')
 
-@section('title', 'Lonca Görev Panosu - Valiant Shade')
+@section('title', __('Guild Quest Board - Valiant Shade'))
 
 @section('vendor-style')
 @vite([
@@ -470,7 +470,7 @@
       <i class="icon-base ti tabler-shield-half-filled fs-2 text-warning"></i>
       <div>
         <h2 class="mb-0 fw-bold font-monospace text-warning" style="letter-spacing: 1px; text-shadow: 0 2px 6px rgba(0,0,0,0.8);">
-          VALIANT SHADE LONCA GÖREV PANOSU
+          {{ __('VALIANT SHADE GUILD QUEST BOARD') }}
         </h2>
         <p class="mb-0 small text-light-emphasis" style="color: #dfceb1 !important;">
         </p>
@@ -485,9 +485,9 @@
     <div class="col-12 col-sm-6 col-xl-3">
       <div class="wooden-placard d-flex align-items-center justify-content-between">
         <div>
-          <span class="text-body-secondary small d-block" style="color: #cbb493 !important;">Panoda Asılı Görevler</span>
+          <span class="text-body-secondary small d-block" style="color: #cbb493 !important;">{{ __('Notice Board Quests') }}</span>
           <h3 class="mb-0 fw-bold font-monospace text-warning mt-1" id="countTotalQuests">{{ $counts['total'] }}</h3>
-          <small class="text-success" style="color: #74c374 !important;">{{ $counts['active'] }} Aktif &bull; {{ $counts['on_hold'] }} Askıda</small>
+          <small class="text-success" style="color: #74c374 !important;">{{ $counts['active'] }} {{ __('Active') }} &bull; {{ $counts['on_hold'] }} {{ __('On Hold') }}</small>
         </div>
         <div class="avatar avatar-lg">
           <span class="avatar-initial rounded-3 bg-label-warning shadow-sm">
@@ -501,9 +501,9 @@
     <div class="col-12 col-sm-6 col-xl-3">
       <div class="wooden-placard d-flex align-items-center justify-content-between">
         <div>
-          <span class="text-body-secondary small d-block" style="color: #cbb493 !important;">Ana Görev Fermanları</span>
+          <span class="text-body-secondary small d-block" style="color: #cbb493 !important;">{{ __('Main Quest Decrees') }}</span>
           <h3 class="mb-0 fw-bold font-monospace text-danger mt-1" style="color: #ff8a80 !important;" id="countMainQuests">{{ $counts['main'] }}</h3>
-          <small style="color: #cbb493 !important;">Lonca ve Şahsi Görevler</small>
+          <small style="color: #cbb493 !important;">{{ __('Guild & Personal Quests') }}</small>
         </div>
         <div class="avatar avatar-lg">
           <span class="avatar-initial rounded-3 bg-label-danger shadow-sm">
@@ -517,9 +517,9 @@
     <div class="col-12 col-sm-6 col-xl-3">
       <div class="wooden-placard d-flex align-items-center justify-content-between">
         <div>
-          <span class="text-body-secondary small d-block" style="color: #cbb493 !important;">Yan Görevler</span>
+          <span class="text-body-secondary small d-block" style="color: #cbb493 !important;">{{ __('Side Quests') }}</span>
           <h3 class="mb-0 fw-bold font-monospace text-info mt-1" style="color: #82b1ff !important;" id="countSideQuests">{{ $counts['side'] }}</h3>
-          <small style="color: #cbb493 !important;">Bölgesel İlanlar & Avlar</small>
+          <small style="color: #cbb493 !important;">{{ __('Regional Notices & Hunts') }}</small>
         </div>
         <div class="avatar avatar-lg">
           <span class="avatar-initial rounded-3 bg-label-info shadow-sm">
@@ -533,9 +533,9 @@
     <div class="col-12 col-sm-6 col-xl-3">
       <div class="wooden-placard d-flex align-items-center justify-content-between">
         <div>
-          <span class="text-body-secondary small d-block" style="color: #cbb493 !important;">Sürekli Görev / Devriye</span>
+          <span class="text-body-secondary small d-block" style="color: #cbb493 !important;">{{ __('Recurring Quests / Patrols') }}</span>
           <h3 class="mb-0 fw-bold font-monospace text-primary mt-1" style="color: #b388ff !important;" id="countRecurringQuests">{{ $counts['recurring'] }}</h3>
-          <small style="color: #cbb493 !important;">Zindan & Yol Güvenliği</small>
+          <small style="color: #cbb493 !important;">{{ __('Dungeon & Highway Patrol') }}</small>
         </div>
         <div class="avatar avatar-lg">
           <span class="avatar-initial rounded-3 bg-label-primary shadow-sm">
@@ -553,11 +553,11 @@
       <div class="col-12 col-lg-7">
         <div class="d-flex align-items-center gap-2 flex-wrap">
           <span class="fw-bold small text-warning me-1">
-            <i class="icon-base ti tabler-users me-1"></i> Lonca Kadrosu:
+            <i class="icon-base ti tabler-users me-1"></i> {{ __('Guild Roster:') }}
           </span>
           @foreach($guildInfo['ranks'] as $r)
-            <span class="badge {{ $r['badge'] }} rounded-pill font-monospace" title="{{ $r['rank'] }} Kadrosu">
-              {{ $r['rank'] }}: {{ $r['count'] }}
+            <span class="badge {{ $r['badge'] }} rounded-pill font-monospace" title="{{ __($r['rank']) }} {{ __('Roster') }}">
+              {{ __($r['rank']) }}: {{ $r['count'] }}
             </span>
           @endforeach
         </div>
@@ -565,10 +565,10 @@
       <!-- Right: Master Sheet Color Legend -->
       <div class="col-12 col-lg-5">
         <div class="d-flex align-items-center justify-content-lg-end gap-3 flex-wrap small">
-          <span class="fw-semibold text-light-emphasis" style="color: #cbb493 !important;">İşaret Lejantı:</span>
-          <span class="badge bg-danger rounded-pill">Kırmızı: Görev Bitti</span>
-          <span class="badge bg-primary rounded-pill">Mavi: Görev Askıda</span>
-          <span class="badge bg-secondary rounded-pill">Gri: İptal</span>
+          <span class="fw-semibold text-light-emphasis" style="color: #cbb493 !important;">{{ __('Sign Legend:') }}</span>
+          <span class="badge bg-danger rounded-pill">{{ __('Red: Completed') }}</span>
+          <span class="badge bg-primary rounded-pill">{{ __('Blue: On Hold') }}</span>
+          <span class="badge bg-secondary rounded-pill">{{ __('Gray: Cancelled') }}</span>
         </div>
       </div>
     </div>
@@ -581,27 +581,27 @@
       <ul class="nav nav-pills medieval-tabs flex-wrap gap-2" id="questCategoryTabs">
         <li class="nav-item">
           <a class="nav-link active cursor-pointer filter-category-btn" data-category="all">
-            <i class="icon-base ti tabler-layout-grid me-1"></i> Tüm İlanlar ({{ $counts['total'] }})
+            <i class="icon-base ti tabler-layout-grid me-1"></i> {{ __('All Notices') }} ({{ $counts['total'] }})
           </a>
         </li>
         <li class="nav-item">
           <a class="nav-link cursor-pointer filter-category-btn" data-category="main">
-            <i class="icon-base ti tabler-swords me-1"></i> Ana Görevler ({{ $counts['main'] }})
+            <i class="icon-base ti tabler-swords me-1"></i> {{ __('Main Quests') }} ({{ $counts['main'] }})
           </a>
         </li>
         <li class="nav-item">
           <a class="nav-link cursor-pointer filter-category-btn" data-category="side">
-            <i class="icon-base ti tabler-compass me-1"></i> Yan Görevler ({{ $counts['side'] }})
+            <i class="icon-base ti tabler-compass me-1"></i> {{ __('Side Quests') }} ({{ $counts['side'] }})
           </a>
         </li>
         <li class="nav-item">
           <a class="nav-link cursor-pointer filter-category-btn" data-category="recurring">
-            <i class="icon-base ti tabler-refresh me-1"></i> Sürekli Görevler ({{ $counts['recurring'] }})
+            <i class="icon-base ti tabler-refresh me-1"></i> {{ __('Recurring Quests') }} ({{ $counts['recurring'] }})
           </a>
         </li>
         <li class="nav-item">
           <a class="nav-link cursor-pointer filter-category-btn" data-category="character">
-            <i class="icon-base ti tabler-user-check me-1"></i> Üye Talepleri ({{ $counts['character'] }})
+            <i class="icon-base ti tabler-user-check me-1"></i> {{ __('Member Requests') }} ({{ $counts['character'] }})
           </a>
         </li>
       </ul>
@@ -611,16 +611,16 @@
     <div class="col-12 col-xl-5">
       <div class="d-flex align-items-center justify-content-xl-end gap-2 flex-wrap">
         <!-- Appearance Customizer Button -->
-        <button type="button" class="btn btn-outline-warning btn-sm rounded-pill shadow-xs" data-bs-toggle="modal" data-bs-target="#modalBoardAppearance" title="Parşömen ve Yazı Renklerini Değiştir">
-          <i class="icon-base ti tabler-color-swatch me-1"></i> Renk Ayarları
+        <button type="button" class="btn btn-outline-warning btn-sm rounded-pill shadow-xs" data-bs-toggle="modal" data-bs-target="#modalBoardAppearance" title="{{ __('Customize Parchment and Font Colors') }}">
+          <i class="icon-base ti tabler-color-swatch me-1"></i> {{ __('Color Settings') }}
         </button>
 
         <!-- View Toggle Buttons -->
         <div class="btn-group" role="group">
-          <button type="button" class="btn btn-outline-warning btn-sm active" id="btnViewParchment" title="Pano Görünümü">
+          <button type="button" class="btn btn-outline-warning btn-sm active" id="btnViewParchment" title="{{ __('Board View') }}">
             <i class="icon-base ti tabler-pin me-1"></i> Pano
           </button>
-          <button type="button" class="btn btn-outline-warning btn-sm" id="btnViewLedger" title="Kayıt Defteri Tablosu">
+          <button type="button" class="btn btn-outline-warning btn-sm" id="btnViewLedger" title="{{ __('Ledger Table') }}">
             <i class="icon-base ti tabler-table me-1"></i> Defter
           </button>
         </div>
@@ -628,7 +628,7 @@
         @if($isAdmin)
           <!-- Pin New Quest Button -->
           <button type="button" class="btn btn-warning btn-sm rounded-pill waves-effect shadow-xs fw-bold" data-bs-toggle="modal" data-bs-target="#modalPinQuest">
-            <i class="icon-base ti tabler-plus me-1"></i> Yeni Görev As
+            <i class="icon-base ti tabler-plus me-1"></i> {{ __('Pin New Quest') }}
           </button>
         @endif
       </div>
@@ -644,30 +644,30 @@
           <span class="input-group-text medieval-input border-end-0">
             <i class="icon-base ti tabler-search text-warning"></i>
           </span>
-          <input type="text" class="form-control medieval-input border-start-0" id="questSearchInput" placeholder="Görev başlığı, maceracı veya bölge ara...">
+          <input type="text" class="form-control medieval-input border-start-0" id="questSearchInput" placeholder="{{ __('Search quest title, adventurer, or region...') }}">
         </div>
       </div>
 
       <!-- Eligibility Filter -->
       <div class="col-6 col-md-3">
         <select class="form-select form-select-sm medieval-input" id="filterEligibility">
-          <option value="all">Tüm Uygunluk Seviyeleri</option>
-          <option value="Hepsi">Hepsi (Tüm Rütbeler)</option>
-          <option value="Aday/Üye">Aday / Üye</option>
-          <option value="Üye/Kıdemli">Üye / Kıdemli</option>
-          <option value="Kıdemli/Uzman">Kıdemli / Uzman</option>
-          <option value="Uzman">Sadece Uzman</option>
+          <option value="all">{{ __('All Eligibility Levels') }}</option>
+          <option value="all_ranks">{{ __('All (All Ranks)') }}</option>
+          <option value="candidate_member">{{ __('Candidate / Member') }}</option>
+          <option value="member_senior">{{ __('Member / Senior') }}</option>
+          <option value="senior_expert">{{ __('Senior / Expert') }}</option>
+          <option value="expert">{{ __('Expert Only') }}</option>
         </select>
       </div>
 
       <!-- Status Filter -->
       <div class="col-6 col-md-3">
         <select class="form-select form-select-sm medieval-input" id="filterStatus">
-          <option value="all">Tüm Durumlar</option>
-          <option value="active">Panoda Asılı (Aktif)</option>
-          <option value="on_hold">Askıya Alındı (Beklemede)</option>
-          <option value="completed">Görev Bitti (Tamamlandı)</option>
-          <option value="cancelled">İptal Edilenler</option>
+          <option value="all">{{ __('All Statuses') }}</option>
+          <option value="active">{{ __('Pinned on Board (Active)') }}</option>
+          <option value="on_hold">{{ __('Suspended (On Hold)') }}</option>
+          <option value="completed">{{ __('Quest Finished (Completed)') }}</option>
+          <option value="cancelled">{{ __('Cancelled Quests') }}</option>
         </select>
       </div>
 
@@ -698,10 +698,10 @@
             'recurring' => '🛡️',
             default => '⚔️'
           };
-          $stampClass = match($q['category_label']) {
-            'Üye Talebi' => 'stamp-member',
-            'Ana Görev' => 'stamp-main',
-            'Yan Görev' => 'stamp-side',
+          $stampClass = match($q['category']) {
+            'character' => 'stamp-member',
+            'main' => 'stamp-main',
+            'side' => 'stamp-side',
             default => 'stamp-recurring'
           };
           $statusBadge = match($q['status']) {
@@ -711,33 +711,33 @@
             default => 'badge-status-active'
           };
           $statusText = match($q['status']) {
-            'completed' => 'Tamamlandı',
-            'on_hold' => 'Askıya Alındı',
-            'cancelled' => 'İptal',
-            default => 'Aktif'
+            'completed' => __('Completed'),
+            'on_hold' => __('On Hold'),
+            'cancelled' => __('Cancelled'),
+            default => __('Active')
           };
 
           // High Contrast Distinct Eligibility Badge Class
-          $eligBadgeClass = match($q['eligibility']) {
-            'Hepsi' => 'badge-elig-hepsi',
-            'Aday/Üye' => 'badge-elig-candidate',
-            'Üye/Kıdemli' => 'badge-elig-member',
-            'Kıdemli/Uzman' => 'badge-elig-senior',
-            'Uzman' => 'badge-elig-expert',
+          $eligBadgeClass = match($q['eligibility_key'] ?? '') {
+            'all_ranks' => 'badge-elig-hepsi',
+            'candidate_member' => 'badge-elig-candidate',
+            'member_senior' => 'badge-elig-member',
+            'senior_expert' => 'badge-elig-senior',
+            'expert' => 'badge-elig-expert',
             default => 'badge-elig-default'
           };
         @endphp
 
         <div class="col-12 col-md-6 col-xl-4 quest-card-item" 
              data-category="{{ $q['category'] }}" 
-             data-eligibility="{{ $q['eligibility'] }}" 
+             data-eligibility="{{ $q['eligibility_key'] ?? $q['eligibility'] }}" 
              data-status="{{ $q['status'] }}"
-             data-character="{{ $q['character'] ?? 'Lonca' }}"
+             data-character="{{ $q['character'] ?? __('Guild') }}"
              data-title="{{ mb_strtolower($q['title']) }}">
           
           <div class="parchment-card">
             <!-- Iron Pushpin Tack -->
-            <div class="iron-pin" title="Panoya Çivilenmiş"></div>
+            <div class="iron-pin" title="{{ __('Pinned to Board') }}"></div>
 
             <!-- Top Stamp Header -->
             <div class="d-flex align-items-center justify-content-between mb-2">
@@ -769,15 +769,15 @@
                 <!-- Row 1: High Contrast Eligibility & Target -->
                 <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
                   <div class="d-flex align-items-center gap-1.5">
-                    <span class="meta-label">Uygunluk:</span> 
+                    <span class="meta-label">{{ __('Eligibility:') }}</span> 
                     <span class="badge-meta badge-eligibility {{ $eligBadgeClass }}">
                       {{ $q['eligibility'] }}
                     </span>
                   </div>
                   <div class="d-flex align-items-center gap-1.5">
-                    <span class="meta-label">İlgili:</span> 
+                    <span class="meta-label">{{ __('Party:') }}</span> 
                     <span class="badge-meta badge-meta-character">
-                      {{ $q['character'] ?? 'Lonca' }}
+                      {{ $q['character'] ?? __('Guild') }}
                     </span>
                   </div>
                 </div>
@@ -785,7 +785,7 @@
                 <!-- Row 2: Location -->
                 @if(!empty($q['location']))
                   <div class="d-flex align-items-center gap-1.5 text-truncate">
-                    <span class="meta-label">Konum:</span>
+                    <span class="meta-label">{{ __('Location:') }}</span>
                     <span class="badge-meta badge-meta-location text-truncate" title="{{ $q['location'] }}">
                       <span>📍</span> <span class="text-truncate">{{ $q['location'] }}</span>
                     </span>
@@ -795,7 +795,7 @@
                 <!-- Row 3: Reward -->
                 @if(!empty($q['reward']))
                   <div class="d-flex align-items-center gap-1.5 text-truncate">
-                    <span class="meta-label">Ödül:</span>
+                    <span class="meta-label">{{ __('Reward:') }}</span>
                     <span class="badge-meta badge-meta-reward text-truncate" title="{{ $q['reward'] }}">
                       <span>🏆</span> <span class="text-truncate">{{ $q['reward'] }}</span>
                     </span>
@@ -811,15 +811,15 @@
 
                 <button type="button" class="btn btn-xs btn-outline-dark rounded-pill btn-inspect-quest fw-bold px-3 py-1"
                         data-title="{{ $q['title'] }}"
-                        data-category="{{ $q['category_label'] }}"
-                        data-eligibility="{{ $q['eligibility'] }}"
-                        data-character="{{ $q['character'] ?? 'Lonca' }}"
-                        data-location="{{ $q['location'] ?? 'Bilinmiyor' }}"
-                        data-reward="{{ $q['reward'] ?? 'Standart Ödül' }}"
-                        data-status="{{ $statusText }}"
+                        data-category="{{ $q['category_label'] }}" data-category-key="{{ $q['category'] }}"
+                        data-eligibility="{{ $q['eligibility_key'] ?? $q['eligibility'] }}"
+                        data-character="{{ $q['character'] ?? __('Guild') }}"
+                        data-location="{{ $q['location'] ?? __('Unknown') }}"
+                        data-reward="{{ $q['reward'] ?? __('Standard Reward') }}"
+                        data-status="{{ $q['status'] }}" data-status-label="{{ $statusText }}"
                         data-badge-class="{{ $eligBadgeClass }}"
                         data-description="{{ $q['description'] }}">
-                  <i class="icon-base ti tabler-eye me-1"></i> Fermanı İncele
+                  <i class="icon-base ti tabler-eye me-1"></i> {{ __('Inspect Decree') }}
                 </button>
               </div>
             </div>
@@ -829,8 +829,8 @@
       @empty
         <div class="col-12 text-center py-5">
           <i class="icon-base ti tabler-scroll-off fs-1 text-warning mb-2 d-block"></i>
-          <h5 class="text-warning font-monospace">Panoda Bu Kriterlere Uygun Ferman Bulunamadı</h5>
-          <p class="text-light-emphasis small">Filtreleri sıfırlayarak tüm görev ilanlarını görebilirsiniz.</p>
+          <h5 class="text-warning font-monospace">{{ __('No Decrees Found Matching These Criteria') }}</h5>
+          <p class="text-light-emphasis small">{{ __('Reset filters to view all guild quest notices.') }}</p>
         </div>
       @endforelse
     </div>
@@ -843,14 +843,14 @@
         <thead>
           <tr>
             <th style="width: 50px;" class="text-center">#</th>
-            <th>Görev Fermanı (Title)</th>
-            <th class="text-center">Kategori</th>
-            <th class="text-center">Uygunluk Rütbesi</th>
-            <th>İlgili Maceracı / Ekip</th>
-            <th>Bölge / Konum</th>
-            <th class="text-end">Ödül</th>
-            <th class="text-center">Durum</th>
-            <th class="text-end">İncele</th>
+            <th>{{ __('Quest Decree (Title)') }}</th>
+            <th class="text-center">{{ __('Category') }}</th>
+            <th class="text-center">{{ __('Eligible Rank') }}</th>
+            <th>{{ __('Adventurer / Party') }}</th>
+            <th>{{ __('Region / Location') }}</th>
+            <th class="text-end">{{ __('Reward') }}</th>
+            <th class="text-center">{{ __('Status') }}</th>
+            <th class="text-end">{{ __('Inspect') }}</th>
           </tr>
         </thead>
         <tbody id="ledgerTableBody">
@@ -863,25 +863,25 @@
                 default => 'badge-status-active'
               };
               $statusText = match($q['status']) {
-                'completed' => 'Tamamlandı',
-                'on_hold' => 'Askıya Alındı',
-                'cancelled' => 'İptal',
-                default => 'Aktif'
+                'completed' => __('Completed'),
+                'on_hold' => __('On Hold'),
+                'cancelled' => __('Cancelled'),
+                default => __('Active')
               };
-              $eligBadgeClass = match($q['eligibility']) {
-                'Hepsi' => 'badge-elig-hepsi',
-                'Aday/Üye' => 'badge-elig-candidate',
-                'Üye/Kıdemli' => 'badge-elig-member',
-                'Kıdemli/Uzman' => 'badge-elig-senior',
-                'Uzman' => 'badge-elig-expert',
+              $eligBadgeClass = match($q['eligibility_key'] ?? '') {
+                'all_ranks' => 'badge-elig-hepsi',
+                'candidate_member' => 'badge-elig-candidate',
+                'member_senior' => 'badge-elig-member',
+                'senior_expert' => 'badge-elig-senior',
+                'expert' => 'badge-elig-expert',
                 default => 'badge-elig-default'
               };
             @endphp
             <tr class="ledger-row" 
                 data-category="{{ $q['category'] }}" 
-                data-eligibility="{{ $q['eligibility'] }}" 
+                data-eligibility="{{ $q['eligibility_key'] ?? $q['eligibility'] }}" 
                 data-status="{{ $q['status'] }}"
-                data-character="{{ $q['character'] ?? 'Lonca' }}"
+                data-character="{{ $q['character'] ?? __('Guild') }}"
                 data-title="{{ mb_strtolower($q['title']) }}">
               <td class="text-center font-monospace fw-bold text-body-secondary">
                 {{ $idx + 1 }}
@@ -891,7 +891,7 @@
                 <small class="text-body-secondary text-truncate d-block" style="max-width: 250px;">{{ $q['description'] }}</small>
               </td>
               <td class="text-center">
-                <span class="stamp-tag {{ match($q['category_label']) { 'Üye Talebi' => 'stamp-member', 'Ana Görev' => 'stamp-main', 'Yan Görev' => 'stamp-side', default => 'stamp-recurring' } }}">
+                <span class="stamp-tag {{ match($q['category']) { 'character' => 'stamp-member', 'main' => 'stamp-main', 'side' => 'stamp-side', default => 'stamp-recurring' } }}">
                   {{ $q['category_label'] }}
                 </span>
               </td>
@@ -899,7 +899,7 @@
                 <span class="badge-eligibility {{ $eligBadgeClass }}">{{ $q['eligibility'] }}</span>
               </td>
               <td>
-                <span class="fw-semibold font-monospace">{{ $q['character'] ?? 'Lonca' }}</span>
+                <span class="fw-semibold font-monospace">{{ $q['character'] ?? __('Guild') }}</span>
               </td>
               <td class="small text-body-secondary">
                 📍 {{ $q['location'] ?? '—' }}
@@ -915,12 +915,12 @@
               <td class="text-end">
                 <button type="button" class="btn btn-xs btn-outline-dark rounded-pill btn-inspect-quest"
                         data-title="{{ $q['title'] }}"
-                        data-category="{{ $q['category_label'] }}"
-                        data-eligibility="{{ $q['eligibility'] }}"
-                        data-character="{{ $q['character'] ?? 'Lonca' }}"
-                        data-location="{{ $q['location'] ?? 'Bilinmiyor' }}"
-                        data-reward="{{ $q['reward'] ?? 'Standart Ödül' }}"
-                        data-status="{{ $statusText }}"
+                        data-category="{{ $q['category_label'] }}" data-category-key="{{ $q['category'] }}"
+                        data-eligibility="{{ $q['eligibility_key'] ?? $q['eligibility'] }}"
+                        data-character="{{ $q['character'] ?? __('Guild') }}"
+                        data-location="{{ $q['location'] ?? __('Unknown') }}"
+                        data-reward="{{ $q['reward'] ?? __('Standard Reward') }}"
+                        data-status="{{ $q['status'] }}" data-status-label="{{ $statusText }}"
                         data-badge-class="{{ $eligBadgeClass }}"
                         data-description="{{ $q['description'] }}">
                   <i class="icon-base ti tabler-eye"></i>
@@ -937,99 +937,99 @@
 
 <!-- ================= MODALS ================= -->
 
-<!-- 1. Modal: Renk & Görünüm Ayarları (Appearance & Colors Customizer) -->
+<!-- 1. Modal: Appearance & Colors Customizer -->
 <div class="modal fade" id="modalBoardAppearance" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-warning shadow-lg">
       <div class="modal-header border-bottom py-3">
         <h5 class="modal-title fw-bold text-heading d-flex align-items-center gap-2 mb-0">
           <i class="icon-base ti tabler-color-swatch text-warning fs-4"></i>
-          <span>Parşömen & Yazı Renk Ayarları</span>
+          <span>{{ __('Parchment & Font Color Settings') }}</span>
         </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('Close') }}"></button>
       </div>
       <div class="modal-body p-4">
         <!-- Section 1: Ready-made Themes -->
-        <h6 class="fw-bold mb-2">Hazır Parşömen Temaları:</h6>
+        <h6 class="fw-bold mb-2">{{ __('Parchment Themes:') }}</h6>
         <div class="row g-2 mb-4">
           <div class="col-6">
             <div class="preset-card card border p-2 rounded text-center active" id="presetClassic" data-theme="classic" style="background: #fbf5e6; color: #2c2011;">
-              <small class="fw-bold d-block">📜 Klasik Parşömen</small>
-              <span style="font-size: 0.72rem;" class="text-muted">Sıcak Antik Tonlar</span>
+              <small class="fw-bold d-block">📜 {{ __('Classic Parchment') }}</small>
+              <span style="font-size: 0.72rem;" class="text-muted">{{ __('Warm Antique Tones') }}</span>
             </div>
           </div>
           <div class="col-6">
             <div class="preset-card card border p-2 rounded text-center" id="presetIvory" data-theme="ivory" style="background: #ffffff; color: #111111;">
-              <small class="fw-bold d-block">📜 Açık Fildişi</small>
-              <span style="font-size: 0.72rem;" class="text-muted">Yüksek Kontrast & Net</span>
+              <small class="fw-bold d-block">📜 {{ __('Light Ivory') }}</small>
+              <span style="font-size: 0.72rem;" class="text-muted">{{ __('High Contrast & Crisp') }}</span>
             </div>
           </div>
           <div class="col-6">
             <div class="preset-card card border p-2 rounded text-center" id="presetPapyrus" data-theme="papyrus" style="background: #f4e8c1; color: #1b1208;">
-              <small class="fw-bold d-block">📜 Antik Papirüs</small>
-              <span style="font-size: 0.72rem;" class="text-muted">Altın Çöl Rulosu</span>
+              <small class="fw-bold d-block">📜 {{ __('Ancient Papyrus') }}</small>
+              <span style="font-size: 0.72rem;" class="text-muted">{{ __('Golden Desert Scroll') }}</span>
             </div>
           </div>
           <div class="col-6">
             <div class="preset-card card border p-2 rounded text-center" id="presetDark" data-theme="dark" style="background: #24190e; color: #fdf5e2;">
-              <small class="fw-bold d-block">📜 Koyu Zindan</small>
-              <span style="font-size: 0.72rem; color: #d7c4a3;">Gece Deri Fermanı</span>
+              <small class="fw-bold d-block">📜 {{ __('Dark Dungeon') }}</small>
+              <span style="font-size: 0.72rem; color: #d7c4a3;">{{ __('Night Leather Scroll') }}</span>
             </div>
           </div>
         </div>
 
         <!-- Section 2: Live Custom Color Controls -->
-        <h6 class="fw-bold mb-2">Özel Renk Seçicileri:</h6>
+        <h6 class="fw-bold mb-2">{{ __('Custom Color Pickers:') }}</h6>
         <div class="card border p-3 rounded bg-body mb-3">
           <!-- Parchment Background -->
           <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-              <span class="fw-semibold d-block small">Parşömen Zemin Rengi</span>
-              <small class="text-body-secondary" style="font-size: 0.74rem;">Ferman kağıdının arka planı</small>
+              <span class="fw-semibold d-block small">{{ __('Parchment Background Color') }}</span>
+              <small class="text-body-secondary" style="font-size: 0.74rem;">{{ __('Background of the quest parchment') }}</small>
             </div>
-            <input type="color" class="form-control form-control-color" id="inputCustomBg" value="#fbf5e6" title="Zemin Rengi Seç">
+            <input type="color" class="form-control form-control-color" id="inputCustomBg" value="#fbf5e6" title="{{ __('Choose Background Color') }}">
           </div>
 
           <!-- General Text Color -->
           <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-              <span class="fw-semibold d-block small">Başlık ve Metin Rengi</span>
-              <small class="text-body-secondary" style="font-size: 0.74rem;">Görev başlığı ve lore açıklamaları</small>
+              <span class="fw-semibold d-block small">{{ __('Heading and Text Color') }}</span>
+              <small class="text-body-secondary" style="font-size: 0.74rem;">{{ __('Quest titles and lore descriptions') }}</small>
             </div>
-            <input type="color" class="form-control form-control-color" id="inputCustomText" value="#2c2011" title="Metin Rengi Seç">
+            <input type="color" class="form-control form-control-color" id="inputCustomText" value="#2c2011" title="{{ __('Choose Text Color') }}">
           </div>
 
           <!-- "Uygunluk" Label Color -->
           <div class="d-flex justify-content-between align-items-center">
             <div>
-              <span class="fw-semibold d-block small">"Uygunluk:" Yazı Rengi</span>
-              <small class="text-body-secondary" style="font-size: 0.74rem;">Rütbe etiketinin solundaki başlık</small>
+              <span class="fw-semibold d-block small">"{{ __('Eligibility:') }}" {{ __('Text Color') }}</span>
+              <small class="text-body-secondary" style="font-size: 0.74rem;">{{ __('Title to the left of the rank badge') }}</small>
             </div>
-            <input type="color" class="form-control form-control-color" id="inputCustomUygunluk" value="#1a0e05" title="Uygunluk Başlık Rengi Seç">
+            <input type="color" class="form-control form-control-color" id="inputCustomUygunluk" value="#1a0e05" title="{{ __('Choose Eligibility Label Color') }}">
           </div>
         </div>
 
         <!-- Live Preview Box -->
         <div class="p-3 rounded border text-center" id="colorPreviewBox" style="background: #fbf5e6; color: #2c2011;">
-          <small class="text-uppercase fw-bold text-muted d-block mb-1" style="font-size: 0.7rem;">Canlı Önizleme</small>
-          <span class="uygunluk-title fw-bold" id="previewUygunlukLabel">Uygunluk:</span>
-          <span class="badge-eligibility badge-elig-senior ms-1">Kıdemli/Uzman</span>
-          <p class="small mb-0 mt-1" id="previewDescText">Bu görev fermanı seçtiğiniz renk ve kontrast ile render edilecektir.</p>
+          <small class="text-uppercase fw-bold text-muted d-block mb-1" style="font-size: 0.7rem;">{{ __('Live Preview') }}</small>
+          <span class="uygunluk-title fw-bold" id="previewUygunlukLabel">{{ __('Eligibility:') }}</span>
+          <span class="badge-eligibility badge-elig-senior ms-1">{{ __('Senior / Expert') }}</span>
+          <p class="small mb-0 mt-1" id="previewDescText">{{ __('This quest decree will be rendered with your chosen color and contrast.') }}</p>
         </div>
       </div>
       <div class="modal-footer border-top d-flex justify-content-between">
         <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill" id="btnResetToDefaults">
-          <i class="icon-base ti tabler-rotate me-1"></i> Varsayılana Sıfırla
+          <i class="icon-base ti tabler-rotate me-1"></i> {{ __('Reset to Defaults') }}
         </button>
         <button type="button" class="btn btn-warning btn-sm rounded-pill fw-bold" data-bs-dismiss="modal">
-          <i class="icon-base ti tabler-check me-1"></i> Ayarları Koru
+          <i class="icon-base ti tabler-check me-1"></i> {{ __('Keep Settings') }}
         </button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- 2. Modal: Inspect Quest Parchment (Resmi Ferman İnceleme) -->
+<!-- 2. Modal: Inspect Quest Parchment -->
 <div class="modal fade" id="modalInspectQuest" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content" style="background: var(--parchment-bg, #fbf5e6); border: 3px solid #7c5a31; color: var(--parchment-text, #2c2011);">
@@ -1037,25 +1037,25 @@
         <div class="d-flex align-items-center gap-2">
           <span class="fs-4">📜</span>
           <h5 class="modal-title fw-bold mb-0" id="inspectQuestTitle" style="color: var(--parchment-text, #2c2011);">
-            Görev Fermanı
+            {{ __('Quest Decree') }}
           </h5>
         </div>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('Close') }}"></button>
       </div>
       <div class="modal-body p-4">
         <!-- Badge row -->
         <div class="d-flex align-items-center justify-content-between mb-3 pb-1">
-          <span class="stamp-tag stamp-main" id="inspectQuestCategory">Ana Görev</span>
-          <span class="badge bg-success rounded-pill font-monospace px-3 py-1" id="inspectQuestStatus">Panoda Asılı</span>
+          <span class="stamp-tag stamp-main" id="inspectQuestCategory">{{ __('Main Quest') }}</span>
+          <span class="badge bg-success rounded-pill font-monospace px-3 py-1" id="inspectQuestStatus">{{ __('Pinned on Board') }}</span>
         </div>
 
         <!-- Description -->
         <div class="p-3 mb-3 rounded-3" style="background: rgba(140, 100, 50, 0.08); border: 1px dashed rgba(140, 100, 50, 0.4);">
           <h6 class="fw-bold mb-2 d-flex align-items-center gap-1" style="color: var(--parchment-text, #2c2011);">
-            <span>📜</span> Lonca Bildirisi:
+            <span>📜</span> {{ __('Guild Notice:') }}
           </h6>
           <p class="mb-0 small" id="inspectQuestDesc" style="line-height: 1.65; color: var(--parchment-desc, #443220);">
-            Detaylı görev açıklaması burada yer alacaktır.
+            {{ __('Detailed quest notice will appear here.') }}
           </p>
         </div>
 
@@ -1063,15 +1063,15 @@
         <div class="row g-3 small">
           <div class="col-6">
             <div class="p-2.5 rounded h-100 d-flex flex-column justify-content-center" style="background: rgba(140, 100, 50, 0.06); border: 1px solid rgba(140, 100, 50, 0.2); min-height: 60px;">
-              <span class="uygunluk-title d-block mb-1">Uygunluk:</span>
+              <span class="uygunluk-title d-block mb-1">{{ __('Eligibility:') }}</span>
               <div>
-                <span class="badge-eligibility badge-elig-senior" id="inspectQuestEligibility">Kıdemli/Uzman</span>
+                <span class="badge-eligibility badge-elig-senior" id="inspectQuestEligibility">{{ __('Senior / Expert') }}</span>
               </div>
             </div>
           </div>
           <div class="col-6">
             <div class="p-2.5 rounded h-100 d-flex flex-column justify-content-center" style="background: rgba(140, 100, 50, 0.06); border: 1px solid rgba(140, 100, 50, 0.2); min-height: 60px;">
-              <span class="uygunluk-title d-block mb-1">İlgili Maceracı:</span>
+              <span class="uygunluk-title d-block mb-1">{{ __('Assigned Adventurer:') }}</span>
               <div>
                 <span class="badge bg-label-dark rounded-pill fw-bold font-monospace px-2.5 py-1" id="inspectQuestCharacter" style="font-size: 0.80rem; color: var(--parchment-text, #2c2011);">Lonca</span>
               </div>
@@ -1079,22 +1079,22 @@
           </div>
           <div class="col-6">
             <div class="p-2.5 rounded h-100 d-flex flex-column justify-content-center" style="background: rgba(140, 100, 50, 0.06); border: 1px solid rgba(140, 100, 50, 0.2); min-height: 60px;">
-              <span class="uygunluk-title d-block mb-1">Bölge / Konum:</span>
-              <span id="inspectQuestLocation" class="fw-medium" style="color: var(--parchment-desc, #443220);">Bilinmiyor</span>
+              <span class="uygunluk-title d-block mb-1">{{ __('Region / Location:') }}</span>
+              <span id="inspectQuestLocation" class="fw-medium" style="color: var(--parchment-desc, #443220);">{{ __('Unknown') }}</span>
             </div>
           </div>
           <div class="col-6">
             <div class="p-2.5 rounded h-100 d-flex flex-column justify-content-center" style="background: rgba(140, 100, 50, 0.06); border: 1px solid rgba(140, 100, 50, 0.2); min-height: 60px;">
-              <span class="uygunluk-title d-block mb-1">Görev Ödülü:</span>
-              <span class="text-success fw-bold" id="inspectQuestReward">Standart XP & Altın</span>
+              <span class="uygunluk-title d-block mb-1">{{ __('Quest Reward:') }}</span>
+              <span class="text-success fw-bold" id="inspectQuestReward">{{ __('Standard XP & Gold') }}</span>
             </div>
           </div>
         </div>
       </div>
       <div class="modal-footer border-top d-flex justify-content-end gap-2 py-3 px-4" style="border-color: rgba(140, 100, 50, 0.35) !important;">
-        <button type="button" class="btn btn-outline-dark btn-sm rounded-pill px-3" data-bs-dismiss="modal">Kapat</button>
-        <button type="button" class="btn btn-warning btn-sm rounded-pill fw-bold px-3 shadow-sm" onclick="Swal.fire('Göreve Talip Olundu!', 'Görevi talep etmek için lonca kâtibine başvurdunuz.', 'success');">
-          <i class="icon-base ti tabler-send me-1"></i> Görevi Talep Et
+        <button type="button" class="btn btn-outline-dark btn-sm rounded-pill px-3" data-bs-dismiss="modal">{{ __('Close') }}</button>
+        <button type="button" class="btn btn-warning btn-sm rounded-pill fw-bold px-3 shadow-sm" onclick="Swal.fire('{{ __('Quest Claimed!') }}', '{{ __('You applied to the guild clerk to claim this quest.') }}', 'success');">
+          <i class="icon-base ti tabler-send me-1"></i> {{ __('Claim Quest') }}
         </button>
       </div>
     </div>
@@ -1102,72 +1102,72 @@
 </div>
 
 @if($isAdmin)
-  <!-- 3. Modal: Pin New Quest (Panoya Yeni Görev As) -->
+  <!-- 3. Modal: Pin New Quest -->
   <div class="modal fade" id="modalPinQuest" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header border-bottom">
           <h5 class="modal-title fw-bold text-heading d-flex align-items-center gap-2">
             <i class="icon-base ti tabler-pin text-warning fs-4"></i>
-            <span>Panoya Yeni Görev Fermanı As</span>
+            <span>{{ __('Pin New Quest Notice to Board') }}</span>
           </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('Close') }}"></button>
         </div>
         <form id="formPinQuest">
           @csrf
           <div class="modal-body p-4">
             <div class="mb-3">
-              <label class="form-label fw-semibold" for="inputQuestTitle">Görev Başlığı <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" id="inputQuestTitle" required placeholder="Örn: Dağdaki Ejderha İninin Temizliği">
+              <label class="form-label fw-semibold" for="inputQuestTitle">{{ __('Quest Title') }} <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="inputQuestTitle" required placeholder="{{ __('e.g., Mountain Dragon Lair Cleansing') }}">
             </div>
 
             <div class="row g-3 mb-3">
               <div class="col-6">
-                <label class="form-label fw-semibold" for="inputQuestCategory">Kategori <span class="text-danger">*</span></label>
+                <label class="form-label fw-semibold" for="inputQuestCategory">{{ __('Category') }} <span class="text-danger">*</span></label>
                 <select class="form-select" id="inputQuestCategory" required>
-                  <option value="main">Ana Görev (Main Quest)</option>
-                  <option value="side">Yan Görev (Side Quest)</option>
-                  <option value="recurring">Sürekli Görev / Devriye</option>
-                  <option value="character">Üye Talebi</option>
+                  <option value="main">{{ __('Main Quest') }}</option>
+                  <option value="side">{{ __('Side Quest') }}</option>
+                  <option value="recurring">{{ __('Recurring Quests / Patrols') }}</option>
+                  <option value="character">{{ __('Member Request') }}</option>
                 </select>
               </div>
               <div class="col-6">
-                <label class="form-label fw-semibold" for="inputQuestEligibility">Uygunluk <span class="text-danger">*</span></label>
+                <label class="form-label fw-semibold" for="inputQuestEligibility">{{ __('Eligibility') }} <span class="text-danger">*</span></label>
                 <select class="form-select" id="inputQuestEligibility" required>
-                  <option value="Hepsi">Hepsi (Tüm Rütbeler)</option>
-                  <option value="Aday/Üye">Aday / Üye</option>
-                  <option value="Üye/Kıdemli">Üye / Kıdemli</option>
-                  <option value="Kıdemli/Uzman">Kıdemli / Uzman</option>
-                  <option value="Uzman">Sadece Uzman</option>
+                  <option value="all_ranks">{{ __('All (All Ranks)') }}</option>
+                  <option value="candidate_member">{{ __('Candidate / Member') }}</option>
+                  <option value="member_senior">{{ __('Member / Senior') }}</option>
+                  <option value="senior_expert">{{ __('Senior / Expert') }}</option>
+                  <option value="expert">{{ __('Expert Only') }}</option>
                 </select>
               </div>
             </div>
 
             <div class="row g-3 mb-3">
               <div class="col-6">
-                <label class="form-label fw-semibold" for="inputQuestCharacter">İlgili Maceracı</label>
-                <input type="text" class="form-control" id="inputQuestCharacter" value="Lonca" placeholder="Lonca veya Karakter adı">
+                <label class="form-label fw-semibold" for="inputQuestCharacter">{{ __('Assigned Adventurer') }}</label>
+                <input type="text" class="form-control" id="inputQuestCharacter" value="{{ __('Guild') }}" placeholder="{{ __('Guild or Character Name') }}">
               </div>
               <div class="col-6">
-                <label class="form-label fw-semibold" for="inputQuestLocation">Konum / Bölge</label>
-                <input type="text" class="form-control" id="inputQuestLocation" placeholder="Örn: Kuzey Sisli Dağları">
+                <label class="form-label fw-semibold" for="inputQuestLocation">{{ __('Location / Region') }}</label>
+                <input type="text" class="form-control" id="inputQuestLocation" placeholder="{{ __('e.g., Northern Mist Mountains') }}">
               </div>
             </div>
 
             <div class="mb-3">
-              <label class="form-label fw-semibold" for="inputQuestReward">Ödül</label>
-              <input type="text" class="form-control" id="inputQuestReward" placeholder="Örn: 10,000 XP & 500 SP">
+              <label class="form-label fw-semibold" for="inputQuestReward">{{ __('Reward') }}</label>
+              <input type="text" class="form-control" id="inputQuestReward" placeholder="{{ __('e.g., 10,000 XP & 500 SP') }}">
             </div>
 
             <div class="mb-0">
-              <label class="form-label fw-semibold" for="inputQuestDesc">Görev Bildirisi & Detaylar <span class="text-danger">*</span></label>
-              <textarea class="form-control" id="inputQuestDesc" rows="3" required placeholder="Görevin amacı, tehlikeler ve maceracılardan beklenenler..."></textarea>
+              <label class="form-label fw-semibold" for="inputQuestDesc">{{ __('Quest Notice & Details') }} <span class="text-danger">*</span></label>
+              <textarea class="form-control" id="inputQuestDesc" rows="3" required placeholder="{{ __('Quest objectives, hazards, and expectations from adventurers...') }}"></textarea>
             </div>
           </div>
           <div class="modal-footer border-top">
-            <button type="button" class="btn btn-label-secondary rounded-pill" data-bs-dismiss="modal">Vazgeç</button>
+            <button type="button" class="btn btn-label-secondary rounded-pill" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
             <button type="submit" class="btn btn-warning rounded-pill fw-bold" id="btnSubmitPinQuest">
-              <i class="icon-base ti tabler-pin me-1"></i> Mühürle ve Panoya As
+              <i class="icon-base ti tabler-pin me-1"></i> {{ __('Seal & Pin to Board') }}
             </button>
           </div>
         </form>
@@ -1462,17 +1462,18 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('inspectQuestTitle').textContent = this.dataset.title;
       const catEl = document.getElementById('inspectQuestCategory');
       catEl.textContent = this.dataset.category;
+      const catKey = this.dataset.categoryKey || '';
       catEl.className = 'stamp-tag ' + (
-        this.dataset.category === 'Üye Talebi' ? 'stamp-member' :
-        (this.dataset.category === 'Yan Görev' ? 'stamp-side' :
-        (this.dataset.category === 'Sürekli Görev' ? 'stamp-recurring' : 'stamp-main'))
+        catKey === 'character' ? 'stamp-member' :
+        (catKey === 'side' ? 'stamp-side' :
+        (catKey === 'recurring' ? 'stamp-recurring' : 'stamp-main'))
       );
       const statusEl = document.getElementById('inspectQuestStatus');
-      statusEl.textContent = this.dataset.status;
+      statusEl.textContent = this.dataset.statusLabel || this.dataset.status;
       statusEl.className = 'badge rounded-pill font-monospace px-3 py-1 ' + (
-        this.dataset.status === 'Aktif' ? 'bg-success' :
-        (this.dataset.status === 'Askıya Alındı' ? 'bg-info' :
-        (this.dataset.status === 'Tamamlandı' ? 'bg-danger' : 'bg-secondary'))
+        this.dataset.status === 'active' ? 'bg-success' :
+        (this.dataset.status === 'on_hold' ? 'bg-info' :
+        (this.dataset.status === 'completed' ? 'bg-danger' : 'bg-secondary'))
       );
 
       const eligEl = document.getElementById('inspectQuestEligibility');
@@ -1480,8 +1481,8 @@ document.addEventListener('DOMContentLoaded', function() {
       eligEl.className = 'badge-meta badge-eligibility ' + (this.dataset.badgeClass || 'badge-elig-senior');
 
       document.getElementById('inspectQuestCharacter').textContent = this.dataset.character;
-      document.getElementById('inspectQuestLocation').textContent = '📍 ' + (this.dataset.location || 'Bilinmiyor');
-      document.getElementById('inspectQuestReward').textContent = '🏆 ' + (this.dataset.reward || 'Standart Ödül');
+      document.getElementById('inspectQuestLocation').textContent = '📍 ' + (this.dataset.location || '{{ __("Unknown") }}');
+      document.getElementById('inspectQuestReward').textContent = '🏆 ' + (this.dataset.reward || '{{ __("Standard Reward") }}');
       document.getElementById('inspectQuestDesc').textContent = this.dataset.description;
 
       const modal = new bootstrap.Modal(document.getElementById('modalInspectQuest'));
@@ -1501,7 +1502,7 @@ document.addEventListener('DOMContentLoaded', function() {
         title: document.getElementById('inputQuestTitle').value,
         category: document.getElementById('inputQuestCategory').value,
         eligibility: document.getElementById('inputQuestEligibility').value,
-        character: document.getElementById('inputQuestCharacter').value || 'Lonca',
+        character: document.getElementById('inputQuestCharacter').value || '{{ __('Guild') }}',
         location: document.getElementById('inputQuestLocation').value,
         reward: document.getElementById('inputQuestReward').value,
         description: document.getElementById('inputQuestDesc').value
@@ -1522,18 +1523,18 @@ document.addEventListener('DOMContentLoaded', function() {
         if (data.success) {
           Swal.fire({
             icon: 'success',
-            title: 'Ferman Asıldı!',
+            title: '{{ __('Notice Pinned!') }}',
             text: data.message,
             timer: 1600,
             showConfirmButton: false
           }).then(() => location.reload());
         } else {
-          Swal.fire({ icon: 'error', title: 'Hata!', text: data.message });
+          Swal.fire({ icon: 'error', title: '{{ __('Error!') }}', text: data.message });
         }
       })
       .catch(() => {
         btn.disabled = false;
-        Swal.fire({ icon: 'error', title: 'Hata!', text: 'Sunucuya ulaşılamadı.' });
+        Swal.fire({ icon: 'error', title: '{{ __('Error!') }}', text: '{{ __('Could not reach the server.') }}' });
       });
     });
   }

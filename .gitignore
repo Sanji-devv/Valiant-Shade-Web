@@ -36,6 +36,9 @@ Thumbs.db
 # Windows
 run-dev.bat
 run-dev.ps1
+start.bat
+start.ps1
+scratch/
 start-db.bat
 stop-db.bat
 /PostgreSQL

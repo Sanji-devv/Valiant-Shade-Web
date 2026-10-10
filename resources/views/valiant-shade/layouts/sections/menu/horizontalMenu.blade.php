@@ -15,7 +15,7 @@
                     $currentRouteName = Route::currentRouteName() ?? '';
                     $routeWithoutPrefix = str_starts_with($currentRouteName, 'valiant-shade.') ? substr($currentRouteName, 14) : $currentRouteName;
 
-                    if ($currentRouteName === $menu->slug || $routeWithoutPrefix === $menu->slug) {
+                    if ($currentRouteName === $menu->slug || $routeWithoutPrefix === $menu->slug || (isset($menu->url) && url()->current() === url($menu->url))) {
                         $activeClass = 'active';
                     } elseif (isset($menu->submenu)) {
                         $slugs = is_array($menu->slug) ? $menu->slug : [$menu->slug];

@@ -21,6 +21,8 @@ class GuestInteractionMiddleware
         'valiant-shade.auth-register-basic.post',
         'valiant-shade.auth-reset-password-basic',
         'valiant-shade.auth-forgot-password-basic',
+        'valiant-shade.pages-account-settings-account.update',
+        'valiant-shade.pages-account-settings-account.deactivate',
         'login',
     ];
 
@@ -34,6 +36,7 @@ class GuestInteractionMiddleware
         '*/auth/register*',
         '*/auth/reset-password*',
         '*/auth/forgot-password*',
+        '*/pages/account-settings-account*',
         'login',
     ];
 

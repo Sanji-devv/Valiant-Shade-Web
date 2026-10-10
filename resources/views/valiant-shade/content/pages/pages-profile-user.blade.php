@@ -45,19 +45,30 @@
                 <span class="badge bg-label-primary font-monospace fs-7 d-inline-flex align-items-center">ID: #{{ Auth::user()->id }}</span>
               </div>
               @endif
-              <ul class="list-inline mb-0 d-flex align-items-center flex-wrap justify-content-sm-start justify-content-center gap-4 my-2">
-                @php
-                  $userRole = Auth::user()->role ?? 'User';
-                  $roleIcon = match($userRole) {
-                    'Admin' => 'ti tabler-crown text-danger',
-                    'Bailiff' => 'ti tabler-shield text-warning',
-                    default => 'ti tabler-user text-primary',
-                  };
-                @endphp
-                <li class="list-inline-item d-flex gap-2 align-items-center"><i class="icon-base {{ $roleIcon }} icon-lg"></i><span class="fw-medium">{{ $userRole }}</span></li>
-
-
-              </ul>
+              <!-- Discord-style User Roles (Ordered from Highest Authority to Least) -->
+              @php
+                $profileUser = Auth::user() ?? ($user ?? null);
+                $profileRoles = $profileUser ? $profileUser->ordered_roles : collect();
+              @endphp
+              <div class="d-flex align-items-center flex-wrap justify-content-sm-start justify-content-center gap-2 my-2" id="userRolesContainer">
+                @forelse($profileRoles as $role)
+                  @php
+                    $roleColor = $role->color ?: '#7367f0';
+                    $roleIcon = $role->icon ?: 'ti tabler-shield';
+                  @endphp
+                  <span class="badge rounded-pill d-inline-flex align-items-center gap-1_5 px-3 py-1_5 shadow-xs"
+                        style="background-color: {{ $roleColor }}20; color: {{ $roleColor }}; border: 1px solid {{ $roleColor }}55; font-size: 0.82rem; font-weight: 600; letter-spacing: 0.3px;"
+                        title="{{ $role->description ? __($role->description) : '' }} ({{ __('Authority') }}: {{ $role->priority }})">
+                    <span class="badge-dot-indicator rounded-circle" style="width: 8px; height: 8px; background-color: {{ $roleColor }}; display: inline-block;"></span>
+                    <span>{{ __($role->name) }}</span>
+                  </span>
+                @empty
+                  <span class="badge rounded-pill bg-label-secondary d-inline-flex align-items-center gap-1_5 px-3 py-1">
+                    <span class="badge-dot-indicator rounded-circle" style="width: 8px; height: 8px; background-color: #82868b; display: inline-block;"></span>
+                    <span>{{ __('Adventurer') }}</span>
+                  </span>
+                @endforelse
+              </div>
             </div>
             
           </div>
@@ -69,66 +80,88 @@
 <!--/ Header -->
 
 <!-- Navbar pills -->
-<div class="row">
-  <div class="col-md-12">
-    <div class="nav-align-top">
-      <ul class="nav nav-pills flex-column flex-sm-row mb-6 gap-sm-0 gap-2">
-        <li class="nav-item">
-          <a class="nav-link active" href="javascript:void(0);"><i class="icon-base ti tabler-user-check icon-sm me-1_5"></i> Profile</a>
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+      <ul class="nav nav-pills flex-wrap gap-2 mb-0" role="tablist" id="profilePageTabList">
+        <li class="nav-item" role="presentation">
+          <button type="button" class="nav-link active d-flex align-items-center gap-1_5 px-3 py-2" role="tab" data-bs-toggle="tab" data-bs-target="#tab-profile" aria-controls="tab-profile" aria-selected="true" id="tab-profile-btn">
+            <i class="icon-base ti tabler-user-check icon-sm"></i>
+            <span class="fw-semibold">{{ __('Profile & Hero Sheet') }}</span>
+          </button>
         </li>
-        <li class="nav-item ms-auto">
-          @if(count($characters ?? []) < 2)
-            <div class="d-flex align-items-center gap-2">
-              <button type="button" class="btn btn-warning waves-effect waves-light d-flex align-items-center shadow-sm" data-bs-toggle="modal" data-bs-target="#claimCharacterModal">
-                <i class="icon-base ti tabler-user-check icon-sm me-1_5"></i> {{ __('Claim Character') }}
-              </button>
-              <button type="button" class="btn btn-outline-primary waves-effect d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#createCharacterModal">
-                <i class="icon-base ti tabler-user-plus icon-sm me-1_5"></i> {{ __('Create New') }}
-              </button>
-            </div>
-          @else
-            <button type="button" class="btn btn-secondary waves-effect d-flex align-items-center disabled" disabled title="{{ __('Maximum 2 characters reached (1 Main and 1 Clerk)') }}">
-              <i class="icon-base ti tabler-lock icon-sm me-1_5"></i> {{ __('Character Limit Reached (2/2)') }}
-            </button>
-          @endif
+        <li class="nav-item" role="presentation">
+          <button type="button" class="nav-link d-flex align-items-center gap-1_5 px-3 py-2" role="tab" data-bs-toggle="tab" data-bs-target="#tab-past-characters" aria-controls="tab-past-characters" aria-selected="false" id="tab-past-characters-btn">
+            <i class="icon-base ti tabler-grave icon-sm text-danger"></i>
+            <span class="fw-semibold">{{ __('Fallen & Retired Heroes') }}</span>
+            <span class="badge rounded-pill bg-label-danger ms-1 px-2 py-0_5 font-monospace">{{ count($pastCharacters ?? []) }}</span>
+          </button>
         </li>
       </ul>
+
+      <div class="d-flex align-items-center gap-2">
+        @if(count($characters ?? []) < 2)
+          <button type="button" class="btn btn-warning waves-effect waves-light d-flex align-items-center shadow-sm" data-bs-toggle="modal" data-bs-target="#claimCharacterModal">
+            <i class="icon-base ti tabler-user-check icon-sm me-1_5"></i> {{ __('Claim Character') }}
+          </button>
+          <button type="button" class="btn btn-outline-primary waves-effect d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#createCharacterModal">
+            <i class="icon-base ti tabler-user-plus icon-sm me-1_5"></i> {{ __('Create New') }}
+          </button>
+        @else
+          <button type="button" class="btn btn-secondary waves-effect d-flex align-items-center disabled" disabled title="{{ __('Maximum 2 characters reached (1 Main and 1 Clerk)') }}">
+            <i class="icon-base ti tabler-lock icon-sm me-1_5"></i> {{ __('Character Limit Reached (2/2)') }}
+          </button>
+        @endif
+      </div>
     </div>
   </div>
 </div>
 <!--/ Navbar pills -->
 
-<!-- User Profile Content -->
-<div class="row">
-  <div class="col-xl-4 col-lg-5 col-md-5">
-    <!-- Player Characters Card (Replaced About) -->
-    <div class="card mb-6" id="playerCharactersCard">
-      <div class="card-header d-flex align-items-center justify-content-between pb-3 border-bottom">
-        <div class="d-flex align-items-center">
-          <div class="avatar avatar-sm bg-label-primary rounded me-2 d-flex align-items-center justify-content-center">
-            <i class="icon-base ti tabler-swords text-primary"></i>
+<!-- Tab Content Container -->
+<div class="tab-content p-0 border-0 shadow-none bg-transparent">
+  <!-- Tab 1: Profile & Hero Sheet -->
+  <div class="tab-pane fade show active" id="tab-profile" role="tabpanel" aria-labelledby="tab-profile-btn">
+    <!-- User Profile Content -->
+    <div class="row">
+      <div class="col-xl-4 col-lg-5 col-md-5">
+        <!-- Player Characters Card -->
+        <div class="card mb-6" id="playerCharactersCard">
+          <div class="card-header d-flex align-items-center justify-content-between pb-3 border-bottom">
+            <div class="d-flex align-items-center min-w-0 me-2">
+              <div class="avatar avatar-sm bg-label-primary rounded me-2 flex-shrink-0 d-flex align-items-center justify-content-center">
+                <i class="icon-base ti tabler-swords text-primary"></i>
+              </div>
+              <div class="overflow-hidden">
+                <h5 class="card-title mb-0 fw-bold text-nowrap">{{ __('My Characters') }}</h5>
+                <small class="text-body-secondary text-nowrap">{{ Auth::user()->name ?? 'Player' }} &bull; {{ __('Active Heroes') }}</small>
+              </div>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-shrink-0">
+              <span class="badge bg-label-primary rounded-pill font-monospace" id="charListCountBadge">{{ count($characters ?? []) }}/2</span>
+              @if(count($characters ?? []) < 2)
+                <div class="dropdown">
+                  <button class="btn btn-sm btn-icon btn-primary dropdown-toggle hide-arrow waves-effect shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="{{ __('Add / Claim Hero') }}">
+                    <i class="icon-base ti tabler-plus"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end shadow">
+                    <li>
+                      <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#claimCharacterModal">
+                        <i class="icon-base ti tabler-user-check text-warning icon-sm"></i>
+                        <span>{{ __('Claim Character') }}</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#createCharacterModal">
+                        <i class="icon-base ti tabler-user-plus text-primary icon-sm"></i>
+                        <span>{{ __('Create New') }}</span>
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              @endif
+            </div>
           </div>
-          <div>
-            <h5 class="card-title mb-0 fw-bold">{{ __('My Characters') }}</h5>
-            <small class="text-body-secondary">{{ Auth::user()->name ?? 'Player' }} &bull; {{ __('Active Heroes') }}</small>
-          </div>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-          <span class="badge bg-label-primary rounded-pill" id="charListCountBadge">{{ count($characters ?? []) }}/2 Characters</span>
-          @if(count($characters ?? []) < 2)
-            <button type="button" class="btn btn-sm btn-warning waves-effect waves-light d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#claimCharacterModal" title="{{ __('Claim Existing Character from XP Registry') }}">
-              <i class="icon-base ti tabler-user-check icon-xs me-1"></i> {{ __('Claim') }}
-            </button>
-            <button type="button" class="btn btn-sm btn-outline-primary waves-effect d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#createCharacterModal" title="{{ __('Create Brand New Character') }}">
-              <i class="icon-base ti tabler-plus icon-xs me-1"></i> {{ __('New') }}
-            </button>
-          @else
-            <button type="button" class="btn btn-sm btn-secondary waves-effect disabled" disabled title="{{ __('Maximum 2 characters reached (1 Main and 1 Clerk)') }}">
-              <i class="icon-base ti tabler-lock icon-xs me-1"></i> {{ __('Full (2/2)') }}
-            </button>
-          @endif
-        </div>
-      </div>
       <div class="card-body pt-4">
         <!-- Container for character cards -->
         <div id="characterCardsContainer" class="d-flex flex-column gap-3">
@@ -169,7 +202,7 @@
                         <span class="badge bg-label-primary px-2 py-0_5" style="font-size: 0.7rem;" title="Permanent Race"><i class="icon-base ti tabler-lock icon-xs me-1 text-muted"></i>{{ $c->race }}</span>
                         <span class="badge bg-label-info px-2 py-0_5" style="font-size: 0.7rem;">{{ $c->class_name }}</span>
                         @if($tCnt > 0)
-                          <span class="badge bg-label-warning px-2 py-0_5" style="font-size: 0.7rem;" title="Rütbe Traitleri"><i class="icon-base ti tabler-sparkles icon-xs me-1"></i>{{ $tCnt }}/3 Trait</span>
+                          <span class="badge bg-label-warning px-2 py-0_5" style="font-size: 0.7rem;" title="{{ __('Rank Traits') }}"><i class="icon-base ti tabler-sparkles icon-xs me-1"></i>{{ $tCnt }}/3 Trait</span>
                         @endif
                       </div>
                     </div>
@@ -225,6 +258,19 @@
             <i class="icon-base ti tabler-user-plus me-1"></i> Create New Character
           </button>
         </div>
+
+        @if(count($characters ?? []) < 2)
+          <div class="d-flex align-items-center gap-2 mt-3 pt-3 border-top border-secondary border-opacity-10">
+            <button type="button" class="btn btn-sm btn-outline-warning w-50 waves-effect d-flex align-items-center justify-content-center gap-1 shadow-sm" data-bs-toggle="modal" data-bs-target="#claimCharacterModal">
+              <i class="icon-base ti tabler-user-check icon-xs"></i>
+              <span>{{ __('Claim Character') }}</span>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary w-50 waves-effect d-flex align-items-center justify-content-center gap-1 shadow-sm" data-bs-toggle="modal" data-bs-target="#createCharacterModal">
+              <i class="icon-base ti tabler-plus icon-xs"></i>
+              <span>{{ __('Create New') }}</span>
+            </button>
+          </div>
+        @endif
       </div>
     </div>
     <!--/ Player Characters Card -->
@@ -353,7 +399,7 @@
                 </span>
                 <span class="badge bg-body border text-body d-flex align-items-center gap-1 py-2 px-3 shadow-xs" id="chipSpellWrapper">
                   <i class="icon-base ti tabler-sparkles text-info"></i>
-                  <span class="text-muted">Büyü:</span>
+                  <span class="text-muted">{{ __('Spells:') }}</span>
                   <strong class="text-info" id="chipSpellType">Divine</strong>
                 </span>
               </div>
@@ -446,7 +492,7 @@
             </div>
           </div>
 
-          <!-- Pane 4: Character Traits (Rütbe Traitleri: Üye, Kıdemli, Uzman) -->
+          <!-- Pane 4: Character Traits (Rank Traits: Member, Senior, Expert) -->
           <div class="tab-pane fade" id="navs-traits" role="tabpanel">
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 p-3 mb-4 rounded-3 border border-warning border-opacity-25 bg-label-warning bg-opacity-10 shadow-sm" id="traitsHeaderCard">
               <div class="d-flex align-items-center gap-3">
@@ -456,10 +502,10 @@
                 <div>
                   <div class="d-flex align-items-center gap-2 flex-wrap">
                     <h5 class="mb-0 fw-bold text-heading" id="traitsCharName">{{ __('Character Name') }}</h5>
-                    <span class="badge bg-label-warning font-monospace">{{ __('Rütbe Traitleri (3 Slot)') }}</span>
+                    <span class="badge bg-label-warning font-monospace">{{ __('Rank Traits (3 Slots)') }}</span>
                   </div>
                   <div class="d-flex align-items-center gap-2 mt-1 flex-wrap text-body-secondary" style="font-size: 0.82rem;">
-                    <span>{{ __('Karakterin Üye, Kıdemli ve Uzman rütbelerinde kazandığı özel lonca traitleri.') }}</span>
+                    <span>{{ __('Special guild traits unlocked at Member, Senior and Expert ranks.') }}</span>
                   </div>
                 </div>
               </div>
@@ -467,7 +513,7 @@
               <div class="d-flex align-items-center gap-2">
                 <a href="#" class="btn btn-sm btn-outline-warning d-flex align-items-center gap-1 px-3 py-2 waves-effect" id="btnEditTraitsInSheet">
                   <i class="icon-base ti tabler-edit icon-sm"></i>
-                  <span>{{ __('Karakter Sayfasında Düzenle') }}</span>
+                  <span>{{ __('Edit in Character Sheet') }}</span>
                 </a>
               </div>
             </div>
@@ -484,6 +530,362 @@
   </div>
 </div>
 <!--/ User Profile Content -->
+  </div>
+  <!--/ Tab 1: Profile & Hero Sheet -->
+
+  <!-- Tab 2: Fallen & Retired Heroes -->
+  <div class="tab-pane fade" id="tab-past-characters" role="tabpanel" aria-labelledby="tab-past-characters-btn">
+    <!-- Memorial / Header Banner -->
+    <div class="card mb-6 border-0 shadow-sm" style="background: linear-gradient(135deg, rgba(23, 25, 45, 0.98) 0%, rgba(38, 22, 30, 0.95) 50%, rgba(18, 19, 32, 0.98) 100%); border: 1px solid rgba(234, 84, 85, 0.35) !important; border-radius: 12px;">
+      <div class="card-body p-4">
+        <div class="row align-items-center g-3">
+          <div class="col-lg-6 col-12">
+            <div class="d-flex align-items-center gap-3">
+              <div class="avatar avatar-lg rounded-3 d-flex align-items-center justify-content-center shadow" style="width: 52px; height: 52px; background: linear-gradient(135deg, #ea5455 0%, #b02a37 100%);">
+                <i class="icon-base ti tabler-grave fs-2 text-white"></i>
+              </div>
+              <div>
+                <h4 class="mb-1 text-white fw-bold d-flex align-items-center gap-2">
+                  <span>{{ __('Fallen & Retired Heroes') }}</span>
+                  <span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25 font-monospace fs-6 px-2 py-0_5">
+                    {{ count($pastCharacters ?? []) }} {{ __('Characters') }}
+                  </span>
+                </h4>
+                <p class="mb-0 text-body-secondary" style="font-size: 0.88rem;">
+                  {{ __('Archive of all past heroes fallen in battle (KIA), missing in action (MIA), or retired from guild adventures.') }}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6 col-12">
+            <div class="row g-2 justify-content-lg-end">
+              <div class="col-auto">
+                <div class="p-2 px-3 rounded-3 bg-dark bg-opacity-60 border border-secondary border-opacity-25 text-center">
+                  <div class="text-body-secondary small fw-medium">{{ __('Toplam') }}</div>
+                  <div class="h5 mb-0 fw-bold text-primary">{{ count($pastCharacters ?? []) }}</div>
+                </div>
+              </div>
+              <div class="col-auto">
+                <div class="p-2 px-3 rounded-3 bg-dark bg-opacity-60 border border-danger border-opacity-25 text-center">
+                  <div class="text-body-secondary small fw-medium">{{ __('(KIA)') }}</div>
+                  <div class="h5 mb-0 fw-bold text-danger">{{ $pastCharacters->where('status', 'KIA')->count() }}</div>
+                </div>
+              </div>
+              <div class="col-auto">
+                <div class="p-2 px-3 rounded-3 bg-dark bg-opacity-60 border border-warning border-opacity-25 text-center">
+                  <div class="text-body-secondary small fw-medium">{{ __('(MIA)') }}</div>
+                  <div class="h5 mb-0 fw-bold text-warning">{{ $pastCharacters->where('status', 'MIA')->count() }}</div>
+                </div>
+              </div>
+              <div class="col-auto">
+                <div class="p-2 px-3 rounded-3 bg-dark bg-opacity-60 border border-info border-opacity-25 text-center">
+                  <div class="text-body-secondary small fw-medium">{{ __('Emekli') }}</div>
+                  <div class="h5 mb-0 fw-bold text-info">{{ $pastCharacters->whereIn('status', ['INACTIVE', 'TRAVELER'])->count() }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search & Filter Bar -->
+    <div class="card mb-6 border-0 shadow-sm">
+      <div class="card-body p-3">
+        <div class="row g-3 align-items-center">
+          <!-- Search Input -->
+          <div class="col-lg-5 col-md-6 col-12">
+            <div class="input-group input-group-merge shadow-sm">
+              <span class="input-group-text"><i class="icon-base ti tabler-search text-secondary"></i></span>
+              <input type="text" id="pastCharsSearchInput" class="form-control" placeholder="{{ __('Search past heroes...') }}" autocomplete="off" />
+              <button class="btn btn-outline-secondary d-none" type="button" id="btnClearPastSearch"><i class="icon-base ti tabler-x"></i></button>
+            </div>
+          </div>
+
+          <!-- Status Filter (No Emojis) -->
+          <div class="col-lg-3 col-md-3 col-6">
+            <select id="pastCharsStatusFilter" class="form-select shadow-sm">
+              <option value="">{{ __('All Statuses') }}</option>
+              <option value="kia">(KIA)</option>
+              <option value="mia">(MIA)</option>
+              <option value="inactive">{{ __('Retired (Inactive)') }}</option>
+              <option value="traveler">{{ __('Wanderer') }}</option>
+            </select>
+          </div>
+
+          <!-- Type Filter -->
+          <div class="col-lg-2 col-md-3 col-6">
+            <select id="pastCharsTypeFilter" class="form-select shadow-sm">
+              <option value="">{{ __('All Types') }}</option>
+              <option value="main">Main</option>
+              <option value="clerk">Clerk</option>
+            </select>
+          </div>
+
+          <!-- View Switch & Reset -->
+          <div class="col-lg-2 col-md-12 col-12 d-flex align-items-center justify-content-end gap-2">
+            <div class="btn-group shadow-sm" role="group" aria-label="{{ __('View') }}">
+              <button type="button" class="btn btn-outline-primary active btn-icon waves-effect" id="btnPastCharsGridView" title="{{ __('Grid View') }}">
+                <i class="icon-base ti tabler-layout-grid"></i>
+              </button>
+              <button type="button" class="btn btn-outline-primary btn-icon waves-effect" id="btnPastCharsTableView" title="{{ __('Table View') }}">
+                <i class="icon-base ti tabler-table"></i>
+              </button>
+            </div>
+            <button type="button" class="btn btn-label-secondary btn-icon waves-effect shadow-sm" id="btnPastCharsResetFilters" title="{{ __('Reset Filters') }}">
+              <i class="icon-base ti tabler-refresh"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter Count Summary -->
+        <div class="d-flex align-items-center justify-content-between mt-3 pt-2 border-top text-body-secondary small">
+          <span id="pastCharsFilterSummary" class="fw-semibold">
+            {{ __('Total :count past heroes listed', ['count' => count($pastCharacters ?? [])]) }}
+          </span>
+          <span class="text-body-secondary">
+            <i class="icon-base ti tabler-info-circle icon-xs me-1"></i> {{ __('Only fallen, missing, or retired heroes belonging to your account are displayed.') }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="card border-0 shadow-sm {{ count($pastCharacters ?? []) > 0 ? 'd-none' : '' }} text-center p-5 mb-6" id="pastCharsEmptyState">
+      <div class="py-5">
+        <div class="avatar avatar-xl bg-label-secondary mx-auto mb-3 rounded-circle d-flex align-items-center justify-content-center" style="width: 72px; height: 72px;">
+          <i class="icon-base ti tabler-shield-heart fs-1 text-secondary"></i>
+        </div>
+        <h5 class="fw-bold mb-1">{{ __('No Fallen or Retired Characters Found') }}</h5>
+        <p class="text-body-secondary mb-3">{{ __('Currently, all your characters are active or no results matched your search filter.') }}</p>
+        <button type="button" class="btn btn-outline-primary waves-effect" id="btnEmptyResetPastFilters">
+          <i class="icon-base ti tabler-refresh me-1"></i> {{ __('Clear Filters') }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Grid View Container (3 Cards per row on desktop for spacious, uncrowded layout) -->
+    <div class="row g-4 mb-6" id="pastCharsGridContainer">
+      @foreach($pastCharacters as $c)
+        @php
+          $qCount = $questCounts[$c->id] ?? 0;
+          $prof = $profilesByName->get($c->name);
+          $cClass = ($prof?->class_name && $prof->class_name !== 'Maceracı') ? $prof->class_name : null;
+          $cRace = $prof?->race ?: 'Human';
+          $statusUpper = strtoupper($c->status ?: 'KIA');
+          
+          $statusBadgeClass = match($statusUpper) {
+            'KIA' => 'bg-label-danger border border-danger border-opacity-25',
+            'MIA' => 'bg-label-warning border border-warning border-opacity-25',
+            'INACTIVE' => 'bg-label-secondary border border-secondary border-opacity-25',
+            'TRAVELER' => 'bg-label-info border border-info border-opacity-25',
+            default => 'bg-label-primary',
+          };
+          $statusLabel = match($statusUpper) {
+            'KIA' => '(KIA)',
+            'MIA' => '(MIA)',
+            'INACTIVE' => 'Emekli',
+            'TRAVELER' => 'Gezgin',
+            default => $statusUpper,
+          };
+          $statusIcon = match($statusUpper) {
+            'KIA' => 'ti tabler-skull text-danger',
+            'MIA' => 'ti tabler-help text-warning',
+            'INACTIVE' => 'ti tabler-shield-check text-secondary',
+            'TRAVELER' => 'ti tabler-compass text-info',
+            default => 'ti tabler-user',
+          };
+        @endphp
+        <div class="col-xxl-4 col-xl-4 col-md-6 col-12 past-char-card-item"
+             data-name="{{ strtolower($c->name) }}"
+             data-status="{{ strtolower($statusUpper) }}"
+             data-type="{{ strtolower($c->character_type ?: 'main') }}"
+             data-id="{{ $c->id }}"
+             data-level="{{ (int)($c->current_level ?: 1) }}">
+          <div class="card h-100 character-directory-card border {{ $statusUpper === 'KIA' ? 'border-danger border-opacity-25' : 'border-secondary border-opacity-25' }} shadow-sm">
+            <div class="card-body p-4 d-flex flex-column">
+
+              <!-- Top Row: Avatar & Level on left, Status on right -->
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="avatar avatar-sm rounded-circle d-flex align-items-center justify-content-center"
+                       style="background: {{ $statusUpper === 'KIA' ? 'rgba(234, 84, 85, 0.16)' : 'rgba(115, 103, 240, 0.16)' }}; border: 1px solid {{ $statusUpper === 'KIA' ? 'rgba(234, 84, 85, 0.4)' : 'rgba(115, 103, 240, 0.3)' }};">
+                    <i class="icon-base {{ $statusIcon }} fs-6"></i>
+                  </div>
+                  <span class="badge bg-primary fs-6 fw-bold px-2 py-0_5 shadow-sm">
+                    Lv. {{ $c->current_level ?: 1 }}
+                  </span>
+                </div>
+                <span class="badge {{ $statusBadgeClass }} font-monospace fw-bold px-2_5 py-1" style="font-size: 0.75rem;">
+                  {{ $statusLabel }}
+                </span>
+              </div>
+
+              <!-- Full-Width Character Name (Accommodates Long Names without cut-off) -->
+              <div class="mb-3">
+                <h5 class="card-title mb-1 fw-bold text-heading" style="word-break: break-word; line-height: 1.35; font-size: 1.15rem;" title="{{ $c->name }}">
+                  @if($prof)
+                    <a href="{{ route('valiant-shade.character-sheet', ['name' => $c->name]) }}" class="text-heading text-hover-primary text-decoration-none">
+                      {{ $c->name }}
+                    </a>
+                  @else
+                    {{ $c->name }}
+                  @endif
+                </h5>
+                <small class="text-body-secondary font-monospace" style="font-size: 0.76rem;">{{ $cClass ? ($cClass . ' • ' . $cRace) : $cRace }}</small>
+              </div>
+
+              <!-- XP & Quest Metrics Strip (Clean 3-metric overview) -->
+              <div class="p-2_5 rounded-3 bg-label-secondary bg-opacity-10 border border-secondary border-opacity-10 mb-3">
+                <div class="row g-2 text-center small">
+                  <div class="col-4">
+                    <div class="text-body-secondary fw-semibold" style="font-size: 0.68rem;">{{ __('TOTAL XP') }}</div>
+                    <div class="fw-bold text-warning font-monospace">{{ number_format($c->total_xp, 0) }}</div>
+                  </div>
+                  <div class="col-4 border-start">
+                    <div class="text-body-secondary fw-semibold" style="font-size: 0.68rem;">{{ __('QUEST XP') }}</div>
+                    <div class="fw-bold text-primary font-monospace">{{ number_format($c->quest_xp ?? 0, 0) }}</div>
+                  </div>
+                  <div class="col-4 border-start">
+                    <div class="text-body-secondary fw-semibold" style="font-size: 0.68rem;">{{ __('QUESTS') }}</div>
+                    <div class="fw-bold text-info font-monospace">{{ $qCount }} {{ __('Quests') }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Footer with Sheet Link or XP Record -->
+              <div class="mt-auto pt-2 border-top d-flex align-items-center justify-content-between gap-2">
+                @if($prof)
+                  <a href="{{ route('valiant-shade.character-sheet', ['name' => $c->name]) }}" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 w-100 justify-content-center waves-effect shadow-sm">
+                    <i class="icon-base ti tabler-file-description icon-xs"></i>
+                    <span>{{ __('Character Sheet') }}</span>
+                  </a>
+                @else
+                  <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 w-100 justify-content-center waves-effect" disabled title="{{ __('This hero is recorded in guild XP registry') }}">
+                    <i class="icon-base ti tabler-award icon-xs"></i>
+                    <span>{{ __('XP Record • :xp XP', ['xp' => number_format($c->total_xp, 0)]) }}</span>
+                  </button>
+                @endif
+              </div>
+
+            </div>
+          </div>
+        </div>
+      @endforeach
+    </div>
+
+    <!-- Table View Container (hidden by default) -->
+    <div class="card border-0 shadow-sm d-none mb-6" id="pastCharsTableContainer">
+      <div class="table-responsive text-nowrap">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th>{{ __('Hero Name') }}</th>
+              <th>{{ __('Status') }}</th>
+              <th>{{ __('Level') }}</th>
+              <th>{{ __('Type') }}</th>
+              <th>{{ __('Quests Attended') }}</th>
+              <th>{{ __('Quest XP') }}</th>
+              <th>{{ __('Total XP') }}</th>
+              <th class="text-end">{{ __('Actions') }}</th>
+            </tr>
+          </thead>
+          <tbody class="table-border-bottom-0" id="pastCharsTableBody">
+            @foreach($pastCharacters as $c)
+              @php
+                $qCount = $questCounts[$c->id] ?? 0;
+                $prof = $profilesByName->get($c->name);
+                $statusUpper = strtoupper($c->status ?: 'KIA');
+                $statusBadgeClass = match($statusUpper) {
+                  'KIA' => 'bg-label-danger',
+                  'MIA' => 'bg-label-warning',
+                  'INACTIVE' => 'bg-label-secondary',
+                  'TRAVELER' => 'bg-label-info',
+                  default => 'bg-label-primary',
+                };
+                $statusLabel = match($statusUpper) {
+                  'KIA' => '(KIA)',
+                  'MIA' => '(MIA)',
+                  'INACTIVE' => 'Emekli',
+                  'TRAVELER' => 'Gezgin',
+                  default => $statusUpper,
+                };
+                $statusIcon = match($statusUpper) {
+                  'KIA' => 'ti tabler-skull text-danger',
+                  'MIA' => 'ti tabler-help text-warning',
+                  'INACTIVE' => 'ti tabler-shield-check text-secondary',
+                  'TRAVELER' => 'ti tabler-compass text-info',
+                  default => 'ti tabler-user',
+                };
+              @endphp
+              <tr class="past-char-table-row"
+                  data-name="{{ strtolower($c->name) }}"
+                  data-status="{{ strtolower($statusUpper) }}"
+                  data-type="{{ strtolower($c->character_type ?: 'main') }}"
+                  data-id="{{ $c->id }}"
+                  data-level="{{ (int)($c->current_level ?: 1) }}">
+                <td>
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="avatar avatar-sm rounded-circle bg-label-secondary d-flex align-items-center justify-content-center">
+                      <i class="icon-base {{ $statusIcon }}"></i>
+                    </div>
+                    <div>
+                      <div class="fw-bold text-heading">
+                        @if($prof)
+                          <a href="{{ route('valiant-shade.character-sheet', ['name' => $c->name]) }}" class="text-heading text-hover-primary text-decoration-none">
+                            {{ $c->name }}
+                          </a>
+                        @else
+                          {{ $c->name }}
+                        @endif
+                      </div>
+                      <small class="text-body-secondary">{{ Auth::user()->name ?? 'Player' }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge {{ $statusBadgeClass }} font-monospace">
+                    {{ $statusLabel }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge bg-label-primary font-monospace fw-bold">Lv. {{ $c->current_level ?: 1 }}</span>
+                </td>
+                <td>
+                  <span class="badge bg-label-info font-monospace">
+                    {{ $c->character_type ?: 'MAIN' }}
+                  </span>
+                </td>
+                <td>
+                  <span class="text-info fw-bold font-monospace">{{ $qCount }}</span> <small class="text-body-secondary">{{ __('Quests') }}</small>
+                </td>
+                <td>
+                  <span class="text-heading fw-bold font-monospace">{{ number_format($c->quest_xp ?? 0, 0) }}</span>
+                </td>
+                <td>
+                  <span class="text-warning fw-bold font-monospace">{{ number_format($c->total_xp, 0) }}</span> <small class="text-body-secondary">XP</small>
+                </td>
+                <td class="text-end">
+                  @if($prof)
+                    <a href="{{ route('valiant-shade.character-sheet', ['name' => $c->name]) }}" class="btn btn-sm btn-icon btn-outline-primary waves-effect" title="{{ __('Character Sheet') }}">
+                      <i class="icon-base ti tabler-file-description"></i>
+                    </a>
+                  @else
+                    <span class="badge bg-label-secondary font-monospace" title="{{ __('XP Registry') }}">
+                      <i class="icon-base ti tabler-award icon-xs"></i>
+                    </span>
+                  @endif
+                </td>
+              </tr>
+            @endforeach
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <!--/ Tab 2: Fallen & Retired Heroes -->
+</div>
+<!--/ Tab Content Container -->
 
 @include('valiant-shade._partials._modals.modal-create-character')
 @include('valiant-shade._partials._modals.modal-claim-character')
@@ -867,6 +1269,26 @@
     font-size: 0.72rem !important;
     line-height: 1.2;
     border-radius: 0.25rem;
+  }
+
+  /* All Characters Directory Styles */
+  .character-directory-card {
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    background: rgba(30, 32, 54, 0.65) !important;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 12px;
+  }
+  .character-directory-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(115, 103, 240, 0.45) !important;
+    box-shadow: 0 12px 28px -5px rgba(0, 0, 0, 0.45), 0 0 15px rgba(115, 103, 240, 0.2) !important;
+  }
+  .all-char-table-row {
+    transition: background-color 0.15s ease;
+  }
+  .all-char-table-row:hover {
+    background-color: rgba(115, 103, 240, 0.08) !important;
   }
 </style>
 
@@ -1397,8 +1819,8 @@ document.addEventListener('DOMContentLoaded', function () {
       container.innerHTML = `
         <div class="col-12 text-center py-5">
           <i class="icon-base ti tabler-sparkles text-muted fs-1 mb-2 d-block opacity-50"></i>
-          <h6 class="text-heading fw-bold mb-1">{{ __("Karakter Seçilmedi") }}</h6>
-          <p class="text-body-secondary small mb-0">{{ __("Traitleri görüntülemek için bir karakter seçin.") }}</p>
+          <h6 class="text-heading fw-bold mb-1">{{ __("No Character Selected") }}</h6>
+          <p class="text-body-secondary small mb-0">{{ __("Select a character to view traits.") }}</p>
         </div>
       `;
       return;
@@ -1426,8 +1848,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const slots = [
       {
         key: 'uye',
-        title: '{{ __("Üye Traiti") }}',
-        rankLabel: 'Üye &bull; Slot 1',
+        title: '{{ __("Member Trait") }}',
+        rankLabel: '{{ __("Member") }} &bull; Slot 1',
         badgeClass: 'bg-label-info',
         borderStyle: 'border-color: rgba(115, 103, 240, 0.35) !important;',
         icon: 'ti tabler-user-check text-info',
@@ -1435,8 +1857,8 @@ document.addEventListener('DOMContentLoaded', function () {
       },
       {
         key: 'kidemli',
-        title: '{{ __("Kıdemli Traiti") }}',
-        rankLabel: 'Kıdemli &bull; Slot 2',
+        title: '{{ __("Senior Trait") }}',
+        rankLabel: '{{ __("Senior") }} &bull; Slot 2',
         badgeClass: 'bg-label-warning',
         borderStyle: 'border-color: rgba(255, 171, 0, 0.35) !important;',
         icon: 'ti tabler-award text-warning',
@@ -1444,8 +1866,8 @@ document.addEventListener('DOMContentLoaded', function () {
       },
       {
         key: 'uzman',
-        title: '{{ __("Uzman Traiti") }}',
-        rankLabel: 'Uzman &bull; Slot 3',
+        title: '{{ __("Expert Trait") }}',
+        rankLabel: '{{ __("Expert") }} &bull; Slot 3',
         badgeClass: 'bg-label-success',
         borderStyle: 'border-color: rgba(40, 199, 111, 0.35) !important;',
         icon: 'ti tabler-shield-star text-success',
@@ -1473,9 +1895,9 @@ document.addEventListener('DOMContentLoaded', function () {
             ` : `
               <div class="text-center py-4 text-body-secondary">
                 <i class="icon-base ti tabler-plus-circle text-muted fs-3 mb-1 d-block opacity-50"></i>
-                <small class="d-block text-muted mb-2">{{ __("Henüz tanımlanmadı") }}</small>
+                <small class="d-block text-muted mb-2">{{ __("Not defined yet") }}</small>
                 <a href="${charSheetUrl}" class="btn btn-xs btn-label-secondary rounded-pill">
-                  <i class="icon-base ti tabler-edit me-1"></i> {{ __("Trait Ekle") }}
+                  <i class="icon-base ti tabler-edit me-1"></i> {{ __("Add Trait") }}
                 </a>
               </div>
             `}
@@ -2090,7 +2512,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const chars = getCharacters();
 
     if (countBadge) {
-      countBadge.textContent = `${chars.length} Characters`;
+      countBadge.textContent = `${chars.length}/2`;
     }
 
     if (chars.length === 0) {
@@ -2149,7 +2571,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (cTr.uye && cTr.uye.name) tCnt++;
                     if (cTr.kidemli && cTr.kidemli.name) tCnt++;
                     if (cTr.uzman && cTr.uzman.name) tCnt++;
-                    return tCnt > 0 ? `<span class="badge bg-label-warning px-2 py-0_5" style="font-size: 0.7rem;" title="Rütbe Traitleri"><i class="icon-base ti tabler-sparkles icon-xs me-1"></i>${tCnt}/3 Trait</span>` : '';
+                    return tCnt > 0 ? `<span class="badge bg-label-warning px-2 py-0_5" style="font-size: 0.7rem;" title="{{ __('Rank Traits') }}"><i class="icon-base ti tabler-sparkles icon-xs me-1"></i>${tCnt}/3 Trait</span>` : '';
                   })()}
                 </div>
               </div>
@@ -2772,6 +3194,139 @@ document.addEventListener('DOMContentLoaded', function () {
       selectCharacter(created.id);
     }
   });
+
+  // ----------------------------------------------------
+  // PAST / FALLEN & RETIRED CHARACTERS DIRECTORY LOGIC
+  // ----------------------------------------------------
+  const pastSearchInput = document.getElementById('pastCharsSearchInput');
+  const pastStatusFilter = document.getElementById('pastCharsStatusFilter');
+  const pastTypeFilter = document.getElementById('pastCharsTypeFilter');
+  const btnClearPastSearch = document.getElementById('btnClearPastSearch');
+  const pastSummaryEl = document.getElementById('pastCharsFilterSummary');
+  const pastEmptyStateEl = document.getElementById('pastCharsEmptyState');
+  const pastGridContainer = document.getElementById('pastCharsGridContainer');
+  const pastTableContainer = document.getElementById('pastCharsTableContainer');
+  const btnPastGridView = document.getElementById('btnPastCharsGridView');
+  const btnPastTableView = document.getElementById('btnPastCharsTableView');
+  const btnPastReset = document.getElementById('btnPastCharsResetFilters');
+  const btnEmptyResetPast = document.getElementById('btnEmptyResetPastFilters');
+
+  function filterPastCharacters() {
+    const query = (pastSearchInput?.value || '').toLowerCase().trim();
+    const sFilter = (pastStatusFilter?.value || '').toLowerCase();
+    const tFilter = (pastTypeFilter?.value || '').toLowerCase();
+
+    if (btnClearPastSearch) {
+      if (query.length > 0) {
+        btnClearPastSearch.classList.remove('d-none');
+      } else {
+        btnClearPastSearch.classList.add('d-none');
+      }
+    }
+
+    const cardItems = document.querySelectorAll('.past-char-card-item');
+    const tableRows = document.querySelectorAll('.past-char-table-row');
+    let visibleCount = 0;
+
+    cardItems.forEach((card, idx) => {
+      const name = card.getAttribute('data-name') || '';
+      const status = card.getAttribute('data-status') || '';
+      const type = card.getAttribute('data-type') || '';
+
+      const matchSearch = !query || name.includes(query);
+      const matchStatus = !sFilter || status.includes(sFilter);
+      const matchType = !tFilter || type === tFilter;
+
+      const isMatch = matchSearch && matchStatus && matchType;
+
+      if (isMatch) {
+        card.classList.remove('d-none');
+        if (tableRows[idx]) tableRows[idx].classList.remove('d-none');
+        visibleCount++;
+      } else {
+        card.classList.add('d-none');
+        if (tableRows[idx]) tableRows[idx].classList.add('d-none');
+      }
+    });
+
+    if (pastSummaryEl) {
+      pastSummaryEl.textContent = `${visibleCount} {{ __('past heroes listed') }}`;
+    }
+
+    if (pastEmptyStateEl) {
+      if (visibleCount === 0) {
+        pastEmptyStateEl.classList.remove('d-none');
+        pastGridContainer?.classList.add('d-none');
+        pastTableContainer?.classList.add('d-none');
+      } else {
+        pastEmptyStateEl.classList.add('d-none');
+        if (btnPastGridView?.classList.contains('active')) {
+          pastGridContainer?.classList.remove('d-none');
+          pastTableContainer?.classList.add('d-none');
+        } else {
+          pastGridContainer?.classList.add('d-none');
+          pastTableContainer?.classList.remove('d-none');
+        }
+      }
+    }
+  }
+
+  if (pastSearchInput) {
+    pastSearchInput.addEventListener('input', filterPastCharacters);
+  }
+  if (pastStatusFilter) {
+    pastStatusFilter.addEventListener('change', filterPastCharacters);
+  }
+  if (pastTypeFilter) {
+    pastTypeFilter.addEventListener('change', filterPastCharacters);
+  }
+  if (btnClearPastSearch) {
+    btnClearPastSearch.addEventListener('click', function() {
+      pastSearchInput.value = '';
+      filterPastCharacters();
+      pastSearchInput.focus();
+    });
+  }
+
+  function resetPastFilters() {
+    if (pastSearchInput) pastSearchInput.value = '';
+    if (pastStatusFilter) pastStatusFilter.value = '';
+    if (pastTypeFilter) pastTypeFilter.value = '';
+    filterPastCharacters();
+  }
+
+  if (btnPastReset) btnPastReset.addEventListener('click', resetPastFilters);
+  if (btnEmptyResetPast) btnEmptyResetPast.addEventListener('click', resetPastFilters);
+
+  // View toggle
+  if (btnPastGridView && btnPastTableView) {
+    btnPastGridView.addEventListener('click', function() {
+      btnPastGridView.classList.add('active');
+      btnPastTableView.classList.remove('active');
+      if (pastEmptyStateEl && pastEmptyStateEl.classList.contains('d-none')) {
+        pastGridContainer?.classList.remove('d-none');
+        pastTableContainer?.classList.add('d-none');
+      }
+    });
+    btnPastTableView.addEventListener('click', function() {
+      btnPastTableView.classList.add('active');
+      btnPastGridView.classList.remove('active');
+      if (pastEmptyStateEl && pastEmptyStateEl.classList.contains('d-none')) {
+        pastGridContainer?.classList.add('d-none');
+        pastTableContainer?.classList.remove('d-none');
+      }
+    });
+  }
+
+  // Handle URL hash or query param to auto-switch tab
+  const urlParams = new URLSearchParams(window.location.search);
+  if (window.location.hash === '#tab-past-characters' || window.location.hash === '#tab-all-characters' || urlParams.get('tab') === 'past' || urlParams.get('tab') === 'all') {
+    const pastCharsTabBtn = document.getElementById('tab-past-characters-btn');
+    if (pastCharsTabBtn && window.bootstrap && bootstrap.Tab) {
+      const tabTrigger = new bootstrap.Tab(pastCharsTabBtn);
+      tabTrigger.show();
+    }
+  }
 });
 </script>
 @endsection

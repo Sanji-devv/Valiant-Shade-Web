@@ -28,12 +28,36 @@ return new class extends Migration
                     ->nullOnDelete();
             }
 
+            if (!Schema::hasColumn('character_feats', 'character_name')) {
+                $table->string('character_name')->nullable()->index();
+            }
+
+            if (!Schema::hasColumn('character_feats', 'feat_name')) {
+                $table->string('feat_name')->nullable();
+            }
+
             if (!Schema::hasColumn('character_feats', 'custom_feat_name')) {
-                $table->string('custom_feat_name')->nullable()->after('feat_id');
+                $table->string('custom_feat_name')->nullable();
+            }
+
+            if (!Schema::hasColumn('character_feats', 'class_feat_name')) {
+                $table->string('class_feat_name')->nullable();
+            }
+
+            if (!Schema::hasColumn('character_feats', 'category')) {
+                $table->string('category')->nullable();
+            }
+
+            if (!Schema::hasColumn('character_feats', 'prerequisites')) {
+                $table->text('prerequisites')->nullable();
+            }
+
+            if (!Schema::hasColumn('character_feats', 'sort_order')) {
+                $table->integer('sort_order')->default(0);
             }
 
             if (!Schema::hasColumn('character_feats', 'acquired_at_level')) {
-                $table->integer('acquired_at_level')->default(1)->after('custom_feat_name');
+                $table->integer('acquired_at_level')->default(1);
             }
         });
     }

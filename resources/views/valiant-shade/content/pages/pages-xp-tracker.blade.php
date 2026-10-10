@@ -134,7 +134,7 @@
       </ul>
     </div>
 
-    <!-- Group Actions / Toplu İşlemler -->
+    <!-- Group Actions -->
     @if($isAdmin)
       <div class="dropdown">
         <button type="button" class="btn btn-label-primary btn-sm rounded-pill dropdown-toggle waves-effect shadow-xs" data-bs-toggle="dropdown" aria-expanded="false">
@@ -183,7 +183,7 @@
             <span class="text-heading fw-semibold">{{ __('Active Guild Roster') }}</span>
             <div class="d-flex align-items-baseline gap-2 my-1">
               <h3 class="mb-0 fw-bold text-heading font-monospace text-primary" id="statGuildCount">
-                {{ $statistics['guild_count'] ?? $guildMembers->count() }}
+                {{ $statistics['guild_count'] ?? 0 }}
               </h3>
               <span class="badge bg-label-primary font-monospace">{{ __('Members') }}</span>
             </div>
@@ -210,7 +210,7 @@
             <span class="text-heading fw-semibold">{{ __('Candidates (New List)') }}</span>
             <div class="d-flex align-items-baseline gap-2 my-1">
               <h3 class="mb-0 fw-bold text-heading font-monospace text-info" id="statCandidateCount">
-                {{ $statistics['candidate_count'] ?? $candidates->count() }}
+                {{ $statistics['candidate_count'] ?? 0 }}
               </h3>
               <span class="badge bg-label-info font-monospace">{{ __('Candidate') }}</span>
             </div>
@@ -249,8 +249,8 @@
           </div>
         </div>
         <div class="mt-2 pt-2 border-top d-flex justify-content-between align-items-center">
-          <small class="text-truncate text-body-secondary" style="max-width: 220px;" title="Ortalama Seviye: Lv {{ $statistics['avg_level'] ?? 1 }}">
-            Ort. Seviye: <strong class="text-heading">Lv {{ $statistics['avg_level'] ?? 1 }}</strong> &bull; Lider: {{ $statistics['top_adventurer']['name'] ?? '—' }}
+          <small class="text-truncate text-body-secondary" style="max-width: 220px;" title="{{ __('Average Level: Lv :lvl', ['lvl' => $statistics['avg_level'] ?? 1]) }}">
+            {{ __('Avg. Level:') }} <strong class="text-heading">Lv {{ $statistics['avg_level'] ?? 1 }}</strong> &bull; {{ __('Leader:') }} {{ $statistics['top_adventurer']['name'] ?? '—' }}
           </small>
         </div>
       </div>
@@ -278,7 +278,7 @@
           </div>
         </div>
         <div class="mt-2 pt-2 border-top">
-          <small class="text-body-secondary">Kayıp ve ebediyete intikal edenler</small>
+          <small class="text-body-secondary">{{ __('Honoring fallen and lost adventurers') }}</small>
         </div>
       </div>
     </div>
@@ -293,10 +293,10 @@
         <span class="avatar avatar-xs rounded-2 bg-label-primary d-flex align-items-center justify-content-center">
           <i class="icon-base ti tabler-chart-arrows fs-6"></i>
         </span>
-        <span class="small fw-semibold text-heading">Pathfinder 1e Hızlı Seviye İlerleme Tablosu (Fast Progression):</span>
+        <span class="small fw-semibold text-heading">{{ __('Pathfinder 1e Fast Progression Level Chart:') }}</span>
       </div>
       <button class="btn btn-xs btn-label-primary rounded-pill" type="button" data-bs-toggle="collapse" data-bs-target="#collapseProgression" aria-expanded="false" aria-controls="collapseProgression">
-        <i class="icon-base ti tabler-eye me-1"></i> Seviye Eşiklerini Göster
+        <i class="icon-base ti tabler-eye me-1"></i> {{ __('Show Level Thresholds') }}
       </button>
     </div>
 
@@ -319,9 +319,9 @@
         <table class="table table-sm table-striped text-center font-monospace mb-0" style="font-size: 0.8rem;">
           <thead class="table-light">
             <tr>
-              <th class="fw-bold">Level</th>
-              <th class="fw-bold">XP (Eşik Değeri)</th>
-              <th class="fw-bold">Failsafe</th>
+              <th class="fw-bold">{{ __('Level') }}</th>
+              <th class="fw-bold">{{ __('XP (Threshold)') }}</th>
+              <th class="fw-bold">{{ __('Failsafe') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -336,7 +336,7 @@
         </table>
       </div>
       <small class="text-body-secondary mt-1 d-block text-end" style="font-size: 0.72rem;">
-        <i class="icon-base ti tabler-file-code me-1"></i>Kaynak Enum: <code>config/enums/xp_levels.php</code>
+        <i class="icon-base ti tabler-file-code me-1"></i>{{ __('Source Enum:') }} <code>config/enums/xp_levels.php</code>
       </small>
     </div>
   </div>
@@ -353,28 +353,28 @@
           <button class="nav-link active d-flex align-items-center gap-2 rounded-pill px-3 py-2 tab-filter-btn" data-filter="guild" id="tab-guild-btn" type="button">
             <i class="icon-base ti tabler-shield-check fs-5"></i>
             <span class="fw-semibold">{{ __('Active Roster (Guild Members)') }}</span>
-            <span class="badge rounded-pill bg-primary ms-1" id="badgeGuildCount">{{ $guildMembers->count() }}</span>
+            <span class="badge rounded-pill bg-primary ms-1" id="badgeGuildCount">{{ $statistics['guild_count'] ?? 0 }}</span>
           </button>
         </li>
         <li class="nav-item" role="presentation">
           <button class="nav-link d-flex align-items-center gap-2 rounded-pill px-3 py-2 tab-filter-btn" data-filter="candidate" id="tab-candidates-btn" type="button">
             <i class="icon-base ti tabler-user-plus fs-5"></i>
             <span class="fw-semibold">{{ __('Candidates') }}</span>
-            <span class="badge rounded-pill bg-label-info ms-1" id="badgeCandidateCount">{{ $candidates->count() }}</span>
+            <span class="badge rounded-pill bg-label-info ms-1" id="badgeCandidateCount">{{ $statistics['candidate_count'] ?? 0 }}</span>
           </button>
         </li>
         <li class="nav-item" role="presentation">
           <button class="nav-link d-flex align-items-center gap-2 rounded-pill px-3 py-2 tab-filter-btn" data-filter="inactive" id="tab-inactives-btn" type="button">
             <i class="icon-base ti tabler-user-off fs-5"></i>
             <span class="fw-semibold">{{ __('Inactives') }}</span>
-            <span class="badge rounded-pill bg-label-dark ms-1" id="badgeInactiveCount">{{ $inactives->count() }}</span>
+            <span class="badge rounded-pill bg-label-dark ms-1" id="badgeInactiveCount">{{ $statistics['inactive_count'] ?? 0 }}</span>
           </button>
         </li>
         <li class="nav-item" role="presentation">
           <button class="nav-link d-flex align-items-center gap-2 rounded-pill px-3 py-2 text-danger tab-filter-btn" data-filter="fallen" id="tab-fallen-btn" type="button">
             <i class="icon-base ti tabler-tombstone fs-5"></i>
             <span class="fw-semibold">{{ __('Hall of Fame (KIA / MIA)') }}</span>
-            <span class="badge rounded-pill bg-label-danger ms-1" id="badgeFallenCount">{{ $fallenAdventurers->count() }}</span>
+            <span class="badge rounded-pill bg-label-danger ms-1" id="badgeFallenCount">{{ $statistics['total_fallen_count'] ?? 0 }}</span>
           </button>
         </li>
         <li class="nav-item" role="presentation">
@@ -411,23 +411,23 @@
         </div>
 
         <!-- Rank Filter -->
-        <select class="form-select form-select-sm w-auto" id="filterRank" aria-label="Rütbe Filtresi">
+        <select class="form-select form-select-sm w-auto" id="filterRank" aria-label="{{ __('Rank Filter') }}">
           <option value="">{{ __('All Ranks') }}</option>
           @foreach($ranks as $rk)
-            <option value="{{ $rk }}" {{ ($filters['rank'] ?? '') === $rk ? 'selected' : '' }}>{{ $rk }}</option>
+            <option value="{{ $rk }}" {{ ($filters['rank'] ?? '') === $rk ? 'selected' : '' }}>{{ __($rk) }}</option>
           @endforeach
         </select>
 
         <!-- Level Filter -->
-        <select class="form-select form-select-sm w-auto" id="filterLevel" aria-label="Seviye Filtresi">
-          <option value="">Tüm Seviyeler</option>
+        <select class="form-select form-select-sm w-auto" id="filterLevel" aria-label="{{ __('Level Filter') }}">
+          <option value="">{{ __('All Levels') }}</option>
           @for($i = 1; $i <= 20; $i++)
-            <option value="{{ $i }}" {{ ($filters['level'] ?? '') == $i ? 'selected' : '' }}>Seviye {{ $i }}</option>
+            <option value="{{ $i }}" {{ ($filters['level'] ?? '') == $i ? 'selected' : '' }}>{{ __('Level') }} {{ $i }}</option>
           @endfor
         </select>
 
         <!-- Clear Filters Button -->
-        <button type="button" class="btn btn-sm btn-icon btn-label-secondary rounded-pill" id="btnClearFilters" title="Filtreleri Temizle">
+        <button type="button" class="btn btn-sm btn-icon btn-label-secondary rounded-pill" id="btnClearFilters" title="{{ __('Clear Filters') }}">
           <i class="icon-base ti tabler-refresh fs-6"></i>
         </button>
       </div>
@@ -441,20 +441,20 @@
         <thead class="table-light">
           <tr>
             <th style="width: 44px; min-width: 44px;" class="text-center ps-3">
-              <input class="form-check-input cursor-pointer" type="checkbox" id="checkSelectAll" title="Tümünü Seç">
+              <input class="form-check-input cursor-pointer" type="checkbox" id="checkSelectAll" title="{{ __('Select All') }}">
             </th>
-            <th style="min-width: 175px;">Maceracı & Oyuncu</th>
-            <th class="text-center" style="min-width: 170px; width: 185px;">Seviye & İlerleme</th>
-            <th class="text-center" style="min-width: 100px; width: 110px;">Rütbe / Durum</th>
-            <th class="text-end" style="min-width: 105px; width: 115px;">Toplam XP</th>
-            <th class="text-center" style="min-width: 85px; width: 95px;">Görev</th>
+            <th style="min-width: 175px;">{{ __('Adventurer & Player') }}</th>
+            <th class="text-center" style="min-width: 170px; width: 185px;">{{ __('Level & Progress') }}</th>
+            <th class="text-center" style="min-width: 100px; width: 110px;">{{ __('Rank / Status') }}</th>
+            <th class="text-end" style="min-width: 105px; width: 115px;">{{ __('Total XP') }}</th>
+            <th class="text-center" style="min-width: 85px; width: 95px;">{{ __('Quests') }}</th>
             <th style="min-width: 145px; width: 175px;">
               <div class="d-flex align-items-center gap-1">
-                <span>XP Dökümü</span>
-                <i class="icon-base ti tabler-info-circle text-muted fs-6 cursor-pointer" data-bs-toggle="tooltip" data-bs-placement="top" title="Görev / Rapor / Rütbe / Ekstra Kazanımları"></i>
+                <span>{{ __('XP Breakdown') }}</span>
+                <i class="icon-base ti tabler-info-circle text-muted fs-6 cursor-pointer" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ __('Quest / Report / Rank / Extra Gains') }}"></i>
               </div>
             </th>
-            <th class="text-end pe-3" style="min-width: 135px; width: 140px;">İşlemler</th>
+            <th class="text-end pe-3" style="min-width: 135px; width: 140px;">{{ __('Actions') }}</th>
           </tr>
         </thead>
         <tbody class="table-border-bottom-0">
@@ -514,18 +514,18 @@
               <!-- Character & Player -->
               <td style="min-width: 175px;">
                 <div class="d-flex align-items-center gap-2_5">
-                  <div class="avatar avatar-sm cursor-pointer btn-open-profile flex-shrink-0" data-adventurer="{{ json_encode($adv) }}" title="Profili İncele">
+                  <div class="avatar avatar-sm cursor-pointer btn-open-profile flex-shrink-0" data-id="{{ $adv->id }}" title="{{ __('View Profile') }}">
                     <span class="avatar-initial rounded-circle {{ $isFallen ? ($isKia ? 'bg-label-danger' : 'bg-label-warning') : 'bg-label-primary' }} fw-bold text-uppercase" style="font-size: 0.76rem;">
                       {{ mb_substr($adv->character_name, 0, 2) }}
                     </span>
                   </div>
                   <div class="text-truncate">
-                    <h6 class="mb-0 text-heading fw-bold cursor-pointer btn-open-profile text-truncate" data-adventurer="{{ json_encode($adv) }}" style="font-size: 0.88rem;">
+                    <h6 class="mb-0 text-heading fw-bold cursor-pointer btn-open-profile text-truncate" data-id="{{ $adv->id }}" style="font-size: 0.88rem;">
                       {{ $adv->character_name }}
                     </h6>
                     <small class="text-body-secondary d-flex align-items-center gap-1 text-truncate" style="font-size: 0.75rem;">
                       <i class="icon-base ti tabler-user fs-7"></i>
-                      <span class="text-truncate">{{ $adv->player_name ?: 'Bilinmiyor / Sahipsiz' }}</span>
+                      <span class="text-truncate">{{ $adv->player_name ?: __('Unknown / Unclaimed') }}</span>
                     </small>
                   </div>
                 </div>
@@ -547,9 +547,9 @@
                     <small class="text-body-secondary font-monospace" style="font-size: 0.7rem;">%{{ $progressPercent }}</small>
                     <small class="text-body-secondary font-monospace" style="font-size: 0.7rem;">
                       @if($effectiveLevel >= 20)
-                        Maksimum
+                        {{ __('Maximum') }}
                       @else
-                        Kalan: <strong>{{ number_format($remainingXp) }} XP</strong>
+                        {{ __('Remaining:') }} <strong>{{ number_format($remainingXp) }} XP</strong>
                       @endif
                     </small>
                   </div>
@@ -559,7 +559,7 @@
               <!-- Rank / Status (Clean Text, No Emojis/Icons) -->
               <td class="text-center">
                 <span class="badge {{ $rankColor }} rounded-pill px-3 py-1 fw-semibold font-monospace">
-                  {{ $rankText }}
+                  {{ __($rankText) }}
                 </span>
               </td>
 
@@ -574,7 +574,7 @@
               <!-- Sessions Count -->
               <td class="text-center" style="min-width: 85px; width: 95px;">
                 <span class="badge bg-label-secondary font-monospace rounded-pill px-2 py-1" style="font-size: 0.74rem;">
-                  {{ $adv->sessions_count }} Görev
+                  {{ $adv->sessions_count }} {{ __('Quests') }}
                 </span>
               </td>
 
@@ -582,32 +582,32 @@
               <td style="min-width: 145px; width: 175px;">
                 <div class="d-flex flex-wrap gap-1 align-items-center" style="max-width: 175px;">
                   @if($adv->mission_xp > 0)
-                    <span class="badge bg-label-success rounded-pill font-monospace" style="font-size: 0.68rem;" title="Görev XP">
-                      G: {{ number_format($adv->mission_xp) }}
+                    <span class="badge bg-label-success rounded-pill font-monospace" style="font-size: 0.68rem;" title="{{ __('Quest XP') }}">
+                      Q: {{ number_format($adv->mission_xp) }}
                     </span>
                   @endif
                   @if($adv->report_xp > 0)
-                    <span class="badge bg-label-info rounded-pill font-monospace" style="font-size: 0.68rem;" title="Rapor XP">
+                    <span class="badge bg-label-info rounded-pill font-monospace" style="font-size: 0.68rem;" title="{{ __('Report XP') }}">
                       R: {{ number_format($adv->report_xp) }}
                     </span>
                   @endif
                   @if($adv->rank_xp > 0)
-                    <span class="badge bg-label-primary rounded-pill font-monospace" style="font-size: 0.68rem;" title="Rütbe Bonusu XP">
-                      Rütbe: {{ number_format($adv->rank_xp) }}
+                    <span class="badge bg-label-primary rounded-pill font-monospace" style="font-size: 0.68rem;" title="{{ __('Rank Bonus XP') }}">
+                      Rank: {{ number_format($adv->rank_xp) }}
                     </span>
                   @endif
                   @if($adv->extra_xp > 0)
-                    <span class="badge bg-label-warning rounded-pill font-monospace" style="font-size: 0.68rem;" title="Ekstra (EX) XP">
+                    <span class="badge bg-label-warning rounded-pill font-monospace" style="font-size: 0.68rem;" title="{{ __('Extra (EX) XP') }}">
                       EX: {{ number_format($adv->extra_xp) }}
                     </span>
                   @endif
                   @if($adv->bailiff_xp > 0)
-                    <span class="badge bg-label-danger rounded-pill font-monospace" style="font-size: 0.68rem;" title="Bailiff XP">
+                    <span class="badge bg-label-danger rounded-pill font-monospace" style="font-size: 0.68rem;" title="{{ __('Bailiff XP') }}">
                       B: {{ number_format($adv->bailiff_xp) }}
                     </span>
                   @endif
                   @if($adv->bonus_xp > 0)
-                    <span class="badge bg-label-secondary rounded-pill font-monospace" style="font-size: 0.68rem;" title="Diğer Bonus XP">
+                    <span class="badge bg-label-secondary rounded-pill font-monospace" style="font-size: 0.68rem;" title="{{ __('Other Bonus XP') }}">
                       +{{ number_format($adv->bonus_xp) }}
                     </span>
                   @endif
@@ -626,57 +626,57 @@
                             data-id="{{ $adv->id }}" 
                             data-name="{{ $adv->character_name }}" 
                             data-xp="{{ $adv->total_xp }}"
-                            title="Hızlı XP Ver">
+                            title="{{ __('Quick Award XP') }}">
                       <i class="icon-base ti tabler-plus fs-7 me-0_5"></i><span>XP</span>
                     </button>
 
                     <!-- Edit Button (Opens Offcanvas) -->
                     <button type="button" class="btn btn-xs btn-icon btn-label-primary rounded-circle btn-edit-adv" 
-                            data-adventurer="{{ json_encode($adv) }}"
-                            title="Düzenle">
+                            data-id="{{ $adv->id }}"
+                            title="{{ __('Edit') }}">
                       <i class="icon-base ti tabler-pencil fs-6"></i>
                     </button>
 
                     <!-- More Actions Dropdown -->
                     <div class="dropdown">
-                      <button class="btn btn-xs btn-icon btn-label-secondary rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Diğer İşlemler">
+                      <button class="btn btn-xs btn-icon btn-label-secondary rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="{{ __('More Actions') }}">
                         <i class="icon-base ti tabler-dots-vertical fs-6"></i>
                       </button>
                       <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                         <li>
-                          <a class="dropdown-item btn-open-profile" href="javascript:void(0);" data-adventurer="{{ json_encode($adv) }}">
-                            <i class="icon-base ti tabler-id me-2 text-primary"></i> Maceracı Profil Kartı
+                          <a class="dropdown-item btn-open-profile" href="javascript:void(0);" data-id="{{ $adv->id }}">
+                            <i class="icon-base ti tabler-id me-2 text-primary"></i> {{ __('Adventurer Profile Sheet') }}
                           </a>
                         </li>
                         @if($isFallen)
                           <li>
                             <a class="dropdown-item text-success btn-status-change" href="javascript:void(0);" data-id="{{ $adv->id }}" data-status="active" data-name="{{ $adv->character_name }}">
-                              <i class="icon-base ti tabler-heart-rate-monitor me-2"></i> Yeniden Canlandır (Aktif)
+                              <i class="icon-base ti tabler-heart-rate-monitor me-2"></i> {{ __('Revive Adventurer (Active)') }}
                             </a>
                           </li>
                         @else
                           <li>
                             <a class="dropdown-item text-danger btn-status-change" href="javascript:void(0);" data-id="{{ $adv->id }}" data-status="kia" data-name="{{ $adv->character_name }}">
-                              <i class="icon-base ti tabler-skull me-2"></i> Şehit Düştü (KIA)
+                              <i class="icon-base ti tabler-skull me-2"></i> {{ __('Fallen in Battle (KIA)') }}
                             </a>
                           </li>
                           <li>
                             <a class="dropdown-item text-warning btn-status-change" href="javascript:void(0);" data-id="{{ $adv->id }}" data-status="mia" data-name="{{ $adv->character_name }}">
-                              <i class="icon-base ti tabler-compass me-2"></i> Kayıp İlan Et (MIA)
+                              <i class="icon-base ti tabler-compass me-2"></i> {{ __('Declare Missing (MIA)') }}
                             </a>
                           </li>
                         @endif
                         <li><hr class="dropdown-divider"></li>
                         <li>
                           <a class="dropdown-item text-danger btn-delete-adv" href="javascript:void(0);" data-id="{{ $adv->id }}" data-name="{{ $adv->character_name }}">
-                            <i class="icon-base ti tabler-trash me-2"></i> Maceracıyı Sil
+                            <i class="icon-base ti tabler-trash me-2"></i> {{ __('Delete Adventurer') }}
                           </a>
                         </li>
                       </ul>
                     </div>
                   @else
-                    <button type="button" class="btn btn-xs btn-label-secondary rounded-pill btn-open-profile" data-adventurer="{{ json_encode($adv) }}">
-                      <i class="icon-base ti tabler-eye me-1"></i> İncele
+                    <button type="button" class="btn btn-xs btn-label-secondary rounded-pill btn-open-profile" data-id="{{ $adv->id }}">
+                      <i class="icon-base ti tabler-eye me-1"></i> {{ __('View') }}
                     </button>
                   @endif
                 </div>
@@ -686,7 +686,7 @@
             <tr>
               <td colspan="8" class="text-center py-4 text-body-secondary">
                 <i class="icon-base ti tabler-info-circle fs-3 d-block mb-1"></i>
-                Kayıt bulunamadı.
+                {{ __('No records found.') }}
               </td>
             </tr>
           @endforelse
@@ -698,132 +698,10 @@
   <!-- VIEW 2: CARDS / GRID VIEW (RPG CHARACTER CARDS) -->
   <div id="viewContainerCards" class="p-4 d-none">
     <div class="row g-4" id="cardsGridContainer">
-      @foreach($allAdventurers as $adv)
-        @php
-          $isFallen = in_array($adv->status, ['kia', 'mia']);
-          $isKia = $adv->status === 'kia' || strtoupper($adv->reason ?? '') === 'KIA';
-          $isMia = $adv->status === 'mia' || strtoupper($adv->reason ?? '') === 'MIA';
-          $effectiveLevel = $adv->effective_level;
-          $progressPercent = $adv->getProgressPercentage();
-          $nextLevelXp = $adv->getNextLevelXp();
-          $xpProgressLabel = $adv->getXpProgressLabel();
-          $remainingXp = $adv->getRemainingXpToNextLevel();
-
-          if ($isKia) {
-            $rankColor = 'bg-label-danger';
-            $rankText = 'KIA';
-          } elseif ($isMia) {
-            $rankColor = 'bg-label-warning';
-            $rankText = 'MIA';
-          } else {
-            $rankColor = match($adv->rank) {
-              'Clerk' => 'bg-label-info',
-              'Aday' => 'bg-label-secondary',
-              'Üye' => 'bg-label-primary',
-              'Uzman' => 'bg-label-success',
-              'Kıdemli' => 'bg-label-warning',
-              'Gezgin' => 'bg-label-info',
-              'Inaktif' => 'bg-label-dark',
-              default => 'bg-label-secondary'
-            };
-            $rankText = $adv->rank;
-          }
-
-          $levelBadgeColor = match(true) {
-            $effectiveLevel >= 10 => 'bg-label-danger',
-            $effectiveLevel >= 6 => 'bg-label-warning',
-            $effectiveLevel >= 3 => 'bg-label-primary',
-            default => 'bg-label-secondary'
-          };
-        @endphp
-        <div class="col-12 col-sm-6 col-lg-4 col-xl-3 adventurer-card-col"
-             data-id="{{ $adv->id }}"
-             data-category="{{ $adv->category }}"
-             data-name="{{ strtolower($adv->character_name) }}"
-             data-player="{{ strtolower($adv->player_name ?? '') }}"
-             data-rank="{{ $adv->rank }}"
-             data-level="{{ $effectiveLevel }}"
-             data-status="{{ $adv->status }}">
-          
-          <div class="card h-100 border shadow-xs adventurer-card">
-            <div class="card-body p-4 d-flex flex-column justify-content-between">
-              <!-- Top Row: Avatar, Name, Rank Badge (Clean, No Emojis) -->
-              <div>
-                <div class="d-flex align-items-start justify-content-between mb-3">
-                  <div class="d-flex align-items-center gap-3">
-                    <div class="avatar avatar-md cursor-pointer btn-open-profile" data-adventurer="{{ json_encode($adv) }}">
-                      <span class="avatar-initial rounded-circle {{ $isFallen ? 'bg-label-danger' : 'bg-label-primary' }} fw-bold fs-5 text-uppercase">
-                        {{ mb_substr($adv->character_name, 0, 2) }}
-                      </span>
-                    </div>
-                    <div>
-                      <h6 class="mb-0 text-heading fw-bold cursor-pointer btn-open-profile" data-adventurer="{{ json_encode($adv) }}">
-                        {{ $adv->character_name }}
-                      </h6>
-                      <small class="text-body-secondary">{{ $adv->player_name ?: 'Sahipsiz' }}</small>
-                    </div>
-                  </div>
-                  <span class="badge {{ $rankColor }} rounded-pill font-monospace" style="font-size: 0.72rem;">
-                    {{ $rankText }}
-                  </span>
-                </div>
-
-                <!-- XP & Level Display (129,141 / 145,000 XP) -->
-                <div class="bg-body border rounded p-3 mb-3">
-                  <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span class="badge {{ $levelBadgeColor }} font-monospace fw-bold">Lv {{ $effectiveLevel }}</span>
-                    <span class="fw-bold font-monospace text-heading" style="font-size: 0.85rem;">{{ $xpProgressLabel }}</span>
-                  </div>
-                  <div class="progress rounded-pill shadow-xs" style="height: 7px;" title="{{ $xpProgressLabel }} (%{{ $progressPercent }})">
-                    <div class="progress-bar bg-primary progress-bar-animated-smooth" role="progressbar" style="width: {{ $progressPercent }}%;"></div>
-                  </div>
-                  <div class="d-flex justify-content-between align-items-center mt-1">
-                    <small class="text-body-secondary font-monospace" style="font-size: 0.72rem;">%{{ $progressPercent }}</small>
-                    <small class="text-body-secondary font-monospace" style="font-size: 0.72rem;">
-                      @if($effectiveLevel >= 20)
-                        Maksimum
-                      @else
-                        Kalan: <strong>{{ number_format($remainingXp) }} XP</strong>
-                      @endif
-                    </small>
-                  </div>
-                </div>
-
-                <!-- XP Breakdown mini pills -->
-                <div class="d-flex flex-wrap gap-1 mb-3">
-                  @if($adv->mission_xp > 0)
-                    <span class="badge bg-label-success rounded-pill font-monospace" style="font-size: 0.7rem;">Görev: {{ number_format($adv->mission_xp) }}</span>
-                  @endif
-                  @if($adv->report_xp > 0)
-                    <span class="badge bg-label-info rounded-pill font-monospace" style="font-size: 0.7rem;">Rapor: {{ number_format($adv->report_xp) }}</span>
-                  @endif
-                  @if($adv->extra_xp > 0)
-                    <span class="badge bg-label-warning rounded-pill font-monospace" style="font-size: 0.7rem;">EX: {{ number_format($adv->extra_xp) }}</span>
-                  @endif
-                  @if($adv->sessions_count > 0)
-                    <span class="badge bg-body border font-monospace text-heading" style="font-size: 0.7rem;">{{ $adv->sessions_count }} Oyun</span>
-                  @endif
-                </div>
-              </div>
-
-              <!-- Footer Actions -->
-              <div class="pt-3 border-top d-flex align-items-center justify-content-between gap-2">
-                <button type="button" class="btn btn-xs btn-label-secondary rounded-pill flex-grow-1 btn-open-profile" data-adventurer="{{ json_encode($adv) }}">
-                  <i class="icon-base ti tabler-id me-1"></i> Profil
-                </button>
-                @if($isAdmin)
-                  <button type="button" class="btn btn-xs btn-primary rounded-pill flex-grow-1 btn-quick-xp" 
-                          data-id="{{ $adv->id }}" 
-                          data-name="{{ $adv->character_name }}" 
-                          data-xp="{{ $adv->total_xp }}">
-                    <i class="icon-base ti tabler-plus me-1"></i> XP Ver
-                  </button>
-                @endif
-              </div>
-            </div>
-          </div>
-        </div>
-      @endforeach
+      <div class="col-12 text-center py-5 text-body-secondary" id="cardsLoadingPlaceholder">
+        <div class="spinner-border text-primary spinner-border-sm me-2" role="status"></div>
+        <span>{{ __('Loading character cards...') }}</span>
+      </div>
     </div>
   </div>
 </div>
@@ -833,16 +711,16 @@
   <div class="d-flex align-items-center gap-3">
     <div class="d-flex align-items-center gap-2">
       <span class="avatar avatar-xs rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" id="floatingSelectedCount">0</span>
-      <span class="text-heading fw-semibold small">Maceracı Seçildi</span>
+      <span class="text-heading fw-semibold small">{{ __('Adventurers Selected') }}</span>
     </div>
     <div class="vr my-1"></div>
     <button type="button" class="btn btn-sm btn-success rounded-pill waves-effect shadow-xs" id="btnBatchAwardXpModal">
-      <i class="icon-base ti tabler-gift me-1"></i> Toplu XP Dağıt
+      <i class="icon-base ti tabler-gift me-1"></i> {{ __('Distribute Batch XP') }}
     </button>
     <button type="button" class="btn btn-sm btn-label-danger rounded-pill waves-effect shadow-xs" id="btnBatchStatusChangeModal">
-      <i class="icon-base ti tabler-shield-x me-1"></i> Durum Güncelle
+      <i class="icon-base ti tabler-shield-x me-1"></i> {{ __('Update Status') }}
     </button>
-    <button type="button" class="btn btn-sm btn-icon btn-label-secondary rounded-circle" id="btnFloatingCancelSelection" title="Seçimi Temizle">
+    <button type="button" class="btn btn-sm btn-icon btn-label-secondary rounded-circle" id="btnFloatingCancelSelection" title="{{ __('Clear Selection') }}">
       <i class="icon-base ti tabler-x fs-6"></i>
     </button>
   </div>
@@ -855,79 +733,79 @@
   <div class="offcanvas-header border-bottom">
     <h5 id="offcanvasAddAdventurerLabel" class="offcanvas-title fw-bold text-heading d-flex align-items-center gap-2">
       <i class="icon-base ti tabler-user-plus text-primary"></i>
-      <span>Yeni Maceracı Ekle</span>
+      <span>{{ __('Add New Adventurer') }}</span>
     </h5>
-    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Kapat"></button>
+    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="{{ __('Close') }}"></button>
   </div>
   <div class="offcanvas-body flex-grow-1 p-4">
     <form id="formAddAdventurer">
       @csrf
       <div class="mb-3">
-        <label class="form-label fw-semibold" for="addCharacterName">Karakter Adı <span class="text-danger">*</span></label>
-        <input type="text" class="form-control" id="addCharacterName" name="character_name" placeholder="Örn: Aki, Argus..." required>
+        <label class="form-label fw-semibold" for="addCharacterName">{{ __('Character Name') }} <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" id="addCharacterName" name="character_name" placeholder="{{ __('e.g. Aki, Argus...') }}" required>
       </div>
 
       <div class="mb-3">
-        <label class="form-label fw-semibold" for="addPlayerName">Oyuncu Adı</label>
-        <input type="text" class="form-control" id="addPlayerName" name="player_name" placeholder="Örn: Barış Şimşek...">
+        <label class="form-label fw-semibold" for="addPlayerName">{{ __('Player Name') }}</label>
+        <input type="text" class="form-control" id="addPlayerName" name="player_name" placeholder="{{ __('e.g. Player Name...') }}">
       </div>
 
       <div class="row g-2 mb-3">
         <div class="col-6">
-          <label class="form-label fw-semibold" for="addRank">Rütbe</label>
+          <label class="form-label fw-semibold" for="addRank">{{ __('Rank') }}</label>
           <select class="form-select" id="addRank" name="rank">
             @foreach($ranks as $rk)
-              <option value="{{ $rk }}" {{ $rk === 'Aday' ? 'selected' : '' }}>{{ $rk }}</option>
+              <option value="{{ $rk }}" {{ $rk === 'Aday' ? 'selected' : '' }}>{{ __($rk) }}</option>
             @endforeach
           </select>
         </div>
         <div class="col-6">
-          <label class="form-label fw-semibold" for="addStatus">Durum</label>
+          <label class="form-label fw-semibold" for="addStatus">{{ __('Status') }}</label>
           <select class="form-select" id="addStatus" name="status">
-            <option value="active" selected>Aktif</option>
-            <option value="inactive">Inaktif</option>
-            <option value="kia">KIA (Şehit)</option>
-            <option value="mia">MIA (Kayıp)</option>
-            <option value="retired">Emekli</option>
+            <option value="active" selected>{{ __('Active') }}</option>
+            <option value="inactive">{{ __('Inactive') }}</option>
+            <option value="kia">{{ __('KIA (Fallen)') }}</option>
+            <option value="mia">{{ __('MIA (Missing)') }}</option>
+            <option value="retired">{{ __('Retired') }}</option>
           </select>
         </div>
       </div>
 
       <div class="mb-3">
-        <label class="form-label fw-semibold" for="addSessionsCount">Oynanan Görev / Oturum Sayısı</label>
+        <label class="form-label fw-semibold" for="addSessionsCount">{{ __('Quests / Sessions Played') }}</label>
         <input type="number" class="form-control font-monospace" id="addSessionsCount" name="sessions_count" value="1" min="0">
       </div>
 
       <div class="border-top pt-3 mb-3">
         <h6 class="fw-bold text-heading mb-1 d-flex align-items-center gap-1">
-          <i class="icon-base ti tabler-chart-pie text-primary fs-5"></i> XP Bileşenleri
+          <i class="icon-base ti tabler-chart-pie text-primary fs-5"></i> {{ __('XP Components') }}
         </h6>
-        <small class="text-body-secondary">Bileşenler girildikçe Toplam XP ve Pathfinder Seviyesi anında hesaplanır.</small>
+        <small class="text-body-secondary">{{ __('Total XP and Pathfinder Level update automatically as values are entered.') }}</small>
       </div>
 
       <div class="row g-2 mb-3">
         <div class="col-6">
-          <label class="form-label small" for="addMissionXp">Görev XP</label>
+          <label class="form-label small" for="addMissionXp">{{ __('Quest XP') }}</label>
           <input type="number" class="form-control form-control-sm font-monospace xp-input-add" id="addMissionXp" name="mission_xp" value="0" min="0">
         </div>
         <div class="col-6">
-          <label class="form-label small" for="addReportXp">Rapor / RP XP</label>
+          <label class="form-label small" for="addReportXp">{{ __('Report / RP XP') }}</label>
           <input type="number" class="form-control form-control-sm font-monospace xp-input-add" id="addReportXp" name="report_xp" value="0" min="0">
         </div>
         <div class="col-6">
-          <label class="form-label small" for="addRankXp">Rütbe Bonusu XP</label>
+          <label class="form-label small" for="addRankXp">{{ __('Rank Bonus XP') }}</label>
           <input type="number" class="form-control form-control-sm font-monospace xp-input-add" id="addRankXp" name="rank_xp" value="0" min="0">
         </div>
         <div class="col-6">
-          <label class="form-label small" for="addExtraXp">Ekstra XP (EX)</label>
+          <label class="form-label small" for="addExtraXp">{{ __('Extra XP (EX)') }}</label>
           <input type="number" class="form-control form-control-sm font-monospace xp-input-add" id="addExtraXp" name="extra_xp" value="0" min="0">
         </div>
         <div class="col-6">
-          <label class="form-label small" for="addBailiffXp">Bailiff Bonusu</label>
+          <label class="form-label small" for="addBailiffXp">{{ __('Bailiff Bonus') }}</label>
           <input type="number" class="form-control form-control-sm font-monospace xp-input-add" id="addBailiffXp" name="bailiff_xp" value="0" min="0">
         </div>
         <div class="col-6">
-          <label class="form-label small" for="addBonusXp">Diğer Bonuslar</label>
+          <label class="form-label small" for="addBonusXp">{{ __('Other Bonuses') }}</label>
           <input type="number" class="form-control form-control-sm font-monospace xp-input-add" id="addBonusXp" name="bonus_xp" value="0" min="0">
         </div>
       </div>
@@ -936,24 +814,24 @@
       <div class="card bg-body border shadow-none p-3 mb-3">
         <div class="d-flex justify-content-between align-items-center">
           <div>
-            <span class="text-body-secondary small">Hesaplanan Toplam XP:</span>
+            <span class="text-body-secondary small">{{ __('Calculated Total XP:') }}</span>
             <h4 class="mb-0 fw-bold font-monospace text-primary" id="addComputedTotalXp">0 XP</h4>
           </div>
           <div class="text-end">
-            <span class="text-body-secondary small">Otomatik Seviye:</span>
-            <h4 class="mb-0 fw-bold font-monospace text-success" id="addComputedLevel">Seviye 1</h4>
+            <span class="text-body-secondary small">{{ __('Automatic Level:') }}</span>
+            <h4 class="mb-0 fw-bold font-monospace text-success" id="addComputedLevel">{{ __('Level 1') }}</h4>
           </div>
         </div>
       </div>
 
       <div class="mb-4">
-        <label class="form-label small" for="addNotes">Notlar / Açıklama</label>
-        <textarea class="form-control" id="addNotes" name="notes" rows="2" placeholder="Karakter notları..."></textarea>
+        <label class="form-label small" for="addNotes">{{ __('Notes / Description') }}</label>
+        <textarea class="form-control" id="addNotes" name="notes" rows="2" placeholder="{{ __('Character notes...') }}"></textarea>
       </div>
 
       <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary rounded-pill flex-grow-1" id="btnSubmitAddAdventurer">Maceracıyı Kaydet</button>
-        <button type="button" class="btn btn-label-secondary rounded-pill" data-bs-dismiss="offcanvas">Vazgeç</button>
+        <button type="submit" class="btn btn-primary rounded-pill flex-grow-1" id="btnSubmitAddAdventurer">{{ __('Save Adventurer') }}</button>
+        <button type="button" class="btn btn-label-secondary rounded-pill" data-bs-dismiss="offcanvas">{{ __('Cancel') }}</button>
       </div>
     </form>
   </div>
@@ -964,9 +842,9 @@
   <div class="offcanvas-header border-bottom">
     <h5 id="offcanvasEditAdventurerLabel" class="offcanvas-title fw-bold text-heading d-flex align-items-center gap-2">
       <i class="icon-base ti tabler-pencil text-primary"></i>
-      <span>Maceracıyı Düzenle</span>
+      <span>{{ __('Edit Adventurer') }}</span>
     </h5>
-    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Kapat"></button>
+    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="{{ __('Close') }}"></button>
   </div>
   <div class="offcanvas-body flex-grow-1 p-4">
     <form id="formEditAdventurer">
@@ -975,81 +853,81 @@
       <input type="hidden" id="editAdventurerId" name="id">
 
       <div class="mb-3">
-        <label class="form-label fw-semibold" for="editCharacterName">Karakter Adı <span class="text-danger">*</span></label>
+        <label class="form-label fw-semibold" for="editCharacterName">{{ __('Character Name') }} <span class="text-danger">*</span></label>
         <input type="text" class="form-control" id="editCharacterName" name="character_name" required>
       </div>
 
       <div class="mb-3">
-        <label class="form-label fw-semibold" for="editPlayerName">Oyuncu Adı</label>
+        <label class="form-label fw-semibold" for="editPlayerName">{{ __('Player Name') }}</label>
         <input type="text" class="form-control" id="editPlayerName" name="player_name">
       </div>
 
       <div class="row g-2 mb-3">
         <div class="col-6">
-          <label class="form-label fw-semibold" for="editRank">Rütbe</label>
+          <label class="form-label fw-semibold" for="editRank">{{ __('Rank') }}</label>
           <select class="form-select" id="editRank" name="rank">
             @foreach($ranks as $rk)
-              <option value="{{ $rk }}">{{ $rk }}</option>
+              <option value="{{ $rk }}">{{ __($rk) }}</option>
             @endforeach
           </select>
         </div>
         <div class="col-6">
-          <label class="form-label fw-semibold" for="editStatus">Durum</label>
+          <label class="form-label fw-semibold" for="editStatus">{{ __('Status') }}</label>
           <select class="form-select" id="editStatus" name="status">
-            <option value="active">Aktif</option>
-            <option value="inactive">Inaktif</option>
-            <option value="kia">KIA (Şehit)</option>
-            <option value="mia">MIA (Kayıp)</option>
-            <option value="retired">Emekli</option>
+            <option value="active">{{ __('Active') }}</option>
+            <option value="inactive">{{ __('Inactive') }}</option>
+            <option value="kia">{{ __('KIA (Fallen)') }}</option>
+            <option value="mia">{{ __('MIA (Missing)') }}</option>
+            <option value="retired">{{ __('Retired') }}</option>
           </select>
         </div>
       </div>
 
       <div class="mb-3">
-        <label class="form-label fw-semibold" for="editSessionsCount">Oynanan Görev Sayısı</label>
+        <label class="form-label fw-semibold" for="editSessionsCount">{{ __('Quests / Sessions Played') }}</label>
         <input type="number" class="form-control font-monospace" id="editSessionsCount" name="sessions_count" min="0">
       </div>
 
       <div class="border-top pt-3 mb-3">
         <h6 class="fw-bold text-heading mb-1 d-flex align-items-center gap-1">
-          <i class="icon-base ti tabler-chart-pie text-primary fs-5"></i> XP Bileşenleri
+          <i class="icon-base ti tabler-chart-pie text-primary fs-5"></i> {{ __('XP Components') }}
         </h6>
       </div>
 
       <div class="row g-2 mb-3">
         <div class="col-6">
-          <label class="form-label small" for="editMissionXp">Görev XP</label>
+          <label class="form-label small" for="editMissionXp">{{ __('Quest XP') }}</label>
           <input type="number" class="form-control form-control-sm font-monospace xp-input-edit" id="editMissionXp" name="mission_xp" min="0">
         </div>
         <div class="col-6">
-          <label class="form-label small" for="editReportXp">Rapor XP</label>
+          <label class="form-label small" for="editReportXp">{{ __('Report / RP XP') }}</label>
           <input type="number" class="form-control form-control-sm font-monospace xp-input-edit" id="editReportXp" name="report_xp" min="0">
         </div>
         <div class="col-6">
-          <label class="form-label small" for="editRankXp">Rütbe XP</label>
+          <label class="form-label small" for="editRankXp">{{ __('Rank Bonus XP') }}</label>
           <input type="number" class="form-control form-control-sm font-monospace xp-input-edit" id="editRankXp" name="rank_xp" min="0">
         </div>
         <div class="col-6">
-          <label class="form-label small" for="editExtraXp">Ekstra XP</label>
+          <label class="form-label small" for="editExtraXp">{{ __('Extra XP (EX)') }}</label>
           <input type="number" class="form-control form-control-sm font-monospace xp-input-edit" id="editExtraXp" name="extra_xp" min="0">
         </div>
         <div class="col-6">
-          <label class="form-label small" for="editBailiffXp">Bailiff XP</label>
+          <label class="form-label small" for="editBailiffXp">{{ __('Bailiff Bonus') }}</label>
           <input type="number" class="form-control form-control-sm font-monospace xp-input-edit" id="editBailiffXp" name="bailiff_xp" min="0">
         </div>
         <div class="col-6">
-          <label class="form-label small" for="editBonusXp">Bonus XP</label>
+          <label class="form-label small" for="editBonusXp">{{ __('Other Bonuses') }}</label>
           <input type="number" class="form-control form-control-sm font-monospace xp-input-edit" id="editBonusXp" name="bonus_xp" min="0">
         </div>
       </div>
 
       <div class="row g-2 mb-3">
         <div class="col-6">
-          <label class="form-label small fw-bold text-heading" for="editTotalXp">Toplam XP (Değer)</label>
+          <label class="form-label small fw-bold text-heading" for="editTotalXp">{{ __('Total XP (Value)') }}</label>
           <input type="number" class="form-control form-control-sm font-monospace" id="editTotalXp" name="total_xp" min="0">
         </div>
         <div class="col-6">
-          <label class="form-label small fw-bold text-heading" for="editLevel">Seviye (Level)</label>
+          <label class="form-label small fw-bold text-heading" for="editLevel">{{ __('Level') }}</label>
           <input type="number" class="form-control form-control-sm font-monospace" id="editLevel" name="level" min="1" max="20">
         </div>
       </div>
@@ -1057,24 +935,24 @@
       <div class="card bg-body border shadow-none p-3 mb-3">
         <div class="d-flex justify-content-between align-items-center">
           <div>
-            <span class="text-body-secondary small">Hesaplanan Toplam XP:</span>
+            <span class="text-body-secondary small">{{ __('Calculated Total XP:') }}</span>
             <h4 class="mb-0 fw-bold font-monospace text-primary" id="editComputedTotalXp">0 XP</h4>
           </div>
           <div class="text-end">
-            <span class="text-body-secondary small">Otomatik Seviye:</span>
-            <h4 class="mb-0 fw-bold font-monospace text-success" id="editComputedLevel">Seviye 1</h4>
+            <span class="text-body-secondary small">{{ __('Automatic Level:') }}</span>
+            <h4 class="mb-0 fw-bold font-monospace text-success" id="editComputedLevel">{{ __('Level 1') }}</h4>
           </div>
         </div>
       </div>
 
       <div class="mb-4">
-        <label class="form-label small" for="editNotes">Notlar</label>
+        <label class="form-label small" for="editNotes">{{ __('Notes / Description') }}</label>
         <textarea class="form-control" id="editNotes" name="notes" rows="2"></textarea>
       </div>
 
       <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary rounded-pill flex-grow-1" id="btnSubmitEditAdventurer">Değişiklikleri Kaydet</button>
-        <button type="button" class="btn btn-label-secondary rounded-pill" data-bs-dismiss="offcanvas">Vazgeç</button>
+        <button type="submit" class="btn btn-primary rounded-pill flex-grow-1" id="btnSubmitEditAdventurer">{{ __('Save Changes') }}</button>
+        <button type="button" class="btn btn-label-secondary rounded-pill" data-bs-dismiss="offcanvas">{{ __('Cancel') }}</button>
       </div>
     </form>
   </div>
@@ -1085,9 +963,9 @@
   <div class="offcanvas-header border-bottom">
     <h5 id="offcanvasAdventurerProfileLabel" class="offcanvas-title fw-bold text-heading d-flex align-items-center gap-2">
       <i class="icon-base ti tabler-id text-primary"></i>
-      <span>Maceracı Detay Kartı</span>
+      <span>{{ __('Adventurer Profile Sheet') }}</span>
     </h5>
-    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Kapat"></button>
+    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="{{ __('Close') }}"></button>
   </div>
   <div class="offcanvas-body flex-grow-1 p-4" id="profileDrawerContent">
     <!-- Content injected dynamically via JS -->
@@ -1101,9 +979,9 @@
       <div class="modal-header border-bottom pb-3">
         <h5 class="modal-title fw-bold text-heading d-flex align-items-center gap-2" id="modalQuickXpLabel">
           <i class="icon-base ti tabler-plus text-success"></i>
-          <span>Hızlı XP Ödülü Ekle</span>
+          <span>{{ __('Add Quick XP Award') }}</span>
         </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('Close') }}"></button>
       </div>
       <form id="formQuickXp">
         @csrf
@@ -1112,16 +990,16 @@
         <div class="modal-body py-4">
           <div class="d-flex align-items-center justify-content-between bg-body border rounded p-3 mb-3">
             <div>
-              <span class="text-body-secondary small">Maceracı:</span>
+              <span class="text-body-secondary small">{{ __('Adventurer:') }}</span>
               <h6 class="mb-0 fw-bold text-heading" id="quickXpTargetName">—</h6>
             </div>
             <div class="text-end">
-              <span class="text-body-secondary small">Mevcut XP:</span>
+              <span class="text-body-secondary small">{{ __('Current XP:') }}</span>
               <h6 class="mb-0 fw-bold font-monospace text-primary" id="quickXpCurrentXp">0 XP</h6>
             </div>
           </div>
 
-          <label class="form-label small fw-semibold">Hızlı Miktar Seç:</label>
+          <label class="form-label small fw-semibold">{{ __('Select Quick Amount:') }}</label>
           <div class="d-flex flex-wrap gap-2 mb-3">
             <button type="button" class="btn btn-xs btn-label-primary rounded-pill font-monospace btn-xp-preset" data-amount="100">+100</button>
             <button type="button" class="btn btn-xs btn-label-primary rounded-pill font-monospace btn-xp-preset" data-amount="250">+250</button>
@@ -1131,30 +1009,30 @@
           </div>
 
           <div class="mb-3">
-            <label class="form-label fw-semibold" for="quickXpAmount">Eklenecek XP Miktarı <span class="text-danger">*</span></label>
-            <input type="number" class="form-control form-control-lg font-monospace text-primary fw-bold" id="quickXpAmount" name="amount" placeholder="Örn: 500" required min="1" max="500000">
+            <label class="form-label fw-semibold" for="quickXpAmount">{{ __('XP Amount to Add') }} <span class="text-danger">*</span></label>
+            <input type="number" class="form-control form-control-lg font-monospace text-primary fw-bold" id="quickXpAmount" name="amount" placeholder="{{ __('e.g. 500') }}" required min="1" max="500000">
           </div>
 
           <div class="mb-3">
-            <label class="form-label fw-semibold" for="quickXpCategory">XP Kategorisi</label>
+            <label class="form-label fw-semibold" for="quickXpCategory">{{ __('XP Category') }}</label>
             <select class="form-select" id="quickXpCategory" name="category">
-              <option value="mission" selected>Görev XP (+1 Görev Sayısı Ekler)</option>
-              <option value="report">Rapor / RP Yazımı XP</option>
-              <option value="rank">Rütbe Terfi Bonusu</option>
-              <option value="extra">Ekstra (EX) XP</option>
-              <option value="bailiff">Bailiff Bonusu</option>
+              <option value="mission" selected>{{ __('Quest XP (+1 Quest Count)') }}</option>
+              <option value="report">{{ __('Report / RP Writing XP') }}</option>
+              <option value="rank">{{ __('Rank Promotion Bonus') }}</option>
+              <option value="extra">{{ __('Extra (EX) XP') }}</option>
+              <option value="bailiff">{{ __('Bailiff Bonus') }}</option>
             </select>
           </div>
 
           <div>
-            <label class="form-label small" for="quickXpNote">Açıklama / Oturum Notu</label>
-            <input type="text" class="form-control" id="quickXpNote" name="note" placeholder="Örn: Oturum #14 Ejderha İni Temizliği">
+            <label class="form-label small" for="quickXpNote">{{ __('Note / Session Title') }}</label>
+            <input type="text" class="form-control" id="quickXpNote" name="note" placeholder="{{ __('e.g. Session #14 Dragon Den') }}">
           </div>
         </div>
 
         <div class="modal-footer border-top pt-3">
-          <button type="button" class="btn btn-label-secondary rounded-pill" data-bs-dismiss="modal">İptal</button>
-          <button type="submit" class="btn btn-success rounded-pill" id="btnSubmitQuickXp">XP'yi Ver</button>
+          <button type="button" class="btn btn-label-secondary rounded-pill" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+          <button type="submit" class="btn btn-success rounded-pill" id="btnSubmitQuickXp">{{ __('Award XP') }}</button>
         </div>
       </form>
     </div>
@@ -1168,42 +1046,42 @@
       <div class="modal-header border-bottom pb-3">
         <h5 class="modal-title fw-bold text-heading d-flex align-items-center gap-2" id="modalBatchXpLabel">
           <i class="icon-base ti tabler-users-group text-primary"></i>
-          <span>Gruba / Seçilenlere Toplu XP Dağıtımı</span>
+          <span>{{ __('Distribute Batch XP to Party / Selection') }}</span>
         </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('Close') }}"></button>
       </div>
       <form id="formBatchXp">
         @csrf
         <div class="modal-body py-4">
           <div class="alert alert-primary d-flex align-items-center gap-2 py-2 px-3 mb-3">
             <i class="icon-base ti tabler-info-circle fs-5"></i>
-            <span class="small" id="batchXpRecipientsSummary">Seçilen maceracılar listelenecek...</span>
+            <span class="small" id="batchXpRecipientsSummary">{{ __('Selected adventurers will be listed...') }}</span>
           </div>
 
           <div class="mb-3">
-            <label class="form-label fw-semibold" for="batchXpAmount">Her Maceracıya Eklenecek XP <span class="text-danger">*</span></label>
-            <input type="number" class="form-control form-control-lg font-monospace text-primary fw-bold" id="batchXpAmount" name="amount" placeholder="Örn: 750" required min="1" max="500000">
+            <label class="form-label fw-semibold" for="batchXpAmount">{{ __('XP to Add Per Adventurer') }} <span class="text-danger">*</span></label>
+            <input type="number" class="form-control form-control-lg font-monospace text-primary fw-bold" id="batchXpAmount" name="amount" placeholder="{{ __('e.g. 750') }}" required min="1" max="500000">
           </div>
 
           <div class="mb-3">
-            <label class="form-label fw-semibold" for="batchXpCategory">XP Kategorisi</label>
+            <label class="form-label fw-semibold" for="batchXpCategory">{{ __('XP Category') }}</label>
             <select class="form-select" id="batchXpCategory" name="category">
-              <option value="mission" selected>Görev XP (+1 Görev Sayısı Ekler)</option>
-              <option value="report">Rapor / RP XP</option>
-              <option value="rank">Rütbe Bonusu</option>
-              <option value="extra">Ekstra XP</option>
+              <option value="mission" selected>{{ __('Quest XP (+1 Quest Count)') }}</option>
+              <option value="report">{{ __('Report / RP XP') }}</option>
+              <option value="rank">{{ __('Rank Bonus') }}</option>
+              <option value="extra">{{ __('Extra XP') }}</option>
             </select>
           </div>
 
           <div>
-            <label class="form-label small" for="batchXpNote">Oturum / Görev Başlığı</label>
-            <input type="text" class="form-control" id="batchXpNote" name="note" placeholder="Örn: Oturum #15 Goblin Zindanları">
+            <label class="form-label small" for="batchXpNote">{{ __('Session / Quest Title') }}</label>
+            <input type="text" class="form-control" id="batchXpNote" name="note" placeholder="{{ __('e.g. Session #15 Goblin Dungeons') }}">
           </div>
         </div>
 
         <div class="modal-footer border-top pt-3">
-          <button type="button" class="btn btn-label-secondary rounded-pill" data-bs-dismiss="modal">Vazgeç</button>
-          <button type="submit" class="btn btn-primary rounded-pill" id="btnSubmitBatchXp">Tüm Gruba XP'yi Dağıt</button>
+          <button type="button" class="btn btn-label-secondary rounded-pill" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+          <button type="submit" class="btn btn-primary rounded-pill" id="btnSubmitBatchXp">{{ __('Distribute XP to Party') }}</button>
         </div>
       </form>
     </div>
@@ -1216,8 +1094,77 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const fastXpThresholds = @json($fastThresholds);
-  let activeTabFilter = 'guild'; // Default tab: Aktif Kadro (Lonca Üyeleri)
+  window.adventurersData = @json($adventurersData);
+  window.isAdmin = {{ $isAdmin ? 'true' : 'false' }};
+  let activeTabFilter = 'guild'; // Default tab: Active Roster (Guild Members)
   let selectedAdventurerIds = [];
+
+  const i18n = {
+    selectAdventurersTitle: @json(__('Select Adventurers')),
+    selectAdventurersText: @json(__('Please select the adventurers you want to award XP to using the checkboxes.')),
+    ok: @json(__('OK')),
+    recipientsSummary: @json(__(':count adventurers will receive equal XP.', ['count' => '__COUNT__'])),
+    batchXpSuccessTitle: @json(__('Batch XP Distributed!')),
+    quickXpSuccessTitle: @json(__('XP Awarded!')),
+    updatedTitle: @json(__('Updated!')),
+    successTitle: @json(__('Success!')),
+    errorTitle: @json(__('Error!')),
+    networkError: @json(__('A network error occurred.')),
+    confirm: @json(__('Yes, Confirm')),
+    cancel: @json(__('Cancel')),
+    statusUpdateTitle: @json(__('Update Status')),
+    statusUpdateText: @json(__('Status will be changed for adventurer ":name". Do you confirm?')),
+    kiaTitle: @json(__('Declare KIA (Fallen)')),
+    kiaText: @json(__('":name" will be marked as fallen in battle and moved to the Hall of Fame.')),
+    miaTitle: @json(__('Declare MIA (Missing)')),
+    miaText: @json(__('":name" will be marked as missing in action and moved to the Hall of Fame.')),
+    reviveTitle: @json(__('Recall to Ranks (Revive)')),
+    reviveText: @json(__('":name" will be revived and restored to the active roster.')),
+    deleteTitle: @json(__('Delete Adventurer?')),
+    deleteText: @json(__('":name" will be permanently deleted. This action cannot be undone!')),
+    deleteConfirm: @json(__('Yes, Delete')),
+    resetTitle: @json(__('Reset to Original Master Sheet?')),
+    resetText: @json(__('All current records will be deleted and the original 64 adventurers will be reloaded!')),
+    resetConfirm: @json(__('Yes, Reset')),
+    resetSuccessTitle: @json(__('Reset Successful!')),
+    deletedTitle: @json(__('Deleted!')),
+    levelPrefix: @json(__('Level ')),
+    maximum: @json(__('Maximum')),
+    maximumLevel: @json(__('Maximum Level')),
+    remainingLabel: @json(__('Remaining: ')),
+    toNextLevelLabel: @json(__('To Next Level: ')),
+    progressLabel: @json(__('Progress: %')),
+    unclaimed: @json(__('Unclaimed')),
+    unknown: @json(__('Unknown')),
+    playerLabel: @json(__('Player: ')),
+    questsLabel: @json(__('Quests')),
+    sessionsCountLabel: @json(__('Sessions')),
+    questXpShort: @json(__('Quest: ')),
+    reportXpShort: @json(__('Report: ')),
+    extraXpShort: @json(__('EX: ')),
+    profileBtn: @json(__('Profile')),
+    awardXpBtn: @json(__('Award XP')),
+    quickXpBtn: @json(__('Add Quick XP')),
+    editBtn: @json(__('Edit')),
+    noRecords: @json(__('No records found.')),
+    historyNotes: @json(__('Adventurer History & Notes:')),
+    xpDistribution: @json(__('XP Component Distribution')),
+    questXp: @json(__('Quest XP')),
+    reportXp: @json(__('Report XP')),
+    rankXp: @json(__('Rank XP')),
+    extraXp: @json(__('Extra (EX)')),
+    bailiffXp: @json(__('Bailiff')),
+    questCount: @json(__('Quest Count')),
+    ranks: {
+      'Aday': @json(__('Candidate')),
+      'Üye': @json(__('Member')),
+      'Kıdemli': @json(__('Veteran')),
+      'Uzman': @json(__('Expert')),
+      'Clerk': @json(__('Clerk')),
+      'Gezgin': @json(__('Wanderer')),
+      'Inaktif': @json(__('Inactive'))
+    }
+  };
 
   // Helper: Fast Progression Level calculation
   function calculateLevel(xp) {
@@ -1250,6 +1197,7 @@ document.addEventListener('DOMContentLoaded', function() {
     btnViewTable.classList.remove('active');
     viewCards.classList.remove('d-none');
     viewTable.classList.add('d-none');
+    renderCardsView();
   });
 
   // Top KPI Card Clicks to Filter
@@ -1335,44 +1283,152 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
 
-    // Filter Cards
-    document.querySelectorAll('.adventurer-card-col').forEach(cardCol => {
-      const category = cardCol.dataset.category;
-      const name = cardCol.dataset.name || '';
-      const player = cardCol.dataset.player || '';
-      const rank = cardCol.dataset.rank || '';
-      const level = cardCol.dataset.level || '';
+    if (!viewCards.classList.contains('d-none')) {
+      renderCardsView();
+    }
+  }
 
+  // Dynamic Cards View Renderer
+  function renderCardsView() {
+    const container = document.getElementById('cardsGridContainer');
+    if (!container) return;
+
+    const term = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const rankVal = filterRank ? filterRank.value : '';
+    const levelVal = filterLevel ? filterLevel.value : '';
+    const hideInactive = chkHideInactive ? chkHideInactive.checked : false;
+    const hideCandidates = chkHideCandidates ? chkHideCandidates.checked : false;
+
+    let html = '';
+    let count = 0;
+
+    for (const [id, adv] of Object.entries(window.adventurersData)) {
+      const category = adv.category;
       let matchCategory = false;
-      if (activeTabFilter === 'all') {
-        matchCategory = true;
-      } else if (activeTabFilter === 'guild') {
-        matchCategory = (category === 'guild');
-      } else if (activeTabFilter === 'candidate') {
-        matchCategory = (category === 'candidate');
-      } else if (activeTabFilter === 'inactive') {
-        matchCategory = (category === 'inactive');
-      } else if (activeTabFilter === 'fallen') {
-        matchCategory = (category === 'fallen');
-      }
+      if (activeTabFilter === 'all') matchCategory = true;
+      else if (activeTabFilter === 'guild') matchCategory = (category === 'guild');
+      else if (activeTabFilter === 'candidate') matchCategory = (category === 'candidate');
+      else if (activeTabFilter === 'inactive') matchCategory = (category === 'inactive');
+      else if (activeTabFilter === 'fallen') matchCategory = (category === 'fallen');
 
-      if (hideInactive && category === 'inactive') {
-        matchCategory = false;
-      }
-      if (hideCandidates && category === 'candidate') {
-        matchCategory = false;
-      }
+      if (hideInactive && category === 'inactive') matchCategory = false;
+      if (hideCandidates && category === 'candidate') matchCategory = false;
 
+      const name = (adv.character_name || '').toLowerCase();
+      const player = (adv.player_name || '').toLowerCase();
       const matchSearch = !term || name.includes(term) || player.includes(term);
-      const matchRank = !rankVal || rank === rankVal;
-      const matchLevel = !levelVal || level === levelVal;
+      const matchRank = !rankVal || adv.rank === rankVal;
+      const effLevel = calculateLevel(adv.total_xp);
+      const matchLevel = !levelVal || String(effLevel) === levelVal;
 
       if (matchCategory && matchSearch && matchRank && matchLevel) {
-        cardCol.style.display = '';
-      } else {
-        cardCol.style.display = 'none';
+        count++;
+        const isFallen = adv.status === 'kia' || adv.status === 'mia';
+        const isKia = adv.status === 'kia' || (adv.reason && adv.reason.toUpperCase() === 'KIA');
+        const isMia = adv.status === 'mia' || (adv.reason && adv.reason.toUpperCase() === 'MIA');
+
+        let rankColor = 'bg-label-secondary';
+        let rawRank = adv.rank || 'Aday';
+        let rankText = i18n.ranks[rawRank] || rawRank;
+        if (isKia) { rankColor = 'bg-label-danger'; rankText = 'KIA'; }
+        else if (isMia) { rankColor = 'bg-label-warning'; rankText = 'MIA'; }
+        else {
+          rankColor = {
+            'Clerk': 'bg-label-info',
+            'Aday': 'bg-label-secondary',
+            'Üye': 'bg-label-primary',
+            'Uzman': 'bg-label-success',
+            'Kıdemli': 'bg-label-warning',
+            'Gezgin': 'bg-label-info',
+            'Inaktif': 'bg-label-dark',
+          }[adv.rank] || 'bg-label-secondary';
+        }
+
+        const levelBadgeColor = effLevel >= 10 ? 'bg-label-danger' : (effLevel >= 6 ? 'bg-label-warning' : (effLevel >= 3 ? 'bg-label-primary' : 'bg-label-secondary'));
+        const nextLevel = Math.min(20, effLevel + 1);
+        const nextLevelXp = fastXpThresholds[nextLevel] || 2400000;
+        const currentBaseXp = fastXpThresholds[effLevel] || 0;
+        const progressPercent = effLevel >= 20 ? 100 : (nextLevelXp > currentBaseXp 
+          ? Math.round(Math.max(0, Math.min(100, ((adv.total_xp - currentBaseXp) / (nextLevelXp - currentBaseXp)) * 100))) 
+          : 100);
+        const remainingXp = Math.max(0, nextLevelXp - adv.total_xp);
+        const progressLabel = effLevel >= 20 
+          ? `${adv.total_xp.toLocaleString()} / ${nextLevelXp.toLocaleString()} XP (MAX)`
+          : `${adv.total_xp.toLocaleString()} / ${nextLevelXp.toLocaleString()} XP`;
+
+        html += `
+          <div class="col-12 col-sm-6 col-lg-4 col-xl-3 adventurer-card-col" data-id="${adv.id}">
+            <div class="card h-100 border shadow-xs adventurer-card">
+              <div class="card-body p-4 d-flex flex-column justify-content-between">
+                <div>
+                  <div class="d-flex align-items-start justify-content-between mb-3">
+                    <div class="d-flex align-items-center gap-3">
+                      <div class="avatar avatar-md cursor-pointer btn-open-profile" data-id="${adv.id}">
+                        <span class="avatar-initial rounded-circle ${isFallen ? 'bg-label-danger' : 'bg-label-primary'} fw-bold fs-5 text-uppercase">
+                          ${adv.character_name.substring(0, 2)}
+                        </span>
+                      </div>
+                      <div>
+                        <h6 class="mb-0 text-heading fw-bold cursor-pointer btn-open-profile" data-id="${adv.id}">
+                          ${adv.character_name}
+                        </h6>
+                        <small class="text-body-secondary">${adv.player_name || i18n.unclaimed}</small>
+                      </div>
+                    </div>
+                    <span class="badge ${rankColor} rounded-pill font-monospace" style="font-size: 0.72rem;">
+                      ${rankText}
+                    </span>
+                  </div>
+
+                  <div class="bg-body border rounded p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                      <span class="badge ${levelBadgeColor} font-monospace fw-bold">Lv ${effLevel}</span>
+                      <span class="fw-bold font-monospace text-heading" style="font-size: 0.85rem;">${progressLabel}</span>
+                    </div>
+                    <div class="progress rounded-pill shadow-xs" style="height: 7px;">
+                      <div class="progress-bar bg-primary progress-bar-animated-smooth" role="progressbar" style="width: ${progressPercent}%;"></div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-1">
+                      <small class="text-body-secondary font-monospace" style="font-size: 0.72rem;">%${progressPercent}</small>
+                      <small class="text-body-secondary font-monospace" style="font-size: 0.72rem;">
+                        ${effLevel >= 20 ? i18n.maximum : `${i18n.remainingLabel}<strong>${remainingXp.toLocaleString()} XP</strong>`}
+                      </small>
+                    </div>
+                  </div>
+
+                  <div class="d-flex flex-wrap gap-1 mb-3">
+                    ${adv.mission_xp > 0 ? `<span class="badge bg-label-success rounded-pill font-monospace" style="font-size: 0.7rem;">${i18n.questXpShort}${adv.mission_xp.toLocaleString()}</span>` : ''}
+                    ${adv.report_xp > 0 ? `<span class="badge bg-label-info rounded-pill font-monospace" style="font-size: 0.7rem;">${i18n.reportXpShort}${adv.report_xp.toLocaleString()}</span>` : ''}
+                    ${adv.extra_xp > 0 ? `<span class="badge bg-label-warning rounded-pill font-monospace" style="font-size: 0.7rem;">${i18n.extraXpShort}${adv.extra_xp.toLocaleString()}</span>` : ''}
+                    ${adv.sessions_count > 0 ? `<span class="badge bg-body border font-monospace text-heading" style="font-size: 0.7rem;">${adv.sessions_count} ${i18n.questsLabel}</span>` : ''}
+                  </div>
+                </div>
+
+                <div class="pt-3 border-top d-flex align-items-center justify-content-between gap-2">
+                  <button type="button" class="btn btn-xs btn-label-secondary rounded-pill flex-grow-1 btn-open-profile" data-id="${adv.id}">
+                    <i class="icon-base ti tabler-id me-1"></i> ${i18n.profileBtn}
+                  </button>
+                  ${window.isAdmin ? `
+                    <button type="button" class="btn btn-xs btn-primary rounded-pill flex-grow-1 btn-quick-xp" 
+                            data-id="${adv.id}" 
+                            data-name="${adv.character_name}" 
+                            data-xp="${adv.total_xp}">
+                      <i class="icon-base ti tabler-plus me-1"></i> ${i18n.awardXpBtn}
+                    </button>
+                  ` : ''}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
       }
-    });
+    }
+
+    if (count === 0) {
+      html = `<div class="col-12 text-center py-5 text-body-secondary"><i class="icon-base ti tabler-info-circle fs-2 d-block mb-2"></i>${i18n.noRecords}</div>`;
+    }
+
+    container.innerHTML = html;
   }
 
   if (searchInput) searchInput.addEventListener('input', applyFilters);
@@ -1446,9 +1502,9 @@ document.addEventListener('DOMContentLoaded', function() {
       if (selectedAdventurerIds.length === 0) {
         Swal.fire({
           icon: 'info',
-          title: 'Maceracı Seçin',
-          text: 'Lütfen tablodan XP dağıtmak istediğiniz maceracıların kutucuklarını işaretleyin.',
-          confirmButtonText: 'Tamam',
+          title: i18n.selectAdventurersTitle,
+          text: i18n.selectAdventurersText,
+          confirmButtonText: i18n.ok,
           customClass: { confirmButton: 'btn btn-primary rounded-pill' },
           buttonsStyling: false
         });
@@ -1461,7 +1517,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btnBatchAwardXpModal').addEventListener('click', openBatchXpModal);
 
   function openBatchXpModal() {
-    document.getElementById('batchXpRecipientsSummary').textContent = `${selectedAdventurerIds.length} maceracıya eşit miktarda XP eklenecektir.`;
+    document.getElementById('batchXpRecipientsSummary').textContent = i18n.recipientsSummary.replace('__COUNT__', selectedAdventurerIds.length);
     document.getElementById('batchXpAmount').value = '';
     document.getElementById('batchXpNote').value = '';
     const modal = new bootstrap.Modal(document.getElementById('modalBatchXp'));
@@ -1498,34 +1554,47 @@ document.addEventListener('DOMContentLoaded', function() {
         if (data.success) {
           Swal.fire({
             icon: 'success',
-            title: 'Toplu XP Dağıtıldı!',
+            title: i18n.batchXpSuccessTitle,
             text: data.message,
             timer: 2000,
             showConfirmButton: false
           }).then(() => location.reload());
         } else {
-          Swal.fire({ icon: 'error', title: 'Hata!', text: data.message });
+          Swal.fire({ icon: 'error', title: i18n.errorTitle, text: data.message });
         }
       })
       .catch(() => {
         btn.disabled = false;
-        Swal.fire({ icon: 'error', title: 'Hata!', text: 'Ağ hatası oluştu.' });
+        Swal.fire({ icon: 'error', title: i18n.errorTitle, text: i18n.networkError });
       });
     });
   }
 
-  // Hero Adventurer Profile Offcanvas Drawer
-  document.querySelectorAll('.btn-open-profile').forEach(btn => {
-    btn.addEventListener('click', function(e) {
+  // Open Adventurer Profile & Edit Drawers via Event Delegation
+  document.addEventListener('click', function(e) {
+    const profileBtn = e.target.closest('.btn-open-profile');
+    if (profileBtn) {
+      e.preventDefault();
       e.stopPropagation();
-      const adv = JSON.parse(this.dataset.adventurer);
-      openProfileDrawer(adv);
-    });
+      const id = profileBtn.dataset.id || profileBtn.closest('[data-id]')?.dataset.id;
+      const adv = window.adventurersData[id];
+      if (adv) openProfileDrawer(adv);
+      return;
+    }
+
+    const editBtn = e.target.closest('.btn-edit-adv');
+    if (editBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const id = editBtn.dataset.id || editBtn.closest('[data-id]')?.dataset.id;
+      const adv = window.adventurersData[id];
+      if (adv) openEditDrawer(adv);
+      return;
+    }
   });
 
   function openProfileDrawer(adv) {
     const isFallen = adv.status === 'kia' || adv.status === 'mia';
-    const isKia = adv.status === 'kia' || (adv.reason && adv.reason.toUpperCase() === 'KIA');
     const container = document.getElementById('profileDrawerContent');
 
     const effLevel = calculateLevel(adv.total_xp);
@@ -1540,6 +1609,8 @@ document.addEventListener('DOMContentLoaded', function() {
       ? `${adv.total_xp.toLocaleString()} / ${nextLevelXp.toLocaleString()} XP (MAX)`
       : `${adv.total_xp.toLocaleString()} / ${nextLevelXp.toLocaleString()} XP`;
 
+    const displayRank = i18n.ranks[adv.rank] || adv.rank;
+
     container.innerHTML = `
       <div class="d-flex align-items-center gap-3 p-3 bg-body border rounded mb-4">
         <div class="avatar avatar-lg">
@@ -1550,10 +1621,10 @@ document.addEventListener('DOMContentLoaded', function() {
         <div>
           <h5 class="mb-0 fw-bold text-heading">${adv.character_name}</h5>
           <span class="text-body-secondary small d-flex align-items-center gap-1">
-            <i class="icon-base ti tabler-user fs-6"></i> Oyuncu: <strong>${adv.player_name || 'Bilinmiyor'}</strong>
+            <i class="icon-base ti tabler-user fs-6"></i> ${i18n.playerLabel} <strong>${adv.player_name || i18n.unknown}</strong>
           </span>
           <div class="mt-1">
-            <span class="badge ${isFallen ? 'bg-label-danger' : 'bg-label-primary'} rounded-pill font-monospace">${adv.rank}</span>
+            <span class="badge ${isFallen ? 'bg-label-danger' : 'bg-label-primary'} rounded-pill font-monospace">${displayRank}</span>
           </div>
         </div>
       </div>
@@ -1567,66 +1638,66 @@ document.addEventListener('DOMContentLoaded', function() {
           <div class="progress-bar bg-primary" role="progressbar" style="width: ${progressPercent}%;"></div>
         </div>
         <div class="d-flex justify-content-between align-items-center small font-monospace text-body-secondary">
-          <span>İlerleme: %${progressPercent}</span>
-          <span>${effLevel >= 20 ? 'Maksimum Seviye' : `Sonraki Seviyeye: ${remainingXp.toLocaleString()} XP`}</span>
+          <span>${i18n.progressLabel}${progressPercent}</span>
+          <span>${effLevel >= 20 ? i18n.maximumLevel : `${i18n.toNextLevelLabel}${remainingXp.toLocaleString()} XP`}</span>
         </div>
       </div>
 
       <h6 class="fw-bold text-heading mb-3 d-flex align-items-center gap-1">
-        <i class="icon-base ti tabler-chart-pie text-primary fs-5"></i> XP Bileşen Dağılımı
+        <i class="icon-base ti tabler-chart-pie text-primary fs-5"></i> ${i18n.xpDistribution}
       </h6>
       <div class="row g-2 mb-4 font-monospace">
         <div class="col-6">
           <div class="border rounded p-2 text-center bg-body">
-            <small class="text-body-secondary d-block">Görev XP</small>
+            <small class="text-body-secondary d-block">${i18n.questXp}</small>
             <strong class="text-success">${(adv.mission_xp || 0).toLocaleString()}</strong>
           </div>
         </div>
         <div class="col-6">
           <div class="border rounded p-2 text-center bg-body">
-            <small class="text-body-secondary d-block">Rapor XP</small>
+            <small class="text-body-secondary d-block">${i18n.reportXp}</small>
             <strong class="text-info">${(adv.report_xp || 0).toLocaleString()}</strong>
           </div>
         </div>
         <div class="col-6">
           <div class="border rounded p-2 text-center bg-body">
-            <small class="text-body-secondary d-block">Rütbe XP</small>
+            <small class="text-body-secondary d-block">${i18n.rankXp}</small>
             <strong class="text-primary">${(adv.rank_xp || 0).toLocaleString()}</strong>
           </div>
         </div>
         <div class="col-6">
           <div class="border rounded p-2 text-center bg-body">
-            <small class="text-body-secondary d-block">Ekstra (EX)</small>
+            <small class="text-body-secondary d-block">${i18n.extraXp}</small>
             <strong class="text-warning">${(adv.extra_xp || 0).toLocaleString()}</strong>
           </div>
         </div>
         <div class="col-6">
           <div class="border rounded p-2 text-center bg-body">
-            <small class="text-body-secondary d-block">Bailiff</small>
+            <small class="text-body-secondary d-block">${i18n.bailiffXp}</small>
             <strong class="text-danger">${(adv.bailiff_xp || 0).toLocaleString()}</strong>
           </div>
         </div>
         <div class="col-6">
           <div class="border rounded p-2 text-center bg-body">
-            <small class="text-body-secondary d-block">Görev Sayısı</small>
-            <strong class="text-heading">${adv.sessions_count || 1} Oturum</strong>
+            <small class="text-body-secondary d-block">${i18n.questCount}</small>
+            <strong class="text-heading">${adv.sessions_count || 1} ${i18n.sessionsCountLabel}</strong>
           </div>
         </div>
       </div>
 
       ${adv.notes ? `
         <div class="mb-4">
-          <label class="form-label small fw-semibold text-heading">Maceracı Geçmişi & Notlar:</label>
+          <label class="form-label small fw-semibold text-heading">${i18n.historyNotes}</label>
           <div class="p-3 bg-body border rounded font-monospace small" style="white-space: pre-wrap;">${adv.notes}</div>
         </div>
       ` : ''}
 
       <div class="border-top pt-3 d-flex gap-2">
         <button type="button" class="btn btn-label-success rounded-pill flex-grow-1 btn-profile-quick-xp" data-id="${adv.id}" data-name="${adv.character_name}" data-xp="${adv.total_xp}">
-          <i class="icon-base ti tabler-plus me-1"></i> Hızlı XP Ekle
+          <i class="icon-base ti tabler-plus me-1"></i> ${i18n.quickXpBtn}
         </button>
-        <button type="button" class="btn btn-label-primary rounded-pill flex-grow-1 btn-profile-edit" data-adventurer='${JSON.stringify(adv)}'>
-          <i class="icon-base ti tabler-pencil me-1"></i> Düzenle
+        <button type="button" class="btn btn-label-primary rounded-pill flex-grow-1 btn-profile-edit" data-id="${adv.id}">
+          <i class="icon-base ti tabler-pencil me-1"></i> ${i18n.editBtn}
         </button>
       </div>
     `;
@@ -1640,7 +1711,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Hook edit inside profile drawer
     container.querySelector('.btn-profile-edit').addEventListener('click', function() {
       bootstrap.Offcanvas.getInstance(document.getElementById('offcanvasAdventurerProfile')).hide();
-      openEditDrawer(JSON.parse(this.dataset.adventurer));
+      openEditDrawer(window.adventurersData[this.dataset.id]);
     });
 
     const offcanvas = new bootstrap.Offcanvas(document.getElementById('offcanvasAdventurerProfile'));
@@ -1694,13 +1765,6 @@ document.addEventListener('DOMContentLoaded', function() {
     offcanvas.show();
   }
 
-  document.querySelectorAll('.btn-edit-adv').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const adv = JSON.parse(this.dataset.adventurer);
-      openEditDrawer(adv);
-    });
-  });
-
   // Live previews for Add and Edit Drawers
   function updateAddPreview() {
     const m = parseInt(document.getElementById('addMissionXp').value) || 0;
@@ -1714,7 +1778,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const lvl = calculateLevel(total);
 
     document.getElementById('addComputedTotalXp').textContent = total.toLocaleString() + ' XP';
-    document.getElementById('addComputedLevel').textContent = 'Seviye ' + lvl;
+    document.getElementById('addComputedLevel').textContent = i18n.levelPrefix + lvl;
   }
 
   document.querySelectorAll('.xp-input-add').forEach(input => {
@@ -1734,7 +1798,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('editTotalXp').value = computed;
     const lvl = calculateLevel(computed);
     document.getElementById('editLevel').value = lvl;
-    document.getElementById('editComputedLevel').textContent = 'Seviye ' + lvl;
+    document.getElementById('editComputedLevel').textContent = i18n.levelPrefix + lvl;
   }
 
   document.querySelectorAll('.xp-input-edit').forEach(input => {
@@ -1764,18 +1828,18 @@ document.addEventListener('DOMContentLoaded', function() {
         if (data.success) {
           Swal.fire({
             icon: 'success',
-            title: 'Başarılı!',
+            title: i18n.successTitle,
             text: data.message,
             timer: 1500,
             showConfirmButton: false
           }).then(() => location.reload());
         } else {
-          Swal.fire({ icon: 'error', title: 'Hata!', text: data.message || 'Eklenemedi.' });
+          Swal.fire({ icon: 'error', title: i18n.errorTitle, text: data.message || 'Error' });
         }
       })
       .catch(() => {
         btn.disabled = false;
-        Swal.fire({ icon: 'error', title: 'Hata!', text: 'Ağ hatası oluştu.' });
+        Swal.fire({ icon: 'error', title: i18n.errorTitle, text: i18n.networkError });
       });
     });
   }
@@ -1804,18 +1868,18 @@ document.addEventListener('DOMContentLoaded', function() {
         if (data.success) {
           Swal.fire({
             icon: 'success',
-            title: 'Güncellendi!',
+            title: i18n.updatedTitle,
             text: data.message,
             timer: 1500,
             showConfirmButton: false
           }).then(() => location.reload());
         } else {
-          Swal.fire({ icon: 'error', title: 'Hata!', text: data.message || 'Güncellenemedi.' });
+          Swal.fire({ icon: 'error', title: i18n.errorTitle, text: data.message || 'Error' });
         }
       })
       .catch(() => {
         btn.disabled = false;
-        Swal.fire({ icon: 'error', title: 'Hata!', text: 'Ağ hatası oluştu.' });
+        Swal.fire({ icon: 'error', title: i18n.errorTitle, text: i18n.networkError });
       });
     });
   }
@@ -1844,18 +1908,18 @@ document.addEventListener('DOMContentLoaded', function() {
         if (data.success) {
           Swal.fire({
             icon: 'success',
-            title: 'XP Eklendi!',
+            title: i18n.quickXpSuccessTitle,
             text: data.message,
             timer: 1800,
             showConfirmButton: false
           }).then(() => location.reload());
         } else {
-          Swal.fire({ icon: 'error', title: 'Hata!', text: data.message || 'XP eklenemedi.' });
+          Swal.fire({ icon: 'error', title: i18n.errorTitle, text: data.message || 'Error' });
         }
       })
       .catch(() => {
         btn.disabled = false;
-        Swal.fire({ icon: 'error', title: 'Hata!', text: 'Ağ hatası oluştu.' });
+        Swal.fire({ icon: 'error', title: i18n.errorTitle, text: i18n.networkError });
       });
     });
   }
@@ -1867,18 +1931,18 @@ document.addEventListener('DOMContentLoaded', function() {
       const status = this.dataset.status;
       const name = this.dataset.name;
 
-      let promptTitle = 'Durum Güncelleme';
-      let promptText = `"${name}" adlı maceracının durumu değiştirilecek. Onaylıyor musunuz?`;
+      let promptTitle = i18n.statusUpdateTitle;
+      let promptText = i18n.statusUpdateText.replace(':name', name);
 
       if (status === 'kia') {
-        promptTitle = 'Şehit İlan Et (KIA)';
-        promptText = `"${name}" savaş meydanında şehit düştü olarak işaretlenecek ve Onur Köşesine taşınacak.`;
+        promptTitle = i18n.kiaTitle;
+        promptText = i18n.kiaText.replace(':name', name);
       } else if (status === 'mia') {
-        promptTitle = 'Kayıp İlan Et (MIA)';
-        promptText = `"${name}" sislerin ardında kayıp olarak işaretlenecek ve Onur Köşesine taşınacak.`;
+        promptTitle = i18n.miaTitle;
+        promptText = i18n.miaText.replace(':name', name);
       } else if (status === 'active') {
-        promptTitle = 'Yeniden Saflara Çağır';
-        promptText = `"${name}" yeniden canlandırılarak Aktif Maceracılar tablosuna döndürülecek.`;
+        promptTitle = i18n.reviveTitle;
+        promptText = i18n.reviveText.replace(':name', name);
       }
 
       Swal.fire({
@@ -1886,8 +1950,8 @@ document.addEventListener('DOMContentLoaded', function() {
         text: promptText,
         icon: status === 'active' ? 'question' : 'warning',
         showCancelButton: true,
-        confirmButtonText: 'Evet, Onayla',
-        cancelButtonText: 'Vazgeç',
+        confirmButtonText: i18n.confirm,
+        cancelButtonText: i18n.cancel,
         customClass: {
           confirmButton: 'btn btn-primary rounded-pill me-2',
           cancelButton: 'btn btn-label-secondary rounded-pill'
@@ -1909,13 +1973,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
               Swal.fire({
                 icon: 'success',
-                title: 'Güncellendi!',
+                title: i18n.updatedTitle,
                 text: data.message,
                 timer: 1500,
                 showConfirmButton: false
               }).then(() => location.reload());
             } else {
-              Swal.fire({ icon: 'error', title: 'Hata!', text: data.message });
+              Swal.fire({ icon: 'error', title: i18n.errorTitle, text: data.message });
             }
           });
         }
@@ -1930,12 +1994,12 @@ document.addEventListener('DOMContentLoaded', function() {
       const name = this.dataset.name;
 
       Swal.fire({
-        title: 'Maceracıyı Sil?',
-        text: `"${name}" adlı maceracı kalıcı olarak silinecektir. Bu işlem geri alınamaz!`,
+        title: i18n.deleteTitle,
+        text: i18n.deleteText.replace(':name', name),
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: 'Evet, Sil',
-        cancelButtonText: 'İptal',
+        confirmButtonText: i18n.deleteConfirm,
+        cancelButtonText: i18n.cancel,
         customClass: {
           confirmButton: 'btn btn-danger rounded-pill me-2',
           cancelButton: 'btn btn-label-secondary rounded-pill'
@@ -1955,13 +2019,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
               Swal.fire({
                 icon: 'success',
-                title: 'Silindi!',
+                title: i18n.deletedTitle,
                 text: data.message,
                 timer: 1500,
                 showConfirmButton: false
               }).then(() => location.reload());
             } else {
-              Swal.fire({ icon: 'error', title: 'Hata!', text: data.message });
+              Swal.fire({ icon: 'error', title: i18n.errorTitle, text: data.message });
             }
           });
         }
@@ -1974,12 +2038,12 @@ document.addEventListener('DOMContentLoaded', function() {
   if (btnReset) {
     btnReset.addEventListener('click', function() {
       Swal.fire({
-        title: 'Orijinal Master Tablosuna Sıfırla?',
-        text: 'Tüm mevcut kayıtlar silinecek ve ekran görüntüsündeki 64 maceracının orijinal verileri yeniden yüklenecektir!',
+        title: i18n.resetTitle,
+        text: i18n.resetText,
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: 'Evet, Sıfırla',
-        cancelButtonText: 'Vazgeç',
+        confirmButtonText: i18n.resetConfirm,
+        cancelButtonText: i18n.cancel,
         customClass: {
           confirmButton: 'btn btn-warning rounded-pill me-2',
           cancelButton: 'btn btn-label-secondary rounded-pill'
@@ -1999,13 +2063,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
               Swal.fire({
                 icon: 'success',
-                title: 'Sıfırlandı!',
+                title: i18n.resetSuccessTitle,
                 text: data.message,
                 timer: 1800,
                 showConfirmButton: false
               }).then(() => location.reload());
             } else {
-              Swal.fire({ icon: 'error', title: 'Hata!', text: data.message });
+              Swal.fire({ icon: 'error', title: i18n.errorTitle, text: data.message });
             }
           });
         }

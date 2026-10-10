@@ -94,6 +94,7 @@ class PlayerTrackerSeeder extends Seeder
 
             $user = User::create([
                 'name' => $playerName,
+                'display_name' => $playerName,
                 'real_name' => $playerName,
                 'username' => $username,
                 'email' => $email,
@@ -121,16 +122,27 @@ class PlayerTrackerSeeder extends Seeder
             }
 
             $user = $getOrCreateUser($playerName);
-            $rankStr = trim((string)($row['Rütbe'] ?? 'Aday'));
+            $rawRankStr = trim((string)($row['Rütbe'] ?? ''));
 
-            $isClerk = ($rankStr === 'Clerk' || str_contains(strtolower($charName), 'clerk'));
+            $isClerk = ($rawRankStr === 'Clerk' || str_contains(strtolower($charName), 'clerk'));
             $charType = $isClerk ? 'CLERK' : 'MAIN';
 
-            $status = match ($rankStr) {
+            $status = match ($rawRankStr) {
                 'Inaktif' => 'INACTIVE',
                 'Gezgin' => 'TRAVELER',
                 default => 'ACTIVE',
             };
+
+            $level = (int)($row['Level'] ?? 1);
+            $sessions = (int)($row['Görev'] ?? 0);
+
+            if ($isClerk) {
+                $rankStr = 'Clerk';
+            } elseif ($rawRankStr === 'Inaktif' || $rawRankStr === 'Gezgin') {
+                $rankStr = $rawRankStr;
+            } else {
+                $rankStr = Character::calculateRankFromLevelAndSessions(max(1, $level), $sessions);
+            }
 
             $matchedRank = match ($rankStr) {
                 'Clerk' => $rankClerk,

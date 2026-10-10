@@ -10,17 +10,22 @@ class UserProfile extends Controller
 {
   public function index()
   {
-    $user = Auth::user();
+    $user = Auth::user() ?: \App\Models\User::orderBy('id', 'asc')->first();
     $loadEnum = function ($file) {
-      $p1 = config_path('enums/' . $file);
-      if (file_exists($p1)) return require $p1;
-      $p2 = config_path('Enums/' . $file);
-      if (file_exists($p2)) return require $p2;
+      $candidates = [
+        config_path('enums/' . $file),
+        config_path('Enums/' . $file),
+        config_path('enums/' . str_replace('pathfinder_', '', $file)),
+        config_path('Enums/' . str_replace('pathfinder_', '', $file)),
+      ];
+      foreach ($candidates as $p) {
+        if (file_exists($p)) return require $p;
+      }
       return [];
     };
 
-    $pfRaces = $loadEnum('pathfinder_races.php');
-    $pfClasses = $loadEnum('pathfinder_classes.php');
+    $pfRaces = $loadEnum('races.php');
+    $pfClasses = $loadEnum('classes.php');
     $bab = $loadEnum('bab.php');
     $progressions = $pfClasses;
     $saves = array_map(fn($c) => $c['saves'] ?? [], $progressions);
@@ -30,14 +35,22 @@ class UserProfile extends Controller
       ['balance_sp' => 358989.50, 'notes' => 'Valiant Shade lonca ana kasası']
     );
 
-    $characters = $user
+    $allCharacters = \App\Models\CharacterProfile::with('user')
+      ->orderByRaw("CASE WHEN rank = 'Main' OR character_type = 'Main' THEN 1 WHEN rank = 'Clerk' OR character_type = 'Clerk' THEN 2 ELSE 3 END")
+      ->orderBy('character_name', 'asc')
+      ->get();
+
+    $userCharacters = $user
       ? \App\Models\CharacterProfile::where('user_id', $user->id)
           ->orderByRaw("CASE WHEN rank = 'Main' OR character_type = 'Main' THEN 1 WHEN rank = 'Clerk' OR character_type = 'Clerk' THEN 2 ELSE 3 END")
           ->orderBy('id', 'asc')
           ->get()
       : collect();
 
-    $charactersData = $characters->map(function ($c) use ($user) {
+    // If current user has own characters use them; otherwise fallback to first 2 from guild characters
+    $characters = ($user && $userCharacters->isNotEmpty()) ? $userCharacters : ($user ? collect() : $allCharacters->take(2));
+
+    $mapCharacter = function ($c) use ($user) {
       $sData = $c->sheet_data['sheetData'] ?? $c->sheet_data ?? [];
       $traits = $sData['traits'] ?? ($c->sheet_data['traits'] ?? [
         'uye' => ['name' => '', 'desc' => ''],
@@ -50,27 +63,91 @@ class UserProfile extends Controller
         'id' => $c->character_id ?: (string) $c->id,
         'db_id' => $c->id,
         'name' => $c->character_name,
-        'player' => $c->player_name ?: ($user->name ?? 'Player'),
-        'race' => $c->race,
-        'raceKey' => strtolower($c->race ?? ''),
-        'class' => $c->class_name,
-        'classKey' => strtolower($c->class_name ?? ''),
+        'player' => $c->player_name ?: ($c->user?->name ?: ($user?->name ?? 'Player')),
+        'race' => $c->race ?: 'Human',
+        'raceKey' => strtolower($c->race ?? 'human'),
+        'class' => $c->class_name ?: 'Fighter',
+        'classKey' => strtolower($c->class_name ?? 'fighter'),
         'rank' => $c->rank ?: 'Main',
         'character_type' => $c->character_type ?: ($c->rank ?: 'Main'),
-        'level' => $c->level ?: 1,
-        'hp' => $c->hp ?: 10,
-        'maxHp' => $c->max_hp ?: ($c->hp ?: 10),
+        'level' => (int) ($c->level ?: 1),
+        'hp' => (int) ($c->hp ?: 10),
+        'maxHp' => (int) ($c->max_hp ?: ($c->hp ?: 10)),
         'hitDie' => $c->hit_die ?: 'd10',
-        'str' => $c->str,
-        'dex' => $c->dex,
-        'con' => $c->con,
-        'int' => $c->int,
-        'wis' => $c->wis,
-        'cha' => $c->cha,
+        'str' => (int) ($c->str ?: 10),
+        'dex' => (int) ($c->dex ?: 10),
+        'con' => (int) ($c->con ?: 10),
+        'int' => (int) ($c->int ?: 10),
+        'wis' => (int) ($c->wis ?: 10),
+        'cha' => (int) ($c->cha ?: 10),
         'gold' => $gold,
         'active' => ($user && $user->current_character === $c->character_name),
         'sheetData' => $sData,
         'traits' => $traits,
+      ];
+    };
+
+    $charactersData = $characters->map($mapCharacter)->values();
+    $allCharactersData = $allCharacters->map($mapCharacter)->values();
+
+    // Resolve all user IDs belonging to this player/account
+    $userIds = $user ? [$user->id] : [];
+    if ($user) {
+      if (!empty($user->current_character)) {
+        $owner = \App\Models\Character::where('name', $user->current_character)->value('user_id');
+        if ($owner && !in_array($owner, $userIds)) $userIds[] = $owner;
+      }
+      $profChars = \App\Models\CharacterProfile::where('user_id', $user->id)->pluck('character_name')->toArray();
+      if (!empty($profChars)) {
+        $owners = \App\Models\Character::whereIn('name', $profChars)->pluck('user_id')->toArray();
+        foreach ($owners as $o) {
+          if ($o && !in_array($o, $userIds)) $userIds[] = $o;
+        }
+      }
+      if ($user->id == 1 || strcasecmp($user->email, 'admin@valiantshade.com') === 0 || stripos($user->name, 'erdem') !== false) {
+        $likeOp = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+        $matched = \App\Models\User::where('name', $likeOp, '%erdem%')->pluck('id')->toArray();
+        foreach ($matched as $m) {
+          if (!in_array($m, $userIds)) $userIds[] = $m;
+        }
+      }
+    }
+
+    // Query user's dead (KIA), retired (INACTIVE), lost (MIA) characters
+    $pastCharacters = \App\Models\Character::with('rank')
+      ->whereIn('user_id', $userIds)
+      ->whereIn('status', ['KIA', 'INACTIVE', 'MIA', 'TRAVELER'])
+      ->orderByRaw("CASE WHEN status = 'KIA' THEN 1 WHEN status = 'INACTIVE' THEN 2 WHEN status = 'MIA' THEN 3 ELSE 4 END")
+      ->orderBy('current_level', 'desc')
+      ->orderBy('total_xp', 'desc')
+      ->get();
+
+    // If the user has no past characters, it remains an empty collection to display the empty state.
+    $pastCharacterNames = $pastCharacters->pluck('name')->toArray();
+    $profilesByName = \App\Models\CharacterProfile::whereIn('character_name', $pastCharacterNames)->get()->keyBy('character_name');
+
+    $questCounts = \App\Models\QuestParticipant::whereIn('character_id', $pastCharacters->pluck('id'))
+      ->groupBy('character_id')
+      ->selectRaw('character_id, count(*) as count')
+      ->pluck('count', 'character_id');
+
+    $pastCharactersData = $pastCharacters->map(function ($c) use ($profilesByName, $questCounts, $user) {
+      $prof = $profilesByName->get($c->name);
+      return [
+        'id' => $c->id,
+        'name' => $c->name,
+        'status' => strtoupper($c->status ?: 'KIA'),
+        'character_type' => $c->character_type ?: 'MAIN',
+        'level' => (int) ($c->current_level ?: 1),
+        'rank' => $c->rank?->name ?? 'Aday',
+        'total_xp' => (float) ($c->total_xp ?: 0),
+        'quest_xp' => (float) ($c->quest_xp ?: 0),
+        'report_xp' => (float) ($c->report_xp ?: 0),
+        'quests_count' => (int) ($questCounts[$c->id] ?? 0),
+        'class' => $prof?->class_name ?: 'Maceracı',
+        'race' => $prof?->race ?: 'Human',
+        'player' => $user?->name ?? 'Player',
+        'created_at' => $c->created_at ? $c->created_at->format('d.m.Y') : '',
       ];
     })->values();
 
@@ -78,6 +155,12 @@ class UserProfile extends Controller
       'user',
       'characters',
       'charactersData',
+      'allCharacters',
+      'allCharactersData',
+      'pastCharacters',
+      'pastCharactersData',
+      'profilesByName',
+      'questCounts',
       'pfRaces',
       'pfClasses',
       'bab',
@@ -144,16 +227,20 @@ class UserProfile extends Controller
       ], 401);
     }
 
-    $existingCount = \App\Models\CharacterProfile::where('user_id', $user->id)->count();
-    if ($existingCount >= 2) {
-      return response()->json([
-        'success' => false,
-        'message' => __('Character limit reached. Each player can have at most 2 characters (1 Main and 1 Clerk).'),
-      ], 422);
+    $isAdmin = (strcasecmp($user->email, 'admin@valiantshade.com') === 0 || (method_exists($user, 'hasRole') && $user->hasRole('admin')));
+
+    if (!$isAdmin) {
+      $existingCount = \App\Models\CharacterProfile::where('user_id', $user->id)->count();
+      if ($existingCount >= 2) {
+        return response()->json([
+          'success' => false,
+          'message' => __('Character limit reached. Each player can have at most 2 characters (1 Main and 1 Clerk).'),
+        ], 422);
+      }
     }
 
     $validated = $request->validate([
-      'character_name' => ['required', 'string', 'min:2', 'max:50', 'unique:character_profiles,character_name'],
+      'character_name' => ['required', 'string', 'min:2', 'max:50'],
       'rank' => ['required', 'string', 'in:Main,Clerk'],
       'race' => ['required', 'string', 'max:50'],
       'class_name' => ['required', 'string', 'max:50'],
@@ -165,32 +252,81 @@ class UserProfile extends Controller
       'cha' => ['required', 'integer', 'min:1', 'max:30'],
     ]);
 
-    // Check if user already has a character with this rank
-    $rankTaken = \App\Models\CharacterProfile::where('user_id', $user->id)
-      ->where(function ($q) use ($validated) {
-        $q->where('rank', $validated['rank'])
-          ->orWhere('character_type', $validated['rank']);
-      })
-      ->exists();
+    // Check unique character name across profiles and characters
+    $nameExists = \App\Models\CharacterProfile::whereRaw('LOWER(character_name) = ?', [mb_strtolower($validated['character_name'])])->exists()
+      || \App\Models\Character::whereRaw('LOWER(name) = ?', [mb_strtolower($validated['character_name'])])->exists();
 
-    if ($rankTaken) {
+    if ($nameExists) {
       return response()->json([
         'success' => false,
-        'message' => __("You already have a :rank character. You can only create one Main and one Clerk.", ['rank' => $validated['rank']]),
+        'message' => __("The character name ':name' is already taken. Please choose another name.", ['name' => $validated['character_name']]),
       ], 422);
     }
 
-    // Determine class hit die and starting HP
+    $isClerk = (strcasecmp($validated['rank'], 'Clerk') === 0);
+    $charType = $isClerk ? 'Clerk' : 'Main';
+    $guildRank = $isClerk ? 'Clerk' : 'Aday'; // Level 1 adventurer rank is Aday
+
+    // Check if user already has an active character of this type
+    if (!$isAdmin) {
+      $slotTaken = \App\Models\CharacterProfile::where('user_id', $user->id)
+        ->where(function ($q) use ($isClerk) {
+          if ($isClerk) {
+            $q->whereIn('character_type', ['CLERK', 'Clerk'])->orWhere('rank', 'Clerk');
+          } else {
+            $q->whereIn('character_type', ['MAIN', 'Main'])->orWhereIn('rank', ['Main', 'Aday', 'Üye', 'Kıdemli', 'Uzman']);
+          }
+        })
+        ->exists();
+
+      if ($slotTaken) {
+        return response()->json([
+          'success' => false,
+          'message' => __("You already have a :slot character. You can only create one Main and one Clerk.", ['slot' => $validated['rank']]),
+        ], 422);
+      }
+    }
+
     $loadEnum = function ($file) {
-      $p1 = config_path('enums/' . $file);
-      if (file_exists($p1)) return require $p1;
-      $p2 = config_path('Enums/' . $file);
-      if (file_exists($p2)) return require $p2;
+      $candidates = [
+        config_path('enums/' . $file),
+        config_path('Enums/' . $file),
+        config_path('enums/' . str_replace('pathfinder_', '', $file)),
+        config_path('Enums/' . str_replace('pathfinder_', '', $file)),
+      ];
+      foreach ($candidates as $p) {
+        if (file_exists($p)) return require $p;
+      }
       return [];
     };
-    $pfClasses = $loadEnum('pathfinder_classes.php');
+
+    // Robust class lookup
+    $pfClasses = $loadEnum('classes.php');
+    $clsInfo = [];
     $classKey = strtolower($validated['class_name']);
-    $clsInfo = $pfClasses[$classKey] ?? [];
+    foreach ($pfClasses as $k => $c) {
+      if (strcasecmp($k, $validated['class_name']) === 0 || strcasecmp($c['name'] ?? '', $validated['class_name']) === 0) {
+        $clsInfo = $c;
+        $classKey = $k;
+        break;
+      }
+    }
+    $classDisplayName = $clsInfo['name'] ?? ucfirst($validated['class_name']);
+
+    // Robust race lookup
+    $pfRaces = $loadEnum('races.php');
+    $raceInfo = [];
+    $raceKey = strtolower($validated['race']);
+    foreach ($pfRaces as $k => $r) {
+      if (strcasecmp($k, $validated['race']) === 0 || strcasecmp($r['name'] ?? '', $validated['race']) === 0) {
+        $raceInfo = $r;
+        $raceKey = $k;
+        break;
+      }
+    }
+    $raceDisplayName = $raceInfo['name'] ?? ucfirst($validated['race']);
+
+    // Hit Die and starting HP
     $hitDie = $clsInfo['hit_die'] ?? 'd10';
     $hdNumber = (int) filter_var($hitDie, FILTER_SANITIZE_NUMBER_INT) ?: 10;
     $conMod = (int) floor(($validated['con'] - 10) / 2);
@@ -198,23 +334,21 @@ class UserProfile extends Controller
 
     // BAB and Saves at level 1
     $babConfig = $loadEnum('bab.php');
-    $progressionsConfig = $pfClasses;
     $babTableKey = $clsInfo['bab_table'] ?? 'bab_section_1';
     $bab = $babConfig[$babTableKey][1] ?? '+1';
-    $classSaves = $progressionsConfig[$classKey]['saves'][1] ?? ['fort' => '+2', 'ref' => '+0', 'will' => '+0'];
-    $castingStat = $progressionsConfig[$classKey]['casting_stat'] ?? 'none';
+    $classSaves = $clsInfo['saves'][1] ?? ['fort' => '+2', 'ref' => '+0', 'will' => '+0'];
+    $castingStat = $clsInfo['casting_stat'] ?? 'none';
 
     $initialSpecials = [];
-    if (!empty($progressionsConfig[$classKey]['specials'][1])) {
-      $specStr = $progressionsConfig[$classKey]['specials'][1];
+    if (!empty($clsInfo['specials'][1])) {
+      $specStr = $clsInfo['specials'][1];
       if ($specStr !== '—' && $specStr !== '-') {
         $parts = array_filter(array_map('trim', explode(',', $specStr)));
-        $clsName = $clsInfo['name'] ?? ucfirst($validated['class_name']);
         foreach ($parts as $part) {
           $initialSpecials[] = [
             'badge' => 'Lvl 1',
             'title' => ucfirst($part),
-            'desc' => "{$clsName} Lvl 1 Class Feature",
+            'desc' => "{$classDisplayName} Lvl 1 Class Feature",
           ];
         }
       }
@@ -230,11 +364,11 @@ class UserProfile extends Controller
       'level' => 1,
       'deity' => '',
       'classKey' => $classKey,
-      'className' => $clsInfo['name'] ?? ucfirst($validated['class_name']),
-      'race' => $validated['race'],
-      'rank' => $validated['rank'],
-      'character_type' => $validated['rank'],
-      'size' => 'Medium',
+      'className' => $classDisplayName,
+      'race' => $raceDisplayName,
+      'rank' => $guildRank,
+      'character_type' => $charType,
+      'size' => $raceInfo['size'] ?? 'Medium',
       'gender' => 'Male',
       'age' => 25,
       'height' => "6'0\"",
@@ -262,7 +396,7 @@ class UserProfile extends Controller
       'tempHp' => 0,
       'nonLethal' => 0,
       'hitDie' => $hitDie,
-      'speedBase' => 30,
+      'speedBase' => (int) filter_var($raceInfo['speed'] ?? '30 ft.', FILTER_SANITIZE_NUMBER_INT) ?: 30,
       'speedArmor' => 30,
       'initMisc' => 0,
       'acArmor' => 0,
@@ -332,11 +466,11 @@ class UserProfile extends Controller
       'user_id' => $user->id,
       'character_name' => $validated['character_name'],
       'player_name' => $user->name,
-      'race' => $validated['race'],
-      'class_name' => $clsInfo['name'] ?? ucfirst($validated['class_name']),
+      'race' => $raceDisplayName,
+      'class_name' => $classDisplayName,
       'level' => 1,
-      'rank' => $validated['rank'],
-      'character_type' => $validated['rank'],
+      'rank' => ucfirst(strtolower($validated['rank'])),
+      'character_type' => $charType,
       'str' => $validated['str'],
       'dex' => $validated['dex'],
       'con' => $validated['con'],
@@ -352,6 +486,65 @@ class UserProfile extends Controller
       'will_save' => $classSaves['will'] ?? '+0',
       'sheet_data' => $initialSheetData,
     ]);
+
+    // Also persist into core Character model
+    $rankModel = \App\Models\Rank::where('name', $guildRank)->first();
+    if (!$rankModel && \Illuminate\Support\Facades\Schema::hasTable('ranks')) {
+      $rankModel = \App\Models\Rank::firstOrCreate(
+        ['name' => $guildRank],
+        ['hierarchy_order' => $isClerk ? 2 : 1, 'base_floor_xp' => 0.00]
+      );
+    }
+    $char = \App\Models\Character::firstOrCreate(
+      ['name' => $validated['character_name']],
+      [
+        'user_id' => $user->id,
+        'character_type' => strtoupper($charType),
+        'status' => 'ACTIVE',
+        'rank_id' => $rankModel?->id,
+        'current_level' => 1,
+        'allowance_sp' => 0.00,
+        'total_xp' => 0.00,
+      ]
+    );
+
+    // Ensure CharacterInfo exists
+    \App\Models\CharacterInfo::firstOrCreate(
+      ['character_id' => $char->id],
+      [
+        'class_and_level' => "{$classDisplayName} 1",
+        'race' => $raceDisplayName,
+        'alignment' => 'TN',
+        'hp_max' => $startingHp,
+        'hp_current' => $startingHp,
+        'armor_class_total' => 10 + (int) floor(($validated['dex'] - 10) / 2),
+        'touch_ac' => 10 + (int) floor(($validated['dex'] - 10) / 2),
+        'flat_footed_ac' => 10,
+        'pocket_money' => ['pp' => 0, 'gp' => 150, 'sp' => 0, 'cp' => 0],
+      ]
+    );
+
+    // Sync with PlayerXp model
+    \App\Models\PlayerXp::firstOrCreate(
+      ['character_name' => $validated['character_name']],
+      [
+        'user_id' => $user->id,
+        'player_name' => $user->name,
+        'status' => 'active',
+        'rank' => $guildRank,
+        'level' => 1,
+        'sessions_count' => 0,
+        'total_xp' => 0,
+        'allowance_sp' => 0,
+      ]
+    );
+
+    // Assign active character on user if not set
+    if ($charType === 'MAIN' && !$user->active_main_character_id) {
+      $user->update(['active_main_character_id' => $char->id]);
+    } elseif ($charType === 'CLERK' && !$user->active_clerk_character_id) {
+      $user->update(['active_clerk_character_id' => $char->id]);
+    }
 
     if (empty($user->current_character)) {
       $user->current_character = $profile->character_name;

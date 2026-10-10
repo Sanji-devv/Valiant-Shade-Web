@@ -3,19 +3,8 @@
         {
             "name": "Dashboards",
             "icon": "menu-icon icon-base ti tabler-smart-home",
-            "slug": "dashboard",
-            "submenu": [
-                {
-                    "url": "/valiant-shade/",
-                    "name": "Analytics",
-                    "slug": "dashboard-analytics"
-                },
-                {
-                    "url": "/valiant-shade/dashboard/crm",
-                    "name": "CRM",
-                    "slug": "dashboard-crm"
-                }
-            ]
+            "slug": "dashboard-analytics",
+            "url": "/valiant-shade/"
         },
         {
             "name": "Pages",
@@ -29,7 +18,7 @@
                 },
                 {
                     "url": "/valiant-shade/pages/profile-user",
-                    "name": "Profile",
+                    "name": "User Profile",
                     "slug": "pages-profile-user"
                 },
                 {

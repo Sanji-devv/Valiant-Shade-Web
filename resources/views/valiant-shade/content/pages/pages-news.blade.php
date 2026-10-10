@@ -1,6 +1,6 @@
 @extends('valiant-shade.layouts/layoutMaster')
 
-@section('title', 'Haberler, Fısıltılar & Sefer Bülteni - Valiant Shade')
+@section('title', __('News, Whispers & Expedition Bulletin - Valiant Shade'))
 
 @section('vendor-style')
 @vite([
@@ -182,34 +182,35 @@
   <div class="row align-items-center mb-4 g-3">
     <div class="col-lg-7 col-md-6">
       <div class="d-flex align-items-center gap-2 mb-1">
-        <span class="badge bg-label-primary px-2 py-1"><i class="icon-base ti tabler-scroll me-1"></i> Valiant Shade Gazetesi</span>
-        <span class="badge bg-label-danger px-2 py-1"><i class="icon-base ti tabler-flame me-1"></i> Canlı Bülten</span>
+        <span class="badge bg-label-primary px-2 py-1"><i class="icon-base ti tabler-scroll me-1"></i> {{ __('Valiant Shade Gazette') }}</span>
+        <span class="badge bg-label-info px-2 py-1"><i class="icon-base ti tabler-speakerphone me-1"></i> Lonca Haberleri &amp; Duyuru Yönetimi</span>
+        <span class="badge bg-label-danger px-2 py-1"><i class="icon-base ti tabler-flame me-1"></i> {{ __('Live Bulletin') }}</span>
       </div>
       <h3 class="fw-bold mb-1 d-flex align-items-center gap-2">
         <i class="icon-base ti tabler-news fs-2 text-warning"></i>
-        <span>{{ __('Haberler, Fısıltılar & Sefer Bülteni') }}</span>
+        <span>{{ __('News, Whispers & Expedition Bulletin') }}</span>
       </h3>
       <p class="text-body-secondary mb-0">
-        {{ __('Meyhane fısıltıları, tekinsiz dedikodular, şehit düşen kahramanlarımızın anma bildirileri, zindan sefer raporları ve Yüksek Divan fermanları.') }}
+        {{ __('Tavern whispers, eerie rumors, memorial notices for our fallen heroes, dungeon expedition reports, and High Court decrees.') }}
       </p>
     </div>
     <div class="col-lg-5 col-md-6 text-md-end d-flex gap-2 justify-content-md-end flex-wrap">
       <a href="{{ route('valiant-shade.dashboard-analytics') }}" class="btn btn-label-secondary d-inline-flex align-items-center gap-1">
         <i class="icon-base ti tabler-home"></i>
-        <span>{{ __('Ana Panel') }}</span>
+        <span>{{ __('Main Dashboard') }}</span>
       </a>
       <button type="button" class="btn btn-outline-warning d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#whisperTipModal">
         <i class="icon-base ti tabler-message-2-share"></i>
-        <span>{{ __('Meyhane Fısıltısı Gönder') }}</span>
+        <span>{{ __('Send Tavern Whisper') }}</span>
       </button>
       <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-1" onclick="window.scrollTo({ top: document.getElementById('newsFeedGrid').offsetTop - 80, behavior: 'smooth' })">
         <i class="icon-base ti tabler-book-2"></i>
-        <span>{{ __('Haberleri Keşfet') }}</span>
+        <span>{{ __('Explore News') }}</span>
       </button>
     </div>
   </div>
 
-  <!-- Featured Manşet / Breaking News Banner -->
+  <!-- Featured Headlines / Breaking News Banner -->
   @if($featuredNews)
   <div class="card border-0 mb-5 overflow-hidden">
     <div class="news-hero-card" style="background-image: url('{{ $featuredNews->image_asset }}');">
@@ -226,7 +227,7 @@
           </span>
           @endif
           <span class="badge bg-dark bg-opacity-75 text-warning border border-warning border-opacity-25 px-2 py-1">
-            <i class="icon-base ti tabler-flame me-1"></i> {{ __('GÜNÜN MANŞETİ') }}
+            <i class="icon-base ti tabler-flame me-1"></i> {{ __('HEADLINE OF THE DAY') }}
           </span>
           <span class="text-white-50 ms-auto d-none d-md-inline-block small">
             <i class="icon-base ti tabler-clock me-1"></i> {{ $featuredNews->date_text }} &bull; {{ $featuredNews->read_time }}
@@ -268,7 +269,7 @@
           <div class="d-flex align-items-center gap-2">
             <button type="button" class="btn btn-{{ $featuredNews->button_color ?? 'danger' }} px-4 py-2 fw-medium d-inline-flex align-items-center gap-2 shadow" data-bs-toggle="modal" data-bs-target="#newsDetailModal" onclick="openNewsDetail({{ $featuredNews->id }})">
               <i class="{{ $featuredNews->button_icon ?: 'icon-base ti tabler-book-2' }}"></i>
-              <span>{{ __('Haberi Detaylıca Oku') }}</span>
+              <span>{{ __('Read Full Story') }}</span>
             </button>
           </div>
         </div>
@@ -287,7 +288,7 @@
           </div>
           <div>
             <h5 class="mb-0 fw-bold text-danger">{{ $statsSummary['deaths'] ?? 2 }}</h5>
-            <small class="text-body-secondary">{{ __('Ölüm & Şehit Bildirisi') }}</small>
+            <small class="text-body-secondary">{{ __('Casualty & Memorial Notice') }}</small>
           </div>
         </div>
       </div>
@@ -300,7 +301,7 @@
           </div>
           <div>
             <h5 class="mb-0 fw-bold text-warning">{{ $statsSummary['rumors'] ?? 2 }}</h5>
-            <small class="text-body-secondary">{{ __('Meyhane & Şehir Dedikodusu') }}</small>
+            <small class="text-body-secondary">{{ __('Tavern & City Gossip') }}</small>
           </div>
         </div>
       </div>
@@ -313,7 +314,7 @@
           </div>
           <div>
             <h5 class="mb-0 fw-bold text-success">{{ $statsSummary['victories'] ?? 1 }}</h5>
-            <small class="text-body-secondary">{{ __('Sefer Zaferi & Ganimet') }}</small>
+            <small class="text-body-secondary">{{ __('Expedition Victory & Loot') }}</small>
           </div>
         </div>
       </div>
@@ -326,7 +327,7 @@
           </div>
           <div>
             <h5 class="mb-0 fw-bold text-primary">{{ $statsSummary['decrees'] ?? 1 }}</h5>
-            <small class="text-body-secondary">{{ __('Divan Kararı & Kelle Ödülü') }}</small>
+            <small class="text-body-secondary">{{ __('Court Decree & Bounty') }}</small>
           </div>
         </div>
       </div>
@@ -341,22 +342,22 @@
         <div class="col-lg-8 col-12">
           <div class="d-flex align-items-center gap-2 flex-wrap" id="categoryFilterGroup">
             <button type="button" class="btn btn-sm category-filter-btn active" data-bs-toggle="tab" data-cat="all">
-              <i class="icon-base ti tabler-layout-grid me-1"></i> Tüm Bülten ({{ $allNews->count() }})
+              <i class="icon-base ti tabler-layout-grid me-1"></i> {{ __('All Bulletins') }} ({{ $allNews->count() }})
             </button>
-            <button type="button" class="btn btn-sm category-filter-btn btn-outline-danger" data-bs-toggle="tab" data-cat="ölüm">
-              <i class="icon-base ti tabler-skull me-1"></i> Ölüm & Şehitler
+            <button type="button" class="btn btn-sm category-filter-btn btn-outline-danger" data-bs-toggle="tab" data-cat="casualties">
+              <i class="icon-base ti tabler-skull me-1"></i> {{ __('Fallen & Casualties') }}
             </button>
-            <button type="button" class="btn btn-sm category-filter-btn btn-outline-warning" data-bs-toggle="tab" data-cat="dedikodu">
-              <i class="icon-base ti tabler-flame me-1"></i> Dedikodular & Fısıltı
+            <button type="button" class="btn btn-sm category-filter-btn btn-outline-warning" data-bs-toggle="tab" data-cat="rumors">
+              <i class="icon-base ti tabler-flame me-1"></i> {{ __('Rumors & Whispers') }}
             </button>
-            <button type="button" class="btn btn-sm category-filter-btn btn-outline-dark" data-bs-toggle="tab" data-cat="suikast">
-              <i class="icon-base ti tabler-dagger me-1"></i> Suikast & İhanet
+            <button type="button" class="btn btn-sm category-filter-btn btn-outline-dark" data-bs-toggle="tab" data-cat="assassination">
+              <i class="icon-base ti tabler-dagger me-1"></i> {{ __('Assassination & Treason') }}
             </button>
-            <button type="button" class="btn btn-sm category-filter-btn btn-outline-success" data-bs-toggle="tab" data-cat="zafer">
-              <i class="icon-base ti tabler-trophy me-1"></i> Sefer Raporları
+            <button type="button" class="btn btn-sm category-filter-btn btn-outline-success" data-bs-toggle="tab" data-cat="expedition">
+              <i class="icon-base ti tabler-trophy me-1"></i> {{ __('Expedition Reports') }}
             </button>
-            <button type="button" class="btn btn-sm category-filter-btn btn-outline-primary" data-bs-toggle="tab" data-cat="meclis">
-              <i class="icon-base ti tabler-gavel me-1"></i> Lonca Meclisi
+            <button type="button" class="btn btn-sm category-filter-btn btn-outline-primary" data-bs-toggle="tab" data-cat="council">
+              <i class="icon-base ti tabler-gavel me-1"></i> {{ __('Guild Council') }}
             </button>
           </div>
         </div>
@@ -367,8 +368,8 @@
             <span class="input-group-text bg-transparent border-end-0">
               <i class="icon-base ti tabler-search text-body-secondary"></i>
             </span>
-            <input type="text" id="liveSearchInput" class="form-control border-start-0 ps-0" placeholder="Haber, dedikodu veya kahraman ara..." value="{{ $searchQuery }}">
-            <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn" title="Temizle">
+            <input type="text" id="liveSearchInput" class="form-control border-start-0 ps-0" placeholder="{{ __('Search news, rumors, or heroes...') }}" value="{{ $searchQuery }}">
+            <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn" title="{{ __('Clear') }}">
               <i class="icon-base ti tabler-x"></i>
             </button>
           </div>
@@ -380,8 +381,19 @@
   <!-- News Cards Grid -->
   <div class="row g-4" id="newsCardsContainer">
     @forelse($news as $item)
+    @php
+      $catType = match((int)$item->id) {
+        1, 6 => 'casualties',
+        2 => 'council',
+        3, 5 => 'expedition',
+        4 => 'rumors',
+        7 => 'assassination',
+        default => 'general'
+      };
+    @endphp
     <div class="col-lg-4 col-md-6 news-item-col"
          data-id="{{ $item->id }}"
+         data-cat-type="{{ $catType }}"
          data-category="{{ mb_strtolower($item->category) }}"
          data-title="{{ mb_strtolower($item->title) }}"
          data-desc="{{ mb_strtolower($item->description) }}"
@@ -466,12 +478,12 @@
           <div class="pt-3 border-top border-white border-opacity-10 d-flex align-items-center justify-content-between">
             <span class="guild-seal-stamp">
               <i class="icon-base ti tabler-shield-check text-{{ $item->badge_color ?? 'primary' }}"></i>
-              <span>Doğrulandı</span>
+              <span>{{ __('Verified') }}</span>
             </span>
 
             <button type="button" class="btn btn-outline-{{ $item->button_color ?? 'primary' }} btn-sm px-3 d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#newsDetailModal" onclick="openNewsDetail({{ $item->id }})">
               <i class="{{ $item->button_icon ?: 'icon-base ti tabler-book-2' }}"></i>
-              <span>{{ __('Detaylı Oku') }}</span>
+              <span>{{ __('Read More') }}</span>
             </button>
           </div>
         </div>
@@ -482,8 +494,8 @@
       <div class="avatar avatar-xl bg-label-secondary mx-auto mb-3">
         <i class="icon-base ti tabler-file-search fs-1"></i>
       </div>
-      <h5>{{ __('Eşleşen Haber Bulunamadı') }}</h5>
-      <p class="text-body-secondary">{{ __('Aradığınız kriterlere uygun haber veya fısıltı kaydı bulunmuyor.') }}</p>
+      <h5>{{ __('No Matching News Found') }}</h5>
+      <p class="text-body-secondary">{{ __('No news or whisper records match your search criteria.') }}</p>
     </div>
     @endforelse
   </div>
@@ -497,16 +509,16 @@
       <!-- Modal Hero Cover -->
       <div class="modal-hero-cover" id="modalHeroCover">
         <div class="modal-hero-overlay"></div>
-        <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3 z-3" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3 z-3" data-bs-dismiss="modal" aria-label="{{ __('Close') }}"></button>
 
         <div class="position-absolute bottom-0 start-0 p-4 z-2 w-100">
           <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
-            <span class="badge" id="modalCategoryBadge">Kategori</span>
-            <span class="news-tag-badge" id="modalTagBadge">Etiket</span>
-            <span class="text-white-50 ms-auto small" id="modalDateText">Tarih</span>
+            <span class="badge" id="modalCategoryBadge">{{ __('Category') }}</span>
+            <span class="news-tag-badge" id="modalTagBadge">{{ __('Tag') }}</span>
+            <span class="text-white-50 ms-auto small" id="modalDateText">{{ __('Date') }}</span>
           </div>
           <h3 class="text-white fw-bold mb-0" id="modalTitle" style="text-shadow: 0 2px 8px rgba(0,0,0,0.8); line-height: 1.3;">
-            Haber Başlığı
+            {{ __('News Title') }}
           </h3>
         </div>
       </div>
@@ -520,13 +532,13 @@
               <i class="icon-base ti tabler-feather text-warning fs-4"></i>
             </div>
             <div>
-              <h6 class="mb-0 text-white fw-bold" id="modalAuthor">Yazar</h6>
-              <small class="text-body-secondary" id="modalAuthorRole">Makam / Görev</small>
+              <h6 class="mb-0 text-white fw-bold" id="modalAuthor">{{ __('Author') }}</h6>
+              <small class="text-body-secondary" id="modalAuthorRole">{{ __('Role / Title') }}</small>
             </div>
           </div>
           <div class="d-flex align-items-center gap-3 text-body-secondary small">
-            <div><i class="icon-base ti tabler-map-pin me-1 text-warning"></i> <span id="modalLocation">Konum</span></div>
-            <div><i class="icon-base ti tabler-book me-1 text-info"></i> <span id="modalReadTime">Okuma Süresi</span></div>
+            <div><i class="icon-base ti tabler-map-pin me-1 text-warning"></i> <span id="modalLocation">{{ __('Location') }}</span></div>
+            <div><i class="icon-base ti tabler-book me-1 text-info"></i> <span id="modalReadTime">{{ __('Read Time') }}</span></div>
           </div>
         </div>
 
@@ -545,7 +557,7 @@
         <div class="mt-4 pt-3 border-top border-white border-opacity-10">
           <h6 class="text-white fw-bold mb-3 d-flex align-items-center gap-2">
             <i class="icon-base ti tabler-chart-pie text-warning"></i>
-            <span>{{ __('Harekat & Olay Özeti') }}</span>
+            <span>{{ __('Operation & Incident Summary') }}</span>
           </h6>
           <div class="row g-3" id="modalStatsGrid">
             <!-- Dynamic stats injected by JS -->
@@ -556,9 +568,9 @@
       <!-- Modal Footer with RPG Actions -->
       <div class="modal-footer border-top border-white border-opacity-10 p-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
         <div class="d-flex align-items-center gap-2" id="modalDynamicActions">
-          <!-- Action buttons injected based on category (taziye, rüşvet/meyhane, ferman) -->
+          <!-- Action buttons injected based on category -->
         </div>
-        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">{{ __('Kapat') }}</button>
+        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">{{ __('Close') }}</button>
       </div>
     </div>
   </div>
@@ -571,43 +583,43 @@
       <div class="modal-header border-bottom border-white border-opacity-10">
         <h5 class="modal-title fw-bold text-white d-flex align-items-center gap-2" id="whisperTipModalTitle">
           <i class="icon-base ti tabler-message-2-question text-warning"></i>
-          <span>{{ __('Meyhane Fısıltısı & İhbar Gönder') }}</span>
+          <span>{{ __('Submit Tavern Whisper & Report') }}</span>
         </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{{ __('Close') }}"></button>
       </div>
       <div class="modal-body p-4">
         <p class="text-body-secondary small mb-3">
-          {{ __('Lonca sokaklarında duyduğunuz şüpheli bir olayı, zindan kaybını veya meyhane dedikodusunu Valiant Shade İstihbarat Teşkilatı\'na gizlice iletin.') }}
+          {{ __('Secretly report suspicious incidents, dungeon losses, or tavern rumors to the Valiant Shade Intelligence Division.') }}
         </p>
         <div class="mb-3">
-          <label class="form-label text-white small fw-medium">{{ __('Fısıltı Başlığı veya Konu') }}</label>
-          <input type="text" class="form-control" id="whisperSubject" placeholder="Örn: Kızıl Han'da şüpheli elf buluşması...">
+          <label class="form-label text-white small fw-medium">{{ __('Whisper Subject or Title') }}</label>
+          <input type="text" class="form-control" id="whisperSubject" placeholder="{{ __('e.g. Suspicious elf meeting at Red Inn...') }}">
         </div>
         <div class="mb-3">
-          <label class="form-label text-white small fw-medium">{{ __('Kategori') }}</label>
+          <label class="form-label text-white small fw-medium">{{ __('Category') }}</label>
           <select class="form-select" id="whisperCategory">
-            <option value="Dedikodu & Fısıltı">{{ __('Meyhane Dedikodusu') }}</option>
-            <option value="Ölüm & Kayıp">{{ __('Zindan Kaybı & Şehit İhbarı') }}</option>
-            <option value="Suikast & İhanet">{{ __('Şüpheli Komplo / İhanet') }}</option>
-            <option value="Ganimet & Keşif">{{ __('Gizli Hazine / Harita İhbarı') }}</option>
+            <option value="rumors">{{ __('Tavern Gossip') }}</option>
+            <option value="casualties">{{ __('Dungeon Loss & Casualty Report') }}</option>
+            <option value="assassination">{{ __('Suspicious Conspiracy / Treason') }}</option>
+            <option value="expedition">{{ __('Hidden Treasure / Map Tip') }}</option>
           </select>
         </div>
         <div class="mb-3">
-          <label class="form-label text-white small fw-medium">{{ __('Fısıltının Detayları & Görgü Tanıklığı') }}</label>
-          <textarea class="form-control" id="whisperMessage" rows="4" placeholder="Gördüğünüz veya duyduğunuz detayları yazın..."></textarea>
+          <label class="form-label text-white small fw-medium">{{ __('Whisper Details & Eyewitness Account') }}</label>
+          <textarea class="form-control" id="whisperMessage" rows="4" placeholder="{{ __('Describe what you saw or heard...') }}"></textarea>
         </div>
         <div class="form-check">
           <input class="form-check-input" type="checkbox" id="anonymousWhisperCheck" checked>
           <label class="form-check-label text-body-secondary small" for="anonymousWhisperCheck">
-            {{ __('Kimliğim gizli kalsın (Gölge Mührü ile korunsun)') }}
+            {{ __('Keep my identity anonymous (Protected by Shadow Seal)') }}
           </label>
         </div>
       </div>
       <div class="modal-footer border-top border-white border-opacity-10">
-        <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">{{ __('Vazgeç') }}</button>
+        <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
         <button type="button" class="btn btn-warning d-inline-flex align-items-center gap-1" id="btnSubmitWhisper">
           <i class="icon-base ti tabler-send"></i>
-          <span>{{ __('Fısıltıyı Ulaştır') }}</span>
+          <span>{{ __('Send Whisper') }}</span>
         </button>
       </div>
     </div>
@@ -641,9 +653,9 @@
     document.getElementById('modalDateText').innerHTML = `<i class="icon-base ti tabler-clock me-1"></i> ${item.published_date || item.date_text}`;
     document.getElementById('modalTitle').textContent = item.title;
     document.getElementById('modalAuthor').textContent = item.author;
-    document.getElementById('modalAuthorRole').textContent = item.author_role || 'Lonca Yetkilisi';
-    document.getElementById('modalLocation').textContent = item.location_badge || 'Valiant Shade Kalesi';
-    document.getElementById('modalReadTime').textContent = item.read_time || '3 dk okuma';
+    document.getElementById('modalAuthorRole').textContent = item.author_role || '{{ __("Guild Official") }}';
+    document.getElementById('modalLocation').textContent = item.location_badge || '{{ __("Valiant Shade Citadel") }}';
+    document.getElementById('modalReadTime').textContent = item.read_time || '{{ __("3 min read") }}';
 
     // Narrative Body (Format paragraphs)
     const storyBox = document.getElementById('modalStoryContent');
@@ -673,37 +685,38 @@
         </div>
       `).join('');
     } else {
-      statsGrid.innerHTML = '<div class="col-12 text-body-secondary small">Özel istatistik bulunmuyor.</div>';
+      statsGrid.innerHTML = '<div class="col-12 text-body-secondary small">{{ __("No special statistics available.") }}</div>';
     }
 
     // Dynamic RPG Action Buttons in Modal
     const dynamicActions = document.getElementById('modalDynamicActions');
-    if (item.category.includes('Ölüm') || item.category.includes('Anma')) {
+    const itemId = parseInt(item.id, 10);
+    if (itemId === 1 || itemId === 6) {
       dynamicActions.innerHTML = `
         <button type="button" class="btn btn-outline-danger d-inline-flex align-items-center gap-1" onclick="taziyeBirak('${item.title}')">
           <i class="icon-base ti tabler-candle"></i>
-          <span>Taziye Mumı Yak & Saygı Duruşu</span>
+          <span>{{ __('Light Memorial Candle & Pay Respects') }}</span>
         </button>
       `;
-    } else if (item.category.includes('Dedikodu') || item.category.includes('Skandal')) {
+    } else if (itemId === 4) {
       dynamicActions.innerHTML = `
         <button type="button" class="btn btn-outline-warning d-inline-flex align-items-center gap-1" onclick="fisiltiYay('${item.title}')">
           <i class="icon-base ti tabler-beer"></i>
-          <span>Kızıl Han'da Bir Kadeh Kaldır & Dedikoduyu Yay</span>
+          <span>{{ __('Raise a Pint at Red Inn & Spread Rumor') }}</span>
         </button>
       `;
-    } else if (item.category.includes('Meclis') || item.category.includes('Ferman')) {
+    } else if (itemId === 2) {
       dynamicActions.innerHTML = `
         <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center gap-1" onclick="fermanKayit('${item.title}')">
           <i class="icon-base ti tabler-scroll"></i>
-          <span>Ödül Avına Adını Yazdır</span>
+          <span>{{ __('Enlist for Bounty Hunt') }}</span>
         </button>
       `;
     } else {
       dynamicActions.innerHTML = `
         <button type="button" class="btn btn-outline-success d-inline-flex align-items-center gap-1" onclick="zaferKutla('${item.title}')">
           <i class="icon-base ti tabler-trophy"></i>
-          <span>Zaferi Kutla & Şerefe</span>
+          <span>{{ __('Celebrate Victory & Cheers') }}</span>
         </button>
       `;
     }
@@ -716,60 +729,60 @@
   function taziyeBirak(title) {
     if (typeof Swal !== 'undefined') {
       Swal.fire({
-        title: '🕯️ Saygı Duruşu & Taziye',
-        text: 'Şehit kahramanlarımızın anısına bir mum yaktınız. Adları Valiant Shade Onur Kitabı\'na kaydedildi.',
+        title: '🕯️ {{ __("Memorial & Moment of Silence") }}',
+        text: '{{ __("You lit a candle in memory of our fallen heroes. Their names have been inscribed into the Valiant Shade Book of Honor.") }}',
         icon: 'info',
-        confirmButtonText: 'Ruhları Şad Olsun',
+        confirmButtonText: '{{ __("May Their Souls Rest in Glory") }}',
         customClass: { confirmButton: 'btn btn-danger' },
         buttonsStyling: false
       });
     } else {
-      alert('Şehitlerimizin anısına taziye sunuldu.');
+      alert('{{ __("Tribute paid to fallen heroes.") }}');
     }
   }
 
   function fisiltiYay(title) {
     if (typeof Swal !== 'undefined') {
       Swal.fire({
-        title: '🍺 Meyhane Fısıltısı',
-        text: 'Kızıl Han\'daki masalara birer kadeh bira ısmarlayıp dedikoduyu kulağa fısıldadınız. Şehirdeki şüphe seviyesi arttı!',
+        title: '🍺 {{ __("Tavern Whisper") }}',
+        text: '{{ __("You bought a round of ales at the Red Inn and whispered the rumor into eager ears. Suspicion in the city has increased!") }}',
         icon: 'warning',
-        confirmButtonText: 'Aramızda Kalsın',
+        confirmButtonText: '{{ __("Keep it Between Us") }}',
         customClass: { confirmButton: 'btn btn-warning' },
         buttonsStyling: false
       });
     } else {
-      alert('Dedikodu meyhaneye yayıldı.');
+      alert('{{ __("Rumor spread through the tavern.") }}');
     }
   }
 
   function fermanKayit(title) {
     if (typeof Swal !== 'undefined') {
       Swal.fire({
-        title: '📜 Ferman İmzalandı',
-        text: 'Kelle ödülü seferine kaydınız yapıldı. Hedef haydutlar canlı ya da ölü getirildiğinde payınız lonca sandığında sizi bekliyor olacak!',
+        title: '📜 {{ __("Decree Signed") }}',
+        text: '{{ __("You have enlisted for the bounty expedition. Your share will await you in the guild coffers once the targets are delivered alive or dead!") }}',
         icon: 'success',
-        confirmButtonText: 'Kılıcım Hazır',
+        confirmButtonText: '{{ __("My Blade is Ready") }}',
         customClass: { confirmButton: 'btn btn-primary' },
         buttonsStyling: false
       });
     } else {
-      alert('Fermana katılımınız onaylandı.');
+      alert('{{ __("Enlistment confirmed.") }}');
     }
   }
 
   function zaferKutla(title) {
     if (typeof Swal !== 'undefined') {
       Swal.fire({
-        title: '🏆 Zafer Kutlaması!',
-        text: 'Büyük zafer şerefine kadehler kaldırıldı. Lonca Meclisi sana ekstra +50 XP onur puanı takdim etti!',
+        title: '🏆 {{ __("Victory Celebration!") }}',
+        text: '{{ __("Steins were raised in honor of the grand victory. The Guild Council granted you +50 XP bonus honor points!") }}',
         icon: 'success',
-        confirmButtonText: 'Valiant Shade İçin!',
+        confirmButtonText: '{{ __("For Valiant Shade!") }}',
         customClass: { confirmButton: 'btn btn-success' },
         buttonsStyling: false
       });
     } else {
-      alert('Zafer kutlandı!');
+      alert('{{ __("Victory celebrated!") }}');
     }
   }
 
@@ -793,7 +806,8 @@
         const author = card.getAttribute('data-author') || '';
 
         // Category check
-        const matchCategory = (currentFilter === 'all') || cat.includes(currentFilter);
+        const cardCatType = card.getAttribute('data-cat-type') || '';
+        const matchCategory = (currentFilter === 'all') || (cardCatType === currentFilter);
 
         // Search check
         const matchQuery = !query
@@ -846,7 +860,7 @@
         const msg = document.getElementById('whisperMessage').value.trim();
 
         if (!subject || !msg) {
-          alert('Lütfen fısıltı konusu ve mesajını doldurun.');
+          alert('{{ __("Please fill in both whisper subject and message.") }}');
           return;
         }
 
@@ -859,15 +873,15 @@
 
         if (typeof Swal !== 'undefined') {
           Swal.fire({
-            title: '🤫 Fısıltınız Alındı!',
-            text: 'İhbarınız Valiant Shade İstihbarat Teşkilatı\'na gizlice ulaştırıldı. Kıdemli gözcülerimiz olayı derhal araştırmaya başladı.',
+            title: '🤫 {{ __("Whisper Received!") }}',
+            text: '{{ __("Your tip was delivered secretly to the Valiant Shade Intelligence Division. Veteran scouts have commenced immediate investigations.") }}',
             icon: 'success',
-            confirmButtonText: 'Anlaşıldı',
+            confirmButtonText: '{{ __("Understood") }}',
             customClass: { confirmButton: 'btn btn-warning' },
             buttonsStyling: false
           });
         } else {
-          alert('Fısıltınız başarıyla iletildi.');
+          alert('{{ __("Your whisper was sent successfully.") }}');
         }
       });
     }

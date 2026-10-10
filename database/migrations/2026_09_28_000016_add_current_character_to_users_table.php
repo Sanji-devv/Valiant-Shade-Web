@@ -8,19 +8,35 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasColumn('users', 'current_character')) {
-            Schema::table('users', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table) {
+            if (!Schema::hasColumn('users', 'display_name')) {
+                $table->string('display_name')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'real_name')) {
+                $table->string('real_name')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'current_character')) {
                 $table->string('current_character')->nullable();
-            });
-        }
+            }
+            if (!Schema::hasColumn('users', 'active_main_character_id')) {
+                $table->unsignedBigInteger('active_main_character_id')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'active_clerk_character_id')) {
+                $table->unsignedBigInteger('active_clerk_character_id')->nullable();
+            }
+        });
     }
 
     public function down(): void
     {
-        if (Schema::hasColumn('users', 'current_character')) {
-            Schema::table('users', function (Blueprint $table) {
-                $table->dropColumn('current_character');
-            });
-        }
+        Schema::table('users', function (Blueprint $table) {
+            $cols = array_filter(
+                ['real_name', 'current_character', 'active_main_character_id', 'active_clerk_character_id'],
+                fn($col) => Schema::hasColumn('users', $col)
+            );
+            if (!empty($cols)) {
+                $table->dropColumn($cols);
+            }
+        });
     }
 };

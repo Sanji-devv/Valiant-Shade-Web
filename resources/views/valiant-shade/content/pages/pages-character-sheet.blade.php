@@ -511,7 +511,7 @@
   <div id="sheetContentWrapper">
 
     <!-- ========================================================================= -->
-    <!-- SAYFA 1: MUHAREBE, NİTELİKLER & BECERİLER (CORE & COMBAT)                -->
+    <!-- PAGE 1: CORE, ATTRIBUTES & COMBAT (CORE & COMBAT) -->
     <!-- ========================================================================= -->
     <div id="tab-page1" class="mb-5">
       <div class="row g-4">
@@ -716,20 +716,20 @@
             </div>
 
             <!-- ====================================================
-                 INTEGRATED AC ITEMS (ARMOR & SHIELDS / AKTİF ZIRH & KALKAN)
+                 INTEGRATED AC ITEMS (ARMOR & SHIELDS / ACTIVE ARMOR & SHIELD)
                  ==================================================== -->
             <div class="pt-3 mt-3 border-top border-secondary border-opacity-20" id="sectionIntegratedAcItems">
               <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
                 <div class="d-flex align-items-center gap-2 flex-wrap" style="font-size: 0.75rem;">
                   <span class="badge bg-label-primary font-monospace py-1 px-2 d-inline-flex align-items-center gap-1 shadow-xs" id="badgeActiveArmor">
                     <i class="icon-base ti tabler-shield-filled fs-6"></i>
-                    <span>{{ __('Aktif Zırh') }}:</span>
-                    <strong id="lblActiveArmorName" class="text-heading ms-1">{{ __('Yok (Zırhsız)') }}</strong>
+                    <span>{{ __('Active Armor') }}:</span>
+                    <strong id="lblActiveArmorName" class="text-heading ms-1">{{ __('None (Unarmored)') }}</strong>
                   </span>
                   <span class="badge bg-label-info font-monospace py-1 px-2 d-inline-flex align-items-center gap-1 shadow-xs" id="badgeActiveShield">
                     <i class="icon-base ti tabler-shield fs-6"></i>
-                    <span>{{ __('Aktif Kalkan') }}:</span>
-                    <strong id="lblActiveShieldName" class="text-heading ms-1">{{ __('Yok') }}</strong>
+                    <span>{{ __('Active Shield') }}:</span>
+                    <strong id="lblActiveShieldName" class="text-heading ms-1">{{ __('None') }}</strong>
                   </span>
                 </div>
                 <button type="button" class="btn btn-xs btn-label-primary rounded-pill px-2" id="btnAddAcItemRow">
@@ -741,8 +741,8 @@
                 <table class="table table-sm align-middle text-center mb-0" id="tableAcItems" style="font-size: 0.76rem;">
                   <thead>
                     <tr class="text-body-secondary font-monospace text-uppercase" style="font-size: 0.68rem;">
-                      <th style="width: 58px;" title="{{ __('Kullanımda / Kuşanılmış Olan Zırh ve Kalkan') }}">{{ __('Aktif') }}</th>
-                      <th class="text-start">{{ __('Item / Eşya Adı') }}</th>
+                      <th style="width: 58px;" title="{{ __('Currently Equipped Armor & Shield') }}">{{ __('Active') }}</th>
+                      <th class="text-start">{{ __('Item Name') }}</th>
                       <th style="width: 82px;">{{ __('Type') }}</th>
                       <th style="width: 50px;">{{ __('Bonus') }}</th>
                       <th style="width: 46px;" title="{{ __('Armor Check Penalty') }}">Pen</th>
@@ -754,8 +754,8 @@
                   </tbody>
                   <tfoot>
                     <tr class="fw-bold font-monospace bg-body border-top">
-                      <td class="text-center"><span class="badge bg-label-success py-0 px-1" style="font-size: 0.62rem;">{{ __('AKTİF') }}</span></td>
-                      <td class="text-start" colspan="2">{{ __('KUŞANILAN TOPLAM') }}:</td>
+                      <td class="text-center"><span class="badge bg-label-success py-0 px-1" style="font-size: 0.62rem;">{{ __('ACTIVE') }}</span></td>
+                      <td class="text-start" colspan="2">{{ __('EQUIPPED TOTAL') }}:</td>
                       <td id="acItemTotalBonus" class="text-primary">+0</td>
                       <td id="acItemTotalPen" class="text-danger">+0</td>
                       <td id="acItemTotalWeight">0 lbs</td>
@@ -848,18 +848,18 @@
             </div>
 
             <!-- ====================================================
-                 INTEGRATED SAVING THROW ITEMS (RESISTANCE & PROTECTIVE ITEMS / DİRENÇ & KORUMA EŞYALARI)
+                 INTEGRATED SAVING THROW ITEMS (RESISTANCE & PROTECTIVE ITEMS)
                  ==================================================== -->
             <div class="pt-3 mt-3 border-top border-secondary border-opacity-20" id="sectionIntegratedSaveItems">
               <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
                 <div class="d-flex align-items-center gap-2 flex-wrap" style="font-size: 0.75rem;">
                   <span class="badge bg-label-warning font-monospace py-1 px-2 d-inline-flex align-items-center gap-1 shadow-xs" id="badgeActiveResistance">
                     <i class="icon-base ti tabler-shield-spark fs-6"></i>
-                    <span>{{ __('Aktif Koruma / Direnç Eşyası') }}:</span>
-                    <strong id="lblActiveResistanceName" class="text-heading ms-1">{{ __('Yok') }}</strong>
+                    <span>{{ __('Active Protection / Resistance Item') }}:</span>
+                    <strong id="lblActiveResistanceName" class="text-heading ms-1">{{ __('None') }}</strong>
                   </span>
                   <span class="badge bg-label-primary font-monospace py-1 px-2 d-inline-flex align-items-center gap-1 shadow-xs" id="badgeActiveSaveBonuses">
-                    <span>{{ __('Eklenen Bonus') }}:</span>
+                    <span>{{ __('Applied Bonus') }}:</span>
                     <strong id="lblActiveSaveBonusesText" class="text-heading ms-1">Fort +0 | Ref +0 | Will +0</strong>
                   </span>
                 </div>
@@ -872,8 +872,8 @@
                 <table class="table table-sm align-middle text-center mb-0" id="tableSaveItems" style="font-size: 0.76rem;">
                   <thead>
                     <tr class="text-body-secondary font-monospace text-uppercase" style="font-size: 0.68rem;">
-                      <th style="width: 58px;" title="{{ __('Kullanımda / Kuşanılmış Olan Koruma Eşyası') }}">{{ __('Aktif') }}</th>
-                      <th class="text-start">{{ __('Item / Eşya Adı') }}</th>
+                      <th style="width: 58px;" title="{{ __('Currently Equipped Protection Item') }}">{{ __('Active') }}</th>
+                      <th class="text-start">{{ __('Item Name') }}</th>
                       <th style="width: 100px;">{{ __('Save Type') }}</th>
                       <th style="width: 100px;">{{ __('Bonus Type') }}</th>
                       <th style="width: 52px;">{{ __('Bonus') }}</th>
@@ -885,8 +885,8 @@
                   </tbody>
                   <tfoot>
                     <tr class="fw-bold font-monospace bg-body border-top">
-                      <td class="text-center"><span class="badge bg-label-success py-0 px-1" style="font-size: 0.62rem;">{{ __('AKTİF') }}</span></td>
-                      <td class="text-start" colspan="3">{{ __('KUŞANILAN DİRENÇ TOPLAMI') }}:</td>
+                      <td class="text-center"><span class="badge bg-label-success py-0 px-1" style="font-size: 0.62rem;">{{ __('ACTIVE') }}</span></td>
+                      <td class="text-start" colspan="3">{{ __('EQUIPPED RESISTANCE TOTAL') }}:</td>
                       <td id="saveItemTotalBonus" class="text-warning">+0</td>
                       <td id="saveItemTotalWeight">0 lbs</td>
                       <td></td>
@@ -1255,7 +1255,7 @@
             </div>
           </div>
 
-          <!-- Carrying Capacity / Taşıma Kapasitesi (Automated based on STR) -->
+          <!-- Carrying Capacity (Automated based on STR) -->
           <div class="pf-card p-3 mb-3">
             <div class="pf-banner-header">
               <span>{{ __('Carrying Capacity') }}</span>
@@ -1337,7 +1337,7 @@
         <!-- Column 2: Feats, Traits & Special Abilities (4 Cols) -->
         <div class="col-12 col-lg-4">
 
-          <!-- Character Traits (Rütbe Traitleri: Üye, Kıdemli, Uzman) -->
+          <!-- Character Traits (Rank Traits: Member, Senior, Expert) -->
           @php
             $existingTraits = [];
             if ($dbCharacter) {
@@ -1374,21 +1374,21 @@
             }
 
             $slotsMeta = [
-              'uye'     => ['label' => __('Üye Traiti'), 'slot' => 'Slot 1 • Üye', 'badge' => 'bg-label-info', 'icon' => 'tabler-user-check', 'border' => 'rgba(115, 103, 240, 0.28)'],
-              'kidemli' => ['label' => __('Kıdemli Traiti'), 'slot' => 'Slot 2 • Kıdemli', 'badge' => 'bg-label-warning', 'icon' => 'tabler-award', 'border' => 'rgba(255, 171, 0, 0.28)'],
-              'uzman'   => ['label' => __('Uzman Traiti'), 'slot' => 'Slot 3 • Uzman', 'badge' => 'bg-label-success', 'icon' => 'tabler-shield-star', 'border' => 'rgba(40, 199, 111, 0.28)'],
+              'uye'     => ['label' => __('Member Trait'), 'slot' => 'Slot 1 • ' . __('Member'), 'badge' => 'bg-label-info', 'icon' => 'tabler-user-check', 'border' => 'rgba(115, 103, 240, 0.28)'],
+              'kidemli' => ['label' => __('Senior Trait'), 'slot' => 'Slot 2 • ' . __('Senior'), 'badge' => 'bg-label-warning', 'icon' => 'tabler-award', 'border' => 'rgba(255, 171, 0, 0.28)'],
+              'uzman'   => ['label' => __('Expert Trait'), 'slot' => 'Slot 3 • ' . __('Expert'), 'badge' => 'bg-label-success', 'icon' => 'tabler-shield-star', 'border' => 'rgba(40, 199, 111, 0.28)'],
             ];
           @endphp
           <div class="pf-card p-3 mb-3" id="characterTraitsCard">
             <div class="pf-banner-header d-flex align-items-center justify-content-between">
               <div class="d-flex align-items-center gap-1_5">
                 <i class="icon-base ti tabler-sparkles text-warning fs-5"></i>
-                <span>{{ __('Character Traits') }} ({{ __('Rütbe Traitleri') }})</span>
+                <span>{{ __('Character Traits') }} ({{ __('Rank Traits') }})</span>
               </div>
               <div class="d-flex align-items-center gap-2">
                 <span class="badge bg-label-warning font-monospace py-0 px-2" style="font-size: 0.68rem;">3 {{ __('Slots') }}</span>
-                <a href="{{ route('valiant-shade.pages-featntrait', ['character' => $dbCharacter->character_name ?? '']) }}" class="btn btn-xs btn-label-primary rounded-pill px-2 d-inline-flex align-items-center gap-1" title="{{ __('Feat & Traits Sayfasında Düzenle') }}">
-                  <i class="icon-base ti tabler-edit fs-6"></i> {{ __('Düzenle') }}
+                <a href="{{ route('valiant-shade.pages-featntrait', ['character' => $dbCharacter->character_name ?? '']) }}" class="btn btn-xs btn-label-primary rounded-pill px-2 d-inline-flex align-items-center gap-1" title="{{ __('Edit in Feat & Traits Page') }}">
+                  <i class="icon-base ti tabler-edit fs-6"></i> {{ __('Edit') }}
                 </a>
               </div>
             </div>
@@ -1416,7 +1416,7 @@
 
                   <div class="d-flex align-items-center gap-2 ms-auto">
                     <!-- Trait Link / Display -->
-                    <a href="{{ $tUrl ?: '#' }}" target="_blank" rel="noopener noreferrer" id="sheetTraitLink_{{ $slotKey }}" class="fw-bold text-primary font-monospace fs-6 text-decoration-none d-inline-flex align-items-center gap-1 hover-underline {{ empty($tName) ? 'd-none' : '' }}" title="{{ __('Kaynağı Aç') }}">
+                    <a href="{{ $tUrl ?: '#' }}" target="_blank" rel="noopener noreferrer" id="sheetTraitLink_{{ $slotKey }}" class="fw-bold text-primary font-monospace fs-6 text-decoration-none d-inline-flex align-items-center gap-1 hover-underline {{ empty($tName) ? 'd-none' : '' }}" title="{{ __('Open Source') }}">
                       <span id="sheetTraitDisplay_{{ $slotKey }}">{{ $tName }}</span>
                       <i class="icon-base ti tabler-external-link fs-6 text-body-secondary"></i>
                     </a>
@@ -1424,7 +1424,7 @@
                     <span class="badge bg-label-secondary font-monospace py-0 px-1 {{ (empty($tName) || empty($tCat)) ? 'd-none' : '' }}" id="sheetTraitCat_{{ $slotKey }}" style="font-size: 0.65rem;">{{ $tCat }}</span>
 
                     <span class="text-body-secondary fst-italic small {{ !empty($tName) ? 'd-none' : '' }}" id="sheetTraitEmpty_{{ $slotKey }}">
-                      {{ __('Henüz atanmadı') }}
+                      {{ __('Not assigned yet') }}
                     </span>
 
                     <!-- Hidden inputs so JS save/state remains fully intact -->
@@ -2485,7 +2485,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     tr.innerHTML = `
       <td class="p-1 text-center align-middle" style="width: 58px;">
-        <div class="form-check form-switch d-flex justify-content-center m-0 p-0" title="Aktif Kullanımda / Kuşanılmış">
+        <div class="form-check form-switch d-flex justify-content-center m-0 p-0" title="Active / Equipped">
           <input type="checkbox" class="form-check-input ac-item-active m-0 cursor-pointer" ${isActive ? 'checked' : ''} style="width: 2.1rem; height: 1.15rem;" />
         </div>
       </td>
@@ -2660,7 +2660,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }).slice(0, 15);
 
       if (matches.length === 0) {
-        dropdown.innerHTML = '<div class="p-2 text-body-secondary small text-center font-monospace">{{ __("Eşleşen koruma eşyası bulunamadı") }}</div>';
+        dropdown.innerHTML = '<div class="p-2 text-body-secondary small text-center font-monospace">{{ __("No matching protection item found") }}</div>';
         dropdown.style.display = 'block';
         return;
       }
@@ -2763,17 +2763,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     tr.innerHTML = `
       <td class="p-1 text-center align-middle" style="width: 58px;">
-        <div class="form-check form-switch d-flex justify-content-center m-0 p-0" title="Aktif Kullanımda / Kuşanılmış">
+        <div class="form-check form-switch d-flex justify-content-center m-0 p-0" title="Active / Equipped">
           <input type="checkbox" class="form-check-input save-item-active m-0 cursor-pointer" ${isActive ? 'checked' : ''} style="width: 2.1rem; height: 1.15rem;" />
         </div>
       </td>
       <td class="position-relative p-1">
-        <input type="text" class="form-control form-control-sm pf-box-input pf-input-compact text-start save-item-name" placeholder="Eşya Adı (örn: Cloak of Resistance +2)" value="${escapeHtml(name)}" autocomplete="off" />
+        <input type="text" class="form-control form-control-sm pf-box-input pf-input-compact text-start save-item-name" placeholder="Item Name (e.g. Cloak of Resistance +2)" value="${escapeHtml(name)}" autocomplete="off" />
         <div class="save-item-autocomplete dropdown-menu shadow-lg pf-scroll p-1" style="display: none; position: absolute; top: 100%; left: 0; min-width: 290px; max-width: 380px; max-height: 240px; overflow-y: auto; z-index: 1050; background: #1b1c2d; border: 1px solid rgba(226, 185, 111, 0.35);"></div>
       </td>
       <td class="p-1">
         <select class="form-select form-select-sm pf-box-input pf-input-compact save-item-target font-monospace p-1 text-center" style="font-size: 0.68rem;">
-          <option value="all" ${target === 'all' ? 'selected' : ''}>All (Tümü)</option>
+          <option value="all" ${target === 'all' ? 'selected' : ''}>All</option>
           <option value="fort" ${target === 'fort' ? 'selected' : ''}>Fortitude</option>
           <option value="ref" ${target === 'ref' ? 'selected' : ''}>Reflex</option>
           <option value="will" ${target === 'will' ? 'selected' : ''}>Will</option>
@@ -3390,14 +3390,14 @@ document.addEventListener('DOMContentLoaded', function () {
       effectiveDex = minMaxDex;
       if (badgeDexCapInfo) {
         badgeDexCapInfo.className = 'badge bg-label-warning font-monospace py-1 px-2';
-        badgeDexCapInfo.innerHTML = `<i class="icon-base ti tabler-alert-triangle me-1"></i>Max Dex: +${minMaxDex} (Dex mod ${formatMod(rawDexMod)} sınırlandı)`;
+        badgeDexCapInfo.innerHTML = `<i class="icon-base ti tabler-alert-triangle me-1"></i>Max Dex: +${minMaxDex} (Dex mod ${formatMod(rawDexMod)} capped)`;
       }
       if (dexCapNotice) dexCapNotice.classList.remove('d-none');
     } else if (minMaxDex !== null) {
       effectiveDex = rawDexMod;
       if (badgeDexCapInfo) {
         badgeDexCapInfo.className = 'badge bg-label-secondary font-monospace py-1 px-2';
-        badgeDexCapInfo.textContent = `Max Dex: +${minMaxDex} (Uygulanan Dex: ${formatMod(rawDexMod)})`;
+        badgeDexCapInfo.textContent = `Max Dex: +${minMaxDex} (Applied Dex: ${formatMod(rawDexMod)})`;
       }
       if (dexCapNotice) dexCapNotice.classList.remove('d-none');
     } else {
@@ -3709,7 +3709,7 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
           // armor
           armorBonus += bonus;
-          activeArmorName = name ? `${name} (+${bonus})` : `Zırh (+${bonus})`;
+          activeArmorName = name ? `${name} (+${bonus})` : `Armor (+${bonus})`;
         }
 
         totBonus += bonus;
@@ -3728,8 +3728,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // Update Quick status labels in AC header
     const lblArmor = document.getElementById('lblActiveArmorName');
     const lblShield = document.getElementById('lblActiveShieldName');
-    if (lblArmor) lblArmor.textContent = activeArmorName || 'Yok (Zırhsız)';
-    if (lblShield) lblShield.textContent = activeShieldName || 'Yok';
+    if (lblArmor) lblArmor.textContent = activeArmorName || 'None (Unarmored)';
+    if (lblShield) lblShield.textContent = activeShieldName || 'None';
 
     // Feed separated Armor, Shield, Deflect, Natural, Misc into Sheet 1 AC
     const sheetArmorInput = document.getElementById('sheetAcArmor');

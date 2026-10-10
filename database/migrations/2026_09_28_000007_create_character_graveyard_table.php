@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('character_id')->constrained('characters')->cascadeOnDelete();
+            $table->foreignId('death_quest_id')->nullable()->constrained('quests')->nullOnDelete();
             $table->enum('cause', ['KIA', 'MIA']);
             
             $table->integer('quest_count_at_death')->default(0);

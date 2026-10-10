@@ -12,9 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('character_profiles', function (Blueprint $table) {
-            $table->string('character_id')->nullable()->index()->after('id');
-            $table->unsignedBigInteger('user_id')->nullable()->index()->after('character_id');
-            $table->json('sheet_data')->nullable()->after('notes');
+            if (!Schema::hasColumn('character_profiles', 'character_id')) {
+                $table->string('character_id')->nullable()->index()->after('id');
+            }
+            if (!Schema::hasColumn('character_profiles', 'user_id')) {
+                $table->unsignedBigInteger('user_id')->nullable()->index()->after('character_id');
+            }
+            if (!Schema::hasColumn('character_profiles', 'sheet_data')) {
+                $table->json('sheet_data')->nullable()->after('notes');
+            }
         });
     }
 
@@ -24,9 +30,10 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('character_profiles', function (Blueprint $table) {
-            $table->dropIndex(['character_id']);
-            $table->dropIndex(['user_id']);
-            $table->dropColumn(['character_id', 'user_id', 'sheet_data']);
+            $cols = array_filter(['character_id', 'user_id', 'sheet_data'], fn($c) => Schema::hasColumn('character_profiles', $c));
+            if (!empty($cols)) {
+                $table->dropColumn($cols);
+            }
         });
     }
 };

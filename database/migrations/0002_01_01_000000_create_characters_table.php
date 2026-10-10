@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('characters', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-            $table->foreignId('parent_id')->constrained('characters')->cascadeOnDelete();
+            $table->foreignId('parent_id')->nullable()->constrained('characters')->nullOnDelete();
             $table->foreignId('rank_id')->nullable()->constrained('ranks')->nullOnDelete();
 
             $table->string('name');

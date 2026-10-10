@@ -168,9 +168,9 @@
     </div>
     <div class="offcanvas-body mx-0 flex-grow-0 p-6 h-100">
       <form class="add-new-user pt-0" id="addNewUserForm" onsubmit="return false">
-        <!-- Full Name -->
+        <!-- Display Name -->
         <div class="mb-6 form-control-validation">
-          <label class="form-label" for="add-user-fullname">Full Name <span class="text-danger">*</span></label>
+          <label class="form-label" for="add-user-fullname">{{ __('Display Name') }} <span class="text-danger">*</span></label>
           <input type="text" class="form-control" id="add-user-fullname" placeholder="Valerius Thorn" name="userFullname" required />
         </div>
 
@@ -230,15 +230,39 @@
               <div class="col-lg-7">
                 <form id="role-form">
                   <input type="hidden" name="roleId" id="role-id">
-                  <div class="mb-4">
-                    <label class="form-label" for="role-name">Role name</label>
-                    <input class="form-control" id="role-name" name="name" maxlength="60" required>
+                  <div class="row g-3 mb-3">
+                    <div class="col-md-7">
+                      <label class="form-label" for="role-name">{{ __('Role Name') }} <span class="text-danger">*</span></label>
+                      <input class="form-control" id="role-name" name="name" maxlength="60" required placeholder="e.g. Game Master">
+                    </div>
+                    <div class="col-md-5">
+                      <label class="form-label" for="role-priority">{{ __('Authority Priority') }} <span class="text-danger">*</span></label>
+                      <input type="number" class="form-control" id="role-priority" name="priority" min="0" max="100" value="10" placeholder="10-100" title="{{ __('Higher number = Higher authority (Admin: 100, Player: 10)') }}">
+                      <div class="form-text" style="font-size: 0.72rem;">{{ __('100: Supreme, 10: Player') }}</div>
+                    </div>
                   </div>
-                  <h6>Permissions</h6>
-                  <div id="role-permissions" class="d-grid gap-2"></div>
-                  <div class="d-flex gap-2 mt-5">
-                    <button class="btn btn-primary" type="submit"><i class="icon-base ti tabler-device-floppy me-1"></i>Save role</button>
-                    <button class="btn btn-label-secondary" type="button" id="new-role">New role</button>
+                  <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                      <label class="form-label" for="role-color">{{ __('Role Badge Color') }}</label>
+                      <div class="input-group">
+                        <input type="color" class="form-control form-control-color" id="role-color" name="color" value="#7367f0" title="{{ __('Choose role color') }}">
+                        <input type="text" class="form-control" id="role-color-hex" value="#7367f0" placeholder="#7367f0">
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label" for="role-icon">{{ __('Icon Class') }}</label>
+                      <input class="form-control" id="role-icon" name="icon" placeholder="ti tabler-shield" value="ti tabler-shield">
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label" for="role-description">{{ __('Description') }}</label>
+                    <textarea class="form-control" id="role-description" name="description" rows="2" placeholder="Guild role purpose..."></textarea>
+                  </div>
+                  <h6>{{ __('Permissions') }}</h6>
+                  <div id="role-permissions" class="d-grid gap-2 border rounded p-3 bg-light bg-opacity-10 mb-3" style="max-height: 180px; overflow-y: auto;"></div>
+                  <div class="d-flex gap-2 mt-4">
+                    <button class="btn btn-primary" type="submit"><i class="icon-base ti tabler-device-floppy me-1"></i>{{ __('Save Role') }}</button>
+                    <button class="btn btn-label-secondary" type="button" id="new-role">{{ __('New Role') }}</button>
                   </div>
                 </form>
               </div>

@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('character_profiles', function (Blueprint $table) {
-            $table->string('character_type')->default('Main')->after('rank');
+            if (!Schema::hasColumn('character_profiles', 'character_type')) {
+                $table->string('character_type')->default('Main')->after('rank');
+            }
         });
     }
 
@@ -22,7 +24,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('character_profiles', function (Blueprint $table) {
-            $table->dropColumn('character_type');
+            if (Schema::hasColumn('character_profiles', 'character_type')) {
+                $table->dropColumn('character_type');
+            }
         });
     }
 };

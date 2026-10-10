@@ -48,6 +48,18 @@ class CharacterProfile extends Model
         'fort_save', 'ref_save', 'will_save',
     ];
 
+    protected static function booted(): void
+    {
+        static::creating(function ($profile) {
+            if (empty($profile->race)) {
+                $profile->race = 'Human';
+            }
+            if (empty($profile->rank)) {
+                $profile->rank = 'Aday';
+            }
+        });
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
@@ -212,8 +224,15 @@ class CharacterProfile extends Model
         return 10;
     }
 
-    public function setHitDieAttribute($value): void { $this->setSheetAttribute('hit_die', (string) $value); }
-    public function getHitDieAttribute(): string { return (string) $this->getSheetAttribute('hit_die', 'd10'); }
+    public function setHitDieAttribute($value): void
+    {
+        $this->setSheetAttribute('hit_die', (string) $value);
+        $this->setSheetAttribute('hitDie', (string) $value);
+    }
+    public function getHitDieAttribute(): string
+    {
+        return (string) ($this->getSheetAttribute('hit_die') ?: $this->getSheetAttribute('hitDie', 'd10'));
+    }
 
     public function setBabAttribute($value): void { $this->setSheetAttribute('bab', (string) $value); }
     public function getBabAttribute(): ?string { return $this->getSheetAttribute('bab'); }
@@ -244,11 +263,15 @@ class CharacterProfile extends Model
 
     public function isMain(): bool
     {
-        return strtolower($this->rank ?? '') === 'main' || strtolower($this->character_type ?? '') === 'main';
+        $ct = strtolower($this->character_type ?? '');
+        $rk = strtolower($this->rank ?? '');
+        return $ct === 'main' || in_array($rk, ['main', 'aday', 'üye', 'uye', 'kıdemli', 'kidemli', 'uzman'], true);
     }
 
     public function isClerk(): bool
     {
-        return strtolower($this->rank ?? '') === 'clerk' || strtolower($this->character_type ?? '') === 'clerk';
+        $ct = strtolower($this->character_type ?? '');
+        $rk = strtolower($this->rank ?? '');
+        return $ct === 'clerk' || $rk === 'clerk';
     }
 }

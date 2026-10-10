@@ -23,8 +23,9 @@ document.addEventListener('DOMContentLoaded', function (e) {
   const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char]);
 
   const statusObj = {
-    1: { title: 'Pending', label: 'Pending', class: 'bg-label-warning' },
-    2: { title: 'Active', label: 'Active', class: 'bg-label-success' },
+    1: { title: 'Active', label: 'Active', class: 'bg-label-success' },
+    2: { title: 'Pending', label: 'Pending', class: 'bg-label-warning' },
+    0: { title: 'Inactive', label: 'Inactive', class: 'bg-label-secondary' },
     3: { title: 'Inactive', label: 'Inactive', class: 'bg-label-secondary' }
   };
 
@@ -112,15 +113,32 @@ document.addEventListener('DOMContentLoaded', function (e) {
           }
         },
         {
-          // Dynamic roles
+          // Dynamic Discord-style multi-roles
           targets: 3,
           render: function (data, type, full, meta) {
-            const role = full['role'] || 'Player';
-            if (currentUserIsAdmin) {
-              const options = availableRoles.map(item => `<option value="${escapeHtml(item.slug)}" ${item.slug === full['role_slug'] ? 'selected' : ''}>${escapeHtml(item.name)}</option>`).join('');
-              return `<select class="form-select form-select-sm user-role-select" data-id="${full.id}" aria-label="Role for ${escapeHtml(role)}">${options}</select>`;
+            const roles = full['roles'] || [];
+            if (roles.length > 0) {
+              const badgesHtml = roles.map(r => {
+                const color = r.color || '#7367f0';
+                return `<span class="badge rounded-pill d-inline-flex align-items-center gap-1_5 me-1 mb-1 px-2 py-1 shadow-xs" style="background-color: ${color}20; color: ${color}; border: 1px solid ${color}45; font-size: 0.75rem;" title="${escapeHtml(r.name)} (Authority: ${r.priority})"><span class="badge-dot-indicator rounded-circle" style="width: 6px; height: 6px; background-color: ${color}; display: inline-block;"></span> ${escapeHtml(r.name)}</span>`;
+              }).join('');
+
+              if (currentUserIsAdmin) {
+                return `
+                  <div class="d-flex flex-column gap-1">
+                    <div class="d-flex flex-wrap align-items-center">${badgesHtml}</div>
+                    <select class="form-select form-select-sm user-role-select mt-1" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;" data-id="${full.id}" aria-label="Assign role">
+                      <option value="" disabled selected>+ Add / Switch Role</option>
+                      ${availableRoles.map(item => `<option value="${escapeHtml(item.slug)}">${escapeHtml(item.name)}</option>`).join('')}
+                    </select>
+                  </div>
+                `;
+              }
+              return `<div class="d-flex flex-wrap align-items-center">${badgesHtml}</div>`;
             }
-            return `<span class="text-truncate d-flex align-items-center text-heading fw-semibold"><i class="icon-base ti tabler-user icon-md text-secondary me-2"></i>${escapeHtml(role)}</span>`;
+
+            const role = full['role'] || 'Player';
+            return `<span class="badge bg-label-secondary">${escapeHtml(role)}</span>`;
           }
         },
         {
@@ -460,10 +478,26 @@ document.addEventListener('DOMContentLoaded', function (e) {
     const permissionList = document.getElementById('role-permissions');
     const roleName = document.getElementById('role-name');
     const roleId = document.getElementById('role-id');
+    const roleColor = document.getElementById('role-color');
+    const roleColorHex = document.getElementById('role-color-hex');
+    const roleIcon = document.getElementById('role-icon');
+    const rolePriority = document.getElementById('role-priority');
+    const roleDescription = document.getElementById('role-description');
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+    if (roleColor && roleColorHex) {
+      roleColor.addEventListener('input', () => { roleColorHex.value = roleColor.value; });
+      roleColorHex.addEventListener('input', () => { if (/^#[0-9A-Fa-f]{6}$/.test(roleColorHex.value)) roleColor.value = roleColorHex.value; });
+    }
+
     const resetRoleForm = () => {
       roleForm.reset();
       roleId.value = '';
+      if (roleColor) roleColor.value = '#7367f0';
+      if (roleColorHex) roleColorHex.value = '#7367f0';
+      if (roleIcon) roleIcon.value = 'ti tabler-shield';
+      if (rolePriority) rolePriority.value = '10';
+      if (roleDescription) roleDescription.value = '';
       roleForm.querySelectorAll('[name="permissions[]"]').forEach(input => { input.checked = false; });
     };
 
@@ -478,11 +512,21 @@ document.addEventListener('DOMContentLoaded', function (e) {
             <input class="form-check-input" type="checkbox" name="permissions[]" value="${escapeHtml(key)}">
             <span class="form-check-label">${escapeHtml(label)}</span>
           </label>`).join('');
-        roleList.innerHTML = (data.roles || []).map(role => `
-          <div class="list-group-item d-flex align-items-center justify-content-between gap-2">
-            <button type="button" class="btn btn-link text-start p-0 role-edit" data-id="${role.id}">${escapeHtml(role.name)}</button>
-            ${role.is_system ? '' : `<button type="button" class="btn btn-text-danger btn-icon role-delete" data-id="${role.id}" title="Delete role"><i class="icon-base ti tabler-trash"></i></button>`}
-          </div>`).join('');
+        roleList.innerHTML = (data.roles || []).map(role => {
+          const color = role.color || '#7367f0';
+          const icon = role.icon || 'ti tabler-shield';
+          return `
+          <div class="list-group-item d-flex align-items-center justify-content-between gap-2 p-2">
+            <button type="button" class="btn btn-link text-start p-0 role-edit d-flex align-items-center gap-2 text-decoration-none" data-id="${role.id}">
+              <span class="badge rounded-pill d-inline-flex align-items-center gap-1" style="background-color: ${color}20; color: ${color}; border: 1px solid ${color}45;">
+                <i class="icon-base ${icon}" style="font-size: 0.8rem; color: ${color};"></i>
+                ${escapeHtml(role.name)}
+              </span>
+              <small class="text-body-secondary">(P: ${role.priority ?? 10})</small>
+            </button>
+            ${role.is_system ? '<span class="badge bg-label-secondary" style="font-size: 0.65rem;">System</span>' : `<button type="button" class="btn btn-text-danger btn-icon role-delete" data-id="${role.id}" title="Delete role"><i class="icon-base ti tabler-trash"></i></button>`}
+          </div>`;
+        }).join('');
         roleList.dataset.roles = JSON.stringify(data.roles || []);
       });
 
@@ -500,6 +544,11 @@ document.addEventListener('DOMContentLoaded', function (e) {
         resetRoleForm();
         roleId.value = role.id;
         roleName.value = role.name;
+        if (roleColor) roleColor.value = role.color || '#7367f0';
+        if (roleColorHex) roleColorHex.value = role.color || '#7367f0';
+        if (roleIcon) roleIcon.value = role.icon || 'ti tabler-shield';
+        if (rolePriority) rolePriority.value = role.priority ?? 10;
+        if (roleDescription) roleDescription.value = role.description || '';
         roleForm.querySelectorAll('[name="permissions[]"]').forEach(input => { input.checked = (role.permissions || []).includes(input.value); });
       }
 
@@ -518,10 +567,18 @@ document.addEventListener('DOMContentLoaded', function (e) {
       event.preventDefault();
       const permissions = Array.from(roleForm.querySelectorAll('[name="permissions[]"]:checked')).map(input => input.value);
       const editing = Boolean(roleId.value);
+      const payload = {
+        name: roleName.value,
+        color: roleColorHex ? roleColorHex.value : (roleColor ? roleColor.value : '#7367f0'),
+        icon: roleIcon ? roleIcon.value : 'ti tabler-shield',
+        priority: rolePriority ? parseInt(rolePriority.value, 10) : 10,
+        description: roleDescription ? roleDescription.value : '',
+        permissions
+      };
       fetch(editing ? rolesUrl + '/' + roleId.value : rolesUrl, {
         method: editing ? 'PUT' : 'POST',
         headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json', 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: roleName.value, permissions })
+        body: JSON.stringify(payload)
       }).then(response => response.json().then(data => ({ response, data })))
         .then(({ response, data }) => {
           if (!response.ok) throw new Error(data.message || 'Unable to save role.');
@@ -529,6 +586,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
           loadRoles();
           if (dt_user) dt_user.ajax.reload(null, false);
         }).catch(error => alert(error.message));
+    });
     });
   }
 

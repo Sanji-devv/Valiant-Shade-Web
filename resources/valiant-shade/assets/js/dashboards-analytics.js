@@ -33,96 +33,301 @@
     });
   }
 
-  // Average Daily Sales
+  // Guild Inventory 30-Day Real Chart
   // --------------------------------------------------------------------
-  const averageDailySalesEl = document.querySelector('#averageDailySales'),
-    averageDailySalesConfig = {
+  const guildInventory30DayChartEl = document.querySelector('#guildInventory30DayChart');
+  if (guildInventory30DayChartEl) {
+    let inventoryDates = [];
+    let inventoryDailySp = [];
+    let inventoryDailyGp = [];
+    let inventoryCumulativeSp = [];
+
+    try {
+      if (guildInventory30DayChartEl.dataset.dates) {
+        inventoryDates = JSON.parse(guildInventory30DayChartEl.dataset.dates);
+      }
+      if (guildInventory30DayChartEl.dataset.dailySp) {
+        inventoryDailySp = JSON.parse(guildInventory30DayChartEl.dataset.dailySp);
+      }
+      if (guildInventory30DayChartEl.dataset.dailyGp) {
+        inventoryDailyGp = JSON.parse(guildInventory30DayChartEl.dataset.dailyGp);
+      }
+      if (guildInventory30DayChartEl.dataset.cumulativeSp) {
+        inventoryCumulativeSp = JSON.parse(guildInventory30DayChartEl.dataset.cumulativeSp);
+      }
+    } catch (e) {
+      console.warn('Error parsing inventory chart data:', e);
+    }
+
+    if (!inventoryDailySp.length) {
+      inventoryDailySp = [22820, 0, 32000, 71700, 0, 11700, 11600, 0, 11000, 23600, 151700, 40000, 80000, 0, 52000, 100000, 20000, 0, 120000, 40000, 60000, 58500, 10000, 48000, 24000, 175000, 40000, 0, 0, 0];
+      inventoryDates = Array.from({ length: 30 }, (_, i) => `${i + 1} Day`);
+    }
+
+    const inventoryConfig = {
       chart: {
-        height: 105,
+        height: 235,
         type: 'area',
+        parentHeightOffset: 0,
         toolbar: {
           show: false
         },
-        sparkline: {
-          enabled: true
+        zoom: {
+          enabled: false
         }
       },
       markers: {
-        colors: 'transparent',
-        strokeColors: 'transparent'
+        size: 3,
+        colors: [config.colors.primary || '#7367f0'],
+        strokeColors: '#ffffff',
+        strokeWidth: 1.5,
+        hover: {
+          size: 6
+        }
       },
       grid: {
-        show: false
+        borderColor: config.colors.borderColor || 'rgba(255, 255, 255, 0.08)',
+        strokeDashArray: 4,
+        padding: {
+          top: -10,
+          bottom: 0,
+          left: 12,
+          right: 12
+        }
       },
-      colors: [config.colors.success],
+      colors: [config.colors.primary || '#7367f0'],
       fill: {
         type: 'gradient',
         gradient: {
           shadeIntensity: 1,
-          opacityFrom: 0.4,
-          gradientToColors: [config.colors.cardColor],
-          opacityTo: 0.1,
-          stops: [0, 100]
+          opacityFrom: 0.45,
+          opacityTo: 0.04,
+          stops: [0, 95, 100]
         }
       },
       dataLabels: {
         enabled: false
       },
       stroke: {
-        width: 2,
+        width: 2.5,
         curve: 'smooth'
       },
       series: [
         {
-          data: [500, 160, 930, 670]
+          name: 'Daily Inflow',
+          data: inventoryDailySp
         }
       ],
       xaxis: {
-        show: true,
-        lines: {
-          show: false
-        },
-        labels: {
-          show: false
-        },
-        stroke: {
-          width: 0
-        },
+        categories: inventoryDates,
         axisBorder: {
           show: false
+        },
+        axisTicks: {
+          show: false
+        },
+        tickAmount: 8,
+        labels: {
+          style: {
+            colors: labelColor || '#a1a5b7',
+            fontSize: '11px',
+            fontFamily: fontFamily
+          }
         }
       },
       yaxis: {
-        stroke: {
-          width: 0
-        },
-        show: false
-      },
-      tooltip: {
-        enabled: false
-      },
-      responsive: [
-        {
-          breakpoint: 1387,
-          options: {
-            chart: {
-              height: 80
-            }
-          }
-        },
-        {
-          breakpoint: 1200,
-          options: {
-            chart: {
-              height: 123
-            }
+        labels: {
+          formatter: function (val) {
+            if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M SP';
+            if (val >= 1000) return (val / 1000).toFixed(0) + 'k SP';
+            return val + ' SP';
+          },
+          style: {
+            colors: labelColor || '#a1a5b7',
+            fontSize: '11px',
+            fontFamily: fontFamily
           }
         }
-      ]
+      },
+      tooltip: {
+        enabled: true,
+        theme: 'dark',
+        custom: function ({ series, seriesIndex, dataPointIndex, w }) {
+          const date = inventoryDates[dataPointIndex] || '';
+          const spVal = series[seriesIndex][dataPointIndex];
+          const gpVal = (spVal / 10).toLocaleString();
+          const cumSp = inventoryCumulativeSp[dataPointIndex] ? inventoryCumulativeSp[dataPointIndex].toLocaleString() : null;
+
+          return `<div class="p-2 font-monospace" style="background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(115, 103, 240, 0.4); border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.5);">
+            <div class="fw-bold text-white border-bottom pb-1 mb-1" style="font-size: 0.8rem;"><i class="ti tabler-calendar me-1 text-primary"></i>${date}</div>
+            <div class="text-primary fw-bold" style="font-size: 0.88rem;">+${spVal.toLocaleString()} SP</div>
+            <div class="text-warning small" style="font-size: 0.75rem;">~${gpVal} GP (Gold)</div>
+            ${cumSp ? `<div class="text-white-50 border-top pt-1 mt-1 small" style="font-size: 0.72rem;">Cumulative Total: <strong class="text-white">${cumSp} SP</strong></div>` : ''}
+          </div>`;
+        }
+      }
     };
-  if (typeof averageDailySalesEl !== undefined && averageDailySalesEl !== null) {
-    const averageDailySales = new ApexCharts(averageDailySalesEl, averageDailySalesConfig);
-    averageDailySales.render();
+
+    const guildInventoryChart = new ApexCharts(guildInventory30DayChartEl, inventoryConfig);
+    guildInventoryChart.render();
+  }
+
+  // Vault Cash 30-Day Real Chart
+  // --------------------------------------------------------------------
+  const vaultCash30DayChartEl = document.querySelector('#vaultCash30DayChart');
+  if (vaultCash30DayChartEl) {
+    let vaultDates = [];
+    let vaultDailySp = [];
+    let vaultDailyGp = [];
+
+    try {
+      if (vaultCash30DayChartEl.dataset.dates) {
+        vaultDates = JSON.parse(vaultCash30DayChartEl.dataset.dates);
+      }
+      if (vaultCash30DayChartEl.dataset.dailySp) {
+        vaultDailySp = JSON.parse(vaultCash30DayChartEl.dataset.dailySp);
+      }
+      if (vaultCash30DayChartEl.dataset.dailyGp) {
+        vaultDailyGp = JSON.parse(vaultCash30DayChartEl.dataset.dailyGp);
+      }
+    } catch (e) {
+      console.warn('Error parsing vault chart data:', e);
+    }
+
+    if (!vaultDailySp.length) {
+      vaultDailySp = [314250, 316000, 318500, 319200, 322000, 321500, 324000, 326800, 329000, 331500, 330000, 333400, 335200, 337000, 339500, 341000, 340200, 343500, 345000, 347200, 346500, 349000, 351200, 352800, 354500, 356000, 355200, 357400, 358200, 358990];
+      vaultDates = Array.from({ length: 30 }, (_, i) => `${i + 1} Day`);
+    }
+
+    const vaultConfig = {
+      chart: {
+        height: 235,
+        type: 'area',
+        parentHeightOffset: 0,
+        toolbar: {
+          show: false
+        },
+        zoom: {
+          enabled: false
+        }
+      },
+      markers: {
+        size: 3,
+        colors: [config.colors.warning || '#ff9f43'],
+        strokeColors: '#ffffff',
+        strokeWidth: 1.5,
+        hover: {
+          size: 6
+        }
+      },
+      grid: {
+        borderColor: config.colors.borderColor || 'rgba(255, 255, 255, 0.08)',
+        strokeDashArray: 4,
+        padding: {
+          top: -10,
+          bottom: 0,
+          left: 12,
+          right: 12
+        }
+      },
+      colors: [config.colors.warning || '#ff9f43'],
+      fill: {
+        type: 'gradient',
+        gradient: {
+          shadeIntensity: 1,
+          opacityFrom: 0.45,
+          opacityTo: 0.04,
+          stops: [0, 95, 100]
+        }
+      },
+      dataLabels: {
+        enabled: false
+      },
+      stroke: {
+        width: 2.5,
+        curve: 'smooth'
+      },
+      series: [
+        {
+          name: 'Vault Reserve',
+          data: vaultDailySp
+        }
+      ],
+      xaxis: {
+        categories: vaultDates,
+        axisBorder: {
+          show: false
+        },
+        axisTicks: {
+          show: false
+        },
+        tickAmount: 8,
+        labels: {
+          style: {
+            colors: labelColor || '#a1a5b7',
+            fontSize: '11px',
+            fontFamily: fontFamily
+          }
+        }
+      },
+      yaxis: {
+        labels: {
+          formatter: function (val) {
+            if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M SP';
+            if (val >= 1000) return (val / 1000).toFixed(0) + 'k SP';
+            return val + ' SP';
+          },
+          style: {
+            colors: labelColor || '#a1a5b7',
+            fontSize: '11px',
+            fontFamily: fontFamily
+          }
+        }
+      },
+      tooltip: {
+        enabled: true,
+        theme: 'dark',
+        custom: function ({ series, seriesIndex, dataPointIndex, w }) {
+          const date = vaultDates[dataPointIndex] || '';
+          const spVal = series[seriesIndex][dataPointIndex];
+          const gpVal = (spVal / 10).toLocaleString();
+
+          return `<div class="p-2 font-monospace" style="background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(255, 159, 67, 0.4); border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.5);">
+            <div class="fw-bold text-white border-bottom pb-1 mb-1" style="font-size: 0.8rem;"><i class="ti tabler-calendar me-1 text-warning"></i>${date}</div>
+            <div class="text-warning fw-bold" style="font-size: 0.88rem;">${spVal.toLocaleString()} SP</div>
+            <div class="text-white-50 small" style="font-size: 0.75rem;">~${gpVal} GP (Gold Value)</div>
+            <div class="text-success border-top pt-1 mt-1 small" style="font-size: 0.72rem;"><i class="ti tabler-shield-check me-1"></i>Liquid Vault Reserve</div>
+          </div>`;
+        }
+      }
+    };
+
+    const vaultCashChart = new ApexCharts(vaultCash30DayChartEl, vaultConfig);
+    vaultCashChart.render();
+  }
+
+  // Fallback for averageDailySales if present
+  const averageDailySalesEl = document.querySelector('#averageDailySales');
+  if (averageDailySalesEl) {
+    let dailyData = [500, 160, 930, 670];
+    let dailySeriesName = averageDailySalesEl.dataset.name || 'Inventory Inflow (GP)';
+    if (averageDailySalesEl.dataset.series) {
+      try {
+        dailyData = JSON.parse(averageDailySalesEl.dataset.series);
+      } catch (e) {}
+    }
+    const averageDailySalesConfig = {
+      chart: {
+        height: 115,
+        type: 'area',
+        toolbar: { show: false },
+        sparkline: { enabled: true }
+      },
+      colors: [config.colors.primary || config.colors.success],
+      stroke: { width: 2, curve: 'smooth' },
+      series: [{ name: dailySeriesName, data: dailyData }]
+    };
+    new ApexCharts(averageDailySalesEl, averageDailySalesConfig).render();
   }
 
   // Earning Reports Bar Chart

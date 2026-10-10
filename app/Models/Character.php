@@ -65,7 +65,48 @@ class Character extends Model
             } elseif (empty($char->current_level)) {
                 $char->current_level = 1;
             }
+
+            // Dynamically recalculate guild rank for standard non-clerk characters
+            if (strtoupper($char->character_type ?? '') !== 'CLERK' && !in_array((int)$char->rank_id, [2, 6, 7, 8], true)) {
+                $sessionsCount = 0;
+                if ($char->exists) {
+                    $sessionsCount = $char->questParticipants()->count();
+                }
+                if ($sessionsCount === 0 && !empty($char->name)) {
+                    $sessionsCount = (int) (\App\Models\PlayerXp::where('character_name', $char->name)->value('sessions_count') ?? 0);
+                }
+                $rankName = self::calculateRankFromLevelAndSessions((int)$char->current_level, $sessionsCount);
+                $rankModel = Rank::where('name', $rankName)->first();
+                if ($rankModel) {
+                    $char->rank_id = $rankModel->id;
+                }
+            }
         });
+    }
+
+    /**
+     * Calculate guild rank strictly based on level and games played (sessions count):
+     * - Level 1: Aday
+     * - Level 2-5: Üye
+     * - Level 6-9: Kıdemli
+     * - Level 10: If sessions_count >= 3 => Uzman; otherwise Kıdemli
+     * - Level 11+: Uzman
+     */
+    public static function calculateRankFromLevelAndSessions(int $level, int $sessionsCount = 0): string
+    {
+        if ($level <= 1) {
+            return 'Aday';
+        }
+        if ($level >= 2 && $level <= 5) {
+            return 'Üye';
+        }
+        if ($level >= 6 && $level <= 9) {
+            return 'Kıdemli';
+        }
+        if ($level === 10) {
+            return $sessionsCount >= 3 ? 'Uzman' : 'Kıdemli';
+        }
+        return 'Uzman';
     }
 
     public function user(): BelongsTo

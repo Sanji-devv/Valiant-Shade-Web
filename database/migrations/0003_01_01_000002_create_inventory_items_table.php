@@ -13,8 +13,8 @@ return new class extends Migration
             $table->foreignId('inventory_id')->nullable()->constrained('inventories')->nullOnDelete();
             $table->foreignId('inventory_item_type_id')->nullable()->constrained('inventory_item_types')->nullOnDelete();
             $table->string('name');
-            $table->string('display_name');
-            $table->string('slug');
+            $table->string('display_name')->nullable();
+            $table->string('slug')->nullable();
             $table->string('quality')->nullable();
             $table->unsignedSmallInteger('uses_remaining')->nullable();
             $table->decimal('unit_price', 14, 2)->default(0);

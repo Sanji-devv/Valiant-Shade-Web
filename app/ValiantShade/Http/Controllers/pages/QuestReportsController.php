@@ -77,7 +77,7 @@ class QuestReportsController extends Controller
         if (!$report) {
             return response()->json([
                 'success' => false,
-                'message' => 'Görev raporu bulunamadı.',
+                'message' => __('Quest report not found.'),
             ], 404);
         }
 
@@ -127,7 +127,7 @@ class QuestReportsController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Görev raporu başarıyla kaydedildi.',
+            'message' => __('Quest report saved successfully.'),
             'report' => $newReport,
             'stats' => $this->service->getStatistics(),
             'gms' => $this->service->getDistinctGms(),
@@ -165,13 +165,13 @@ class QuestReportsController extends Controller
         if (!$updated) {
             return response()->json([
                 'success' => false,
-                'message' => 'Güncellenecek görev raporu bulunamadı.',
+                'message' => __('Quest report to update not found.'),
             ], 404);
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'Görev raporu başarıyla güncellendi.',
+            'message' => __('Quest report updated successfully.'),
             'report' => $updated,
             'stats' => $this->service->getStatistics(),
             'gms' => $this->service->getDistinctGms(),
@@ -188,13 +188,13 @@ class QuestReportsController extends Controller
         if (!$deleted) {
             return response()->json([
                 'success' => false,
-                'message' => 'Silinecek görev raporu bulunamadı.',
+                'message' => __('Quest report to delete not found.'),
             ], 404);
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'Görev raporu başarıyla silindi.',
+            'message' => __('Quest report deleted successfully.'),
             'stats' => $this->service->getStatistics(),
             'gms' => $this->service->getDistinctGms(),
         ]);
@@ -209,7 +209,7 @@ class QuestReportsController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Görev Raporları tablosu Master Sheet orijinal 32 satırına sıfırlandı.',
+            'message' => __('Quest Reports table reset to original Master Sheet 32 rows.'),
             'reports' => $this->service->getAllReportsData(),
             'stats' => $this->service->getStatistics(),
             'gms' => $this->service->getDistinctGms(),
@@ -231,7 +231,11 @@ class QuestReportsController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "Rapor #{$id} kapsamındaki {$result['total_awarded_count']} maceracıya +{$result['xp_per_player']} XP başarıyla aktarıldı.",
+                'message' => __('Successfully awarded +:xp XP to :count adventurers under Report #:id.', [
+                    'id' => $id,
+                    'count' => $result['total_awarded_count'],
+                    'xp' => $result['xp_per_player']
+                ]),
                 'data' => $result,
             ]);
         } catch (\Exception $e) {
@@ -270,7 +274,7 @@ class QuestReportsController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Lonca XP Havuzu ve Rütbeler verisi başarıyla güncellendi.',
+            'message' => __('Guild XP Pool and Ranks data updated successfully.'),
             'guildPoolData' => $updated,
         ]);
     }
@@ -284,7 +288,7 @@ class QuestReportsController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Lonca XP Havuzu ve Rütbeler tablosu Google Sheet orijinal değerlerine sıfırlandı.',
+            'message' => __('Guild XP Pool and Ranks table reset to Google Sheet original values.'),
             'guildPoolData' => $reset,
         ]);
     }

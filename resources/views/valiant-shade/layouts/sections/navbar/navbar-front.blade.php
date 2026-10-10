@@ -282,9 +282,20 @@ $activeClass = in_array($currentRouteName, $activeRoutes) ? 'active' : '';
 
         <!-- navbar button: Start -->
         <li>
-          <a href="{{ url('/valiant-shade/auth/login-cover') }}" class="btn btn-primary" target="_blank"><span
-              class="icon-base ti tabler-login scaleX-n1-rtl me-md-1"></span><span
-              class="d-none d-md-block">Login/Register</span></a>
+          @if (Auth::check())
+            <a href="{{ route('logout') }}" class="btn btn-danger" onclick="event.preventDefault(); document.getElementById('front-logout-form').submit();">
+              <span class="icon-base ti tabler-logout scaleX-n1-rtl me-md-1"></span>
+              <span class="d-none d-md-block">{{ __('Logout') }}</span>
+            </a>
+            <form id="front-logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+              @csrf
+            </form>
+          @else
+            <a href="{{ url('/valiant-shade/auth/login-cover') }}" class="btn btn-primary" target="_blank">
+              <span class="icon-base ti tabler-login scaleX-n1-rtl me-md-1"></span>
+              <span class="d-none d-md-block">Login/Register</span>
+            </a>
+          @endif
         </li>
         <!-- navbar button: End -->
       </ul>

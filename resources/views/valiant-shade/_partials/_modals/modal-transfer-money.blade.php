@@ -85,8 +85,8 @@
                     <i class="icon-base ti tabler-coin me-1"></i> {{ __('Currency') }}
                   </label>
                   <select class="form-select form-select-lg" id="transferCharCurrencySelect">
-                    <option value="GP" selected>GP (Gold Piece / Altın)</option>
-                    <option value="SP">SP (Silver Piece / Gümüş)</option>
+                    <option value="GP" selected>GP ({{ __('Gold Piece') }})</option>
+                    <option value="SP">SP ({{ __('Silver Piece') }})</option>
                   </select>
                 </div>
 
@@ -166,7 +166,7 @@
                       <div class="d-flex align-items-center gap-2">
                         <i class="icon-base ti tabler-building-bank fs-4 text-warning"></i>
                         <div>
-                          <span class="fw-bold text-heading">{{ __('Guild Vault Reserve') }} ({{ $vault->name ?? 'Ana Lonca Kasası' }}):</span>
+                          <span class="fw-bold text-heading">{{ __('Guild Vault Reserve') }} ({{ $vault->name ?? __('Main Guild Vault') }}):</span>
                           <div class="small text-body-secondary">{{ $vault->notes ?? __('Guild liquid funds') }}</div>
                         </div>
                       </div>
@@ -206,8 +206,8 @@
                     <i class="icon-base ti tabler-coin me-1"></i> {{ __('Currency') }}
                   </label>
                   <select class="form-select form-select-lg" id="transferVaultCurrencySelect">
-                    <option value="GP" selected>GP (Gold / Altın)</option>
-                    <option value="SP">SP (Silver / Gümüş)</option>
+                    <option value="GP" selected>GP ({{ __('Gold') }})</option>
+                    <option value="SP">SP ({{ __('Silver') }})</option>
                   </select>
                 </div>
 

@@ -25,10 +25,10 @@ class QuestBoardController extends Controller
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Bu eylem Lonca Yöneticisi (Admin / GM) yetkisi gerektirir.',
+                    'message' => __('You cannot make this action'),
                 ], 403);
             }
-            abort(403, 'Bu eylem Lonca Yöneticisi yetkisi gerektirir.');
+            abort(403, __('You cannot make this action'));
         }
         return null;
     }
@@ -38,6 +38,10 @@ class QuestBoardController extends Controller
      */
     public function index(Request $request): View|JsonResponse|Response
     {
+        if (!session()->has('locale')) {
+            app()->setLocale('tr');
+        }
+
         $filters = [
             'category' => $request->get('category', 'all'),
             'eligibility' => $request->get('eligibility', 'all'),
@@ -102,7 +106,7 @@ class QuestBoardController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "\"{$validated['title']}\" görevi başarıyla mühürlendi ve panoya asıldı!",
+            'message' => __("Quest \":title\" was successfully sealed and pinned to the board!", ['title' => $validated['title']]),
             'quest' => array_merge($validated, [
                 'id' => rand(100, 999),
                 'status' => 'active',
@@ -125,15 +129,15 @@ class QuestBoardController extends Controller
         ]);
 
         $statusLabels = [
-            'active' => 'Panoda Asılı (Aktif)',
-            'on_hold' => 'Askıya Alındı (Beklemede)',
-            'completed' => 'Görev Bitti (Tamamlandı)',
-            'cancelled' => 'Görev İptal Edildi',
+            'active' => __('Pinned on Board (Active)'),
+            'on_hold' => __('Suspended (On Hold)'),
+            'completed' => __('Quest Finished (Completed)'),
+            'cancelled' => __('Quest Cancelled'),
         ];
 
         return response()->json([
             'success' => true,
-            'message' => "Görev durumu \"{$statusLabels[$validated['status']]}\" olarak güncellendi.",
+            'message' => __('Quest status updated to ":status".', ['status' => $statusLabels[$validated['status']] ?? $validated['status']]),
             'status' => $validated['status'],
         ]);
     }

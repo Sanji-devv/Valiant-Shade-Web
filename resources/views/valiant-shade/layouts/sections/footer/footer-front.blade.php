@@ -60,7 +60,14 @@
               <a href="{{ url('/valiant-shade/front-pages/help-center') }}" class="footer-link">Help Center</a>
             </li>
             <li class="mb-4">
-              <a href="{{ url('/valiant-shade/auth/login-cover') }}" target="_blank" class="footer-link">Login/Register</a>
+              @if (Auth::check())
+                <a href="{{ route('logout') }}" class="footer-link text-danger" onclick="event.preventDefault(); document.getElementById('footer-logout-form').submit();">{{ __('Logout') }}</a>
+                <form id="footer-logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                  @csrf
+                </form>
+              @else
+                <a href="{{ url('/valiant-shade/auth/login-cover') }}" target="_blank" class="footer-link">Login/Register</a>
+              @endif
             </li>
           </ul>
         </div>

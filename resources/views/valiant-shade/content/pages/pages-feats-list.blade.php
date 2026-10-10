@@ -477,8 +477,8 @@
             <i class="icon-base ti tabler-award fs-4"></i>
           </div>
           <div>
-            <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.7rem;">Kayıtlı Featler</div>
-            <div class="fw-bolder fs-5 text-info font-monospace">{{ $dossier['total_feats_count'] ?? 0 }} (Bu Karakter)</div>
+            <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.7rem;">{{ __('Registered Feats') }}</div>
+            <div class="fw-bolder fs-5 text-info font-monospace">{{ $dossier['total_feats_count'] ?? 0 }} ({{ __('This Character') }})</div>
           </div>
         </div>
       </div>
@@ -489,7 +489,7 @@
             <i class="icon-base ti tabler-sparkles fs-4"></i>
           </div>
           <div>
-            <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.7rem;">Sınıf Yetenekleri / Talents</div>
+            <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.7rem;">{{ __('Class Talents / Abilities') }}</div>
             <div class="fw-bolder fs-5 text-success font-monospace">{{ $dossier['class_count'] ?? 0 }}</div>
           </div>
         </div>
@@ -501,7 +501,7 @@
             <i class="icon-base ti tabler-dna fs-4"></i>
           </div>
           <div>
-            <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.7rem;">Irk & Standart Featler</div>
+            <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.7rem;">{{ __('Racial & Standard Feats') }}</div>
             <div class="fw-bolder fs-5 text-warning font-monospace">{{ ($dossier['standard_count'] ?? 0) + ($dossier['racial_count'] ?? 0) }}</div>
           </div>
         </div>
@@ -518,7 +518,7 @@
       <!-- Character Selection Form & Quick Search -->
       <div class="d-flex align-items-center gap-2 flex-grow-1 flex-wrap" style="min-width: 280px; max-width: 520px;">
         <label for="charSelectDropdown" class="text-body-secondary small fw-bold text-nowrap">
-          <i class="icon-base ti tabler-user me-1 text-primary"></i> Karakter:
+          <i class="icon-base ti tabler-user me-1 text-primary"></i> {{ __("Character:") }}
         </label>
         <select class="form-select text-heading bg-dark border-secondary border-opacity-50" id="charSelectDropdown" onchange="switchCharacter(this.value)">
           @foreach($characters as $c)
@@ -532,15 +532,15 @@
       <!-- Sorting Dropdown -->
       <div class="d-flex align-items-center gap-2">
         <label for="toolbarSortSelect" class="text-body-secondary small fw-bold text-nowrap">
-          <i class="icon-base ti tabler-arrows-sort me-1 text-primary"></i> Sırala:
+          <i class="icon-base ti tabler-arrows-sort me-1 text-primary"></i> {{ __("Sort By:") }}
         </label>
         <select class="form-select form-select-sm text-heading bg-dark border-secondary border-opacity-50" id="toolbarSortSelect" onchange="changeSorting(this.value)" style="width: auto;">
-          <option value="name_asc" {{ ($sortBy ?? 'name_asc') === 'name_asc' ? 'selected' : '' }}>İsim (A &rarr; Z)</option>
-          <option value="name_desc" {{ ($sortBy ?? '') === 'name_desc' ? 'selected' : '' }}>İsim (Z &rarr; A)</option>
-          <option value="level_desc" {{ ($sortBy ?? '') === 'level_desc' ? 'selected' : '' }}>Seviye (En Yüksek &darr;)</option>
-          <option value="level_asc" {{ ($sortBy ?? '') === 'level_asc' ? 'selected' : '' }}>Seviye (En Düşük &uarr;)</option>
-          <option value="feats_desc" {{ ($sortBy ?? '') === 'feats_desc' ? 'selected' : '' }}>Feat Sayısı (En Çok &darr;)</option>
-          <option value="feats_asc" {{ ($sortBy ?? '') === 'feats_asc' ? 'selected' : '' }}>Feat Sayısı (En Az &uarr;)</option>
+          <option value="name_asc" {{ ($sortBy ?? 'name_asc') === 'name_asc' ? 'selected' : '' }}>{{ __('Name (A &rarr; Z)') }}</option>
+          <option value="name_desc" {{ ($sortBy ?? '') === 'name_desc' ? 'selected' : '' }}>{{ __('Name (Z &rarr; A)') }}</option>
+          <option value="level_desc" {{ ($sortBy ?? '') === 'level_desc' ? 'selected' : '' }}>{{ __('Level (Highest &darr;)') }}</option>
+          <option value="level_asc" {{ ($sortBy ?? '') === 'level_asc' ? 'selected' : '' }}>{{ __('Level (Lowest &uarr;)') }}</option>
+          <option value="feats_desc" {{ ($sortBy ?? '') === 'feats_desc' ? 'selected' : '' }}>{{ __('Feats Count (Most &darr;)') }}</option>
+          <option value="feats_asc" {{ ($sortBy ?? '') === 'feats_asc' ? 'selected' : '' }}>{{ __('Feats Count (Least &uarr;)') }}</option>
         </select>
       </div>
 
@@ -576,8 +576,8 @@
               <div>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                   <h3 class="mb-0 fw-bold text-heading font-monospace">{{ $prof->character_name }}</h3>
-                  <span class="badge bg-label-primary fw-bold">Seviye {{ $prof->level }}</span>
-                  <span class="badge bg-label-warning">{{ $prof->rank ?? 'Üye' }}</span>
+                  <span class="badge bg-label-primary fw-bold">{{ __('Level') }} {{ $prof->level }}</span>
+                  <span class="badge bg-label-warning">{{ __($prof->rank ?? 'Member') }}</span>
                 </div>
                 <div class="text-body-secondary small mt-1">
                   <span class="text-heading fw-semibold">{{ $prof->race }}</span> &bull; 
@@ -675,7 +675,7 @@
       </div>
 
       <!-- ====================================================
-           TRAITS MINI TABLOSU (LONCA RÜTBE GELİŞİMİ: ÜYE, KIDEMLİ, UZMAN)
+           TRAITS MINI TABLE (GUILD RANK PROGRESSION: MEMBER, SENIOR, EXPERT)
            ==================================================== -->
       <div class="card mb-4 shadow-sm" id="cardGuildTraits" style="background: #2f3349; border: 1px solid rgba(255, 171, 0, 0.35);">
         <div class="card-header d-flex align-items-center justify-content-between p-3 border-bottom border-secondary border-opacity-20 flex-wrap gap-2">
@@ -686,12 +686,12 @@
             <div>
               <h5 class="mb-0 fw-bold text-heading font-monospace">Karakter Traitleri (Lonca Rütbe Gelişimi)</h5>
               <small class="text-body-secondary font-monospace">
-                Lonca hiyerarşisine göre açılan özel karakter nitelikleri (Üye &bull; Kıdemli &bull; Uzman)
+                {{ __('Special character traits unlocked according to guild hierarchy (Member • Senior • Expert)') }}
               </small>
             </div>
           </div>
           <span class="badge bg-label-warning font-monospace py-1 px-3">
-            {{ $prof->rank ?? 'Üye' }} &bull; Rütbe Traitleri
+            {{ __($prof->rank ?? 'Member') }} &bull; {{ __('Rank Traits') }}
           </span>
         </div>
 
@@ -699,12 +699,12 @@
           <table class="table table-hover align-middle mb-0" id="traitsTable" style="font-size: 0.84rem;">
             <thead class="table-dark">
               <tr class="font-monospace text-uppercase" style="font-size: 0.72rem;">
-                <th style="width: 190px;">Slot / Rütbe</th>
-                <th style="width: 110px;">Durum</th>
-                <th>Trait Adı</th>
-                <th style="width: 120px;">Kategori</th>
-                <th>Açıklama / Bonus</th>
-                <th style="width: 140px;" class="text-end">İşlem</th>
+                <th style="width: 190px;">{{ __('Slot / Rank') }}</th>
+                <th style="width: 110px;">{{ __('Status') }}</th>
+                <th>{{ __('Trait Name') }}</th>
+                <th style="width: 120px;">{{ __('Category') }}</th>
+                <th>{{ __('Description / Bonus') }}</th>
+                <th style="width: 140px;" class="text-end">{{ __('Actions') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -721,16 +721,16 @@
                 <tr class="{{ $isUnlocked ? '' : 'opacity-50 bg-light-subtle' }}">
                   <td>
                     <div class="fw-bold font-monospace text-heading">{{ $sData['slot_label'] ?? $sKey }}</div>
-                    <small class="text-body-secondary">Gereken: <span class="badge bg-label-secondary py-0 px-1">{{ $sData['required_rank'] ?? $sKey }}</span></small>
+                    <small class="text-body-secondary">{{ __('Requires:') }} <span class="badge bg-label-secondary py-0 px-1">{{ __($sData['required_rank'] ?? $sKey) }}</span></small>
                   </td>
                   <td>
                     @if($isUnlocked)
                       <span class="badge bg-label-success font-monospace py-1 px-2 d-inline-flex align-items-center gap-1">
-                        <i class="icon-base ti tabler-lock-open fs-6"></i> Açık
+                        <i class="icon-base ti tabler-lock-open fs-6"></i> {{ __('Unlocked') }}
                       </span>
                     @else
                       <span class="badge bg-label-secondary font-monospace py-1 px-2 d-inline-flex align-items-center gap-1">
-                        <i class="icon-base ti tabler-lock fs-6"></i> Kilitli
+                        <i class="icon-base ti tabler-lock fs-6"></i> {{ __('Locked') }}
                       </span>
                     @endif
                   </td>
@@ -738,12 +738,12 @@
                     @if(!empty($tName))
                       <span class="fw-bold text-primary font-monospace">{{ $tName }}</span>
                       @if(!empty($tUrl))
-                        <a href="{{ $tUrl }}" target="_blank" class="ms-1 text-muted small" title="d20pfsrd kaynağı"><i class="icon-base ti tabler-external-link"></i></a>
+                        <a href="{{ $tUrl }}" target="_blank" class="ms-1 text-muted small" title="{{ __('d20pfsrd source') }}"><i class="icon-base ti tabler-external-link"></i></a>
                       @endif
                     @elseif($isUnlocked)
-                      <span class="text-body-secondary fst-italic">Henüz trait atanmadı</span>
+                      <span class="text-body-secondary fst-italic">{{ __('No trait assigned yet') }}</span>
                     @else
-                      <span class="text-muted fst-italic">{{ $sData['required_rank'] }} rütbesine ulaşıldığında açılır</span>
+                      <span class="text-muted fst-italic">{{ __('Unlocks upon reaching :rank rank', ['rank' => __($sData['required_rank'])]) }}</span>
                     @endif
                   </td>
                   <td>
@@ -765,13 +765,13 @@
                                 data-slot="{{ $sKey }}"
                                 data-slot-label="{{ $sData['slot_label'] ?? $sKey }}"
                                 data-char="{{ $prof->character_name }}">
-                          <i class="icon-base ti tabler-sparkles me-1"></i> {{ !empty($tName) ? __('Değiştir') : __('Trait Seç') }}
+                          <i class="icon-base ti tabler-sparkles me-1"></i> {{ !empty($tName) ? __('Change') : __('Select Trait') }}
                         </button>
                         @if(!empty($tName))
                           <button type="button" class="btn btn-icon btn-text-danger btn-xs btn-clear-trait"
                                   data-slot="{{ $sKey }}"
                                   data-char="{{ $prof->character_name }}"
-                                  title="Traiti Kaldır">
+                                  title="{{ __('Remove Trait') }}">
                             <i class="icon-base ti tabler-x"></i>
                           </button>
                         @endif
@@ -801,7 +801,7 @@
           <div class="d-flex align-items-center gap-2 flex-wrap">
             <!-- Filter Pills inside Progression -->
             <div class="d-flex align-items-center gap-1 flex-wrap">
-              <button type="button" class="prog-filter-pill active" data-filter="all" onclick="filterProgression('all', this)">Tümü (1-20)</button>
+              <button type="button" class="prog-filter-pill active" data-filter="all" onclick="filterProgression('all', this)">{{ __('All (1-20)') }}</button>
               <button type="button" class="prog-filter-pill" data-filter="populated" onclick="filterProgression('populated', this)">Dolu Seviyeler</button>
               <button type="button" class="prog-filter-pill" data-filter="current" onclick="filterProgression('current', this)">Aktif Seviyeler (1-{{ $prof->level }})</button>
             </div>
@@ -816,7 +816,7 @@
           <table class="table table-progression" id="progressionTable">
             <thead>
               <tr>
-                <th style="width: 140px;">FEAT SEVİYESİ</th>
+                <th style="width: 140px;">{{ __('FEAT SEVİYESİ') }}</th>
                 <th>FEAT ADI</th>
                 <th class="text-end" style="width: 120px;">EKLE</th>
               </tr>
@@ -833,7 +833,7 @@
                     data-has-feats="{{ $hasAnyFeat ? '1' : '0' }}"
                     data-has-class="{{ $hasClassFeat ? '1' : '0' }}">
                   
-                  <!-- FEAT SEVİYESİ Column (No emojis, clean level badges, Level 1 guidance) -->
+                  <!-- FEAT LEVEL Column (No emojis, clean level badges, Level 1 guidance) -->
                   <td class="level-cell">
                     <div class="d-flex flex-column align-items-center justify-content-center">
                       <span class="badge lvl-badge font-monospace px-2 py-1">
@@ -873,7 +873,7 @@
                               @endif
                               @if($feat->prerequisites)
                                 <small class="text-body-secondary d-block mt-0" style="font-size: 0.75rem;">
-                                  Ön Koşul: {{ $feat->prerequisites }}
+                                  {{ __("Prerequisite:") }} {{ $feat->prerequisites }}
                                 </small>
                               @endif
                               @if($feat->notes)
@@ -883,7 +883,7 @@
                               @endif
                             </div>
                             <div class="d-flex align-items-center gap-1">
-                              <button type="button" class="btn btn-xs btn-icon btn-text-secondary btn-row-action" title="Düzenle" onclick="openEditFeatModal({{ $feat->id }}, '{{ addslashes($feat->feat_name) }}', {{ $feat->level }}, '{{ $feat->slot_type }}', '{{ addslashes($feat->category ?? '') }}', '{{ addslashes($feat->prerequisites ?? '') }}', '{{ addslashes($feat->notes ?? '') }}', {{ $feat->is_class_feat ? 1 : 0 }})">
+                              <button type="button" class="btn btn-xs btn-icon btn-text-secondary btn-row-action" title="{{ __("Edit") }}" onclick="openEditFeatModal({{ $feat->id }}, '{{ addslashes($feat->feat_name) }}', {{ $feat->level }}, '{{ $feat->slot_type }}', '{{ addslashes($feat->category ?? '') }}', '{{ addslashes($feat->prerequisites ?? '') }}', '{{ addslashes($feat->notes ?? '') }}', {{ $feat->is_class_feat ? 1 : 0 }})">
                                 <i class="icon-base ti tabler-edit {{ in_array($feat->slot_type, ['class_talent', 'class_bonus']) || $feat->is_class_feat ? 'text-success' : 'text-primary' }}"></i>
                               </button>
                               <button type="button" class="btn btn-xs btn-icon btn-text-danger btn-row-action" title="Sil" onclick="deleteFeatConfirm({{ $feat->id }}, '{{ addslashes($feat->feat_name) }}')">
@@ -897,13 +897,13 @@
                           <div class="d-flex align-items-center justify-content-between gap-2 p-2 rounded bg-dark bg-opacity-40 border border-secondary border-opacity-20">
                             <div>
                               <span class="text-warning fst-italic" style="font-size: 0.88rem;">{{ $feat->feat_name }}</span>
-                              <span class="badge bg-label-secondary ms-1">Planlanan / Ön Koşul</span>
+                              <span class="badge bg-label-secondary ms-1">{{ __('Planned / Prerequisite') }}</span>
                               @if($feat->notes)
                                 <small class="text-muted d-block" style="font-size: 0.73rem;">{{ $feat->notes }}</small>
                               @endif
                             </div>
                             <div class="d-flex align-items-center gap-1">
-                              <button type="button" class="btn btn-xs btn-icon btn-text-secondary btn-row-action" title="Düzenle" onclick="openEditFeatModal({{ $feat->id }}, '{{ addslashes($feat->feat_name) }}', {{ $feat->level }}, '{{ $feat->slot_type }}', '{{ addslashes($feat->category ?? '') }}', '{{ addslashes($feat->prerequisites ?? '') }}', '{{ addslashes($feat->notes ?? '') }}', 0)">
+                              <button type="button" class="btn btn-xs btn-icon btn-text-secondary btn-row-action" title="{{ __("Edit") }}" onclick="openEditFeatModal({{ $feat->id }}, '{{ addslashes($feat->feat_name) }}', {{ $feat->level }}, '{{ $feat->slot_type }}', '{{ addslashes($feat->category ?? '') }}', '{{ addslashes($feat->prerequisites ?? '') }}', '{{ addslashes($feat->notes ?? '') }}', 0)">
                                 <i class="icon-base ti tabler-edit text-warning"></i>
                               </button>
                               <button type="button" class="btn btn-xs btn-icon btn-text-danger btn-row-action" title="Sil" onclick="deleteFeatConfirm({{ $feat->id }}, '{{ addslashes($feat->feat_name) }}')">
@@ -943,7 +943,7 @@
           <h5 class="mb-0 fw-bold text-heading">
             <i class="icon-base ti tabler-table me-2 text-primary"></i>{{ __('Master Feats Archive Table') }}
           </h5>
-          <small class="text-body-secondary">Tüm lonca kahramanlarının seviye bazlı feat dökümü (Google Sheet formatı).</small>
+          <small class="text-body-secondary">{{ __('Level-based feat breakdown for all guild heroes (Google Sheet format).') }}</small>
         </div>
 
         <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -961,18 +961,18 @@
         <table class="table table-dark table-hover mb-0" id="masterSheetTable" style="font-size: 0.85rem;">
           <thead>
             <tr style="background: rgba(37, 41, 60, 0.95);">
-              <th class="th-sortable" onclick="sortMasterTableByColumn(0)">Rütbe <i class="icon-base ti tabler-arrows-sort small text-muted"></i></th>
-              <th class="th-sortable" onclick="sortMasterTableByColumn(1)">Karakter Adı <i class="icon-base ti tabler-arrows-sort small text-muted"></i></th>
+              <th class="th-sortable" onclick="sortMasterTableByColumn(0)">{{ __("Rank") }} <i class="icon-base ti tabler-arrows-sort small text-muted"></i></th>
+              <th class="th-sortable" onclick="sortMasterTableByColumn(1)">{{ __("Character Name") }} <i class="icon-base ti tabler-arrows-sort small text-muted"></i></th>
               <th class="th-sortable" onclick="sortMasterTableByColumn(2)">Oyuncu <i class="icon-base ti tabler-arrows-sort small text-muted"></i></th>
               <th class="th-sortable" onclick="sortMasterTableByColumn(3)">Irk <i class="icon-base ti tabler-arrows-sort small text-muted"></i></th>
-              <th class="th-sortable" onclick="sortMasterTableByColumn(4)">Sınıf & Archetype <i class="icon-base ti tabler-arrows-sort small text-muted"></i></th>
+              <th class="th-sortable" onclick="sortMasterTableByColumn(4)">{{ __("Class & Archetype") }} <i class="icon-base ti tabler-arrows-sort small text-muted"></i></th>
               <th class="th-sortable" onclick="sortMasterTableByColumn(5)">Seviye <i class="icon-base ti tabler-arrows-sort small text-muted"></i></th>
               <th>1. Level</th>
               <th>1. Level Class Bonus</th>
               <th>1. Level Racial Bonus</th>
               <th>2. Level Class Bonus / Ability</th>
               <th>3. Level</th>
-              <th class="text-end">İşlemler</th>
+              <th class="text-end">{{ __("Actions") }}</th>
             </tr>
           </thead>
           <tbody id="masterSheetTableBody">
@@ -995,7 +995,7 @@
                 <td>{{ $row['lvl_3_standard'] }}</td>
                 <td class="text-end" onclick="event.stopPropagation()">
                   <div class="d-inline-flex align-items-center gap-1">
-                    <button type="button" class="btn btn-xs btn-outline-primary" onclick="switchCharacter('{{ addslashes($row['character_name']) }}');" title="Görüntüle">
+                    <button type="button" class="btn btn-xs btn-outline-primary" onclick="switchCharacter('{{ addslashes($row['character_name']) }}');" title="{{ __("View") }}">
                       <i class="icon-base ti tabler-eye"></i>
                     </button>
                     <button type="button" class="btn btn-xs btn-outline-danger btn-icon" title="Karakteri Sil" onclick="deleteCharacterConfirm('{{ addslashes($row['character_name']) }}')">
@@ -1046,35 +1046,35 @@
               </select>
             </div>
             <div class="col-8">
-              <label class="form-label fw-semibold" for="featInputSlotType">Slot / Kural Türü <span class="text-danger">*</span></label>
+              <label class="form-label fw-semibold" for="featInputSlotType">{{ __('Slot / Rule Type') }} <span class="text-danger">*</span></label>
               <select class="form-select" id="featInputSlotType" required>
                 <option value="standard">{{ __('Standard Feat') }} (Normal Feat: 1, 3, 5..)</option>
-                <option value="racial_bonus">{{ __('Racial Bonus Feat') }} (İnsan Bonusu vb.)</option>
+                <option value="racial_bonus">{{ __('Racial Bonus Feat') }} ({{ __('Human Bonus') }} vb.)</option>
                 <option value="class_bonus">{{ __('Class Bonus Feat') }} (Fighter, Wizard, Monk, Warpriest)</option>
                 <option value="class_talent">{{ __('Class Feats & Talents') }} (Rogue Talent, Magus Arcana, Discovery, Hex)</option>
-                <option value="trait">Trait (Karakter Özelliği - Additional Traits)</option>
-                <option value="reserve">{{ __('Reserve / Planned') }} (Planlanan / Ön Koşul)</option>
+                <option value="trait">Trait ({{ __('Character Trait - Additional Traits') }})</option>
+                <option value="reserve">{{ __('Reserve / Planned') }} ({{ __('Planned / Prerequisite') }})</option>
               </select>
             </div>
           </div>
 
-          <!-- 1. Seviye Özel Yuva Seçici (Normal Feat + İnsan Bonusu + Fighter/Sınıf Bonusu) -->
+          <!-- Level 1 Special Slot Selector (Normal Feat + {{ __('Human Bonus') }} + Fighter/{{ __('Class Bonus') }}) -->
           <div id="modalLevel1Helper" class="mb-3 p-2 rounded bg-dark border border-primary border-opacity-35" style="display: none;">
             <div class="d-flex align-items-center justify-content-between mb-2">
-              <span class="text-primary small fw-bold text-uppercase" style="font-size: 0.75rem;">1. Seviye Yuva Türü:</span>
-              <span class="text-body-secondary small" style="font-size: 0.72rem;">Normal Feat + İnsan Bonusu + Sınıf Bonusu</span>
+              <span class="text-primary small fw-bold text-uppercase" style="font-size: 0.75rem;">{{ __('Level 1 Slot Type:') }}</span>
+              <span class="text-body-secondary small" style="font-size: 0.72rem;">Normal Feat + {{ __('Human Bonus') }} + {{ __('Class Bonus') }}</span>
             </div>
             <div class="d-flex gap-2 flex-wrap">
               <button type="button" class="btn btn-xs btn-outline-primary" onclick="setModalSlotType('standard')">Normal Feat</button>
-              <button type="button" class="btn btn-xs btn-outline-info" onclick="setModalSlotType('racial_bonus')">+ İnsan Bonusu</button>
-              <button type="button" class="btn btn-xs btn-outline-warning" onclick="setModalSlotType('class_bonus')">+ Sınıf Bonusu (Fighter / vb.)</button>
+              <button type="button" class="btn btn-xs btn-outline-info" onclick="setModalSlotType('racial_bonus')">+ {{ __('Human Bonus') }}</button>
+              <button type="button" class="btn btn-xs btn-outline-warning" onclick="setModalSlotType('class_bonus')">+ {{ __('Class Bonus') }} (Fighter / vb.)</button>
             </div>
           </div>
 
           <!-- Feat Name -->
           <div class="mb-3">
             <label class="form-label fw-semibold" for="featInputName">{{ __('Feat Name') }} <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="featInputName" placeholder="Örn: Power Attack, Weapon Focus (Rapier)..." list="commonFeatsList" required />
+            <input type="text" class="form-control" id="featInputName" placeholder="{{ __("e.g., Power Attack, Weapon Focus (Rapier)...") }}" list="commonFeatsList" required />
             <datalist id="commonFeatsList">
               @foreach($library as $lf)
                 <option value="{{ $lf['name'] }}">{{ $lf['category'] }} &bull; {{ $lf['preq'] }}</option>
@@ -1086,17 +1086,17 @@
           <div class="mb-3">
             <label class="form-label fw-semibold" for="featInputCategory">Kategori</label>
             <select class="form-select" id="featInputCategory">
-              <option value="Combat">Combat (Dövüş)</option>
+              <option value="Combat">Combat</option>
               <option value="General">General (Genel)</option>
-              <option value="Magic">Magic (Büyü)</option>
-              <option value="Metamagic">Metamagic (Metabüyü)</option>
-              <option value="Rogue Talent">Rogue Talent (Rogue Yeteneği)</option>
-              <option value="Magus Arcana">Magus Arcana (Magus Sırrı)</option>
-              <option value="Discovery">Discovery (Alchemist Keşfi)</option>
-              <option value="Witch Hex">Witch Hex (Cadı Büyüsü)</option>
-              <option value="Style">Style Feat (Dövüş Stili)</option>
-              <option value="Teamwork">Teamwork (Takım Çalışması)</option>
-              <option value="Item Creation">Item Creation (Eşya Yapımı)</option>
+              <option value="Magic">Magic</option>
+              <option value="Metamagic">Metamagic</option>
+              <option value="Rogue Talent">Rogue Talent</option>
+              <option value="Magus Arcana">Magus Arcana</option>
+              <option value="Discovery">Discovery</option>
+              <option value="Witch Hex">Witch Hex</option>
+              <option value="Style">Style Feat</option>
+              <option value="Teamwork">Teamwork</option>
+              <option value="Item Creation">Item Creation</option>
               <option value="Trait">Trait</option>
             </select>
           </div>
@@ -1104,12 +1104,12 @@
           <!-- Prerequisites & Notes -->
           <div class="row g-2 mb-2">
             <div class="col-12">
-              <label class="form-label fw-semibold" for="featInputPreq">{{ __('Prerequisites') }} / Ön Koşul</label>
-              <input type="text" class="form-control" id="featInputPreq" placeholder="Örn: Preq(Spell Focus(evocation), -) veya Str 13, BAB +1" />
+              <label class="form-label fw-semibold" for="featInputPreq">{{ __('Prerequisites') }}</label>
+              <input type="text" class="form-control" id="featInputPreq" placeholder="{{ __("e.g., Preq(Spell Focus(evocation), -) or Str 13, BAB +1") }}" />
             </div>
             <div class="col-12 mt-2">
-              <label class="form-label fw-semibold" for="featInputNotes">Açıklama / Notlar</label>
-              <input type="text" class="form-control" id="featInputNotes" placeholder="İsteğe bağlı ek notlar..." />
+              <label class="form-label fw-semibold" for="featInputNotes">{{ __('Description / Notes') }}</label>
+              <input type="text" class="form-control" id="featInputNotes" placeholder="{{ __("Optional additional notes...") }}" />
             </div>
           </div>
         </div>
@@ -1149,7 +1149,7 @@
                 <input type="text" class="form-control" id="statsRace" value="{{ $dossier['profile']->race }}" required />
               </div>
               <div class="col-md-3">
-                <label class="form-label fw-semibold" for="statsClass">Sınıf</label>
+                <label class="form-label fw-semibold" for="statsClass">{{ __("Class") }}</label>
                 <input type="text" class="form-control" id="statsClass" value="{{ $dossier['profile']->class_name }}" required />
               </div>
               <div class="col-md-3">
@@ -1194,7 +1194,7 @@
             <!-- Row 3: HP & Hit Die -->
             <div class="row g-3 mb-2">
               <div class="col-md-6">
-                <label class="form-label fw-semibold" for="statsHp">Can Puanı (HP)</label>
+                <label class="form-label fw-semibold" for="statsHp">{{ __("Hit Points (HP)") }}</label>
                 <input type="number" class="form-control font-monospace" id="statsHp" min="1" max="1000" value="{{ $dossier['profile']->hp ?? 60 }}" />
               </div>
               <div class="col-md-6">
@@ -1229,11 +1229,11 @@
           </span>
           <div>
             <h5 class="modal-title mb-0" id="modalTraitCatalogTitle">
-              Pathfinder Trait Kataloğundan Ara (1,346 Trait)
+              {{ __('Search from Pathfinder Trait Catalog (1,346 Traits)') }}
             </h5>
             <div class="d-flex align-items-center gap-2 mt-1" id="traitModalSlotInfo">
               <span class="small" style="color: #8b949e;">Hedef Yuva:</span>
-              <span class="badge font-monospace px-2 py-0" id="traitModalSlotBadge" style="background: #f59e0b; color: #000; font-weight: 700; font-size: 0.72rem;">Üye Traiti</span>
+              <span class="badge font-monospace px-2 py-0" id="traitModalSlotBadge" style="background: #f59e0b; color: #000; font-weight: 700; font-size: 0.72rem;">{{ __("Member Trait") }}</span>
             </div>
           </div>
         </div>
@@ -1246,7 +1246,7 @@
           <span class="input-group-text trait-search-addon"><i class="icon-base ti tabler-search"></i></span>
           <input type="text" class="form-control font-monospace"
                  id="traitCatalogSearchInput"
-                 placeholder="Trait adı, kategori veya açıklama arayın (Örn: Reactionary, Anatomist, Magical Lineage...)"
+                 placeholder="{{ __("Search by trait name, category or description (e.g. Reactionary, Anatomist, Magical Lineage...)") }}"
                  autocomplete="off" />
           <button type="button" class="btn trait-search-btn" id="btnTriggerTraitSearch">
             <i class="icon-base ti tabler-search me-1"></i> Ara
@@ -1268,14 +1268,14 @@
         <!-- Search Results List -->
         <div class="pf-scroll" style="max-height: 520px; overflow-y: auto; padding-right: 4px;" id="traitSearchResultsContainer">
           <div class="text-center py-4 font-monospace" style="color: #8b949e;">
-            <span class="spinner-border spinner-border-sm me-2" style="color: #f59e0b;"></span>Katalog yükleniyor...
+            <span class="spinner-border spinner-border-sm me-2" style="color: #f59e0b;"></span>{{ __('Loading catalog...') }}
           </div>
         </div>
       </div>
 
       <div class="modal-footer d-flex align-items-center justify-content-between p-3">
         <span class="trait-footer-note font-monospace">
-          * Traitler Pathfinder 1E d20pfsrd kurallarına tabidir.
+          {{ __('* Traits are subject to Pathfinder 1E d20pfsrd rules.') }}
         </span>
         <button type="button" class="btn btn-sm trait-btn-close" data-bs-dismiss="modal">{{ __('Kapat') }}</button>
       </div>
@@ -1417,11 +1417,11 @@ document.addEventListener('DOMContentLoaded', function () {
   window.deleteCharacterConfirm = function(charName) {
     Swal.fire({
       title: 'Karakteri Sil?',
-      text: `"${charName}" ve bu karaktere ait tüm kayıtlı featler kalıcı olarak silinecektir!`,
+      text: `"${charName}" {{ __("and all registered feats for this character will be permanently deleted!") }}`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Evet, Karakteri Sil',
-      cancelButtonText: 'Vazgeç',
+      cancelButtonText: '{{ __('Cancel') }}',
       customClass: {
         confirmButton: 'btn btn-danger me-2',
         cancelButton: 'btn btn-label-secondary'
@@ -1459,7 +1459,7 @@ document.addEventListener('DOMContentLoaded', function () {
           }
         })
         .catch(() => {
-          Swal.fire({ icon: 'error', title: 'Hata', text: 'Ağ hatası oluştu.' });
+          Swal.fire({ icon: 'error', title: '{{ __('Error') }}', text: '{{ __('A network error occurred.') }}' });
         });
       }
     });
@@ -1510,7 +1510,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Quick Add for specific level
   window.quickAddFeatToLevel = function(level) {
     document.getElementById('editFeatId').value = '';
-    document.getElementById('featModalModeText').textContent = `Seviye ${level} için Feat Ekle`;
+    document.getElementById('featModalModeText').textContent = `{{ __("Add Feat for Level") }} ${level}`;
     document.getElementById('featInputLevel').value = level;
     document.getElementById('featInputName').value = '';
     document.getElementById('featInputPreq').value = '';
@@ -1548,7 +1548,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const notes = document.getElementById('featInputNotes').value.trim();
 
       if (!featName) {
-        Swal.fire({ icon: 'warning', title: 'Dikkat', text: 'Lütfen bir Feat adı giriniz.' });
+        Swal.fire({ icon: 'warning', title: '{{ __('Warning') }}', text: '{{ __('Please enter a Feat name.') }}' });
         return;
       }
 
@@ -1586,18 +1586,18 @@ document.addEventListener('DOMContentLoaded', function () {
           featModal.hide();
           Swal.fire({
             icon: 'success',
-            title: 'Başarılı!',
+            title: '{{ __('Success!') }}',
             text: data.message,
             timer: 1200,
             showConfirmButton: false
           }).then(() => location.reload());
         } else {
-          Swal.fire({ icon: 'error', title: 'Hata', text: data.message || 'Kayıt sırasında hata oluştu.' });
+          Swal.fire({ icon: 'error', title: '{{ __('Error') }}', text: data.message || '{{ __('An error occurred during save.') }}' });
         }
       })
       .catch(err => {
         btnSaveFeat.disabled = false;
-        Swal.fire({ icon: 'error', title: 'Bağlantı Hatası', text: 'Sunucuya ulaşılamadı.' });
+        Swal.fire({ icon: 'error', title: '{{ __('Connection Error') }}', text: '{{ __('Could not reach the server.') }}' });
       });
     });
   }
@@ -1606,11 +1606,11 @@ document.addEventListener('DOMContentLoaded', function () {
   window.deleteFeatConfirm = function(id, name) {
     Swal.fire({
       title: 'Feat Silinsin mi?',
-      text: `"${name}" bu karakterin ilerlemesinden kaldırılacaktır!`,
+      text: `"${name}" {{ __("will be removed from this character's progression!") }}`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Evet, Sil',
-      cancelButtonText: 'Vazgeç',
+      cancelButtonText: '{{ __('Cancel') }}',
       customClass: {
         confirmButton: 'btn btn-danger me-2',
         cancelButton: 'btn btn-label-secondary'
@@ -1640,7 +1640,7 @@ document.addEventListener('DOMContentLoaded', function () {
           }
         })
         .catch(() => {
-          Swal.fire({ icon: 'error', title: 'Hata', text: 'Ağ hatası oluştu.' });
+          Swal.fire({ icon: 'error', title: '{{ __('Error') }}', text: '{{ __('A network error occurred.') }}' });
         });
       }
     });
@@ -1706,7 +1706,7 @@ document.addEventListener('DOMContentLoaded', function () {
           statsModal.hide();
           Swal.fire({
             icon: 'success',
-            title: 'Nitelikler Güncellendi!',
+            title: '{{ __('Attributes Updated!') }}',
             text: data.message,
             timer: 1200,
             showConfirmButton: false
@@ -1717,7 +1717,7 @@ document.addEventListener('DOMContentLoaded', function () {
       })
       .catch(() => {
         btnSaveStats.disabled = false;
-        Swal.fire({ icon: 'error', title: 'Hata', text: 'Sunucuya ulaşılamadı.' });
+        Swal.fire({ icon: 'error', title: '{{ __('Error') }}', text: '{{ __('Could not reach the server.') }}' });
       });
     });
   }
@@ -1727,12 +1727,12 @@ document.addEventListener('DOMContentLoaded', function () {
   if (btnResetFeats) {
     btnResetFeats.addEventListener('click', function () {
       Swal.fire({
-        title: 'Master Sheet Verilerine Sıfırla?',
-        text: 'Tüm karakter featleri ve "Magus Buckler" orijinal şablon verilerine döndürülecektir!',
+        title: '{{ __('Reset to Master Sheet Data?') }}',
+        text: '{{ __('All character feats and "Magus Buckler" will be restored to original template data!') }}',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: 'Evet, Sıfırla',
-        cancelButtonText: 'Vazgeç',
+        confirmButtonText: '{{ __('Yes, Reset') }}',
+        cancelButtonText: '{{ __('Cancel') }}',
         customClass: {
           confirmButton: 'btn btn-primary me-2',
           cancelButton: 'btn btn-label-secondary'
@@ -1752,7 +1752,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (data.success) {
               Swal.fire({
                 icon: 'success',
-                title: 'Sıfırlandı!',
+                title: '{{ __('Reset Complete!') }}',
                 text: data.message,
                 timer: 1500,
                 showConfirmButton: false
@@ -1762,7 +1762,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
           })
           .catch(() => {
-            Swal.fire({ icon: 'error', title: 'Hata', text: 'Ağ hatası oluştu.' });
+            Swal.fire({ icon: 'error', title: '{{ __('Error') }}', text: '{{ __('A network error occurred.') }}' });
           });
         }
       });
@@ -1812,12 +1812,12 @@ document.addEventListener('DOMContentLoaded', function () {
       const slot = this.dataset.slot;
       const charName = this.dataset.char;
       Swal.fire({
-        title: 'Traiti Kaldır?',
+        title: '{{ __('Remove Trait?') }}',
         text: 'Bu slottaki trait temizlenecektir.',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: 'Evet, Kaldır',
-        cancelButtonText: 'Vazgeç',
+        confirmButtonText: '{{ __('Yes, Remove') }}',
+        cancelButtonText: '{{ __('Cancel') }}',
         customClass: {
           confirmButton: 'btn btn-danger me-2',
           cancelButton: 'btn btn-label-secondary'
@@ -1844,7 +1844,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
           })
           .catch(() => {
-            Swal.fire({ icon: 'error', title: 'Hata', text: 'Ağ hatası oluştu.' });
+            Swal.fire({ icon: 'error', title: '{{ __('Error') }}', text: '{{ __('A network error occurred.') }}' });
           });
         }
       });
@@ -1853,18 +1853,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function fetchTraits(query = '') {
     if (!traitResultsContainer) return;
-    traitResultsContainer.innerHTML = '<div class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm me-2"></span>Katalog taranıyor...</div>';
+    traitResultsContainer.innerHTML = '<div class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm me-2"></span>{{ __('Searching catalog...') }}</div>';
     fetch(`{{ url("/valiant-shade/pages/traits/search") }}?q=${encodeURIComponent(query)}`)
       .then(res => res.json())
       .then(data => {
         if (!data.success || !Array.isArray(data.traits) || data.traits.length === 0) {
-          traitResultsContainer.innerHTML = '<div class="text-center py-4 text-muted">Eşleşen trait bulunamadı.</div>';
+          traitResultsContainer.innerHTML = '<div class="text-center py-4 text-muted">{{ __('No matching traits found.') }}</div>';
           return;
         }
         renderTraitResults(data.traits);
       })
       .catch(() => {
-        traitResultsContainer.innerHTML = '<div class="text-center py-4 text-danger">Traitler yüklenirken hata oluştu.</div>';
+        traitResultsContainer.innerHTML = '<div class="text-center py-4 text-danger">{{ __('Error loading traits.') }}</div>';
       });
   }
 
@@ -1875,7 +1875,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (filtered.length === 0) {
-      traitResultsContainer.innerHTML = '<div class="text-center py-4 font-monospace" style="color: #8b949e;">Bu kategoride eşleşen trait bulunamadı.</div>';
+      traitResultsContainer.innerHTML = '<div class="text-center py-4 font-monospace" style="color: #8b949e;">{{ __('No matching traits in this category.') }}</div>';
       return;
     }
 
@@ -1905,16 +1905,16 @@ document.addEventListener('DOMContentLoaded', function () {
               <span class="badge py-1 px-2 font-monospace" style="background: ${catStyle.bg}; color: ${catStyle.text}; border: 1px solid ${catStyle.border}; font-size: 0.72rem; font-weight: 600;">
                 ${cat}
               </span>
-              ${url ? `<a href="${url}" target="_blank" class="trait-card-extlink" title="d20pfsrd Kural & Kaynak Sayfası"><i class="icon-base ti tabler-external-link"></i></a>` : ''}
+              ${url ? `<a href="${url}" target="_blank" class="trait-card-extlink" title="{{ __("d20pfsrd Rules & Source Page") }}"><i class="icon-base ti tabler-external-link"></i></a>` : ''}
             </div>
-            ${desc ? `<p class="trait-card-desc mb-0">${desc}</p>` : (url ? `<a href="${url}" target="_blank" class="trait-card-urllink"><i class="icon-base ti tabler-book-2 me-1"></i>d20pfsrd kural & detay sayfasını incele &rarr;</a>` : '')}
+            ${desc ? `<p class="trait-card-desc mb-0">${desc}</p>` : (url ? `<a href="${url}" target="_blank" class="trait-card-urllink"><i class="icon-base ti tabler-book-2 me-1"></i>{{ __('inspect d20pfsrd rule & details page &rarr;') }}</a>` : '')}
           </div>
           <button type="button" class="btn btn-sm btn-select-trait-item trait-btn-select flex-shrink-0"
                   data-name="${name}"
                   data-category="${cat}"
                   data-desc="${desc}"
                   data-url="${url}">
-            <i class="icon-base ti tabler-check me-1"></i> Seç
+            <i class="icon-base ti tabler-check me-1"></i> {{ __("Select") }}
           </button>
         </div>
       `;
@@ -1960,7 +1960,7 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .catch(() => {
           this.disabled = false;
-          Swal.fire({ icon: 'error', title: 'Hata', text: 'Sunucuya ulaşılamadı.' });
+          Swal.fire({ icon: 'error', title: '{{ __('Error') }}', text: '{{ __('Could not reach the server.') }}' });
         });
       };
     });

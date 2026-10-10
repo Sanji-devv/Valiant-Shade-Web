@@ -15,11 +15,11 @@ return new class extends Migration
             $table->id();
             $table->string('character_name')->unique();
             $table->string('player_name')->nullable();
-            $table->string('race');
-            $table->string('class_name');
+            $table->string('race')->default('Human')->nullable();
+            $table->string('class_name')->default('Adventurer')->nullable();
             $table->string('archetype')->nullable();
             $table->integer('level')->default(1);
-            $table->string('rank');
+            $table->string('rank')->default('Aday')->nullable();
             $table->integer('str')->default(10);
             $table->integer('dex')->default(10);
             $table->integer('con')->default(10);

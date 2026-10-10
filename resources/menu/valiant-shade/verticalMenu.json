@@ -3,19 +3,8 @@
         {
             "name": "Dashboards",
             "icon": "menu-icon icon-base ti tabler-smart-home",
-            "slug": "dashboard",
-            "submenu": [
-                {
-                    "url": "/valiant-shade/",
-                    "name": "Analytics",
-                    "slug": "dashboard-analytics"
-                },
-                {
-                    "url": "/valiant-shade/dashboard/crm",
-                    "name": "CRM",
-                    "slug": "dashboard-crm"
-                }
-            ]
+            "slug": "dashboard-analytics",
+            "url": "/valiant-shade/"
         },
         {
             "menuHeader": "Pages"
@@ -29,29 +18,8 @@
         {
             "name": "User Profile",
             "icon": "menu-icon icon-base ti tabler-user",
-            "slug": "pages-profile",
-            "submenu": [
-                {
-                    "url": "/valiant-shade/pages/profile-user",
-                    "name": "Profile",
-                    "slug": "pages-profile-user"
-                },
-                {
-                    "url": "/valiant-shade/pages/profile-teams",
-                    "name": "Teams",
-                    "slug": "pages-profile-teams"
-                },
-                {
-                    "url": "/valiant-shade/pages/profile-projects",
-                    "name": "Projects",
-                    "slug": "pages-profile-projects"
-                },
-                {
-                    "url": "/valiant-shade/pages/profile-connections",
-                    "name": "Connections",
-                    "slug": "pages-profile-connections"
-                }
-            ]
+            "slug": "pages-profile-user",
+            "url": "/valiant-shade/pages/profile-user"
         },
         {
             "name": "Guild Inventory",
@@ -106,12 +74,6 @@
         },
         {
             "menuHeader": "Authentication"
-        },
-        {
-            "name": "Profile",
-            "icon": "menu-icon icon-base ti tabler-user",
-            "slug": "pages-profile-user",
-            "url": "/valiant-shade/pages/profile-user"
         },
         {
             "name": "Login",

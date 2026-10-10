@@ -43,6 +43,8 @@ Route::get('/pages/profile-teams', [UserTeams::class, 'index'])->name('valiant-s
 Route::get('/pages/profile-projects', [UserProjects::class, 'index'])->name('valiant-shade.pages-profile-projects');
 Route::get('/pages/profile-connections', [UserConnections::class, 'index'])->name('valiant-shade.pages-profile-connections');
 Route::get('/pages/account-settings-account', [AccountSettingsAccount::class, 'index'])->name('valiant-shade.pages-account-settings-account');
+Route::post('/pages/account-settings-account', [AccountSettingsAccount::class, 'update'])->name('valiant-shade.pages-account-settings-account.update');
+Route::post('/pages/account-settings-account/deactivate', [AccountSettingsAccount::class, 'deactivate'])->name('valiant-shade.pages-account-settings-account.deactivate');
 Route::get('/character/sheet', [CharacterSheet::class, 'index'])->name('valiant-shade.character-sheet');
 Route::post('/character/sheet/save', [CharacterSheet::class, 'save'])->name('valiant-shade.character-sheet.save');
 Route::get('/character/sheet/data', [CharacterSheet::class, 'data'])->name('valiant-shade.character-sheet.data');
@@ -64,13 +66,18 @@ Route::post('/pages/inventory/vault', [Inventory::class, 'updateVault'])->name('
 
 // News Routes
 Route::get('/pages/news', [NewsController::class, 'index'])->name('valiant-shade.pages-news');
+Route::get('/pages/guild-news', [NewsController::class, 'index'])->name('valiant-shade.pages-guild-news');
 Route::get('/pages/news/{id}', [NewsController::class, 'show'])->name('valiant-shade.pages-news.show');
 Route::post('/pages/news', [NewsController::class, 'store'])->name('valiant-shade.pages-news.store');
+Route::post('/pages/guild-news', [NewsController::class, 'store'])->name('valiant-shade.pages-guild-news.store');
 Route::post('/pages/news/reset-defaults', [NewsController::class, 'resetDefaults'])->name('valiant-shade.pages-news.reset-defaults');
+Route::post('/pages/guild-news/reset-defaults', [NewsController::class, 'resetDefaults'])->name('valiant-shade.pages-guild-news.reset-defaults');
 Route::post('/pages/news/{id}', [NewsController::class, 'update'])->name('valiant-shade.pages-news.update');
+Route::post('/pages/guild-news/{id}', [NewsController::class, 'update'])->name('valiant-shade.pages-guild-news.update');
 Route::delete('/pages/news/{id}', [NewsController::class, 'destroy'])->name('valiant-shade.pages-news.destroy');
+Route::delete('/pages/guild-news/{id}', [NewsController::class, 'destroy'])->name('valiant-shade.pages-guild-news.destroy');
 Route::post('/pages/news/{id}/toggle', [NewsController::class, 'toggleActive'])->name('valiant-shade.pages-news.toggle');
-Route::redirect('/pages/guild-news', '/valiant-shade/pages/news');
+Route::post('/pages/guild-news/{id}/toggle', [NewsController::class, 'toggleActive'])->name('valiant-shade.pages-guild-news.toggle');
 
 // Player XP Tracker Routes
 Route::get('/pages/xp-tracker', [PlayerXpController::class, 'index'])->name('valiant-shade.pages-xp-tracker');
@@ -137,10 +144,18 @@ Route::get('/pages/feats-listesi', function (\Illuminate\Http\Request $request) 
     $qs = $request->getQueryString();
     return redirect()->to('/valiant-shade/pages/featntrait' . ($qs ? '?' . $qs : ''), 301);
 });
+Route::get('/pages/feat-listesi', function (\Illuminate\Http\Request $request) {
+    $qs = $request->getQueryString();
+    return redirect()->to('/valiant-shade/pages/featntrait' . ($qs ? '?' . $qs : ''), 301);
+});
 Route::get('/pages/feats-and-traits', function (\Illuminate\Http\Request $request) {
     $qs = $request->getQueryString();
     return redirect()->to('/valiant-shade/pages/featntrait' . ($qs ? '?' . $qs : ''), 301);
 })->name('valiant-shade.pages-feats-and-traits');
+Route::get('/pages/feat-and-traits', function (\Illuminate\Http\Request $request) {
+    $qs = $request->getQueryString();
+    return redirect()->to('/valiant-shade/pages/featntrait' . ($qs ? '?' . $qs : ''), 301);
+})->name('valiant-shade.pages-feat-and-traits');
 
 // Feat & Trait Action Routes (/pages/featntrait)
 Route::post('/pages/featntrait', [\App\ValiantShade\Http\Controllers\pages\FeatsListController::class, 'store'])->name('valiant-shade.pages-featntrait.store');
@@ -186,7 +201,7 @@ Route::get('/app/roles', [RoleController::class, 'index'])->name('valiant-shade.
 Route::post('/app/roles', [RoleController::class, 'store'])->name('valiant-shade.app-roles.store');
 Route::put('/app/roles/{role}', [RoleController::class, 'update'])->name('valiant-shade.app-roles.update');
 Route::delete('/app/roles/{role}', [RoleController::class, 'destroy'])->name('valiant-shade.app-roles.destroy');
-Route::post('/logout', [LogoutController::class, 'logout'])->name('logout');
-Route::post('/auth/logout', [LogoutController::class, 'logout'])->name('valiant-shade.auth-logout');
+Route::match(['GET', 'POST'], '/logout', [LogoutController::class, 'logout'])->name('logout');
+Route::match(['GET', 'POST'], '/auth/logout', [LogoutController::class, 'logout'])->name('valiant-shade.auth-logout');
 
 

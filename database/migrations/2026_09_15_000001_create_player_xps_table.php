@@ -25,6 +25,7 @@ return new class extends Migration
             $table->integer('bonus_xp')->default(0);
             $table->integer('total_xp')->default(0);
             $table->integer('inactive_threshold_xp')->nullable();
+            $table->integer('allowance_sp')->default(0);
             $table->string('reason')->nullable();
             $table->text('notes')->nullable();
 

@@ -44,6 +44,7 @@ class QuestReportsSeeder extends Seeder
             ['email' => 'adventurers@valiantshade.com'],
             [
                 'name' => 'Valiant Adventurer',
+                'display_name' => 'Valiant Adventurer',
                 'real_name' => 'Valiant Adventurer',
                 'username' => 'valiant_adventurer',
                 'password' => bcrypt('123456'),

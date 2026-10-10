@@ -17,8 +17,9 @@ return new class extends Migration
             $table->string('password')->nullable();
             $table->string('password_hash')->nullable();
             $table->string('name')->nullable();
+            $table->string('real_name')->nullable();
             $table->string('display_name')->nullable();
-            $table->enum('role', ['ADMIN', 'GM', 'PLAYER'])->default('PLAYER');
+            $table->string('role')->default('PLAYER');
             $table->tinyInteger('status')->default(2);
 
             $table->rememberToken();

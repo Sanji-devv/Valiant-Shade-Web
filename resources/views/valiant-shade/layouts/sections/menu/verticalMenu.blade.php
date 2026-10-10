@@ -40,7 +40,7 @@ $configData = \App\ValiantShade\Helpers\Helpers::appClasses();
     $currentRouteName = Route::currentRouteName() ?? '';
     $routeWithoutPrefix = str_starts_with($currentRouteName, 'valiant-shade.') ? substr($currentRouteName, 14) : $currentRouteName;
 
-    if ($currentRouteName === $menu->slug || $routeWithoutPrefix === $menu->slug) {
+    if ($currentRouteName === $menu->slug || $routeWithoutPrefix === $menu->slug || (isset($menu->url) && url()->current() === url($menu->url))) {
       $activeClass = 'active';
     } elseif (isset($menu->submenu)) {
       $slugs = is_array($menu->slug) ? $menu->slug : [$menu->slug];
@@ -56,18 +56,35 @@ $configData = \App\ValiantShade\Helpers\Helpers::appClasses();
     }
     @endphp
 
+    @php
+      $isLoginSlug = ($menu->slug === 'auth-login-basic');
+      $isRegisterSlug = ($menu->slug === 'auth-register-basic');
+    @endphp
+
+    @if (Auth::check() && $isRegisterSlug)
+      @continue
+    @endif
+
+    @php
+      $isLogoutItem = Auth::check() && $isLoginSlug;
+      $menuUrl = $isLogoutItem ? route('logout') : (isset($menu->url) ? url($menu->url) : 'javascript:void(0);');
+      $menuName = $isLogoutItem ? __('Logout') : (isset($menu->name) ? __($menu->name) : '');
+      $menuIcon = $isLogoutItem ? 'menu-icon icon-base ti tabler-logout text-danger' : ($menu->icon ?? null);
+    @endphp
+
     {{-- main menu --}}
     <li class="menu-item {{ $activeClass }}">
-      <a href="{{ isset($menu->url) ? url($menu->url) : 'javascript:void(0);' }}"
-        class="{{ isset($menu->submenu) ? 'menu-link menu-toggle' : 'menu-link' }}" @if (isset($menu->target) and
-        !empty($menu->target)) target="_blank" @endif>
-        @isset($menu->icon)
-        <i class="{{ $menu->icon }}"></i>
+      <a href="{{ $menuUrl }}"
+        class="{{ isset($menu->submenu) ? 'menu-link menu-toggle' : 'menu-link' }} {{ $isLogoutItem ? 'text-danger' : '' }}"
+        @if ($isLogoutItem) onclick="event.preventDefault(); document.getElementById('vertical-menu-logout-form').submit();" @endif
+        @if (isset($menu->target) and !empty($menu->target) and !$isLogoutItem) target="_blank" @endif>
+        @isset($menuIcon)
+        <i class="{{ $menuIcon }}"></i>
         @endisset
-        <div>{{ isset($menu->name) ? __($menu->name) : '' }}</div>
-        @isset($menu->badge)
+        <div>{{ $menuName }}</div>
+        @if (!$isLogoutItem && isset($menu->badge))
         <div class="badge bg-{{ $menu->badge[0] }} rounded-pill ms-auto">{{ $menu->badge[1] }}</div>
-        @endisset
+        @endif
       </a>
 
       {{-- submenu --}}
@@ -78,5 +95,11 @@ $configData = \App\ValiantShade\Helpers\Helpers::appClasses();
     @endif
     @endforeach
   </ul>
+
+  @if (Auth::check())
+  <form id="vertical-menu-logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+    @csrf
+  </form>
+  @endif
 
 </aside>

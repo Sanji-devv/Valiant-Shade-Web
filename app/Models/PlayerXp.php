@@ -88,25 +88,67 @@ class PlayerXp extends Model
     public const STATUS_MIA = 'mia';
     public const STATUS_RETIRED = 'retired';
 
+    protected static function booted(): void
+    {
+        static::saving(function (PlayerXp $p) {
+            if (empty($p->rank)) {
+                $lvl = $p->level ?: self::calculateLevelFromXp((int)$p->total_xp);
+                $p->rank = self::calculateRankFromLevelAndSessions((int)$lvl, (int)$p->sessions_count);
+            }
+        });
+    }
+
+    /**
+     * Calculate guild rank strictly based on level and games played (sessions count):
+     * - Level 1: Aday
+     * - Level 2-5: Üye
+     * - Level 6-9: Kıdemli
+     * - Level 10: If sessions_count >= 3 => Uzman; otherwise Kıdemli
+     * - Level 11+: Uzman
+     */
+    public static function calculateRankFromLevelAndSessions(int $level, int $sessionsCount = 0): string
+    {
+        if ($level <= 1) {
+            return 'Aday';
+        }
+        if ($level >= 2 && $level <= 5) {
+            return 'Üye';
+        }
+        if ($level >= 6 && $level <= 9) {
+            return 'Kıdemli';
+        }
+        if ($level === 10) {
+            return $sessionsCount >= 3 ? 'Uzman' : 'Kıdemli';
+        }
+        return 'Uzman';
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
+
+    public static ?array $cachedThresholds = null;
+    public static ?array $cachedFailsafes = null;
 
     /**
      * Get XP Thresholds dynamically from config/enums/xp_levels.php or XpLevel enum.
      */
     public static function getXpThresholds(): array
     {
+        if (self::$cachedThresholds !== null) {
+            return self::$cachedThresholds;
+        }
+
         $path = config_path('enums/xp_levels.php');
         if (file_exists($path)) {
             $data = require $path;
             if (isset($data['thresholds'])) {
-                return $data['thresholds'];
+                return self::$cachedThresholds = $data['thresholds'];
             }
         }
 
-        return self::FAST_XP_THRESHOLDS;
+        return self::$cachedThresholds = self::FAST_XP_THRESHOLDS;
     }
 
     /**
@@ -114,15 +156,19 @@ class PlayerXp extends Model
      */
     public static function getXpFailsafes(): array
     {
+        if (self::$cachedFailsafes !== null) {
+            return self::$cachedFailsafes;
+        }
+
         $path = config_path('enums/xp_levels.php');
         if (file_exists($path)) {
             $data = require $path;
             if (isset($data['failsafes'])) {
-                return $data['failsafes'];
+                return self::$cachedFailsafes = $data['failsafes'];
             }
         }
 
-        return self::FAST_XP_THRESHOLDS;
+        return self::$cachedFailsafes = self::FAST_XP_THRESHOLDS;
     }
 
     /**
@@ -172,14 +218,52 @@ class PlayerXp extends Model
         return 'guild';
     }
 
+    protected ?array $computedProgress = null;
+
+    /**
+     * Compute all level progression stats in a single fast pass.
+     */
+    public function getProgressDetails(): array
+    {
+        if ($this->computedProgress !== null) {
+            return $this->computedProgress;
+        }
+
+        $thresholds = self::getXpThresholds();
+        $xp = (int) $this->total_xp;
+        $lvl = self::calculateLevelFromXp($xp);
+
+        $currentBase = $thresholds[$lvl] ?? 0;
+        if ($lvl >= 20) {
+            $nextBase = $thresholds[20] ?? 2400000;
+            $percent = 100.0;
+            $remaining = 0;
+            $label = number_format($xp) . ' / ' . number_format($nextBase) . ' XP (MAX)';
+        } else {
+            $nextLvl = min(20, $lvl + 1);
+            $nextBase = $thresholds[$nextLvl] ?? ($thresholds[20] ?? 2400000);
+            $span = $nextBase - $currentBase;
+            $percent = $span > 0 ? round(max(0, min(100, (($xp - $currentBase) / $span) * 100)), 1) : 100.0;
+            $remaining = max(0, $nextBase - $xp);
+            $label = number_format($xp) . ' / ' . number_format($nextBase) . ' XP';
+        }
+
+        return $this->computedProgress = [
+            'level' => $lvl,
+            'current_base' => $currentBase,
+            'next_base' => $nextBase,
+            'percent' => $percent,
+            'remaining' => $remaining,
+            'label' => $label,
+        ];
+    }
+
     /**
      * Base XP required for the current level.
      */
     public function getCurrentLevelBaseXp(): int
     {
-        $thresholds = self::getXpThresholds();
-        $lvl = self::calculateLevelFromXp($this->total_xp);
-        return $thresholds[$lvl] ?? 0;
+        return $this->getProgressDetails()['current_base'];
     }
 
     /**
@@ -187,13 +271,7 @@ class PlayerXp extends Model
      */
     public function getNextLevelXp(): int
     {
-        $thresholds = self::getXpThresholds();
-        $lvl = self::calculateLevelFromXp($this->total_xp);
-        if ($lvl >= 20) {
-            return $thresholds[20] ?? 2400000;
-        }
-        $nextLevel = min(20, $lvl + 1);
-        return $thresholds[$nextLevel] ?? ($thresholds[20] ?? 2400000);
+        return $this->getProgressDetails()['next_base'];
     }
 
     /**
@@ -201,20 +279,7 @@ class PlayerXp extends Model
      */
     public function getProgressPercentage(): float
     {
-        $lvl = self::calculateLevelFromXp($this->total_xp);
-        if ($lvl >= 20) {
-            return 100.0;
-        }
-
-        $currentBase = $this->getCurrentLevelBaseXp();
-        $nextBase = $this->getNextLevelXp();
-
-        if ($nextBase <= $currentBase) {
-            return 100.0;
-        }
-
-        $progress = (($this->total_xp - $currentBase) / ($nextBase - $currentBase)) * 100;
-        return round(max(0, min(100, $progress)), 1);
+        return $this->getProgressDetails()['percent'];
     }
 
     /**
@@ -222,11 +287,7 @@ class PlayerXp extends Model
      */
     public function getXpProgressLabel(): string
     {
-        $lvl = self::calculateLevelFromXp($this->total_xp);
-        if ($lvl >= 20) {
-            return number_format($this->total_xp) . ' / ' . number_format($this->getNextLevelXp()) . ' XP (MAX)';
-        }
-        return number_format($this->total_xp) . ' / ' . number_format($this->getNextLevelXp()) . ' XP';
+        return $this->getProgressDetails()['label'];
     }
 
     /**
@@ -234,8 +295,7 @@ class PlayerXp extends Model
      */
     public function getRemainingXpToNextLevel(): int
     {
-        $next = $this->getNextLevelXp();
-        return max(0, $next - $this->total_xp);
+        return $this->getProgressDetails()['remaining'];
     }
 
     /**

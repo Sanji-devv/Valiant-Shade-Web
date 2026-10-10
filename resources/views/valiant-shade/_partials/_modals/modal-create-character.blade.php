@@ -6,12 +6,12 @@
         <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
         
         <!-- Header -->
-        <div class="text-center mb-5">
+        <div class="text-center mb-4">
           <div class="avatar avatar-xl mx-auto mb-3 bg-label-primary rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 64px; height: 64px;">
             <i class="icon-base ti tabler-user-plus text-primary" style="font-size: 32px;"></i>
           </div>
-          <h3 class="mb-1 fw-bold" id="createCharacterModalLabel">Create New Character</h3>
-          <p class="text-body-secondary mb-0">Choose the core attributes of your hero embarking on the world of Valiant Shade.</p>
+          <h3 class="mb-1 fw-bold" id="createCharacterModalLabel">{{ __('Create New Character') }}</h3>
+          <p class="text-body-secondary mb-0">{{ __('Choose the core attributes of your hero embarking on the world of Valiant Shade.') }}</p>
         </div>
 
 <style>
@@ -30,9 +30,8 @@
   left: 0;
   right: 0;
   z-index: 1070;
-  max-height: 300px;
+  max-height: 340px;
   overflow-y: auto;
-  scroll-behavior: auto;
   border-radius: 0.375rem;
   box-shadow: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.35);
   background: var(--bs-paper-bg, #2f3349);
@@ -71,26 +70,75 @@
 .custom-class-option.active .text-muted, .custom-race-option.active .text-muted {
   color: rgba(255, 255, 255, 0.75) !important;
 }
+.menu-category-header {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.35rem 0.75rem;
+  background: rgba(115, 103, 240, 0.08);
+  color: #7367f0;
+  border-radius: 0.25rem;
+  margin: 0.25rem 0;
+}
 </style>
 
 @php
-  $racesFile = file_exists(config_path('enums/pathfinder_races.php'))
-    ? config_path('enums/pathfinder_races.php')
-    : (file_exists(config_path('Enums/pathfinder_races.php')) ? config_path('Enums/pathfinder_races.php') : null);
-  $pfRaces = $racesFile ? require $racesFile : [];
+  $loadEnumFile = function ($file) {
+    $candidates = [
+      config_path('enums/' . $file),
+      config_path('Enums/' . $file),
+      config_path('enums/' . str_replace('pathfinder_', '', $file)),
+      config_path('Enums/' . str_replace('pathfinder_', '', $file)),
+    ];
+    foreach ($candidates as $p) {
+      if (file_exists($p)) return require $p;
+    }
+    return [];
+  };
 
-  $classesFile = file_exists(config_path('enums/pathfinder_classes.php'))
-    ? config_path('enums/pathfinder_classes.php')
-    : (file_exists(config_path('Enums/pathfinder_classes.php'))
-      ? config_path('Enums/pathfinder_classes.php')
-      : (file_exists(config_path('Enums/classes.php')) ? config_path('Enums/classes.php') : null));
-  $pfClasses = $classesFile ? require $classesFile : [];
+  $pfRaces = $loadEnumFile('races.php');
+  $pfClasses = $loadEnumFile('classes.php');
+
+  // Categorize 64 races
+  $raceCategories = [
+    'Core Races' => ['human', 'elf', 'dwarf', 'gnome', 'half_elf', 'half_orc', 'halfling'],
+    'Standard Races' => [
+      'aasimar', 'catfolk', 'dhampir', 'drow', 'fetchling', 'goblin', 'hobgoblin', 'ifrit',
+      'kobold', 'orc', 'oread', 'ratfolk', 'sylph', 'tengu', 'tiefling', 'undine'
+    ],
+    'Advanced Races' => [
+      'android', 'aquatic_elf', 'cecaelia', 'changeling', 'deep_gnome', 'derro', 'drow_noble',
+      'duergar', 'ghoran', 'gillman', 'grippli', 'kasatha', 'kitsune', 'lashunta', 'lizardfolk',
+      'locathah', 'merfolk', 'monkey_goblin', 'nagaji', 'samsaran', 'strix', 'suli', 'svirfneblin',
+      'vanara', 'vishkanya', 'wayang', 'wyrwood', 'wyvaran'
+    ],
+    'Monstrous & Other Races' => []
+  ];
+
+  $allCategorizedRaces = array_merge(...array_values($raceCategories));
+  foreach (array_keys($pfRaces) as $rKey) {
+    if (!in_array($rKey, $allCategorizedRaces, true)) {
+      $raceCategories['Monstrous & Other Races'][] = $rKey;
+    }
+  }
+
+  // Categorize 51 classes
+  $classCategories = [
+    'Core Classes' => ['barbarian', 'bard', 'cleric', 'druid', 'fighter', 'monk', 'paladin', 'ranger', 'rogue', 'sorcerer', 'wizard'],
+    'Base Classes' => ['alchemist', 'cavalier', 'gunslinger', 'inquisitor', 'magus', 'omdura', 'oracle', 'shifter', 'summoner', 'vampire_hunter', 'vigilante', 'witch'],
+    'Hybrid Classes' => ['arcanist', 'bloodrager', 'brawler', 'hunter', 'investigator', 'shaman', 'skald', 'slayer', 'swashbuckler', 'warpriest'],
+    'Occult Classes' => ['kineticist', 'medium', 'mesmerist', 'occultist', 'psychic', 'spiritualist'],
+    'Alternate & Unchained' => ['antipaladin', 'ninja', 'samurai', 'unchained_barbarian', 'unchained_monk', 'unchained_rogue', 'unchained_summoner'],
+    'NPC Classes' => ['adept', 'aristocrat', 'commoner', 'expert', 'warrior_npc']
+  ];
 
   $currentUser = Auth::user();
+  $isAdmin = $currentUser && ($currentUser->id === 1 || strcasecmp($currentUser->email, 'admin@valiantshade.com') === 0 || (method_exists($currentUser, 'hasRole') && $currentUser->hasRole('admin')));
   $userChars = $currentUser ? \App\Models\CharacterProfile::where('user_id', $currentUser->id)->get() : collect();
   $hasMain = $userChars->contains(fn($c) => $c->isMain());
   $hasClerk = $userChars->contains(fn($c) => $c->isClerk());
-  $isFull = $userChars->count() >= 2;
+  $isFull = !$isAdmin && ($userChars->count() >= 2);
 @endphp
 
         @if($isFull)
@@ -105,7 +153,7 @@
 
         <!-- Form -->
         <form id="createCharacterForm" class="row g-4" onsubmit="return false;">
-          <!-- Rank / Slot Selection -->
+          <!-- 1. Rank / Slot Selection -->
           <div class="col-12">
             <label class="form-label fw-semibold d-flex justify-content-between align-items-center">
               <span><i class="icon-base ti tabler-badge me-1 text-primary"></i> {{ __('Character Rank / Slot') }} <span class="text-danger">*</span></span>
@@ -113,70 +161,70 @@
             </label>
             <div class="row g-3">
               <div class="col-6">
-                <div class="form-check custom-option custom-option-basic p-0 {{ $hasMain ? 'opacity-50' : '' }}">
+                <div class="form-check custom-option custom-option-basic p-0">
                   <label class="form-check-label custom-option-content p-3 w-100 border rounded cursor-pointer" for="rankMain">
-                    <input class="form-check-input me-2" type="radio" name="charModalRank" id="rankMain" value="Main" {{ $hasMain ? 'disabled' : (!$hasMain ? 'checked' : '') }} required />
+                    <input class="form-check-input me-2" type="radio" name="charModalRank" id="rankMain" value="Main" {{ (!$hasMain || $isAdmin) ? 'checked' : '' }} required />
                     <span class="d-flex align-items-center justify-content-between">
                       <span class="fw-bold text-heading d-flex align-items-center gap-1">
-                        <i class="icon-base ti tabler-crown text-primary"></i> {{ __('Main') }}
+                        <i class="icon-base ti tabler-crown text-primary"></i> {{ __('Main (Candidate)') }}
                       </span>
-                      @if($hasMain)
-                        <span class="badge bg-label-secondary font-monospace" style="font-size: 0.68rem;">{{ __('Already Created') }}</span>
+                      @if($hasMain && !$isAdmin)
+                        <span class="badge bg-label-secondary font-monospace" style="font-size: 0.68rem;">{{ __('Existing Slot') }}</span>
                       @else
                         <span class="badge bg-label-primary font-monospace" style="font-size: 0.68rem;">{{ __('Primary Slot') }}</span>
                       @endif
                     </span>
-                    <small class="text-body-secondary d-block mt-1">{{ __('Main hero for adventures') }}</small>
+                    <small class="text-body-secondary d-block mt-1">{{ __('Level 1 Candidate adventurer') }}</small>
                   </label>
                 </div>
               </div>
               <div class="col-6">
-                <div class="form-check custom-option custom-option-basic p-0 {{ $hasClerk ? 'opacity-50' : '' }}">
+                <div class="form-check custom-option custom-option-basic p-0">
                   <label class="form-check-label custom-option-content p-3 w-100 border rounded cursor-pointer" for="rankClerk">
-                    <input class="form-check-input me-2" type="radio" name="charModalRank" id="rankClerk" value="Clerk" {{ $hasClerk ? 'disabled' : ($hasMain && !$hasClerk ? 'checked' : '') }} required />
+                    <input class="form-check-input me-2" type="radio" name="charModalRank" id="rankClerk" value="Clerk" {{ ($hasMain && !$hasClerk && !$isAdmin) ? 'checked' : '' }} required />
                     <span class="d-flex align-items-center justify-content-between">
                       <span class="fw-bold text-heading d-flex align-items-center gap-1">
                         <i class="icon-base ti tabler-feather text-info"></i> {{ __('Clerk') }}
                       </span>
-                      @if($hasClerk)
-                        <span class="badge bg-label-secondary font-monospace" style="font-size: 0.68rem;">{{ __('Already Created') }}</span>
+                      @if($hasClerk && !$isAdmin)
+                        <span class="badge bg-label-secondary font-monospace" style="font-size: 0.68rem;">{{ __('Existing Slot') }}</span>
                       @else
                         <span class="badge bg-label-info font-monospace" style="font-size: 0.68rem;">{{ __('Guild Scribe') }}</span>
                       @endif
                     </span>
-                    <small class="text-body-secondary d-block mt-1">{{ __('Guild official and record keeper') }}</small>
+                    <small class="text-body-secondary d-block mt-1">{{ __('Level 1 Guild Scribe') }}</small>
                   </label>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Character Name -->
+          <!-- 2. Character Name -->
           <div class="col-12">
             <label class="form-label fw-semibold" for="charModalName">
               <i class="icon-base ti tabler-id me-1 text-primary"></i> {{ __('Character Name') }} <span class="text-danger">*</span>
             </label>
             <div class="input-group input-group-merge">
               <span class="input-group-text"><i class="icon-base ti tabler-user"></i></span>
-              <input type="text" id="charModalName" class="form-control form-control-lg" placeholder="{{ __('Hero name (e.g. Caspian Thunderblade)') }}" maxlength="30" required autocomplete="off" />
+              <input type="text" id="charModalName" class="form-control form-control-lg" placeholder="{{ __('Hero name (e.g. Caspian Thunderblade)') }}" maxlength="50" required autocomplete="off" />
             </div>
             <div class="invalid-feedback d-none" id="charNameFeedback">{{ __('Please enter a valid name with at least 2 characters.') }}</div>
           </div>
 
-          <!-- Character Race - Custom Dropdown Menu -->
+          <!-- 3. Character Race - Custom Dropdown with Live Search & All 64 Races -->
           <div class="col-12 col-md-6">
             <label class="form-label fw-semibold" for="charModalRace">
               <i class="icon-base ti tabler-dna me-1 text-primary"></i> {{ __('Character Race') }} <span class="text-danger">*</span>
             </label>
 
             <div class="position-relative" id="customRaceDropdownWrapper">
-              <!-- Hidden select for validation and form saving -->
+              <!-- Hidden select for validation and form submission -->
               <select id="charModalRace" class="d-none" required>
                 <option value="" disabled selected>{{ __('Select Pathfinder 1E Race...') }}</option>
                 @if(!empty($pfRaces))
                   @foreach ($pfRaces as $rKey => $r)
-                    <option value="{{ $rKey }}" data-name="{{ $r['name'] ?? $rKey }}" data-bonus="{{ $r['ability_bonus_summary'] ?? 'Standard Attributes' }}" data-category="{{ $r['category'] ?? '' }}">
-                      {{ $r['name'] ?? $rKey }}
+                    <option value="{{ $rKey }}" data-name="{{ $r['name'] ?? ucfirst($rKey) }}" data-bonus="{{ $r['ability_bonus_summary'] ?? 'Standard Attributes' }}" data-category="{{ $r['category'] ?? '' }}">
+                      {{ $r['name'] ?? ucfirst($rKey) }}
                     </option>
                   @endforeach
                 @endif
@@ -187,19 +235,42 @@
                 <span id="customRaceSelectText" class="text-body-secondary text-truncate">{{ __('Select Pathfinder 1E Race...') }}</span>
               </div>
 
-              <!-- Smooth scroll menu -->
-              <div id="customRaceDropdownMenu" class="custom-race-menu p-1 d-none">
-                @if(!empty($pfRaces))
-                  @foreach ($pfRaces as $rKey => $r)
-                    <div class="custom-race-option d-flex align-items-center justify-content-between py-2 px-3 rounded-2" data-value="{{ $rKey }}" data-name="{{ $r['name'] ?? $rKey }}" data-bonus="{{ $r['ability_bonus_summary'] ?? 'Standard Attributes' }}" style="font-size: 0.93rem;">
-                      <div>
-                        <span class="fw-semibold">{{ $r['name'] ?? $rKey }}</span>
-                        <small class="text-muted d-block" style="font-size: 0.75rem;">{{ $r['ability_bonus_summary'] ?? '' }}</small>
-                      </div>
-                      <i class="icon-base ti tabler-check d-none text-primary fs-5 check-icon"></i>
-                    </div>
-                  @endforeach
-                @endif
+              <!-- Searchable dropdown menu -->
+              <div id="customRaceDropdownMenu" class="custom-race-menu p-2 d-none">
+                <!-- Search input -->
+                <div class="mb-2">
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="icon-base ti tabler-search"></i></span>
+                    <input type="text" id="customRaceSearchInput" class="form-control" placeholder="{{ __('Search 64 races...') }}" autocomplete="off" />
+                  </div>
+                </div>
+
+                <div id="customRaceOptionsList">
+                  @if(!empty($pfRaces))
+                    @foreach ($raceCategories as $catTitle => $rKeys)
+                      @php
+                        $availableInCat = array_filter($rKeys, fn($k) => isset($pfRaces[$k]));
+                      @endphp
+                      @if(!empty($availableInCat))
+                        <div class="menu-category-header race-category-header">{{ $catTitle }} ({{ count($availableInCat) }})</div>
+                        @foreach ($availableInCat as $rKey)
+                          @php $r = $pfRaces[$rKey]; @endphp
+                          <div class="custom-race-option d-flex align-items-center justify-content-between py-2 px-3 rounded-2"
+                               data-value="{{ $rKey }}"
+                               data-name="{{ $r['name'] ?? ucfirst($rKey) }}"
+                               data-bonus="{{ $r['ability_bonus_summary'] ?? 'Standard Attributes' }}"
+                               data-category="{{ $catTitle }}">
+                            <div class="pe-2">
+                              <span class="fw-semibold text-heading">{{ $r['name'] ?? ucfirst($rKey) }}</span>
+                              <small class="text-muted d-block" style="font-size: 0.75rem;">{{ $r['ability_bonus_summary'] ?? 'Standard' }}</small>
+                            </div>
+                            <i class="icon-base ti tabler-check d-none text-primary fs-5 check-icon"></i>
+                          </div>
+                        @endforeach
+                      @endif
+                    @endforeach
+                  @endif
+                </div>
               </div>
             </div>
             <div class="form-text text-danger d-flex align-items-center gap-1 mt-1">
@@ -208,20 +279,20 @@
             </div>
           </div>
 
-          <!-- Character Class - Custom Dropdown Menu -->
+          <!-- 4. Character Class - Custom Dropdown with Live Search & All 51 Classes -->
           <div class="col-12 col-md-6">
             <label class="form-label fw-semibold" for="charModalClass">
               <i class="icon-base ti tabler-swords me-1 text-primary"></i> {{ __('Character Class') }} <span class="text-danger">*</span>
             </label>
 
             <div class="position-relative" id="customClassDropdownWrapper">
-              <!-- Hidden select for validation and form saving -->
+              <!-- Hidden select for validation and form submission -->
               <select id="charModalClass" class="d-none" required>
                 <option value="" disabled selected>{{ __('Select Pathfinder 1E Class...') }}</option>
                 @if(!empty($pfClasses))
                   @foreach ($pfClasses as $cKey => $c)
-                    <option value="{{ $cKey }}" data-name="{{ $c['name'] ?? $cKey }}" data-hd="{{ $c['hit_die'] ?? 'd10' }}">
-                      {{ $c['name'] ?? $cKey }} ({{ $c['hit_die'] ?? 'd10' }})
+                    <option value="{{ $cKey }}" data-name="{{ $c['name'] ?? ucfirst($cKey) }}" data-hd="{{ $c['hit_die'] ?? 'd10' }}">
+                      {{ $c['name'] ?? ucfirst($cKey) }} ({{ $c['hit_die'] ?? 'd10' }})
                     </option>
                   @endforeach
                 @endif
@@ -232,37 +303,75 @@
                 <span id="customClassSelectText" class="text-body-secondary text-truncate">{{ __('Select Pathfinder 1E Class...') }}</span>
               </div>
 
-              <!-- Smooth scroll menu -->
-              <div id="customClassDropdownMenu" class="custom-class-menu p-1 d-none">
-                @if(!empty($pfClasses))
-                  @foreach ($pfClasses as $cKey => $c)
-                    <div class="custom-class-option d-flex align-items-center justify-content-between py-2 px-3 rounded-2" data-value="{{ $cKey }}" data-name="{{ $c['name'] ?? $cKey }}" data-hd="{{ $c['hit_die'] ?? 'd10' }}" style="font-size: 0.93rem;">
-                      <span>{{ $c['name'] ?? $cKey }} <small class="text-muted font-monospace">({{ $c['hit_die'] ?? 'd10' }})</small></span>
-                      <i class="icon-base ti tabler-check d-none text-primary fs-5 check-icon"></i>
-                    </div>
-                  @endforeach
-                @endif
+              <!-- Searchable dropdown menu -->
+              <div id="customClassDropdownMenu" class="custom-class-menu p-2 d-none">
+                <!-- Search input -->
+                <div class="mb-2">
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="icon-base ti tabler-search"></i></span>
+                    <input type="text" id="customClassSearchInput" class="form-control" placeholder="{{ __('Search 51 classes...') }}" autocomplete="off" />
+                  </div>
+                </div>
+
+                <div id="customClassOptionsList">
+                  @if(!empty($pfClasses))
+                    @foreach ($classCategories as $catTitle => $cKeys)
+                      @php
+                        $availableInCat = array_filter($cKeys, fn($k) => isset($pfClasses[$k]));
+                      @endphp
+                      @if(!empty($availableInCat))
+                        <div class="menu-category-header class-category-header">{{ $catTitle }} ({{ count($availableInCat) }})</div>
+                        @foreach ($availableInCat as $cKey)
+                          @php $c = $pfClasses[$cKey]; @endphp
+                          <div class="custom-class-option d-flex align-items-center justify-content-between py-2 px-3 rounded-2"
+                               data-value="{{ $cKey }}"
+                               data-name="{{ $c['name'] ?? ucfirst($cKey) }}"
+                               data-hd="{{ $c['hit_die'] ?? 'd10' }}"
+                               data-category="{{ $catTitle }}">
+                            <span>
+                              <span class="fw-semibold text-heading">{{ $c['name'] ?? ucfirst($cKey) }}</span>
+                              <small class="badge bg-label-primary font-monospace ms-1" style="font-size: 0.72rem;">{{ $c['hit_die'] ?? 'd10' }}</small>
+                            </span>
+                            <i class="icon-base ti tabler-check d-none text-primary fs-5 check-icon"></i>
+                          </div>
+                        @endforeach
+                      @endif
+                    @endforeach
+                  @endif
+                </div>
               </div>
             </div>
             <div class="form-text text-muted" id="classDescText">{{ __('Choose class to determine Hit Die, BAB, and saves.') }}</div>
           </div>
 
-          <!-- Mandatory Ability Scores (Stats) Section -->
+          <!-- 5. Ability Scores (Stats) Section with Quick Presets -->
           <div class="col-12">
             <div class="card border border-primary border-opacity-25 bg-label-secondary bg-opacity-10 p-3 shadow-none">
               <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-                <label class="form-label fw-bold text-heading mb-0 d-flex align-items-center gap-1">
-                  <i class="icon-base ti tabler-chart-dots text-primary"></i> {{ __('Ability Scores (Stats)') }} <span class="text-danger">*</span>
-                </label>
-                <span class="badge bg-label-danger fw-bold">{{ __('Mandatory (1 - 30)') }}</span>
+                <div>
+                  <label class="form-label fw-bold text-heading mb-0 d-flex align-items-center gap-1">
+                    <i class="icon-base ti tabler-chart-dots text-primary"></i> {{ __('Ability Scores (Stats)') }} <span class="text-danger">*</span>
+                  </label>
+                  <small class="text-body-secondary d-block">{{ __('All 6 Pathfinder ability scores (1 - 30). Modifiers are calculated automatically.') }}</small>
+                </div>
+                <!-- Quick Preset Buttons -->
+                <div class="btn-group btn-group-sm" role="group" aria-label="Stat Presets">
+                  <button type="button" class="btn btn-outline-primary btn-stat-preset" data-preset="15,14,13,12,10,8">
+                    Standard (15,14,13...)
+                  </button>
+                  <button type="button" class="btn btn-outline-primary btn-stat-preset" data-preset="16,14,14,12,10,8">
+                    High (16,14,14...)
+                  </button>
+                  <button type="button" class="btn btn-outline-secondary btn-stat-preset" data-preset="10,10,10,10,10,10">
+                    {{ __('Reset (10)') }}
+                  </button>
+                </div>
               </div>
-              <p class="small text-body-secondary mb-3">
-                {{ __('All 6 core Pathfinder ability scores must be entered. Ability modifiers are calculated dynamically.') }}
-              </p>
-              <div class="row g-2">
+
+              <div class="row g-2 mt-1">
                 <!-- STR -->
                 <div class="col-4 col-md-2">
-                  <div class="stat-input-box p-2 text-center border rounded bg-body">
+                  <div class="stat-input-box p-2 text-center border rounded bg-body shadow-xs">
                     <label class="fw-bold small text-uppercase text-danger d-block mb-1" for="charStatStr">STR</label>
                     <input type="number" id="charStatStr" class="form-control form-control-sm text-center fw-bold font-monospace stat-input" min="1" max="30" value="10" required />
                     <div class="small fw-semibold text-muted mt-1 stat-mod-text" id="modStr">+0 Mod</div>
@@ -270,7 +379,7 @@
                 </div>
                 <!-- DEX -->
                 <div class="col-4 col-md-2">
-                  <div class="stat-input-box p-2 text-center border rounded bg-body">
+                  <div class="stat-input-box p-2 text-center border rounded bg-body shadow-xs">
                     <label class="fw-bold small text-uppercase text-success d-block mb-1" for="charStatDex">DEX</label>
                     <input type="number" id="charStatDex" class="form-control form-control-sm text-center fw-bold font-monospace stat-input" min="1" max="30" value="10" required />
                     <div class="small fw-semibold text-muted mt-1 stat-mod-text" id="modDex">+0 Mod</div>
@@ -278,7 +387,7 @@
                 </div>
                 <!-- CON -->
                 <div class="col-4 col-md-2">
-                  <div class="stat-input-box p-2 text-center border rounded bg-body">
+                  <div class="stat-input-box p-2 text-center border rounded bg-body shadow-xs">
                     <label class="fw-bold small text-uppercase text-warning d-block mb-1" for="charStatCon">CON</label>
                     <input type="number" id="charStatCon" class="form-control form-control-sm text-center fw-bold font-monospace stat-input" min="1" max="30" value="10" required />
                     <div class="small fw-semibold text-muted mt-1 stat-mod-text" id="modCon">+0 Mod</div>
@@ -286,7 +395,7 @@
                 </div>
                 <!-- INT -->
                 <div class="col-4 col-md-2">
-                  <div class="stat-input-box p-2 text-center border rounded bg-body">
+                  <div class="stat-input-box p-2 text-center border rounded bg-body shadow-xs">
                     <label class="fw-bold small text-uppercase text-info d-block mb-1" for="charStatInt">INT</label>
                     <input type="number" id="charStatInt" class="form-control form-control-sm text-center fw-bold font-monospace stat-input" min="1" max="30" value="10" required />
                     <div class="small fw-semibold text-muted mt-1 stat-mod-text" id="modInt">+0 Mod</div>
@@ -294,7 +403,7 @@
                 </div>
                 <!-- WIS -->
                 <div class="col-4 col-md-2">
-                  <div class="stat-input-box p-2 text-center border rounded bg-body">
+                  <div class="stat-input-box p-2 text-center border rounded bg-body shadow-xs">
                     <label class="fw-bold small text-uppercase text-primary d-block mb-1" for="charStatWis">WIS</label>
                     <input type="number" id="charStatWis" class="form-control form-control-sm text-center fw-bold font-monospace stat-input" min="1" max="30" value="10" required />
                     <div class="small fw-semibold text-muted mt-1 stat-mod-text" id="modWis">+0 Mod</div>
@@ -302,7 +411,7 @@
                 </div>
                 <!-- CHA -->
                 <div class="col-4 col-md-2">
-                  <div class="stat-input-box p-2 text-center border rounded bg-body">
+                  <div class="stat-input-box p-2 text-center border rounded bg-body shadow-xs">
                     <label class="fw-bold small text-uppercase text-secondary d-block mb-1" for="charStatCha">CHA</label>
                     <input type="number" id="charStatCha" class="form-control form-control-sm text-center fw-bold font-monospace stat-input" min="1" max="30" value="10" required />
                     <div class="small fw-semibold text-muted mt-1 stat-mod-text" id="modCha">+0 Mod</div>
@@ -323,7 +432,7 @@
                   <div>
                     <h5 class="mb-0 fw-bold" id="charPreviewName">{{ __('Awaiting Hero Name...') }}</h5>
                     <div class="d-flex align-items-center gap-2 mt-1 flex-wrap">
-                      <span class="badge bg-primary text-white" id="charPreviewRankBadge">{{ $hasMain && !$hasClerk ? 'Clerk' : 'Main' }}</span>
+                      <span class="badge bg-primary text-white" id="charPreviewRankBadge">{{ ($hasMain && !$hasClerk && !$isAdmin) ? 'Clerk' : 'Aday' }}</span>
                       <span class="badge bg-label-primary" id="charPreviewRaceBadge">{{ __('No Race Selected') }}</span>
                       <span class="badge bg-label-secondary" id="charPreviewClassBadge">{{ __('No Class Selected') }}</span>
                     </div>
@@ -365,7 +474,7 @@
           </div>
 
           <!-- Buttons -->
-          <div class="col-12 text-center mt-4">
+          <div class="col-12 text-center mt-3">
             <button type="button" class="btn btn-label-secondary me-2 px-4 waves-effect" data-bs-dismiss="modal">
               <i class="icon-base ti tabler-x me-1"></i> {{ __('Cancel') }}
             </button>
@@ -387,9 +496,10 @@ document.addEventListener('DOMContentLoaded', function () {
   const submitBtn = document.getElementById('btnCreateCharacterSubmit');
 
   const previewName = document.getElementById('charPreviewName');
+  const previewRankBadge = document.getElementById('charPreviewRankBadge');
   const previewRaceBadge = document.getElementById('charPreviewRaceBadge');
   const previewClassBadge = document.getElementById('charPreviewClassBadge');
-  const previewIcon = document.getElementById('charPreviewIcon');
+  const previewHpBadge = document.getElementById('charPreviewHpBadge');
   const previewBonus = document.getElementById('charPreviewBonus');
   const previewRole = document.getElementById('charPreviewRole');
   const successAlert = document.getElementById('charSuccessAlert');
@@ -397,19 +507,19 @@ document.addEventListener('DOMContentLoaded', function () {
   const successMsg = document.getElementById('charSuccessMsg');
   const nameFeedback = document.getElementById('charNameFeedback');
 
-  // Class Custom Dropdown
+  // --- 1. Class Custom Dropdown with Live Search ---
   const classDropdownTrigger = document.getElementById('customClassSelectTrigger');
   const classDropdownMenu = document.getElementById('customClassDropdownMenu');
   const classDropdownText = document.getElementById('customClassSelectText');
+  const classSearchInput = document.getElementById('customClassSearchInput');
   const customClassOptions = document.querySelectorAll('.custom-class-option');
 
   function openClassDropdown() {
     classDropdownMenu.classList.remove('d-none');
     classDropdownTrigger.classList.add('border-primary');
     classDropdownTrigger.setAttribute('aria-expanded', 'true');
-    const activeItem = classDropdownMenu.querySelector('.custom-class-option.active');
-    if (activeItem) {
-      activeItem.scrollIntoView({ block: 'nearest' });
+    if (classSearchInput) {
+      setTimeout(() => classSearchInput.focus(), 50);
     }
   }
 
@@ -432,13 +542,6 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
 
-    classDropdownTrigger.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
-        e.preventDefault();
-        openClassDropdown();
-      }
-    });
-
     document.addEventListener('click', function (e) {
       if (!classDropdownTrigger.contains(e.target) && !classDropdownMenu.contains(e.target)) {
         closeClassDropdown();
@@ -451,10 +554,31 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
 
-    classDropdownMenu.addEventListener('wheel', function (e) {
-      e.preventDefault();
-      classDropdownMenu.scrollTop += e.deltaY * 1.15;
-    }, { passive: false });
+    // Real-time Class Search Filtering
+    if (classSearchInput) {
+      classSearchInput.addEventListener('input', function () {
+        const query = this.value.trim().toLowerCase();
+        const headers = classDropdownMenu.querySelectorAll('.class-category-header');
+        
+        customClassOptions.forEach(opt => {
+          const name = (opt.getAttribute('data-name') || '').toLowerCase();
+          const val = (opt.getAttribute('data-value') || '').toLowerCase();
+          const match = name.includes(query) || val.includes(query);
+          opt.style.display = match ? 'flex' : 'none';
+        });
+
+        // Hide empty category headers
+        headers.forEach(h => {
+          let next = h.nextElementSibling;
+          let anyVisible = false;
+          while (next && !next.classList.contains('class-category-header')) {
+            if (next.style.display !== 'none') anyVisible = true;
+            next = next.nextElementSibling;
+          }
+          h.style.display = anyVisible ? 'block' : 'none';
+        });
+      });
+    }
 
     customClassOptions.forEach(function (opt) {
       opt.addEventListener('click', function (e) {
@@ -462,8 +586,9 @@ document.addEventListener('DOMContentLoaded', function () {
         e.preventDefault();
         const val = this.getAttribute('data-value');
         const name = this.getAttribute('data-name');
+        const hd = this.getAttribute('data-hd') || 'd10';
 
-        customClassOptions.forEach(function (o) {
+        customClassOptions.forEach(o => {
           o.classList.remove('active');
           const chk = o.querySelector('.check-icon');
           if (chk) chk.classList.add('d-none');
@@ -473,9 +598,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const checkIcon = this.querySelector('.check-icon');
         if (checkIcon) checkIcon.classList.remove('d-none');
 
-        classDropdownText.textContent = name;
+        classDropdownText.innerHTML = `<span class="fw-semibold text-heading">${name}</span> <span class="badge bg-label-primary font-monospace ms-1" style="font-size: 0.72rem;">${hd}</span>`;
         classDropdownText.classList.remove('text-body-secondary');
-        classDropdownText.classList.add('text-heading', 'fw-semibold');
 
         if (classSelect) {
           classSelect.value = val;
@@ -486,19 +610,19 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // Race Custom Dropdown
+  // --- 2. Race Custom Dropdown with Live Search ---
   const raceDropdownTrigger = document.getElementById('customRaceSelectTrigger');
   const raceDropdownMenu = document.getElementById('customRaceDropdownMenu');
   const raceDropdownText = document.getElementById('customRaceSelectText');
+  const raceSearchInput = document.getElementById('customRaceSearchInput');
   const customRaceOptions = document.querySelectorAll('.custom-race-option');
 
   function openRaceDropdown() {
     raceDropdownMenu.classList.remove('d-none');
     raceDropdownTrigger.classList.add('border-primary');
     raceDropdownTrigger.setAttribute('aria-expanded', 'true');
-    const activeItem = raceDropdownMenu.querySelector('.custom-race-option.active');
-    if (activeItem) {
-      activeItem.scrollIntoView({ block: 'nearest' });
+    if (raceSearchInput) {
+      setTimeout(() => raceSearchInput.focus(), 50);
     }
   }
 
@@ -521,13 +645,6 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
 
-    raceDropdownTrigger.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
-        e.preventDefault();
-        openRaceDropdown();
-      }
-    });
-
     document.addEventListener('click', function (e) {
       if (!raceDropdownTrigger.contains(e.target) && !raceDropdownMenu.contains(e.target)) {
         closeRaceDropdown();
@@ -540,10 +657,32 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
 
-    raceDropdownMenu.addEventListener('wheel', function (e) {
-      e.preventDefault();
-      raceDropdownMenu.scrollTop += e.deltaY * 1.15;
-    }, { passive: false });
+    // Real-time Race Search Filtering
+    if (raceSearchInput) {
+      raceSearchInput.addEventListener('input', function () {
+        const query = this.value.trim().toLowerCase();
+        const headers = raceDropdownMenu.querySelectorAll('.race-category-header');
+        
+        customRaceOptions.forEach(opt => {
+          const name = (opt.getAttribute('data-name') || '').toLowerCase();
+          const val = (opt.getAttribute('data-value') || '').toLowerCase();
+          const bonus = (opt.getAttribute('data-bonus') || '').toLowerCase();
+          const match = name.includes(query) || val.includes(query) || bonus.includes(query);
+          opt.style.display = match ? 'flex' : 'none';
+        });
+
+        // Hide empty category headers
+        headers.forEach(h => {
+          let next = h.nextElementSibling;
+          let anyVisible = false;
+          while (next && !next.classList.contains('race-category-header')) {
+            if (next.style.display !== 'none') anyVisible = true;
+            next = next.nextElementSibling;
+          }
+          h.style.display = anyVisible ? 'block' : 'none';
+        });
+      });
+    }
 
     customRaceOptions.forEach(function (opt) {
       opt.addEventListener('click', function (e) {
@@ -551,8 +690,9 @@ document.addEventListener('DOMContentLoaded', function () {
         e.preventDefault();
         const val = this.getAttribute('data-value');
         const name = this.getAttribute('data-name');
+        const bonus = this.getAttribute('data-bonus') || '';
 
-        customRaceOptions.forEach(function (o) {
+        customRaceOptions.forEach(o => {
           o.classList.remove('active');
           const chk = o.querySelector('.check-icon');
           if (chk) chk.classList.add('d-none');
@@ -562,9 +702,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const checkIcon = this.querySelector('.check-icon');
         if (checkIcon) checkIcon.classList.remove('d-none');
 
-        raceDropdownText.textContent = name;
+        raceDropdownText.innerHTML = `<span class="fw-semibold text-heading">${name}</span> <small class="text-muted ms-1">(${bonus})</small>`;
         raceDropdownText.classList.remove('text-body-secondary');
-        raceDropdownText.classList.add('text-heading', 'fw-semibold');
 
         if (raceSelect) {
           raceSelect.value = val;
@@ -575,11 +714,27 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  // --- 3. Ability Score Modifiers & Presets ---
   function calcMod(val) {
     const n = parseInt(val, 10);
     if (isNaN(n)) return '+0';
     const mod = Math.floor((n - 10) / 2);
     return (mod >= 0 ? '+' : '') + mod;
+  }
+
+  function updateModDisplay(inputEl, modEl) {
+    if (!inputEl || !modEl) return;
+    const val = parseInt(inputEl.value, 10);
+    const mod = Math.floor((val - 10) / 2);
+    const modStr = (mod >= 0 ? '+' : '') + mod + ' Mod';
+    modEl.textContent = modStr;
+    if (mod > 0) {
+      modEl.className = 'small fw-bold text-success mt-1 stat-mod-text';
+    } else if (mod < 0) {
+      modEl.className = 'small fw-bold text-danger mt-1 stat-mod-text';
+    } else {
+      modEl.className = 'small fw-semibold text-muted mt-1 stat-mod-text';
+    }
   }
 
   const statInputs = [
@@ -593,17 +748,33 @@ document.addEventListener('DOMContentLoaded', function () {
 
   statInputs.forEach(item => {
     if (item.el) {
+      updateModDisplay(item.el, item.modEl);
       item.el.addEventListener('input', function () {
-        const modStr = calcMod(this.value);
-        if (item.modEl) item.modEl.textContent = modStr + ' Mod';
+        updateModDisplay(this, item.modEl);
         updatePreview();
       });
     }
   });
 
-  const previewRankBadge = document.getElementById('charPreviewRankBadge');
-  const previewHpBadge = document.getElementById('charPreviewHpBadge');
+  // Preset Buttons
+  document.querySelectorAll('.btn-stat-preset').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const raw = this.getAttribute('data-preset');
+      if (!raw) return;
+      const values = raw.split(',').map(v => parseInt(v.trim(), 10));
+      if (values.length === 6) {
+        statInputs.forEach((item, idx) => {
+          if (item.el) {
+            item.el.value = values[idx];
+            updateModDisplay(item.el, item.modEl);
+          }
+        });
+        updatePreview();
+      }
+    });
+  });
 
+  // --- 4. Live RPG Preview Card Update ---
   function updatePreview() {
     if (!nameInput || !raceSelect || !classSelect) return;
     const rawName = nameInput.value.trim();
@@ -613,7 +784,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const rankRadio = document.querySelector('input[name="charModalRank"]:checked');
     const rankVal = rankRadio ? rankRadio.value : 'Main';
     if (previewRankBadge) {
-      previewRankBadge.textContent = rankVal;
+      previewRankBadge.textContent = (rankVal === 'Main') ? 'Aday' : 'Clerk';
       previewRankBadge.className = (rankVal === 'Main') ? 'badge bg-primary text-white' : 'badge bg-info text-white';
     }
 
@@ -639,7 +810,7 @@ document.addEventListener('DOMContentLoaded', function () {
       hitDieVal = parseInt(hdRaw.replace(/\D/g, ''), 10) || 10;
       previewClassBadge.textContent = clsName;
       previewClassBadge.className = 'badge bg-label-info';
-      previewRole.textContent = clsName;
+      previewRole.textContent = clsName + ' (' + hdRaw + ')';
     } else {
       previewClassBadge.textContent = 'No Class Selected';
       previewClassBadge.className = 'badge bg-label-secondary';
@@ -661,6 +832,10 @@ document.addEventListener('DOMContentLoaded', function () {
   if (classSelect) classSelect.addEventListener('change', updatePreview);
   document.querySelectorAll('input[name="charModalRank"]').forEach(r => r.addEventListener('change', updatePreview));
 
+  // Initial preview update
+  updatePreview();
+
+  // --- 5. Form Submission ---
   if (submitBtn) {
     submitBtn.addEventListener('click', function (e) {
       e.preventDefault();
@@ -762,7 +937,7 @@ document.addEventListener('DOMContentLoaded', function () {
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          successTitle.textContent = `${charName} (${rankVal}) Created Successfully!`;
+          successTitle.textContent = `${charName} (${rankVal === 'Main' ? 'Aday' : 'Clerk'}) Created Successfully!`;
           successMsg.textContent = `Your ${raceText} ${classText} hero is permanently registered in the world of Valiant Shade.`;
           successAlert.classList.remove('d-none');
           if (typeof Swal !== 'undefined') {

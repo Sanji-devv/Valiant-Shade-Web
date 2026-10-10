@@ -31,7 +31,7 @@ return new class extends Migration
 
         Schema::table('quest_participants', function (Blueprint $table) {
             if (!Schema::hasColumn('quest_participants', 'attendance_status')) {
-                $table->string('attendance_status')->default('COMPLETED')->after('role_in_quest');
+                $table->string('attendance_status')->default('COMPLETED')->after('character_id');
             }
         });
     }

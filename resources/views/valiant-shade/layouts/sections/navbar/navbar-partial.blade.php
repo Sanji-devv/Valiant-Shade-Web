@@ -435,8 +435,14 @@ use Illuminate\Support\Facades\Route;
                 </div>
               </div>
               <div class="flex-grow-1">
-                <h6 class="mb-0">
-                  {{ Auth::user()->name }}
+                <h6 class="mb-0 d-flex align-items-center flex-wrap gap-1">
+                  <span>{{ Auth::user()->name }}</span>
+                  @if($topRole = Auth::user()->highest_role)
+                    <span class="badge rounded-pill d-inline-flex align-items-center gap-1" style="font-size: 0.65rem; background-color: {{ $topRole->color }}22; color: {{ $topRole->color }}; border: 1px solid {{ $topRole->color }}55;">
+                      <span class="badge-dot-indicator rounded-circle" style="width: 5px; height: 5px; background-color: {{ $topRole->color }}; display: inline-block;"></span>
+                      <span>{{ __($topRole->name) }}</span>
+                    </span>
+                  @endif
                 </h6>
                 <small class="text-body-secondary d-block">{{ Auth::user()->email ?? 'User' }}</small>
                 <small class="text-muted font-monospace d-block" style="font-size: 0.75rem;" title="{{ Auth::user()->uuid }}">
@@ -508,7 +514,7 @@ use Illuminate\Support\Facades\Route;
         <li>
           <a class="dropdown-item" href="{{ route('logout') }}"
             onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-            <i class="icon-base bx bx-power-off icon-md me-3"></i><span>{{ __('Logout') }}</span>
+            <i class="icon-base ti tabler-logout icon-md me-3 text-danger"></i><span class="text-danger">{{ __('Logout') }}</span>
           </a>
         </li>
         <form method="POST" id="logout-form" action="{{ route('logout') }}">
@@ -516,11 +522,24 @@ use Illuminate\Support\Facades\Route;
         </form>
       </ul>
     </li>
+    <li class="nav-item ms-2 d-none d-md-block">
+      <a class="btn btn-label-danger btn-sm d-flex align-items-center" href="{{ route('logout') }}"
+        onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+        <i class="icon-base ti tabler-logout me-1 icon-16px"></i>
+        <span>{{ __('Logout') }}</span>
+      </a>
+    </li>
     @else
     <li class="nav-item ms-2">
       <a class="btn btn-primary btn-sm d-flex align-items-center" href="{{ route('valiant-shade.auth-login-basic') }}">
         <i class="icon-base ti tabler-login me-1 icon-16px"></i>
         <span>{{ __('Sign In') }}</span>
+      </a>
+    </li>
+    <li class="nav-item ms-2 d-none d-sm-block">
+      <a class="btn btn-label-primary btn-sm d-flex align-items-center" href="{{ route('valiant-shade.auth-register-basic') }}">
+        <i class="icon-base ti tabler-user-plus me-1 icon-16px"></i>
+        <span>{{ __('Register') }}</span>
       </a>
     </li>
     @endif

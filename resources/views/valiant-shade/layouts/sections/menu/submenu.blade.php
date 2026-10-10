@@ -5,6 +5,21 @@ use Illuminate\Support\Facades\Route;
 <ul class="menu-sub">
   @if (isset($menu))
     @foreach ($menu as $submenu)
+    @php
+      $isLoginSub = ($submenu->slug === 'auth-login-basic');
+      $isRegisterSub = ($submenu->slug === 'auth-register-basic');
+    @endphp
+
+    @if (Auth::check() && $isRegisterSub)
+      @continue
+    @endif
+
+    @php
+      $isLogoutSub = Auth::check() && $isLoginSub;
+      $subUrl = $isLogoutSub ? route('logout') : (isset($submenu->url) ? url($submenu->url) : 'javascript:void(0)');
+      $subName = $isLogoutSub ? __('Logout') : (isset($submenu->name) ? __($submenu->name) : '');
+      $subIcon = $isLogoutSub ? 'menu-icon icon-base ti tabler-logout text-danger' : ($submenu->icon ?? null);
+    @endphp
 
     {{-- active menu method --}}
     @php
@@ -28,14 +43,17 @@ use Illuminate\Support\Facades\Route;
     @endphp
 
       <li class="menu-item {{$activeClass}}">
-        <a href="{{ isset($submenu->url) ? url($submenu->url) : 'javascript:void(0)' }}" class="{{ isset($submenu->submenu) ? 'menu-link menu-toggle' : 'menu-link' }}" @if (isset($submenu->target) and !empty($submenu->target)) target="_blank" @endif>
-          @if (isset($submenu->icon))
-          <i class="{{ $submenu->icon }}"></i>
+        <a href="{{ $subUrl }}"
+          class="{{ isset($submenu->submenu) ? 'menu-link menu-toggle' : 'menu-link' }} {{ $isLogoutSub ? 'text-danger' : '' }}"
+          @if ($isLogoutSub) onclick="event.preventDefault(); document.getElementById('submenu-logout-form').submit();" @endif
+          @if (isset($submenu->target) and !empty($submenu->target) and !$isLogoutSub) target="_blank" @endif>
+          @if ($subIcon)
+          <i class="{{ $subIcon }}"></i>
           @endif
-          <div>{{ isset($submenu->name) ? __($submenu->name) : '' }}</div>
-          @isset($submenu->badge)
+          <div>{{ $subName }}</div>
+          @if (!$isLogoutSub && isset($submenu->badge))
             <div class="badge bg-{{ $submenu->badge[0] }} rounded-pill ms-auto">{{ $submenu->badge[1] }}</div>
-          @endisset
+          @endif
         </a>
 
         {{-- submenu --}}
@@ -44,5 +62,10 @@ use Illuminate\Support\Facades\Route;
         @endif
       </li>
     @endforeach
+    @if (Auth::check())
+      <form id="submenu-logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+        @csrf
+      </form>
+    @endif
   @endif
 </ul>

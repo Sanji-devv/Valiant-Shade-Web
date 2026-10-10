@@ -39,6 +39,8 @@ class PlayerXpController extends Controller
      */
     public function index(Request $request): View|JsonResponse|Response
     {
+        @ini_set('memory_limit', '256M');
+
         $this->service->ensureSampleDataSeeded();
 
         // Handle CSV Export
@@ -60,30 +62,41 @@ class PlayerXpController extends Controller
             'sort_dir' => $request->get('sort_dir', 'desc'),
         ];
 
-        // Categorized collections
-        $guildMembers = $this->service->getAdventurers(array_merge($filters, ['category' => 'guild']));
-        $candidates = $this->service->getAdventurers(array_merge($filters, ['category' => 'candidate']));
-        $inactives = $this->service->getAdventurers(array_merge($filters, ['category' => 'inactive']));
-        $activeFilters = array_merge($filters, ['status' => 'active_only']);
-        $activeAdventurers = $this->service->getAdventurers($activeFilters);
-        $fallenFilters = array_merge($filters, ['status' => 'fallen']);
-        $fallenAdventurers = $this->service->getAdventurers($fallenFilters);
+        // Fetch adventurers based on user search/sort filters
         $allAdventurers = $this->service->getAdventurers($filters);
-
         $statistics = $this->service->getStatistics();
         $ranks = PlayerXp::RANKS;
         $fastThresholds = PlayerXp::getXpThresholds();
         $xpFailsafes = PlayerXp::getXpFailsafes();
         $isAdmin = auth()->user()?->hasPermission('xp.manage') ?? false;
 
+        // Lightweight map for JS drawers (Profile & Edit) to eliminate megabytes of duplicated HTML attributes
+        $adventurersData = [];
+        foreach ($allAdventurers as $adv) {
+            $adventurersData[$adv->id] = [
+                'id' => $adv->id,
+                'character_name' => $adv->character_name,
+                'player_name' => $adv->player_name,
+                'status' => $adv->status,
+                'rank' => $adv->rank,
+                'level' => $adv->level,
+                'sessions_count' => $adv->sessions_count,
+                'rank_xp' => $adv->rank_xp,
+                'mission_xp' => $adv->mission_xp,
+                'report_xp' => $adv->report_xp,
+                'bailiff_xp' => $adv->bailiff_xp,
+                'extra_xp' => $adv->extra_xp,
+                'bonus_xp' => $adv->bonus_xp,
+                'total_xp' => $adv->total_xp,
+                'category' => $adv->category,
+                'reason' => $adv->reason,
+                'notes' => $adv->notes,
+            ];
+        }
+
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'guild_members' => $guildMembers,
-                'candidates' => $candidates,
-                'inactives' => $inactives,
-                'active_adventurers' => $activeAdventurers,
-                'fallen_adventurers' => $fallenAdventurers,
                 'all_adventurers' => $allAdventurers,
                 'statistics' => $statistics,
                 'thresholds' => $fastThresholds,
@@ -93,12 +106,8 @@ class PlayerXpController extends Controller
         }
 
         return view('valiant-shade.content.pages.pages-xp-tracker', compact(
-            'guildMembers',
-            'candidates',
-            'inactives',
-            'activeAdventurers',
-            'fallenAdventurers',
             'allAdventurers',
+            'adventurersData',
             'statistics',
             'ranks',
             'fastThresholds',

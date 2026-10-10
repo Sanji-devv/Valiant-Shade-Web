@@ -109,7 +109,10 @@
 
       function isAuthPage() {
         return Boolean(document.querySelector('#formAuthentication')) ||
-               window.location.pathname.includes('/valiant-shade/auth/');
+               Boolean(document.querySelector('#formAccountSettings')) ||
+               Boolean(document.querySelector('#formAccountDeactivation')) ||
+               window.location.pathname.includes('/valiant-shade/auth/') ||
+               window.location.pathname.includes('/valiant-shade/pages/account-settings-account');
       }
 
       function redirectToLogin(event) {

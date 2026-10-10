@@ -126,30 +126,33 @@ class PlayerXpRepository implements PlayerXpRepositoryInterface
 
     public function getStatistics(): array
     {
-        $all = PlayerXp::all();
+        $kiaCount = PlayerXp::where('status', PlayerXp::STATUS_KIA)->count();
+        $miaCount = PlayerXp::where('status', PlayerXp::STATUS_MIA)->count();
+        $fallenCount = $kiaCount + $miaCount;
 
-        $activeCharacters = $all->whereNotIn('status', [PlayerXp::STATUS_KIA, PlayerXp::STATUS_MIA]);
-        $fallenCharacters = $all->whereIn('status', [PlayerXp::STATUS_KIA, PlayerXp::STATUS_MIA]);
-        $kiaCount = $all->where('status', PlayerXp::STATUS_KIA)->count();
-        $miaCount = $all->where('status', PlayerXp::STATUS_MIA)->count();
+        $activeQuery = PlayerXp::whereNotIn('status', [PlayerXp::STATUS_KIA, PlayerXp::STATUS_MIA]);
+        $totalActiveCount = (clone $activeQuery)->count();
+        $totalActiveXp = (int) (clone $activeQuery)->sum('total_xp');
 
-        $guildMembers = $activeCharacters->whereNotIn('rank', ['Inaktif', 'Aday'])->where('status', '!=', 'inactive');
-        $candidates = $activeCharacters->where('rank', 'Aday');
-        $inactives = $activeCharacters->filter(fn($c) => $c->rank === 'Inaktif' || $c->status === 'inactive');
+        $guildQuery = (clone $activeQuery)->whereNotIn('rank', ['Inaktif', 'Aday'])->where('status', '!=', 'inactive');
+        $guildCount = (clone $guildQuery)->count();
+        $totalGuildXp = (int) (clone $guildQuery)->sum('total_xp');
+        $avgLevel = $guildCount > 0 ? round((float) (clone $guildQuery)->avg('level'), 1) : 1.0;
 
-        $totalActiveXp = $activeCharacters->sum('total_xp');
-        $totalGuildXp = $guildMembers->sum('total_xp');
-        $totalGrandXp = $all->sum('total_xp');
-        $avgLevel = $guildMembers->count() > 0 ? round($guildMembers->avg('level'), 1) : ($activeCharacters->count() > 0 ? round($activeCharacters->avg('level'), 1) : 1);
+        $candidateCount = (clone $activeQuery)->where('rank', 'Aday')->count();
+        $inactiveCount = (clone $activeQuery)->where(function ($q) {
+            $q->where('rank', 'Inaktif')->orWhere('status', 'inactive');
+        })->count();
 
-        $topAdventurer = $activeCharacters->sortByDesc('total_xp')->first();
+        $totalGrandXp = (int) PlayerXp::sum('total_xp');
+        $topAdventurer = (clone $activeQuery)->orderBy('total_xp', 'desc')->first(['character_name', 'player_name', 'level', 'total_xp']);
 
         return [
-            'total_active_count' => $activeCharacters->count(),
-            'guild_count' => $guildMembers->count(),
-            'candidate_count' => $candidates->count(),
-            'inactive_count' => $inactives->count(),
-            'total_fallen_count' => $fallenCharacters->count(),
+            'total_active_count' => $totalActiveCount,
+            'guild_count' => $guildCount,
+            'candidate_count' => $candidateCount,
+            'inactive_count' => $inactiveCount,
+            'total_fallen_count' => $fallenCount,
             'kia_count' => $kiaCount,
             'mia_count' => $miaCount,
             'total_active_xp' => $totalActiveXp,

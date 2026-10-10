@@ -78,6 +78,9 @@ class PlayerXpService
 
         $adventurer->total_xp = $adventurer->calculateComputedTotalXp();
         $adventurer->level = PlayerXp::calculateLevelFromXp($adventurer->total_xp);
+        if (!in_array($adventurer->rank, ['Clerk', 'Inaktif', 'Gezgin', 'Margrave', 'Margrave (U)', 'Temsilci'], true)) {
+            $adventurer->rank = PlayerXp::calculateRankFromLevelAndSessions($adventurer->level, (int) $adventurer->sessions_count);
+        }
 
         if ($note) {
             $existingNotes = $adventurer->notes ? $adventurer->notes . "\n" : '';
@@ -159,6 +162,9 @@ class PlayerXpService
 
         // Calculate Level strictly based on Pathfinder Fast Progression table
         $level = PlayerXp::calculateLevelFromXp($totalXp);
+        $sessionsCount = max(0, (int) ($data['sessions_count'] ?? 1));
+
+        $rank = !empty($data['rank']) ? $data['rank'] : PlayerXp::calculateRankFromLevelAndSessions($level, $sessionsCount);
 
         return array_merge($data, [
             'rank_xp' => $rankXp,
@@ -169,9 +175,9 @@ class PlayerXpService
             'bonus_xp' => $bonusXp,
             'total_xp' => $totalXp,
             'level' => $level,
-            'sessions_count' => max(0, (int) ($data['sessions_count'] ?? 1)),
+            'sessions_count' => $sessionsCount,
             'status' => $data['status'] ?? PlayerXp::STATUS_ACTIVE,
-            'rank' => $data['rank'] ?? 'Aday',
+            'rank' => $rank ?? 'Aday',
         ]);
     }
 

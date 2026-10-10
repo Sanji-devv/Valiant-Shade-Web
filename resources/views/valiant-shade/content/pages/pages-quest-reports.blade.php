@@ -622,18 +622,18 @@
 <div class="container-xxl flex-grow-1 container-p-y">
 
   <!-- ====================================================
-       TOP NAVIGATION TABS (GÖREV RAPORLARI vs. LONCA XP HAVUZU)
+       TOP NAVIGATION TABS (QUEST REPORTS vs. GUILD XP POOL)
        ==================================================== -->
   <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
     <div class="d-inline-flex align-items-center p-1 rounded-3 bg-dark bg-opacity-75 border border-secondary border-opacity-25" id="questReportsMainTabs">
       <button type="button" class="tab-nav-switch active" id="tabNavQuests" data-tab-target="#tabViewQuests">
         <i class="icon-base ti tabler-scroll fs-5"></i>
-        <span>{{ __('Görev Raporları (A..BG)') }}</span>
+        <span>{{ __('Quest Reports (A..BG)') }}</span>
         <span class="badge bg-primary ms-1 font-monospace" id="navTabQuestCount">{{ count($reports) }}</span>
       </button>
       <button type="button" class="tab-nav-switch" id="tabNavGuildPool" data-tab-target="#tabViewGuildPool">
         <i class="icon-base ti tabler-shield-dollar fs-5"></i>
-        <span>{{ __('Lonca XP & Rütbeler Havuzu (BU..CA)') }}</span>
+        <span>{{ __('Guild XP & Rank Pool (BU..CA)') }}</span>
         <span class="badge bg-label-warning ms-1 font-monospace" id="navTabPoolGrandBadge">{{ number_format($guildPoolData['grand_total_xp'] ?? 3459587.50, 0) }} XP</span>
       </button>
     </div>
@@ -652,7 +652,7 @@
   </div>
 
   <!-- ====================================================
-       TAB VIEW 1: GÖREV RAPORLARI TABLOSU (SÜTUNLAR A..BG)
+       TAB VIEW 1: QUEST REPORTS TABLE (COLUMNS A..BG)
        ==================================================== -->
   <div id="tabViewQuests" class="tab-pane-view">
 
@@ -667,21 +667,21 @@
             <i class="icon-base ti tabler-scroll fs-4 text-warning"></i>
           </div>
           <h3 class="mb-0 fw-bold text-heading" style="font-size: 1.45rem; letter-spacing: 0.3px;">
-            {{ __('Görev Raporları') }}
+            {{ __('Quest Reports') }}
           </h3>
           <span class="badge bg-primary font-monospace px-3 py-1 shadow-sm fs-6" id="kpiTotalReportsBadge">
-            {{ $stats['total_quests'] }} {{ __('Kayıtlı Sefer') }}
+            {{ $stats['total_quests'] }} {{ __('Recorded Expeditions') }}
           </span>
         </div>
         <p class="text-body-secondary small mb-0">
-          {{ __('Valiant Shade Master Sheet & Görev Arşivi') }} &bull; {{ __('Otomatik formül hesaplamalı sefer raporları, lonca & depo payları ve oyuncu ortalama XP tablosu.') }}
+          {{ __('Valiant Shade Master Sheet & Quest Archive') }} &bull; {{ __('Automatic formula-calculated expedition reports, guild & depot shares and player average XP table.') }}
         </p>
       </div>
 
       <div class="d-flex align-items-center gap-2 flex-wrap">
         <!-- Google Sheet Default Reset -->
-        <button type="button" class="btn btn-outline-warning btn-sm" id="btnResetToMasterDefaults" title="{{ __('Google Sheet Orijinal 32 Satırına Sıfırla') }}">
-          <i class="icon-base ti tabler-refresh me-1"></i> {{ __('Sheet Sıfırla') }}
+        <button type="button" class="btn btn-outline-warning btn-sm" id="btnResetToMasterDefaults" title="{{ __('Reset to Google Sheet Original 32 Rows') }}">
+          <i class="icon-base ti tabler-refresh me-1"></i> {{ __('Reset Sheet') }}
         </button>
 
         <!-- New Quest Report Button (Primary) -->
@@ -711,7 +711,7 @@
         </div>
       </div>
 
-      <!-- KPI 2: Ana & Epik Görevler -->
+      <!-- KPI 2: Main & Epic Quests -->
       <div class="col-6 col-md-4 col-xl-2">
         <div class="kpi-stat-card d-flex align-items-center gap-3">
           <div class="kpi-icon-wrapper kpi-icon-gold shadow-sm">
@@ -724,20 +724,20 @@
         </div>
       </div>
 
-      <!-- KPI 3: Yan Görevler -->
+      <!-- KPI 3: Side Quests -->
       <div class="col-6 col-md-4 col-xl-2">
         <div class="kpi-stat-card d-flex align-items-center gap-3">
           <div class="kpi-icon-wrapper kpi-icon-cyan shadow-sm">
             <i class="icon-base ti tabler-sparkles"></i>
           </div>
           <div>
-            <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">{{ __('Yan Görevler') }}</div>
+            <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">{{ __('Side Quests') }}</div>
             <div class="fw-bolder fs-5 text-info font-monospace" id="kpiSideQuestsVal">{{ $stats['side_quests'] }}</div>
           </div>
         </div>
       </div>
 
-      <!-- KPI 4: Toplam Dağıtılan XP -->
+      <!-- KPI 4: Total Distributed XP -->
       <div class="col-6 col-md-4 col-xl-2">
         <div class="kpi-stat-card d-flex align-items-center gap-3">
           <div class="kpi-icon-wrapper kpi-icon-green shadow-sm">
@@ -757,7 +757,7 @@
             <i class="icon-base ti tabler-coins"></i>
           </div>
           <div>
-            <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">{{ __('Lonca Kasası (G)') }}</div>
+            <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">{{ __('Guild Vault (G)') }}</div>
             <div class="fw-bolder fs-5 text-warning font-monospace" id="kpiTotalGuildCutVal">{{ number_format($stats['total_guild_cut'], 1) }} SP</div>
           </div>
         </div>
@@ -787,8 +787,8 @@
       <div class="flex-grow-1" style="min-width: 240px; max-width: 360px;">
         <div class="input-group input-group-merge">
           <span class="input-group-text bg-transparent border-secondary border-opacity-25"><i class="icon-base ti tabler-search text-muted"></i></span>
-          <input type="text" class="form-control bg-transparent border-secondary border-opacity-25 text-heading" id="reportsSearchInput" placeholder="{{ __('Görev, GM, Raporlayan, Oyuncular...') }}" value="{{ $filters['search'] ?? '' }}" />
-          <button type="button" class="btn btn-outline-secondary border-secondary border-opacity-25 d-none" id="btnReportsSearchClear" title="{{ __('Aramayı Temizle') }}">
+          <input type="text" class="form-control bg-transparent border-secondary border-opacity-25 text-heading" id="reportsSearchInput" placeholder="{{ __('Quest, GM, Reporter, Players...') }}" value="{{ $filters['search'] ?? '' }}" />
+          <button type="button" class="btn btn-outline-secondary border-secondary border-opacity-25 d-none" id="btnReportsSearchClear" title="{{ __('Clear Search') }}">
             <i class="icon-base ti tabler-x fs-6"></i>
           </button>
         </div>
@@ -797,7 +797,7 @@
       <!-- Quick Type Filter Buttons -->
       <div class="d-flex align-items-center gap-1 bg-dark bg-opacity-50 p-1 rounded-3 border border-secondary border-opacity-20" id="reportsTypeFilters">
         <button type="button" class="filter-pill-btn {{ ($filters['type'] ?? 'all') === 'all' ? 'active' : '' }}" data-type="all">
-          {{ __('Tümü') }} (<span id="typeCountAll">{{ $stats['total_quests'] }}</span>)
+          {{ __('All') }} (<span id="typeCountAll">{{ $stats['total_quests'] }}</span>)
         </button>
         <button type="button" class="filter-pill-btn {{ ($filters['type'] ?? '') === 'main' ? 'active' : '' }}" data-type="main">
           <i class="icon-base ti tabler-shield-check me-1 text-primary"></i> {{ __('Ana (✓)') }} (<span id="typeCountMain">{{ $stats['main_quests'] }}</span>)
@@ -814,7 +814,7 @@
       <div class="d-flex align-items-center gap-2 flex-wrap ms-auto">
         <!-- GM Filter -->
         <select class="form-select form-select-sm bg-transparent border-secondary border-opacity-25 text-heading" id="reportsGmFilter" style="width: auto;">
-          <option value="all">{{ __('Tüm GM\'ler') }}</option>
+          <option value="all">{{ __("All GMs") }}</option>
           @foreach($gms as $gm)
             <option value="{{ $gm }}" {{ ($filters['gm'] ?? '') === $gm ? 'selected' : '' }}>{{ $gm }}</option>
           @endforeach
@@ -822,7 +822,7 @@
 
         <!-- Level Filter -->
         <select class="form-select form-select-sm bg-transparent border-secondary border-opacity-25 text-heading" id="reportsLevelFilter" style="width: auto;">
-          <option value="all">{{ __('Tüm Seviyeler') }}</option>
+          <option value="all">{{ __('All Levels') }}</option>
           <option value="1">Lvl 1</option>
           <option value="2">Lvl 2</option>
           <option value="3">Lvl 3</option>
@@ -834,13 +834,13 @@
         <select class="form-select form-select-sm bg-transparent border-secondary border-opacity-25 text-heading" id="reportsSortSelect" style="width: auto;">
           <option value="date-desc">{{ __('Tarih: Yeniden Eskiye') }}</option>
           <option value="date-asc">{{ __('Tarih: Eskiden Yeniye') }}</option>
-          <option value="xp-desc">{{ __('Toplam XP: En Yüksek') }}</option>
-          <option value="avg-desc">{{ __('Ortalama XP: En Yüksek') }}</option>
-          <option value="title-asc">{{ __('Görev Adı: A-Z') }}</option>
+          <option value="xp-desc">{{ __('Total XP: Highest') }}</option>
+          <option value="avg-desc">{{ __('Average XP: Highest') }}</option>
+          <option value="title-asc">{{ __('Quest Name: A-Z') }}</option>
         </select>
 
         <!-- Reset Button -->
-        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnResetReportsFilters" title="{{ __('Filtreleri Sıfırla') }}">
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnResetReportsFilters" title="{{ __('Reset Filters') }}">
           <i class="icon-base ti tabler-rotate-clockwise"></i>
         </button>
       </div>
@@ -849,19 +849,19 @@
 
   <!-- ====================================================
        3. MASTER SPREADSHEET TABLE
-       (Görev Adı | Tarih | MQ | Level | XP | Depo | Lonca | Depo | Rapor | Ek | Ortalama | Oyuncu | GM | Raporlayan | Diğer Oyuncular | İşlemler)
+       (Quest Title | Date | MQ | Level | XP | Vault | Guild | Vault | Report | Extra | Average | Player | GM | Reporter | Other Players | Actions)
        ==================================================== -->
   <div class="card card-table-dark-container mb-4">
     <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
       <div class="d-flex align-items-center gap-2">
         <i class="icon-base ti tabler-table text-primary fs-4"></i>
         <h5 class="mb-0 fw-bold text-heading" style="font-size: 1.08rem;">
-          {{ __('Master Sheet Görev Listesi') }}
+          {{ __('Master Sheet Quest List') }}
         </h5>
         <span class="badge bg-primary font-monospace ms-2" id="currentFilteredCount">
           {{ count($reports) }}
         </span>
-        <span class="text-body-secondary small">/ <span id="totalReportsSpan">{{ $stats['total_quests'] }}</span> {{ __('Kayıt') }}</span>
+        <span class="text-body-secondary small">/ <span id="totalReportsSpan">{{ $stats['total_quests'] }}</span> {{ __('Record') }}</span>
       </div>
 
       <div class="d-flex align-items-center gap-2">
@@ -870,7 +870,7 @@
           <span>{{ __('Sona Git »') }}</span>
         </button>
         <span class="badge bg-label-info font-monospace small">
-          <i class="icon-base ti tabler-calculator me-1"></i> Formül: <code>(E - G - H - I + J) / AL</code>
+          <i class="icon-base ti tabler-calculator me-1"></i> {{ __("Formula:") }} <code>(E - G - H - I + J) / AL</code>
         </span>
         <button type="button" class="btn btn-sm btn-primary btn-add-report-trigger d-flex align-items-center gap-1 shadow-sm" id="btnTableOpenAddReportModal" data-bs-toggle="modal" data-bs-target="#modalAddQuestReport">
           <i class="icon-base ti tabler-plus fs-6"></i>
@@ -884,7 +884,7 @@
         <thead>
           <tr>
             <th style="width: 40px;" class="text-center">#</th>
-            <th style="min-width: 220px;">{{ __('Görev Adı') }} (A)</th>
+            <th style="min-width: 220px;">{{ __('Quest Name') }} (A)</th>
             <th style="width: 75px;">{{ __('Tarih') }} (B)</th>
             <th style="width: 70px;" class="text-center">{{ __('MQ') }} (C)</th>
             <th style="width: 70px;" class="text-center">{{ __('Level') }} (D)</th>
@@ -898,8 +898,8 @@
             <th style="width: 75px;" class="text-center">{{ __('Oyuncu') }} (AL)</th>
             <th style="width: 110px;">{{ __('GM') }} (AM)</th>
             <th style="width: 130px;">{{ __('Raporlayan') }} (AN)</th>
-            <th style="min-width: 240px;">{{ __('Diğer Oyuncular') }} (AO..BG)</th>
-            <th style="width: 110px;" class="text-end">{{ __('İşlemler') }}</th>
+            <th style="min-width: 240px;">{{ __('Other Players') }} (AO..BG)</th>
+            <th style="width: 110px;" class="text-end">{{ __('Actions') }}</th>
           </tr>
         </thead>
         <tbody class="table-border-bottom-0" id="reportsTableBody">
@@ -923,11 +923,11 @@
               <td>
                 <div class="d-flex align-items-center">
                   @if(($q['mq'] ?? '') === 'epic')
-                    <span class="badge bg-warning text-dark me-2 px-2 py-0" title="Epik Görev (3x XP)">✓✓</span>
+                    <span class="badge bg-warning text-dark me-2 px-2 py-0" title="{{ __("Epic Quest (3x XP)") }}">✓✓</span>
                   @elseif(!empty($q['is_main']) || ($q['mq'] ?? '') === 'main')
-                    <span class="badge bg-primary me-2 px-2 py-0" title="Ana Görev">✓</span>
+                    <span class="badge bg-primary me-2 px-2 py-0" title="{{ __("Main Quest") }}">✓</span>
                   @else
-                    <span class="badge bg-secondary me-2 px-2 py-0" title="Yan Görev">✗</span>
+                    <span class="badge bg-secondary me-2 px-2 py-0" title="{{ __("Side Quest") }}">✗</span>
                   @endif
                   <div>
                     <span class="fw-bold text-heading quest-title-text d-block" style="cursor: pointer;" onclick="openReportDetail({{ $q['id'] }})">
@@ -950,11 +950,11 @@
               <!-- 3. MQ (C) -->
               <td class="text-center">
                 @if(($q['mq'] ?? '') === 'epic')
-                  <span class="badge badge-mq-epic font-monospace px-2 py-1" title="Epik Ana Görev (3x)">✓✓</span>
+                  <span class="badge badge-mq-epic font-monospace px-2 py-1" title="{{ __("Epic Main Quest (3x)") }}">✓✓</span>
                 @elseif(!empty($q['is_main']) || ($q['mq'] ?? '') === 'main')
-                  <span class="badge badge-mq-main font-monospace px-2 py-1" title="Ana Görev">✓</span>
+                  <span class="badge badge-mq-main font-monospace px-2 py-1" title="{{ __("Main Quest") }}">✓</span>
                 @else
-                  <span class="badge badge-mq-side font-monospace px-2 py-1" title="Yan Görev">✗</span>
+                  <span class="badge badge-mq-side font-monospace px-2 py-1" title="{{ __("Side Quest") }}">✗</span>
                 @endif
               </td>
 
@@ -1039,17 +1039,17 @@
               <td class="text-end">
                 <div class="d-inline-flex align-items-center gap-1">
                   <!-- Detay -->
-                  <button type="button" class="btn btn-icon btn-sm btn-outline-primary btn-open-report" onclick="openReportDetail({{ $q['id'] }})" title="{{ __('Rapor Detayları') }}">
+                  <button type="button" class="btn btn-icon btn-sm btn-outline-primary btn-open-report" onclick="openReportDetail({{ $q['id'] }})" title="{{ __('Report Details') }}">
                     <i class="icon-base ti tabler-file-text fs-6"></i>
                   </button>
 
                   <!-- Düzenle -->
-                  <button type="button" class="btn btn-icon btn-sm btn-outline-warning" onclick="openEditReportModal({{ $q['id'] }})" title="{{ __('Düzenle') }}">
+                  <button type="button" class="btn btn-icon btn-sm btn-outline-warning" onclick="openEditReportModal({{ $q['id'] }})" title="{{ __('Edit') }}">
                     <i class="icon-base ti tabler-edit fs-6"></i>
                   </button>
 
                   <!-- XP Tracker'a Dağıt -->
-                  <button type="button" class="btn btn-icon btn-sm btn-outline-success" onclick="distributeReportXp({{ $q['id'] }})" title="{{ __('Maceracılara XP Dağıt (XP Tracker)') }}">
+                  <button type="button" class="btn btn-icon btn-sm btn-outline-success" onclick="distributeReportXp({{ $q['id'] }})" title="{{ __('Distribute XP to Adventurers (XP Tracker)') }}">
                     <i class="icon-base ti tabler-bolt fs-6"></i>
                   </button>
 
@@ -1066,7 +1066,7 @@
                 <div class="avatar avatar-xl bg-label-secondary mx-auto mb-3 rounded-circle d-flex align-items-center justify-content-center">
                   <i class="icon-base ti tabler-file-search fs-1 text-muted"></i>
                 </div>
-                <h5 class="fw-bold text-heading">{{ __('Kriterlere uygun görev raporu bulunamadı.') }}</h5>
+                <h5 class="fw-bold text-heading">{{ __('No quest reports found matching the criteria.') }}</h5>
               </td>
             </tr>
           @endforelse
@@ -1080,21 +1080,21 @@
         <span class="badge bg-label-secondary font-monospace"><i class="icon-base ti tabler-files me-1"></i>50 Rapor / Sayfa</span>
         <span class="opacity-50">|</span>
         <span id="paginationInfoText" class="font-monospace text-heading">
-          {{ __('Yükleniyor...') }}
+          {{ __('Loading...') }}
         </span>
       </div>
 
       <div class="d-flex align-items-center gap-2 flex-wrap">
         <!-- Quick First Page -->
-        <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 btn-pagination-action" id="btnPageFirst" onclick="goToPage(1)" title="{{ __('İlk Sayfaya Git (Sayfa 1)') }}">
+        <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 btn-pagination-action" id="btnPageFirst" onclick="goToPage(1)" title="{{ __('Go to First Page (Page 1)') }}">
           <i class="icon-base ti tabler-chevrons-left fs-6"></i>
-          <span class="d-none d-sm-inline">{{ __('İlk') }}</span>
+          <span class="d-none d-sm-inline">{{ __('First') }}</span>
         </button>
 
         <!-- Previous Page -->
-        <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 btn-pagination-action" id="btnPagePrev" onclick="goToPrevPage()" title="{{ __('Önceki Sayfa') }}">
+        <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 btn-pagination-action" id="btnPagePrev" onclick="goToPrevPage()" title="{{ __('Previous Page') }}">
           <i class="icon-base ti tabler-chevron-left fs-6"></i>
-          <span class="d-none d-sm-inline">{{ __('Önceki') }}</span>
+          <span class="d-none d-sm-inline">{{ __('Previous') }}</span>
         </button>
 
         <!-- Dynamic Numeric Pagination Buttons -->
@@ -1122,11 +1122,11 @@
     <div class="avatar avatar-xl bg-label-secondary mx-auto mb-3 rounded-circle d-flex align-items-center justify-content-center">
       <i class="icon-base ti tabler-file-search fs-1 text-muted"></i>
     </div>
-    <h5 class="fw-bold text-heading">{{ __('Filtre kriterlerinize uygun görev raporu bulunamadı.') }}</h5>
-    <p class="text-body-secondary small mb-3">Filtrelerinizi temizleyerek veya farklı bir arama terimi deneyerek tekrar arayabilirsiniz.</p>
+    <h5 class="fw-bold text-heading">{{ __('No quest reports matching your filter criteria were found.') }}</h5>
+    <p class="text-body-secondary small mb-3">{{ __('You can search again by clearing your filters or trying a different search term.') }}</p>
     <div>
       <button type="button" class="btn btn-outline-primary btn-sm" id="btnEmptyResetFilters">
-        <i class="icon-base ti tabler-rotate-clockwise me-1"></i> {{ __('Filtreleri Sıfırla') }}
+        <i class="icon-base ti tabler-rotate-clockwise me-1"></i> {{ __('Reset Filters') }}
       </button>
     </div>
   </div>
@@ -1134,7 +1134,7 @@
   <!-- /#tabViewQuests -->
 
   <!-- ====================================================
-       TAB VIEW 2: LONCA XP & RÜTBELER HAVUZU (SÜTUNLAR BU..CA)
+       TAB VIEW 2: GUILD XP & RANKS POOL (COLUMNS BU..CA)
        ==================================================== -->
   <div id="tabViewGuildPool" class="tab-pane-view d-none">
     
@@ -1147,21 +1147,21 @@
               <i class="icon-base ti tabler-shield-dollar fs-4 text-warning"></i>
             </div>
             <h3 class="mb-0 fw-bold text-heading" style="font-size: 1.45rem; letter-spacing: 0.3px;">
-              {{ __('Lonca XP & Rütbeler Dağılım Havuzu') }}
+              {{ 'Lonca XP & Rütbeler Havuzu' }}
             </h3>
             <span class="badge bg-warning text-dark font-monospace px-3 py-1 shadow-sm fs-6" id="poolLevelBadge">
               Level {{ $guildPoolData['guild_xp']['level'] ?? 12 }} Lonca
             </span>
           </div>
           <p class="text-body-secondary small mb-0">
-            {{ __('Master Sheet BU:CA Sütunları & Formül Mimarisi') }} &bull; {{ __('Wiki XP, Lonca XP kasası, Uzman Havuzu & Payı ve 7 kademeli rütbe tahsis matrisi.') }}
+            {{ __('Master Sheet BU:CA Columns & Formula Architecture') }} &bull; {{ __('Wiki XP, Guild XP vault, Expert Pool & Share, and 7-tier rank allocation matrix.') }}
           </p>
         </div>
 
         <div class="d-flex align-items-center gap-2 flex-wrap">
           <!-- Reset Guild Pool Defaults -->
-          <button type="button" class="btn btn-outline-warning btn-sm" id="btnResetGuildPoolDefaults" title="{{ __('Google Sheet Orijinal Değerlerine Sıfırla') }}">
-            <i class="icon-base ti tabler-refresh me-1"></i> {{ __('Sheet Sıfırla') }}
+          <button type="button" class="btn btn-outline-warning btn-sm" id="btnResetGuildPoolDefaults" title="{{ __('Reset to Google Sheet Original Values') }}">
+            <i class="icon-base ti tabler-refresh me-1"></i> {{ __('Reset Sheet') }}
           </button>
 
           <!-- New Quest Report & Calc Button -->
@@ -1172,7 +1172,7 @@
           <!-- Edit Guild Pool Data -->
           <button type="button" class="btn btn-primary btn-sm btn-add-quest-report" id="btnOpenEditGuildPoolModal">
             <i class="icon-base ti tabler-edit fs-5"></i>
-            <span>{{ __('Havuz & Rütbe Verilerini Düzenle') }}</span>
+            <span>{{ __('Edit Pool & Rank Data') }}</span>
           </button>
         </div>
       </div>
@@ -1198,7 +1198,7 @@
             </div>
             <div class="d-flex justify-content-between text-body-secondary small font-monospace pt-1 border-top border-secondary border-opacity-10" style="font-size: 0.75rem;">
               <span>Total (BW): <b class="text-heading" id="kpiWikiTotalVal">{{ number_format($guildPoolData['wiki_xp']['total'] ?? 53800, 2) }}</b></span>
-              <span>Dağıtılan (BX): <b class="text-warning" id="kpiWikiDistVal">{{ number_format($guildPoolData['wiki_xp']['distributed'] ?? 39547, 2) }}</b></span>
+              <span>{{ __("Distributed (BX):") }} <b class="text-warning" id="kpiWikiDistVal">{{ number_format($guildPoolData['wiki_xp']['distributed'] ?? 39547, 2) }}</b></span>
             </div>
           </div>
         </div>
@@ -1236,7 +1236,7 @@
                   <i class="icon-base ti tabler-coins"></i>
                 </div>
                 <div>
-                  <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">{{ __('Uzman Payı (=BV5/BW10)') }}</div>
+                  <div class="text-body-secondary small text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">{{ __('Expert Share (=BV5/BW10)') }}</div>
                   <div class="fw-bolder fs-5 text-success font-monospace" id="kpiPoolPayVal">
                     {{ number_format($guildPoolData['pool_share_uzman'] ?? 98295.22, 2) }} XP
                   </div>
@@ -1246,7 +1246,7 @@
             </div>
             <div class="d-flex justify-content-between text-body-secondary small font-monospace pt-1 border-top border-secondary border-opacity-10" style="font-size: 0.75rem;">
               <span>Havuz (BV5): <b class="text-heading" id="kpiPoolTotalVal">{{ number_format($guildPoolData['pool_total'] ?? 2064199.61, 2) }}</b></span>
-              <span class="text-success fw-semibold">Net Pay/Kişi</span>
+              <span class="text-success fw-semibold">{{ __("Net Share/Person") }}</span>
             </div>
           </div>
         </div>
@@ -1269,7 +1269,7 @@
               <span class="badge bg-label-primary font-monospace small">Genel Bakiye</span>
             </div>
             <div class="d-flex justify-content-between text-body-secondary small font-monospace pt-1 border-top border-secondary border-opacity-10" style="font-size: 0.75rem;">
-              <span>Rütbeler (CA7): <b class="text-heading" id="kpiRanksTotalVal">{{ number_format($guildPoolData['ranks_total_spent'] ?? 3439017.50, 2) }}</b></span>
+              <span>{{ __("Ranks (CA7):") }} <b class="text-heading" id="kpiRanksTotalVal">{{ number_format($guildPoolData['ranks_total_spent'] ?? 3439017.50, 2) }}</b></span>
               <span>Ek Fon (CA4): <b class="text-info" id="kpiExtraFundVal">+{{ number_format($guildPoolData['extra_fund'] ?? 20570, 2) }}</b></span>
             </div>
           </div>
@@ -1279,7 +1279,7 @@
 
     <!-- Rütbeler Tablosu (Columns BU..CA) -->
     <!-- ====================================================
-         CANLI XP HESAPLAMA & FORMÜL ÇÖZÜMLEME MERKEZİ (BU..CA)
+         LIVE XP CALCULATION & FORMULA ENGINE (BU..CA)
          ==================================================== -->
     <div class="card card-table-dark-container mb-4" style="background: radial-gradient(circle at 10% 20%, rgba(115, 103, 240, 0.08) 0%, rgba(18, 20, 36, 0.95) 90%);">
       <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2 pb-2">
@@ -1289,14 +1289,14 @@
           </div>
           <div>
             <h5 class="mb-0 fw-bold text-heading" style="font-size: 1.12rem;">
-              {{ __('Lonca XP & Rütbeler Canlı Hesaplama Motoru') }}
+              {{ __('Guild XP & Ranks Live Calculation Engine') }}
             </h5>
-            <small class="text-body-secondary font-monospace">{{ __('Master Sheet BU..CA Sütun Mimarisi & Adım Adım Matematiksel Çözümler') }}</small>
+            <small class="text-body-secondary font-monospace">{{ __('Master Sheet BU..CA Column Architecture & Step-by-Step Mathematical Solutions') }}</small>
           </div>
         </div>
         <div class="d-flex align-items-center gap-2">
           <span class="badge bg-label-success font-monospace px-3 py-1">
-            <i class="icon-base ti tabler-check me-1"></i> {{ __('Formüller Aktif & Doğrulandı') }}
+            <i class="icon-base ti tabler-check me-1"></i> {{ __('Formulas Active & Verified') }}
           </span>
         </div>
       </div>
@@ -1308,7 +1308,7 @@
           <div class="col-12 col-md-6 col-xl-3">
             <div class="p-3 rounded-3 bg-dark bg-opacity-75 border border-secondary border-opacity-25 h-100 position-relative">
               <div class="d-flex align-items-center justify-content-between mb-2">
-                <span class="badge bg-warning text-dark font-monospace fw-bold">1. Lonca Kasası</span>
+                <span class="badge bg-warning text-dark font-monospace fw-bold">{{ __("1. Guild Vault") }}</span>
                 <code class="text-warning small">=SUM(G2:G)</code>
               </div>
               <h6 class="fw-bold text-heading mb-1" style="font-size: 0.92rem;">{{ __('Lonca XP Birikimi') }}</h6>
@@ -1321,7 +1321,7 @@
                   <b class="text-heading">Lvl {{ $guildPoolData['guild_xp']['level'] ?? 12 }}</b>
                 </div>
                 <div class="d-flex justify-content-between mb-1">
-                  <span>{{ __('Baz / Eşik') }}:</span>
+                  <span>{{ __('Base / Threshold') }}:</span>
                   <span>{{ number_format($guildPoolData['guild_xp']['base'] ?? 145000) }} / {{ number_format($guildPoolData['guild_xp']['next_level_threshold'] ?? 210000) }}</span>
                 </div>
                 <div class="progress mt-2" style="height: 6px;">
@@ -1339,7 +1339,7 @@
                 <span class="badge bg-info text-dark font-monospace fw-bold">2. Wiki Havuzu</span>
                 <code class="text-info small">=BW2 - BX2</code>
               </div>
-              <h6 class="fw-bold text-heading mb-1" style="font-size: 0.92rem;">{{ __('Kalan Wiki Dağıtım Payı') }}</h6>
+              <h6 class="fw-bold text-heading mb-1" style="font-size: 0.92rem;">{{ __('Remaining Wiki Distribution Share') }}</h6>
               <div class="fs-5 fw-bold text-info font-monospace mb-2" id="calcCockpitWikiRem">
                 {{ number_format($guildPoolData['wiki_xp']['remaining'] ?? 14253, 2) }} XP
               </div>
@@ -1349,13 +1349,13 @@
                   <b class="text-heading">{{ number_format($guildPoolData['wiki_xp']['total'] ?? 53800, 2) }}</b>
                 </div>
                 <div class="d-flex justify-content-between mb-1">
-                  <span>{{ __('Dağıtılan') }} (BX2):</span>
+                  <span>{{ __('Distributed') }} (BX2):</span>
                   <b class="text-warning">{{ number_format($guildPoolData['wiki_xp']['distributed'] ?? 39547, 2) }}</b>
                 </div>
                 <div class="progress mt-2" style="height: 6px;">
                   <div class="progress-bar bg-info" role="progressbar" style="width: 73.5%;" aria-valuenow="73.5" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
-                <div class="text-end text-muted mt-1" style="font-size: 0.72rem;">%73.5 {{ __('Oyunculara Dağıtıldı') }}</div>
+                <div class="text-end text-muted mt-1" style="font-size: 0.72rem;">%73.5 {{ __('Distributed to Players') }}</div>
               </div>
             </div>
           </div>
@@ -1364,20 +1364,20 @@
           <div class="col-12 col-md-6 col-xl-3">
             <div class="p-3 rounded-3 bg-dark bg-opacity-75 border border-secondary border-opacity-25 h-100 position-relative">
               <div class="d-flex align-items-center justify-content-between mb-2">
-                <span class="badge bg-success text-dark font-monospace fw-bold">3. Uzman Payı</span>
+                <span class="badge bg-success text-dark font-monospace fw-bold">{{ __("3. Expert Share") }}</span>
                 <code class="text-success small">=BV5 / 21</code>
               </div>
-              <h6 class="fw-bold text-heading mb-1" style="font-size: 0.92rem;">{{ __('Uzman Başına Net Pay') }}</h6>
+              <h6 class="fw-bold text-heading mb-1" style="font-size: 0.92rem;">{{ __('Net Share Per Expert') }}</h6>
               <div class="fs-5 fw-bold text-success font-monospace mb-2" id="calcCockpitUzmanPay">
                 {{ number_format($guildPoolData['pool_share_uzman'] ?? 98295.22, 2) }} XP
               </div>
               <div class="text-body-secondary small font-monospace" style="font-size: 0.78rem;">
                 <div class="d-flex justify-content-between mb-1">
-                  <span>{{ __('Havuz Tutarı') }} (BV5):</span>
+                  <span>{{ __('Pool Amount') }} (BV5):</span>
                   <b class="text-heading">{{ number_format($guildPoolData['pool_total'] ?? 2064199.61, 2) }}</b>
                 </div>
                 <div class="d-flex justify-content-between mb-1">
-                  <span>{{ __('Uzman Sayısı') }} (BW11):</span>
+                  <span>{{ __('Expert Count') }} (BW11):</span>
                   <b class="text-success">21 {{ __('Uzman') }}</b>
                 </div>
                 <div class="p-1 rounded bg-black bg-opacity-40 text-center text-success mt-2 font-monospace" style="font-size: 0.72rem;">
@@ -1400,7 +1400,7 @@
               </div>
               <div class="text-body-secondary small font-monospace" style="font-size: 0.78rem;">
                 <div class="d-flex justify-content-between mb-1">
-                  <span>{{ __('Rütbeler Harcama') }}:</span>
+                  <span>{{ __('Ranks Expenditure') }}:</span>
                   <b class="text-heading">{{ number_format($guildPoolData['ranks_total_spent'] ?? 3439017.50, 2) }}</b>
                 </div>
                 <div class="d-flex justify-content-between mb-1">
@@ -1420,18 +1420,18 @@
           <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
             <div class="d-flex align-items-center gap-2">
               <i class="icon-base ti tabler-adjustments-alt text-warning fs-4"></i>
-              <span class="fw-bold text-heading" style="font-size: 0.95rem;">{{ __('Canlı Rütbe & Pay Simülatörü (Parametreleri Değiştirin)') }}</span>
+              <span class="fw-bold text-heading" style="font-size: 0.95rem;">{{ __('Live Rank & Share Simulator (Adjust Parameters)') }}</span>
             </div>
-            <span class="badge bg-label-warning font-monospace small">{{ __('Anlık Canlı Hesaplama') }}</span>
+            <span class="badge bg-label-warning font-monospace small">{{ __('Instant Live Calculation') }}</span>
           </div>
 
           <div class="row g-3 align-items-end">
             <div class="col-12 col-md-3">
-              <label class="form-label text-body-secondary small font-monospace mb-1">{{ __('Havuz Tutarı (BV5 XP)') }}</label>
+              <label class="form-label text-body-secondary small font-monospace mb-1">{{ __('Pool Amount (BV5 XP)') }}</label>
               <input type="number" step="1000" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading font-monospace fw-bold" id="simPoolInput" value="{{ $guildPoolData['pool_total'] ?? 2064199.61 }}">
             </div>
             <div class="col-12 col-md-2">
-              <label class="form-label text-body-secondary small font-monospace mb-1">{{ __('Uzman Sayısı (BW11)') }}</label>
+              <label class="form-label text-body-secondary small font-monospace mb-1">{{ __('Expert Count (BW11)') }}</label>
               <input type="number" min="1" max="100" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading font-monospace text-center fw-bold" id="simUzmanInput" value="21">
             </div>
             <div class="col-12 col-md-3">
@@ -1441,7 +1441,7 @@
             <div class="col-12 col-md-4">
               <div class="p-2 rounded bg-dark border border-success border-opacity-30 d-flex align-items-center justify-content-between">
                 <div>
-                  <small class="text-body-secondary d-block font-monospace" style="font-size: 0.72rem;">{{ __('Hesaplanan Uzman Payı') }}:</small>
+                  <small class="text-body-secondary d-block font-monospace" style="font-size: 0.72rem;">{{ __('Calculated Expert Share') }}:</small>
                   <span class="fs-6 fw-bold text-success font-monospace" id="simUzmanPayOutput">{{ number_format($guildPoolData['pool_share_uzman'] ?? 98295.22, 2) }} XP</span>
                 </div>
                 <div class="text-end">
@@ -1461,12 +1461,12 @@
         <div class="d-flex align-items-center gap-2">
           <i class="icon-base ti tabler-shield-check text-warning fs-4"></i>
           <h5 class="mb-0 fw-bold text-heading" style="font-size: 1.08rem;">
-            {{ __('Rütbeler & XP Dağıtım Tablosu') }} <span class="font-monospace text-body-secondary fs-6">(Google Sheet BU..CA)</span>
+            {{ __('Ranks & XP Allocation Table') }} <span class="font-monospace text-body-secondary fs-6">(Google Sheet BU..CA)</span>
           </h5>
         </div>
         <div class="d-flex align-items-center gap-2">
           <span class="badge bg-label-info font-monospace small">
-            <i class="icon-base ti tabler-calculator me-1"></i> Formül: <code>=SUMIF('Player XP Tracker'!E:E, BU_x, 'Player XP Tracker'!H:H)</code>
+            <i class="icon-base ti tabler-calculator me-1"></i> {{ __('Formula:') }} <code>=SUMIF('Player XP Tracker'!E:E, BU_x, 'Player XP Tracker'!H:H)</code>
           </span>
         </div>
       </div>
@@ -1475,14 +1475,14 @@
         <table class="table table-dark table-master-sheet" id="guildRanksTable">
           <thead>
             <tr>
-              <th style="min-width: 140px;">{{ __('Rütbe') }} (BU)</th>
+              <th style="min-width: 140px;">{{ __('Rank') }} (BU)</th>
               <th style="width: 110px;" class="text-end">{{ __('Kapasite') }} (BV)</th>
               <th style="width: 100px;" class="text-center">{{ __('Olan') }} (BW)</th>
               <th style="width: 140px;" class="text-end text-warning">{{ __('Kapasite XP') }} (BX)</th>
               <th style="width: 140px;" class="text-end text-info">{{ __('Olan XP') }} (BY)</th>
               <th style="width: 140px;" class="text-end text-success">{{ __('Net XP') }} (BZ)</th>
               <th style="width: 160px;" class="text-end text-primary">{{ __('Harcanan XP') }} (CA)</th>
-              <th style="min-width: 250px;" class="text-start">{{ __('XP Hesaplama Formülü & Açıklaması') }}</th>
+              <th style="min-width: 250px;" class="text-start">{{ __('XP Calculation Formula & Explanation') }}</th>
             </tr>
           </thead>
           <tbody id="guildRanksTableBody">
@@ -1508,12 +1508,12 @@
                 </td>
 
                 <!-- Kapasite (BV) -->
-                <td class="text-end font-monospace text-heading fw-semibold" title="{{ __('Kapasite Sınırı (BV)') }}">
+                <td class="text-end font-monospace text-heading fw-semibold" title="{{ __('Capacity Limit (BV)') }}">
                   {{ $rk['capacity'] !== null ? number_format($rk['capacity'], 2) : '-' }}
                 </td>
 
                 <!-- Olan (BW) -->
-                <td class="text-center font-monospace fw-bold {{ (int)$rk['current_count'] > 0 ? 'text-warning' : 'text-body-secondary' }}" title="{{ __('Aktif Oyuncu Sayısı (BW)') }}">
+                <td class="text-center font-monospace fw-bold {{ (int)$rk['current_count'] > 0 ? 'text-warning' : 'text-body-secondary' }}" title="{{ __('Active Player Count (BW)') }}">
                   {{ number_format($rk['current_count']) }}
                 </td>
 
@@ -1523,17 +1523,17 @@
                 </td>
 
                 <!-- Olan XP (BY) -->
-                <td class="text-end font-monospace text-info fw-semibold" title="{{ __('Gerçekleşen Olan XP (BY)') }}">
+                <td class="text-end font-monospace text-info fw-semibold" title="{{ __('Actual Existing XP (BY)') }}">
                   {{ $rk['current_xp'] !== null ? number_format($rk['current_xp'], 2) : '-' }}
                 </td>
 
                 <!-- Net XP (BZ) -->
-                <td class="text-end font-monospace text-success fw-bold" title="{{ __('Kişi Başı Net Dağıtım XP (BZ)') }}">
+                <td class="text-end font-monospace text-success fw-bold" title="{{ __('Net Distribution XP Per Capita (BZ)') }}">
                   {{ $rk['net_xp'] !== null ? number_format($rk['net_xp'], 2) : '-' }}
                 </td>
 
                 <!-- Harcanan XP (CA) -->
-                <td class="text-end font-monospace text-heading fw-bolder" style="font-size: 0.95rem;" title="{{ __('Rütbe Toplam Harcanan XP (CA)') }}">
+                <td class="text-end font-monospace text-heading fw-bolder" style="font-size: 0.95rem;" title="{{ __('Total Rank Spent XP (CA)') }}">
                   {{ number_format($rk['spent_xp'], 2) }}
                 </td>
 
@@ -1549,7 +1549,7 @@
           </tbody>
           <tfoot>
             <tr style="background: rgba(30, 34, 59, 0.95); border-top: 2px solid rgba(115, 103, 240, 0.5);">
-              <th class="text-uppercase fw-bold text-heading font-monospace">{{ __('Rütbeler Toplamı (CA7)') }}</th>
+              <th class="text-uppercase fw-bold text-heading font-monospace">{{ __('Total Ranks (CA7)') }}</th>
               <th class="text-end font-monospace text-heading fw-bold" id="ranksTableTotalCapacity">
                 {{ number_format($guildPoolData['total_capacity'] ?? 5900.90, 2) }}
               </th>
@@ -1588,7 +1588,7 @@
               <th class="text-end font-monospace fw-bolder text-warning fs-5" id="ranksTableGrandTotal">
                 {{ number_format($guildPoolData['grand_total_xp'], 2) }}
               </th>
-              <th class="text-start font-monospace text-warning small fw-bold">Denk Bakiye (18/18 Doğrulandı)</th>
+              <th class="text-start font-monospace text-warning small fw-bold">{{ __("Balanced Sheet (18/18 Verified)") }}</th>
             </tr>
           </tfoot>
         </table>
@@ -1601,10 +1601,10 @@
         <div class="d-flex align-items-center gap-2">
           <i class="icon-base ti tabler-math-symbols text-primary fs-4"></i>
           <h5 class="mb-0 fw-bold text-heading" style="font-size: 1.05rem;">
-            {{ __('Google Sheet Master Formül Dokümantasyonu (18 Formül Mimarisi)') }}
+            {{ __('Google Sheet Master Formula Documentation (18 Formula Architecture)') }}
           </h5>
         </div>
-        <span class="badge bg-label-primary font-monospace">18/18 Aktif Eşleşme</span>
+        <span class="badge bg-label-primary font-monospace">{{ __("18/18 Active Matches") }}</span>
       </div>
 
       <div class="card-body p-3 p-md-4">
@@ -1613,14 +1613,14 @@
           <div class="col-12 col-lg-4">
             <div class="p-3 rounded-3 bg-dark bg-opacity-60 border border-secondary border-opacity-20 h-100">
               <h6 class="fw-bold text-info mb-3 d-flex align-items-center gap-2">
-                <i class="icon-base ti tabler-book"></i> {{ __('Wiki & Lonca Formülleri') }}
+                <i class="icon-base ti tabler-book"></i> {{ __('Wiki & Guild Formulas') }}
               </h6>
               <ul class="list-unstyled mb-0 font-monospace small" style="line-height: 1.9;">
                 <li><code class="text-warning">=BW2-BX2</code> <span class="text-body-secondary">&rarr; Wiki Kalan: 53,800 - 39,547 = <b>14,253</b></span></li>
                 <li><code class="text-warning">=BW3*0.6</code> <span class="text-body-secondary">&rarr; Uzman Kapasite XP: 157,150 &times; 0.6 = <b>94,290</b></span></li>
-                <li><code class="text-warning">=SUM(G2:G)</code> <span class="text-body-secondary">&rarr; Sefer Lonca Kasası: <b>{{ number_format($stats['total_guild_cut'], 1) }} SP</b></span></li>
+                <li><code class="text-warning">=SUM(G2:G)</code> <span class="text-body-secondary">&rarr; {{ __("Expedition Guild Vault:") }} <b>{{ number_format($stats['total_guild_cut'], 1) }} SP</b></span></li>
                 <li><code class="text-warning">=SUM(BT:BT)</code> <span class="text-body-secondary">&rarr; Sefer Lonca Kolonu Kesinti Hacmi</span></li>
-                <li><code class="text-warning">=COUNTA('Görev Raporları'!A2:A)</code> <span class="text-body-secondary">&rarr; Toplam Sefer Sayısı: <b>{{ $stats['total_quests'] }}</b></span></li>
+                <li><code class="text-warning">=COUNTA('Görev Raporları'!A2:A)</code> <span class="text-body-secondary">&rarr; {{ __("Total Expeditions:") }} <b>{{ $stats['total_quests'] }}</b></span></li>
               </ul>
             </div>
           </div>
@@ -1629,14 +1629,14 @@
           <div class="col-12 col-lg-4">
             <div class="p-3 rounded-3 bg-dark bg-opacity-60 border border-secondary border-opacity-20 h-100">
               <h6 class="fw-bold text-success mb-3 d-flex align-items-center gap-2">
-                <i class="icon-base ti tabler-coins"></i> {{ __('Havuz & Net Pay Formülleri') }}
+                <i class="icon-base ti tabler-coins"></i> {{ __('Pool & Net Share Formulas') }}
               </h6>
               <ul class="list-unstyled mb-0 font-monospace small" style="line-height: 1.9;">
-                <li><code class="text-success">=BV5/(BW11+BW17)</code> <span class="text-body-secondary">&rarr; Uzman Net Payı: 2,064,199.61 / 21 = <b>98,295.22</b></span></li>
-                <li><code class="text-success">=CA11/BW11</code> <span class="text-body-secondary">&rarr; Kıdemli Net XP: 401,350.01 / 20 = <b>20,067.50</b></span></li>
-                <li><code class="text-success">=CA12/BW12</code> <span class="text-body-secondary">&rarr; Üye Net XP: 30,047.37 / 20 = <b>1,502.37</b></span></li>
+                <li><code class="text-success">=BV5/(BW11+BW17)</code> <span class="text-body-secondary">&rarr; {{ __("Expert Net Share:") }} 2,064,199.61 / 21 = <b>98,295.22</b></span></li>
+                <li><code class="text-success">=CA11/BW11</code> <span class="text-body-secondary">&rarr; {{ __("Senior Net XP:") }} 401,350.01 / 20 = <b>20,067.50</b></span></li>
+                <li><code class="text-success">=CA12/BW12</code> <span class="text-body-secondary">&rarr; {{ __("Member Net XP:") }} 30,047.37 / 20 = <b>1,502.37</b></span></li>
                 <li><code class="text-success">=CA13/BW13</code> <span class="text-body-secondary">&rarr; Clerk Net XP: 198,000.00 / 60 = <b>3,300.00</b></span></li>
-                <li><code class="text-success">=SUMIF('Player XP Tracker'!E:E, BU_x, H:H)</code> <span class="text-body-secondary">&rarr; Rütbe Harcanan XP</span></li>
+                <li><code class="text-success">=SUMIF('Player XP Tracker'!E:E, BU_x, H:H)</code> <span class="text-body-secondary">&rarr; {{ __("Rank Spent XP") }}</span></li>
               </ul>
             </div>
           </div>
@@ -1645,13 +1645,13 @@
           <div class="col-12 col-lg-4">
             <div class="p-3 rounded-3 bg-dark bg-opacity-60 border border-secondary border-opacity-20 h-100">
               <h6 class="fw-bold text-primary mb-3 d-flex align-items-center gap-2">
-                <i class="icon-base ti tabler-scale"></i> {{ __('Kapasite & Denklik Formülleri') }}
+                <i class="icon-base ti tabler-scale"></i> {{ __('Capacity & Equivalence Formulas') }}
               </h6>
               <ul class="list-unstyled mb-0 font-monospace small" style="line-height: 1.9;">
-                <li><code class="text-primary">=(BV10+BV13)/10</code> <span class="text-body-secondary">&rarr; Uzman & Clerk Kapasite Oranı</span></li>
-                <li><code class="text-primary">=BV13/2</code> <span class="text-body-secondary">&rarr; Clerk Kapasite Katsayısı: <b>84.39</b></span></li>
-                <li><code class="text-primary">=MIN(BX11,BX11*BV11/BW11)</code> <span class="text-body-secondary">&rarr; Kıdemli Min Tavanı</span></li>
-                <li><code class="text-primary">=SUM(BV9:BV10)</code> & <code class="text-primary">=SUM(BV9:BV13)</code> <span class="text-body-secondary">&rarr; Kademe Kümeleri</span></li>
+                <li><code class="text-primary">=(BV10+BV13)/10</code> <span class="text-body-secondary">&rarr; {{ __("Expert & Clerk Capacity Ratio") }}</span></li>
+                <li><code class="text-primary">=BV13/2</code> <span class="text-body-secondary">&rarr; {{ __("Clerk Capacity Coefficient:") }} <b>84.39</b></span></li>
+                <li><code class="text-primary">=MIN(BX11,BX11*BV11/BW11)</code> <span class="text-body-secondary">&rarr; {{ __("Senior Min Ceiling") }}</span></li>
+                <li><code class="text-primary">=SUM(BV9:BV10)</code> & <code class="text-primary">=SUM(BV9:BV13)</code> <span class="text-body-secondary">&rarr; {{ __("Tier Clusters") }}</span></li>
                 <li><code class="text-primary">=SUM(J2:J)=(CA2-CA4-CA10-SUM(CA12:CA16))</code> <span class="text-body-secondary">&rarr; Ek & Havuz Dengeleme</span></li>
                 <li><code class="text-primary">=SUM(E2:E)+SUM(G2:G)+SUM(H2:H)</code> <span class="text-body-secondary">&rarr; Toplam Sefer Hacmi</span></li>
               </ul>
@@ -1667,7 +1667,7 @@
 </div>
 
 <!-- ====================================================
-     4. MODAL: GÖREV RAPORU EKLE (CANLI FORMÜL MOTORLU)
+     4. MODAL: ADD QUEST REPORT (LIVE FORMULA ENGINE)
      ==================================================== -->
 <div class="modal fade" id="modalAddQuestReport" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
@@ -1680,8 +1680,8 @@
             <i class="icon-base ti tabler-calculator fs-3 text-primary"></i>
           </div>
           <div>
-            <h4 class="mb-0 fw-bold text-heading">{{ __('Yeni Görev Raporu & Canlı Ortalama XP Hesaplayıcı') }}</h4>
-            <small class="text-body-secondary font-monospace">{{ __('Master Sheet formülü: (E - G - H - I + J) / AL ile oyuncuların ortalamasını canlı hesaplayın') }}</small>
+            <h4 class="mb-0 fw-bold text-heading">{{ __('New Quest Report & Live Average XP Calculator') }}</h4>
+            <small class="text-body-secondary font-monospace">{{ __('Live average calculation for players using Master Sheet formula: (E - G - H - I + J) / AL') }}</small>
           </div>
         </div>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -1695,7 +1695,7 @@
           <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
             <div class="d-flex align-items-center gap-2">
               <i class="icon-base ti tabler-cpu text-primary fs-4"></i>
-              <span class="fw-bold text-heading" style="font-size: 0.95rem;">{{ __('Canlı Formül & Oyuncu Ortalama XP Motoru') }}</span>
+              <span class="fw-bold text-heading" style="font-size: 0.95rem;">{{ __('Live Formula & Player Average XP Engine') }}</span>
             </div>
             <span class="badge badge-avg-xp font-monospace fs-6 px-3 py-1 shadow-sm" id="liveAddAvgXpBadge">
               Ortalama: 175.63 XP
@@ -1748,15 +1748,15 @@
               <!-- Row 1: Görev Adı & Tarih (Gün/Ay/Yıl) -->
               <div class="row g-2 mb-3">
                 <div class="col-12 col-sm-7">
-                  <label class="form-label fw-semibold text-heading small">{{ __('Görev Adı (A)') }} <span class="text-danger">*</span></label>
+                  <label class="form-label fw-semibold text-heading small">{{ __('Quest Name (A)') }} <span class="text-danger">*</span></label>
                   <div class="input-group input-group-merge input-group-sm">
                     <span class="input-group-text bg-dark border-secondary border-opacity-25"><i class="icon-base ti tabler-sword text-primary"></i></span>
-                    <input type="text" class="form-control bg-dark border-secondary border-opacity-25 text-heading" name="title" id="addReportTitle" placeholder="Örn: Kasadaki Para" required />
+                    <input type="text" class="form-control bg-dark border-secondary border-opacity-25 text-heading" name="title" id="addReportTitle" placeholder="{{ __("e.g. Vault Funds") }}" required />
                   </div>
                 </div>
 
                 <div class="col-12 col-sm-5">
-                  <label class="form-label fw-semibold text-heading small">{{ __('Tarih (B) [Gün/Ay/Yıl]') }} <span class="text-danger">*</span></label>
+                  <label class="form-label fw-semibold text-heading small">{{ __('Date (B) [Day/Month/Year]') }} <span class="text-danger">*</span></label>
                   <div class="input-group input-group-merge input-group-sm">
                     <span class="input-group-text bg-dark border-secondary border-opacity-25"><i class="icon-base ti tabler-calendar text-info"></i></span>
                     <input type="date" class="form-control bg-dark border-secondary border-opacity-25 text-heading font-monospace" name="date" id="addReportDate" value="{{ date('Y-m-d') }}" required />
@@ -1768,26 +1768,26 @@
               <div class="row g-2 mb-3">
                 <!-- MQ -->
                 <div class="col-12 col-sm-6">
-                  <label class="form-label fw-semibold text-heading small">{{ __('MQ (C) - Görev Tipi') }}</label>
+                  <label class="form-label fw-semibold text-heading small">{{ __('MQ (C) - Quest Type') }}</label>
                   <select class="form-select form-select-sm bg-dark border-secondary border-opacity-25 text-heading" name="mq" id="addReportMq">
-                    <option value="none" selected>✗ Yan Görev (1x)</option>
-                    <option value="main">✓ Ana Görev (1x)</option>
-                    <option value="epic">✓✓ Epik Ana Görev (3x)</option>
+                    <option value="none" selected>✗ {{ __("Side Quest (1x)") }}</option>
+                    <option value="main">✓ {{ __("Main Quest (1x)") }}</option>
+                    <option value="epic">✓✓ {{ __("Epic Main Quest (3x)") }}</option>
                   </select>
                 </div>
 
                 <!-- Level (D) - Kadroya Göre Otomatik Hesaplanır -->
                 <div class="col-12 col-sm-6">
                   <label class="form-label fw-semibold text-heading small d-flex align-items-center justify-content-between mb-1">
-                    <span>{{ __('Level (D) - Görev Seviyesi') }}</span>
+                    <span>{{ __('Level (D) - Quest Level') }}</span>
                     <span class="badge bg-label-info font-monospace py-0 px-1" id="addReportLevelBadge" style="font-size: 0.65rem;">Kadro Ort: 1.00</span>
                   </label>
                   <div class="input-group input-group-merge input-group-sm">
                     <span class="input-group-text bg-dark border-secondary border-opacity-25"><i class="icon-base ti tabler-chart-bar text-info"></i></span>
-                    <input type="number" class="form-control bg-dark border-secondary border-opacity-25 text-heading font-monospace fw-bold" name="level" id="addReportLevel" value="1" min="1" max="20" readonly style="background-color: rgba(0,0,0,0.45) !important; cursor: not-allowed;" title="{{ __('Kadroya göre otomatik hesaplanır (Değiştirilemez)') }}" required />
+                    <input type="number" class="form-control bg-dark border-secondary border-opacity-25 text-heading font-monospace fw-bold" name="level" id="addReportLevel" value="1" min="1" max="20" readonly style="background-color: rgba(0,0,0,0.45) !important; cursor: not-allowed;" title="{{ __('Automatically calculated based on party (Cannot be changed)') }}" required />
                   </div>
                   <small class="text-body-secondary d-block mt-1" style="font-size: 0.68rem;">
-                    <i class="icon-base ti tabler-lock text-warning me-1"></i>Kadro ortalamasına göre otomatik hesaplanır.
+                    <i class="icon-base ti tabler-lock text-warning me-1"></i>{{ __("Calculated automatically based on party average.") }}
                   </small>
                 </div>
               </div>
@@ -1796,10 +1796,10 @@
               <div class="row g-2 mb-3">
                 <!-- Görev Sonucu (Başarılı / Başarısız) -->
                 <div class="col-12 col-sm-6">
-                  <label class="form-label fw-semibold text-heading small">{{ __('Görev Sonucu (F)') }} <span class="text-danger">*</span></label>
+                  <label class="form-label fw-semibold text-heading small">{{ __('Quest Result (F)') }} <span class="text-danger">*</span></label>
                   <select class="form-select form-select-sm bg-dark border-secondary border-opacity-25 text-heading fw-semibold" name="status" id="addReportStatus">
-                    <option value="success" selected>✓ Başarılı (Tamamlandı)</option>
-                    <option value="failed">✗ Başarısız (Yenilgi / İptal)</option>
+                    <option value="success" selected>✓ {{ __("Successful (Completed)") }}</option>
+                    <option value="failed">✗ {{ __("Failed (Defeat / Cancelled)") }}</option>
                   </select>
                 </div>
 
@@ -1809,10 +1809,10 @@
                     <span>{{ __('Depo Durumu (F)') }}</span>
                     <span class="badge bg-label-secondary font-monospace py-0 px-1" style="font-size: 0.65rem;">Otomatik</span>
                   </label>
-                  <input type="text" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-success font-monospace fw-bold" id="addReportDepoDisplay" value="🗸 Teslim (Ceza Yok / 0 SP)" readonly style="background-color: rgba(0,0,0,0.45) !important; cursor: not-allowed;" title="{{ __('Görevin başarılı/başarısız olmasına göre otomatik belirlenir') }}" />
+                  <input type="text" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-success font-monospace fw-bold" id="addReportDepoDisplay" value="🗸 Teslim (Ceza Yok / 0 SP)" readonly style="background-color: rgba(0,0,0,0.45) !important; cursor: not-allowed;" title="{{ __('Automatically determined based on quest success/failure') }}" />
                   <input type="hidden" name="depo_status" id="addReportDepoStatus" value="1" />
                   <small class="text-body-secondary d-block mt-1" style="font-size: 0.68rem;" id="addReportDepoHint">
-                    <i class="icon-base ti tabler-circle-check text-success me-1"></i>Görev başarılı olduğundan depo cezası uygulanmaz.
+                    <i class="icon-base ti tabler-circle-check text-success me-1"></i>{{ __("Since quest was successful, no vault penalty is applied.") }}
                   </small>
                 </div>
               </div>
@@ -1825,7 +1825,7 @@
                     <span>{{ __('Rapor (I)') }}</span>
                     <span class="badge bg-label-info font-monospace py-0 px-1" style="font-size: 0.65rem;">%10 Fix (XP &times; 0.1)</span>
                   </label>
-                  <input type="number" step="0.5" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-info font-monospace fw-bold" name="rapor_cut" id="addReportRaporCut" value="75" readonly style="background-color: rgba(0,0,0,0.45) !important; cursor: not-allowed;" title="{{ __('Toplam XP nin %10 u olarak sabit hesaplanır (Değiştirilemez)') }}" />
+                  <input type="number" step="0.5" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-info font-monospace fw-bold" name="rapor_cut" id="addReportRaporCut" value="75" readonly style="background-color: rgba(0,0,0,0.45) !important; cursor: not-allowed;" title="{{ __('Calculated fixed at 10% of Total XP (Cannot be changed)') }}" />
                   <small class="text-body-secondary d-block mt-1" style="font-size: 0.65rem;">
                     <i class="icon-base ti tabler-lock text-warning me-1"></i>Toplam XP'nin %10'u sabittir.
                   </small>
@@ -1858,18 +1858,18 @@
               <div class="row g-2 mb-2">
                 <div class="col-12 col-sm-6">
                   <label class="form-label fw-semibold text-heading small mb-1">{{ __('Lokasyon') }}</label>
-                  <input type="text" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading" name="location" id="addReportLocation" value="Siwion Ticaret Bölgesi" placeholder="Siwion, Harken Vadisi..." />
+                  <input type="text" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading" name="location" id="addReportLocation" value="Siwion Commercial District" placeholder="{{ __("Siwion, Harken Valley...") }}" />
                 </div>
 
                 <div class="col-12 col-sm-6">
-                  <label class="form-label fw-semibold text-heading small mb-1">{{ __('Düşmanlar') }}</label>
-                  <input type="text" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading" name="enemies" id="addReportEnemies" value="Şehir Hırsızları" placeholder="Düşman tipleri..." />
+                  <label class="form-label fw-semibold text-heading small mb-1">{{ __('Enemies') }}</label>
+                  <input type="text" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading" name="enemies" id="addReportEnemies" value="Urban Thieves" placeholder="{{ __("Enemy types...") }}" />
                 </div>
               </div>
 
               <div>
-                <label class="form-label fw-semibold text-heading small mb-1">{{ __('Detaylı Sefer Raporu / Brifing') }}</label>
-                <textarea class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading" name="full_report" id="addReportFullText" rows="2" placeholder="Görevin hikayesini buraya yazın...">Görev başarıyla tamamlandı, ganimet ve fonlar loncaya teslim edildi.</textarea>
+                <label class="form-label fw-semibold text-heading small mb-1">{{ __('Detailed Expedition Report / Briefing') }}</label>
+                <textarea class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading" name="full_report" id="addReportFullText" rows="2" placeholder="{{ __("Write quest narrative here...") }}">{{ __("Quest was completed successfully, loot and funds delivered to guild.") }}</textarea>
               </div>
             </div>
 
@@ -1878,11 +1878,11 @@
               <div class="form-check form-switch mb-0">
                 <input class="form-check-input cursor-pointer" type="checkbox" id="addReportDistributeXp" name="distribute_xp_auto" value="1" checked>
                 <label class="form-check-label text-heading fw-semibold small cursor-pointer" for="addReportDistributeXp">
-                  {{ __('Maceracı profillerine otomatik XP aktar (XP Tracker & Karakterler)') }}
+                  {{ __('Automatically transfer XP to adventurer profiles (XP Tracker & Characters)') }}
                 </label>
               </div>
               <small class="text-body-secondary d-block mt-1 ps-4" id="liveAddDistributeHint" style="font-size: 0.72rem;">
-                <i class="icon-base ti tabler-info-circle text-info me-1"></i>Kaydedildiğinde kadrodaki 4 maceracıya otomatik olarak +175.63 XP aktarılacaktır.
+                <i class="icon-base ti tabler-info-circle text-info me-1"></i>{{ __("When saved, +175.63 XP will be automatically awarded to 4 adventurers in the party.") }}
               </small>
             </div>
           </div>
@@ -1895,10 +1895,10 @@
               <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
                 <h6 class="mb-0 fw-bold text-heading d-flex align-items-center gap-2">
                   <i class="icon-base ti tabler-users-group text-primary fs-5"></i>
-                  <span>{{ __('Katılan Kadro & Maceracılar') }}</span>
+                  <span>{{ __('Attending Party & Adventurers') }}</span>
                 </h6>
                 <span class="badge bg-primary font-monospace fs-6 px-3 py-1 shadow-sm" id="addReportPartyCountLabel">
-                  3 Diğer Oyuncu (+1 Raporlayan = 4 Kişi)
+                  3 {{ __("Other Players") }} (+1 {{ __("Reporter") }} = 4 {{ __("Total") }})
                 </span>
               </div>
 
@@ -1907,14 +1907,14 @@
                 <div class="d-flex align-items-center justify-content-between mb-1">
                   <label class="form-label fw-semibold text-warning small mb-0 d-flex align-items-center gap-1">
                     <span class="fs-5">👑</span>
-                    <span>{{ __('Raporlayan Maceracı (AN - Lider)') }}</span>
+                    <span>{{ __('Reporting Adventurer (AN - Leader)') }}</span>
                     <span class="text-danger">*</span>
                   </label>
-                  <span class="badge bg-label-warning font-monospace" style="font-size: 0.68rem;">Rapor Ödülü Dahil</span>
+                  <span class="badge bg-label-warning font-monospace" style="font-size: 0.68rem;">{{ __('Report Reward Included') }}</span>
                 </div>
                 <div class="input-group input-group-merge input-group-sm">
                   <span class="input-group-text bg-dark border-secondary border-opacity-25"><i class="icon-base ti tabler-feather text-warning"></i></span>
-                  <input type="text" class="form-control bg-dark border-secondary border-opacity-25 text-heading fw-bold" name="reporter" id="addReportReporter" list="knownAdventurersList" value="Tolrun" placeholder="Örn: Tolrun, Leothar..." required />
+                  <input type="text" class="form-control bg-dark border-secondary border-opacity-25 text-heading fw-bold" name="reporter" id="addReportReporter" list="knownAdventurersList" value="Tolrun" placeholder="{{ __('e.g., Tolrun, Leothar...') }}" required />
                 </div>
               </div>
 
@@ -1923,7 +1923,7 @@
                 <div class="d-flex align-items-center justify-content-between mb-1">
                   <label class="form-label fw-semibold text-heading small mb-0 d-flex align-items-center gap-1">
                     <i class="icon-base ti tabler-user-plus text-primary"></i>
-                    <span>{{ __('Diğer Oyuncuları Kadroya Ekle (AO..BG)') }}</span>
+                    <span>{{ __('Add Other Players to Party (AO..BG)') }}</span>
                   </label>
                   <button type="button" class="btn btn-outline-danger btn-xs py-0 px-2" id="btnClearAllOtherPlayersBtn" title="{{ __('Kadroyu Temizle') }}" style="font-size: 0.72rem;">
                     <i class="icon-base ti tabler-trash me-1"></i>{{ __('Kadroyu Temizle') }}
@@ -1933,7 +1933,7 @@
                 <div class="d-flex align-items-center gap-2">
                   <div class="input-group input-group-merge flex-grow-1">
                     <span class="input-group-text bg-dark border-secondary border-opacity-25"><i class="icon-base ti tabler-user text-body-secondary"></i></span>
-                    <input type="text" class="form-control bg-dark border-secondary border-opacity-25 text-heading" id="inputAddOtherPlayer" list="knownAdventurersList" placeholder="Maceracı adı yazın veya listeden seçin..." />
+                    <input type="text" class="form-control bg-dark border-secondary border-opacity-25 text-heading" id="inputAddOtherPlayer" list="knownAdventurersList" placeholder="{{ __("Type adventurer name or select from list...") }}" />
                   </div>
                   <button type="button" class="btn btn-primary d-flex align-items-center gap-1 px-3 shadow-sm" id="btnAddOtherPlayerBtn">
                     <i class="icon-base ti tabler-plus fs-5"></i>
@@ -1946,21 +1946,21 @@
               <div class="mb-3">
                 <div class="d-flex align-items-center justify-content-between mb-2">
                   <small class="text-body-secondary fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">
-                    <i class="icon-base ti tabler-list-check text-info me-1"></i>{{ __('Mevcut Kadro Listesi & Canlı XP Payı:') }}
+                    <i class="icon-base ti tabler-list-check text-info me-1"></i>{{ __('Current Party List & Live XP Share:') }}
                   </small>
                   <span class="badge bg-label-warning font-monospace" id="liveAddDistributionSummaryBadge" style="font-size: 0.72rem;">
-                    4 Oyuncu &bull; Kişi Başı: 175.63 XP
+                    4 {{ __("Players") }} &bull; {{ __("Per Person:") }} 175.63 XP
                   </span>
                 </div>
 
-                <!-- Unified Party List (Raporlayan + Diğer Oyuncular with Clear [Çıkar] buttons) -->
+                <!-- Unified Party List (Raporlayan + {{ __('Other Players') }} with Clear [Çıkar] buttons) -->
                 <div id="liveAddPlayersDistributionList" class="d-flex flex-column gap-2 p-1 rounded bg-black bg-opacity-35 border border-secondary border-opacity-20 mb-2" style="max-height: 220px; overflow-y: auto;">
                   <!-- Populated in real-time by updateAddLiveCalculator() -->
                 </div>
 
                 <div class="d-flex align-items-center justify-content-between p-2 rounded bg-black bg-opacity-40 font-monospace text-body-secondary" style="font-size: 0.73rem;">
-                  <span id="liveAddSumCheckText">Dağıtılan Toplam: 4 &times; 175.63 = 702.52 XP</span>
-                  <span class="text-success"><i class="icon-base ti tabler-check me-1"></i>{{ __('Eşit Ortalama Dağılımı') }}</span>
+                  <span id="liveAddSumCheckText">{{ __("Total Distributed:") }} 4 &times; 175.63 = 702.52 XP</span>
+                  <span class="text-success"><i class="icon-base ti tabler-check me-1"></i>{{ __('Equal Average Distribution') }}</span>
                 </div>
               </div>
 
@@ -1980,11 +1980,11 @@
       <!-- Modal Footer (Pinned at Bottom, Always Visible) -->
       <div class="modal-footer p-3 p-md-4 d-flex align-items-center justify-content-between">
         <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal">
-          <i class="icon-base ti tabler-x me-1"></i> {{ __('Vazgeç') }}
+          <i class="icon-base ti tabler-x me-1"></i> {{ __('Cancel') }}
         </button>
         <button type="submit" class="btn btn-primary btn-add-quest-report px-4 py-2 shadow-lg" id="btnSubmitAddQuestReport">
           <i class="icon-base ti tabler-circle-check fs-5 me-2"></i>
-          <span class="fw-bold">{{ __('Görev Raporunu Kaydet & Dağıt') }}</span>
+          <span class="fw-bold">{{ __('Save & Distribute Quest Report') }}</span>
         </button>
       </div>
     </form>
@@ -1992,7 +1992,7 @@
 </div>
 
 <!-- ====================================================
-     5. MODAL: GÖREV RAPORU DÜZENLE (EDIT QUEST REPORT)
+     5. MODAL: EDIT QUEST REPORT
      ==================================================== -->
 <div class="modal fade" id="modalEditQuestReport" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
@@ -2007,8 +2007,8 @@
             <i class="icon-base ti tabler-edit fs-3 text-warning"></i>
           </div>
           <div>
-            <h4 class="mb-0 fw-bold text-heading">{{ __('Görev Raporunu Düzenle') }}</h4>
-            <small class="text-body-secondary font-monospace" id="editReportSubtitle">Rapor #1 düzenleniyor</small>
+            <h4 class="mb-0 fw-bold text-heading">{{ __('Edit Quest Report') }}</h4>
+            <small class="text-body-secondary font-monospace" id="editReportSubtitle">{{ __("Report #1 (Editing)") }}</small>
           </div>
         </div>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -2022,7 +2022,7 @@
           <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
             <div class="d-flex align-items-center gap-2">
               <i class="icon-base ti tabler-cpu text-warning fs-4"></i>
-              <span class="fw-bold text-heading" style="font-size: 0.95rem;">{{ __('Canlı Formül Hesaplayıcı') }}</span>
+              <span class="fw-bold text-heading" style="font-size: 0.95rem;">{{ __('Live Formula Calculator') }}</span>
             </div>
             <span class="badge badge-avg-xp font-monospace fs-6 px-3 py-1 shadow-sm" id="liveEditAvgXpBadge">
               Ortalama: 175.63 XP
@@ -2072,7 +2072,7 @@
               <!-- Row 1: Görev Adı & Tarih (Gün/Ay/Yıl) -->
               <div class="row g-2 mb-3">
                 <div class="col-12 col-sm-7">
-                  <label class="form-label fw-semibold text-heading small">{{ __('Görev Adı (A)') }} <span class="text-danger">*</span></label>
+                  <label class="form-label fw-semibold text-heading small">{{ __('Quest Name (A)') }} <span class="text-danger">*</span></label>
                   <div class="input-group input-group-merge input-group-sm">
                     <span class="input-group-text bg-dark border-secondary border-opacity-25"><i class="icon-base ti tabler-sword text-warning"></i></span>
                     <input type="text" class="form-control bg-dark border-secondary border-opacity-25 text-heading" name="title" id="editReportTitle" required />
@@ -2080,7 +2080,7 @@
                 </div>
 
                 <div class="col-12 col-sm-5">
-                  <label class="form-label fw-semibold text-heading small">{{ __('Tarih (B) [Gün/Ay/Yıl]') }} <span class="text-danger">*</span></label>
+                  <label class="form-label fw-semibold text-heading small">{{ __('Date (B) [Day/Month/Year]') }} <span class="text-danger">*</span></label>
                   <div class="input-group input-group-merge input-group-sm">
                     <span class="input-group-text bg-dark border-secondary border-opacity-25"><i class="icon-base ti tabler-calendar text-info"></i></span>
                     <input type="date" class="form-control bg-dark border-secondary border-opacity-25 text-heading font-monospace" name="date" id="editReportDate" required />
@@ -2091,26 +2091,26 @@
               <!-- Row 2: MQ Tipi, Seviye (Otomatik) -->
               <div class="row g-2 mb-3">
                 <div class="col-12 col-sm-6">
-                  <label class="form-label fw-semibold text-heading small">{{ __('MQ (C) - Görev Tipi') }}</label>
+                  <label class="form-label fw-semibold text-heading small">{{ __('MQ (C) - Quest Type') }}</label>
                   <select class="form-select form-select-sm bg-dark border-secondary border-opacity-25 text-heading" name="mq" id="editReportMq">
-                    <option value="none">✗ Yan Görev (1x)</option>
-                    <option value="main">✓ Ana Görev (1x)</option>
-                    <option value="epic">✓✓ Epik Ana Görev (3x)</option>
+                    <option value="none">✗ {{ __("Side Quest (1x)") }}</option>
+                    <option value="main">✓ {{ __("Main Quest (1x)") }}</option>
+                    <option value="epic">✓✓ {{ __("Epic Main Quest (3x)") }}</option>
                   </select>
                 </div>
 
                 <!-- Level (D) - Kadroya Göre Otomatik Hesaplanır -->
                 <div class="col-12 col-sm-6">
                   <label class="form-label fw-semibold text-heading small d-flex align-items-center justify-content-between mb-1">
-                    <span>{{ __('Level (D) - Görev Seviyesi') }}</span>
+                    <span>{{ __('Level (D) - Quest Level') }}</span>
                     <span class="badge bg-label-warning font-monospace py-0 px-1" id="editReportLevelBadge" style="font-size: 0.65rem;">Kadro Ort: 1.00</span>
                   </label>
                   <div class="input-group input-group-merge input-group-sm">
                     <span class="input-group-text bg-dark border-secondary border-opacity-25"><i class="icon-base ti tabler-chart-bar text-warning"></i></span>
-                    <input type="number" class="form-control bg-dark border-secondary border-opacity-25 text-heading font-monospace fw-bold" name="level" id="editReportLevel" value="1" min="1" max="20" readonly style="background-color: rgba(0,0,0,0.45) !important; cursor: not-allowed;" title="{{ __('Kadroya göre otomatik hesaplanır (Değiştirilemez)') }}" required />
+                    <input type="number" class="form-control bg-dark border-secondary border-opacity-25 text-heading font-monospace fw-bold" name="level" id="editReportLevel" value="1" min="1" max="20" readonly style="background-color: rgba(0,0,0,0.45) !important; cursor: not-allowed;" title="{{ __('Automatically calculated based on party (Cannot be changed)') }}" required />
                   </div>
                   <small class="text-body-secondary d-block mt-1" style="font-size: 0.68rem;">
-                    <i class="icon-base ti tabler-lock text-warning me-1"></i>Kadro ortalamasına göre otomatik hesaplanır.
+                    <i class="icon-base ti tabler-lock text-warning me-1"></i>{{ __("Calculated automatically based on party average.") }}
                   </small>
                 </div>
               </div>
@@ -2118,10 +2118,10 @@
               <!-- Row 3: Görev Sonucu (F) & Depo Durumu (F) (Otomatik) -->
               <div class="row g-2 mb-3">
                 <div class="col-12 col-sm-6">
-                  <label class="form-label fw-semibold text-heading small">{{ __('Görev Sonucu (F)') }} <span class="text-danger">*</span></label>
+                  <label class="form-label fw-semibold text-heading small">{{ __('Quest Result (F)') }} <span class="text-danger">*</span></label>
                   <select class="form-select form-select-sm bg-dark border-secondary border-opacity-25 text-heading fw-semibold" name="status" id="editReportStatus">
-                    <option value="success">✓ Başarılı (Tamamlandı)</option>
-                    <option value="failed">✗ Başarısız (Yenilgi / İptal)</option>
+                    <option value="success">✓ {{ __("Successful (Completed)") }}</option>
+                    <option value="failed">✗ {{ __("Failed (Defeat / Cancelled)") }}</option>
                   </select>
                 </div>
 
@@ -2131,10 +2131,10 @@
                     <span>{{ __('Depo Durumu (F)') }}</span>
                     <span class="badge bg-label-secondary font-monospace py-0 px-1" style="font-size: 0.65rem;">Otomatik</span>
                   </label>
-                  <input type="text" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-success font-monospace fw-bold" id="editReportDepoDisplay" value="🗸 Teslim (Ceza Yok / 0 SP)" readonly style="background-color: rgba(0,0,0,0.45) !important; cursor: not-allowed;" title="{{ __('Görevin başarılı/başarısız olmasına göre otomatik belirlenir') }}" />
+                  <input type="text" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-success font-monospace fw-bold" id="editReportDepoDisplay" value="🗸 Teslim (Ceza Yok / 0 SP)" readonly style="background-color: rgba(0,0,0,0.45) !important; cursor: not-allowed;" title="{{ __('Automatically determined based on quest success/failure') }}" />
                   <input type="hidden" name="depo_status" id="editReportDepoStatus" value="1" />
                   <small class="text-body-secondary d-block mt-1" style="font-size: 0.68rem;" id="editReportDepoHint">
-                    <i class="icon-base ti tabler-circle-check text-success me-1"></i>Görev başarılı olduğundan depo cezası uygulanmaz.
+                    <i class="icon-base ti tabler-circle-check text-success me-1"></i>{{ __("Since quest was successful, no vault penalty is applied.") }}
                   </small>
                 </div>
               </div>
@@ -2146,7 +2146,7 @@
                     <span>{{ __('Rapor (I)') }}</span>
                     <span class="badge bg-label-info font-monospace py-0 px-1" style="font-size: 0.65rem;">%10 Fix (XP &times; 0.1)</span>
                   </label>
-                  <input type="number" step="0.5" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-info font-monospace fw-bold" name="rapor_cut" id="editReportRaporCut" readonly style="background-color: rgba(0,0,0,0.45) !important; cursor: not-allowed;" title="{{ __('Toplam XP nin %10 u olarak sabit hesaplanır (Değiştirilemez)') }}" />
+                  <input type="number" step="0.5" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-info font-monospace fw-bold" name="rapor_cut" id="editReportRaporCut" readonly style="background-color: rgba(0,0,0,0.45) !important; cursor: not-allowed;" title="{{ __('Calculated fixed at 10% of Total XP (Cannot be changed)') }}" />
                   <small class="text-body-secondary d-block mt-1" style="font-size: 0.68rem;">
                     <i class="icon-base ti tabler-lock text-warning me-1"></i>Toplam XP'nin %10'u sabittir.
                   </small>
@@ -2178,13 +2178,13 @@
                 </div>
 
                 <div class="col-12 col-sm-6">
-                  <label class="form-label fw-semibold text-heading small mb-1">{{ __('Düşmanlar') }}</label>
+                  <label class="form-label fw-semibold text-heading small mb-1">{{ __('Enemies') }}</label>
                   <input type="text" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading" name="enemies" id="editReportEnemies" />
                 </div>
               </div>
 
               <div>
-                <label class="form-label fw-semibold text-heading small mb-1">{{ __('Detaylı Sefer Raporu / Brifing') }}</label>
+                <label class="form-label fw-semibold text-heading small mb-1">{{ __('Detailed Expedition Report / Briefing') }}</label>
                 <textarea class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading" name="full_report" id="editReportFullText" rows="2"></textarea>
               </div>
             </div>
@@ -2198,10 +2198,10 @@
               <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
                 <h6 class="mb-0 fw-bold text-heading d-flex align-items-center gap-2">
                   <i class="icon-base ti tabler-users-group text-warning fs-5"></i>
-                  <span>{{ __('Katılan Kadro & Maceracılar') }}</span>
+                  <span>{{ __('Attending Party & Adventurers') }}</span>
                 </h6>
                 <span class="badge bg-warning text-dark font-monospace fs-6 px-3 py-1 shadow-sm" id="editReportPartyCountLabel">
-                  Diğer Oyuncular
+                  {{ __('Other Players') }}
                 </span>
               </div>
 
@@ -2210,10 +2210,10 @@
                 <div class="d-flex align-items-center justify-content-between mb-1">
                   <label class="form-label fw-semibold text-warning small mb-0 d-flex align-items-center gap-1">
                     <span class="fs-5">👑</span>
-                    <span>{{ __('Raporlayan Maceracı (AN - Lider)') }}</span>
+                    <span>{{ __('Reporting Adventurer (AN - Leader)') }}</span>
                     <span class="text-danger">*</span>
                   </label>
-                  <span class="badge bg-label-warning font-monospace" style="font-size: 0.68rem;">Rapor Ödülü Dahil</span>
+                  <span class="badge bg-label-warning font-monospace" style="font-size: 0.68rem;">{{ __('Report Reward Included') }}</span>
                 </div>
                 <div class="input-group input-group-merge input-group-sm">
                   <span class="input-group-text bg-dark border-secondary border-opacity-25"><i class="icon-base ti tabler-feather text-warning"></i></span>
@@ -2226,7 +2226,7 @@
                 <div class="d-flex align-items-center justify-content-between mb-1">
                   <label class="form-label fw-semibold text-heading small mb-0 d-flex align-items-center gap-1">
                     <i class="icon-base ti tabler-user-plus text-warning"></i>
-                    <span>{{ __('Diğer Oyuncuları Kadroya Ekle (AO..BG)') }}</span>
+                    <span>{{ __('Add Other Players to Party (AO..BG)') }}</span>
                   </label>
                   <button type="button" class="btn btn-outline-danger btn-xs py-0 px-2" id="btnClearAllEditOtherPlayersBtn" title="{{ __('Kadroyu Temizle') }}" style="font-size: 0.72rem;">
                     <i class="icon-base ti tabler-trash me-1"></i>{{ __('Kadroyu Temizle') }}
@@ -2236,7 +2236,7 @@
                 <div class="d-flex align-items-center gap-2">
                   <div class="input-group input-group-merge flex-grow-1">
                     <span class="input-group-text bg-dark border-secondary border-opacity-25"><i class="icon-base ti tabler-user text-body-secondary"></i></span>
-                    <input type="text" class="form-control bg-dark border-secondary border-opacity-25 text-heading" id="inputEditOtherPlayer" list="knownAdventurersList" placeholder="Karakter adı yazın veya seçin..." />
+                    <input type="text" class="form-control bg-dark border-secondary border-opacity-25 text-heading" id="inputEditOtherPlayer" list="knownAdventurersList" placeholder="{{ __("Type or select character name...") }}" />
                   </div>
                   <button type="button" class="btn btn-warning d-flex align-items-center gap-1 px-3 shadow-sm text-dark fw-bold" id="btnEditOtherPlayerBtn">
                     <i class="icon-base ti tabler-plus fs-5"></i>
@@ -2249,10 +2249,10 @@
               <div class="mb-3">
                 <div class="d-flex align-items-center justify-content-between mb-2">
                   <small class="text-body-secondary fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">
-                    <i class="icon-base ti tabler-list-check text-warning me-1"></i>{{ __('Mevcut Kadro & Kişi Başı Ortalama XP:') }}
+                    <i class="icon-base ti tabler-list-check text-warning me-1"></i>{{ __('Current Party & Average XP Per Capita:') }}
                   </small>
                   <span class="badge bg-label-warning font-monospace" id="liveEditDistributionSummaryBadge" style="font-size: 0.72rem;">
-                    4 Oyuncu &bull; Kişi Başı: 175.63 XP
+                    4 {{ __("Players") }} &bull; {{ __("Per Person:") }} 175.63 XP
                   </span>
                 </div>
 
@@ -2261,8 +2261,8 @@
                 </div>
 
                 <div class="d-flex align-items-center justify-content-between p-2 rounded bg-black bg-opacity-40 font-monospace text-body-secondary" style="font-size: 0.73rem;">
-                  <span id="liveEditSumCheckText">Dağıtılan Toplam: 4 &times; 175.63 = 702.52 XP</span>
-                  <span class="text-success"><i class="icon-base ti tabler-check me-1"></i>{{ __('Eşit Ortalama Dağılımı') }}</span>
+                  <span id="liveEditSumCheckText">{{ __("Total Distributed:") }} 4 &times; 175.63 = 702.52 XP</span>
+                  <span class="text-success"><i class="icon-base ti tabler-check me-1"></i>{{ __('Equal Average Distribution') }}</span>
                 </div>
               </div>
 
@@ -2278,11 +2278,11 @@
       <!-- Modal Footer (Pinned at Bottom, Always Visible) -->
       <div class="modal-footer p-3 p-md-4 d-flex align-items-center justify-content-between">
         <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal">
-          <i class="icon-base ti tabler-x me-1"></i> {{ __('Vazgeç') }}
+          <i class="icon-base ti tabler-x me-1"></i> {{ __('Cancel') }}
         </button>
         <button type="submit" class="btn btn-warning btn-sm fw-bold px-4 py-2 shadow-lg" id="btnSubmitEditQuestReport">
           <i class="icon-base ti tabler-check me-1 fs-5"></i>
-          <span>{{ __('Değişiklikleri Kaydet') }}</span>
+          <span>{{ __('Save Changes') }}</span>
         </button>
       </div>
     </form>
@@ -2307,7 +2307,7 @@
               <span class="text-body-secondary font-monospace small" id="modalReportDate">15.09.2026</span>
               <span class="badge bg-label-success" id="modalReportStatusBadge">✓ {{ __('Successful') }}</span>
             </div>
-            <h4 class="mb-0 fw-bold text-heading" id="modalReportTitle">Görev Başlığı</h4>
+            <h4 class="mb-0 fw-bold text-heading" id="modalReportTitle">{{ __("Quest Title") }}</h4>
           </div>
         </div>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -2360,14 +2360,14 @@
           <div class="d-flex align-items-center justify-content-between mb-2">
             <h6 class="mb-0 fw-bold text-heading d-flex align-items-center gap-2">
               <i class="icon-base ti tabler-feather text-warning"></i>
-              <span>{{ __('Detaylı Sefer Raporu') }}</span>
+              <span>{{ __('Detailed Expedition Report') }}</span>
             </h6>
             <span class="badge bg-label-danger font-monospace" id="modalReportEnemies" style="font-size: 0.75rem;">
-              Düşmanlar
+              {{ __('Enemies') }}
             </span>
           </div>
           <p class="text-body-secondary mb-0" id="modalReportFullText" style="line-height: 1.68; font-size: 0.92rem; white-space: pre-line;">
-            Detaylı sefer raporu yükleniyor...
+            {{ __('Loading detailed expedition report...') }}
           </p>
         </div>
 
@@ -2376,7 +2376,7 @@
           <div class="d-flex align-items-center justify-content-between mb-2">
             <h6 class="mb-0 fw-bold text-heading d-flex align-items-center gap-2">
               <i class="icon-base ti tabler-users-group text-primary"></i>
-              <span>{{ __('Katılan Maceracılar & Ortalama Pay') }}</span>
+              <span>{{ __('Attending Adventurers & Average Share') }}</span>
             </h6>
             <span class="badge bg-label-secondary font-monospace" id="modalReportPartyCount">
               4 Oyuncu
@@ -2386,10 +2386,10 @@
             <table class="table table-sm text-nowrap mb-0" style="font-size: 0.85rem;">
               <thead>
                 <tr class="text-body-secondary border-bottom border-secondary border-opacity-20">
-                  <th>{{ __('Maceracı') }}</th>
+                  <th>{{ __('Adventurer') }}</th>
                   <th>{{ __('Rol') }}</th>
                   <th>{{ __('Seviye') }}</th>
-                  <th class="text-end">{{ __('Kazanılan XP') }}</th>
+                  <th class="text-end">{{ __('XP Earned') }}</th>
                 </tr>
               </thead>
               <tbody id="modalReportPartyTableBody">
@@ -2403,7 +2403,7 @@
         <div class="report-section-box mb-0">
           <h6 class="mb-3 fw-bold text-heading d-flex align-items-center gap-2">
             <i class="icon-base ti tabler-coins text-warning"></i>
-            <span>{{ __('Mali Tablo & Kesintiler (Google Sheet Sütunları)') }}</span>
+            <span>{{ __('Financial Table & Deductions (Google Sheet Columns)') }}</span>
           </h6>
           <div class="row g-2">
             <div class="col-6 col-md-3">
@@ -2426,7 +2426,7 @@
             </div>
             <div class="col-6 col-md-3">
               <div class="p-2 rounded-2 bg-black bg-opacity-30 border border-secondary border-opacity-10 text-center">
-                <span class="text-body-secondary small d-block" style="font-size: 0.7rem;">{{ __('Kişi Başı Ortalama (K)') }}</span>
+                <span class="text-body-secondary small d-block" style="font-size: 0.7rem;">{{ __('Per Capita Average (K)') }}</span>
                 <span class="fw-bold font-monospace text-warning" id="modalReportAvgReward">175.63 XP</span>
               </div>
             </div>
@@ -2448,7 +2448,7 @@
 </div>
 
 <!-- ====================================================
-     7. MODAL: LONCA XP & RÜTBELER HAVUZU DÜZENLE
+     7. MODAL: EDIT GUILD XP & RANKS POOL
      ==================================================== -->
 <div class="modal fade" id="modalEditGuildPool" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
@@ -2462,8 +2462,8 @@
               <i class="icon-base ti tabler-shield-dollar fs-3 text-warning"></i>
             </div>
             <div>
-              <h4 class="mb-0 fw-bold text-heading">{{ __('Lonca XP & Rütbeler Havuzunu Düzenle') }}</h4>
-              <small class="text-body-secondary font-monospace">{{ __('Master Sheet BU..CA parametreleri ve anlık formül hesaplaması') }}</small>
+              <h4 class="mb-0 fw-bold text-heading">{{ __('Edit Guild XP & Rank Pool') }}</h4>
+              <small class="text-body-secondary font-monospace">{{ __('Master Sheet BU..CA parameters and instant formula calculation') }}</small>
             </div>
           </div>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -2477,14 +2477,14 @@
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
               <div class="d-flex align-items-center gap-2">
                 <i class="icon-base ti tabler-cpu text-warning fs-4"></i>
-                <span class="fw-bold text-heading" style="font-size: 0.95rem;">{{ __('Canlı Havuz & Pay Hesaplayıcı') }}</span>
+                <span class="fw-bold text-heading" style="font-size: 0.95rem;">{{ __('Live Pool & Share Calculator') }}</span>
               </div>
               <span class="badge badge-avg-xp font-monospace" id="livePoolPayBadge">
-                Uzman Payı: 98,295.22 XP
+                {{ __('Expert Share:') }} 98,295.22 XP
               </span>
             </div>
             <div class="p-2 rounded bg-black bg-opacity-40 font-monospace small mb-2 text-warning" id="livePoolEquationsText">
-              Uzman Payı = Havuz / Uzman Sayısı | Grand Total = Rütbeler Toplamı + Ek Fon
+              {{ __('Expert Share = Pool / Expert Count | Grand Total = Ranks Total + Extra Fund') }}
             </div>
             <div class="row g-2 text-center text-body-secondary font-monospace" style="font-size: 0.78rem;">
               <div class="col-6 col-md-3">
@@ -2496,7 +2496,7 @@
                 <span class="fw-bold text-warning" id="livePoolUzmanCapText">94,290.00 XP</span>
               </div>
               <div class="col-6 col-md-3">
-                <span class="d-block text-muted">Rütbeler Toplam (CA7)</span>
+                <span class="d-block text-muted">{{ __("Ranks Total (CA7)") }}</span>
                 <span class="fw-bold text-success" id="livePoolRanksTotalText">3,439,017.50 XP</span>
               </div>
               <div class="col-6 col-md-3">
@@ -2520,12 +2520,12 @@
                     <input type="number" step="0.5" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading font-monospace" id="editPoolWikiTotal" value="{{ $guildPoolData['wiki_xp']['total'] ?? 53800 }}" />
                   </div>
                   <div class="col-6">
-                    <label class="form-label text-heading small fw-semibold">{{ __('Wiki Dağıtılan (BX2)') }}</label>
+                    <label class="form-label text-heading small fw-semibold">{{ __('Wiki Distributed (BX2)') }}</label>
                     <input type="number" step="0.5" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading font-monospace" id="editPoolWikiDist" value="{{ $guildPoolData['wiki_xp']['distributed'] ?? 39547 }}" />
                   </div>
                 </div>
                 <small class="text-body-secondary font-monospace d-block mt-2">
-                  Formül: <code>Kalan (BY2) = BW2 - BX2</code>
+                  {{ __("Formula:") }} <code>{{ __("Remaining") }} (BY2) = BW2 - BX2</code>
                 </small>
               </div>
             </div>
@@ -2542,7 +2542,7 @@
                     <input type="number" step="0.5" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading font-monospace" id="editPoolGuildTotal" value="{{ $guildPoolData['guild_xp']['total'] ?? 157150 }}" />
                   </div>
                   <div class="col-4">
-                    <label class="form-label text-heading small fw-semibold">{{ __('Sonraki Eşik (BX3)') }}</label>
+                    <label class="form-label text-heading small fw-semibold">{{ __('Next Threshold (BX3)') }}</label>
                     <input type="number" step="0.5" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading font-monospace" id="editPoolGuildNext" value="{{ $guildPoolData['guild_xp']['next_level_threshold'] ?? 210000 }}" />
                   </div>
                   <div class="col-4">
@@ -2565,7 +2565,7 @@
                 <span class="input-group-text bg-dark border-secondary border-opacity-25"><i class="icon-base ti tabler-coins text-warning"></i></span>
                 <input type="number" step="0.01" class="form-control bg-dark border-secondary border-opacity-25 text-heading font-monospace fw-bold" id="editPoolTotalVal" value="{{ $guildPoolData['pool_total'] ?? 2064199.61 }}" required />
               </div>
-              <small class="text-body-secondary font-monospace">Uzman Payı: <code>=BV5 / Uzman Sayısı</code></small>
+              <small class="text-body-secondary font-monospace">{{ __("Expert Share:") }} <code>=BV5 / {{ __("Expert Count") }}</code></small>
             </div>
 
             <div class="col-12 col-md-6">
@@ -2582,16 +2582,16 @@
           <div class="report-section-box mb-2">
             <h6 class="fw-bold text-heading mb-3 d-flex align-items-center gap-2">
               <i class="icon-base ti tabler-users-group text-primary"></i>
-              <span>{{ __('Rütbe Kadroları & Harcanan XP Değerleri (Satır 9..15)') }}</span>
+              <span>{{ __('Rank Rosters & Spent XP Values (Rows 9..15)') }}</span>
             </h6>
 
             <div class="table-responsive">
               <table class="table table-sm table-dark text-nowrap mb-0" style="font-size: 0.85rem;">
                 <thead>
                   <tr class="text-body-secondary border-bottom border-secondary border-opacity-20">
-                    <th style="width: 160px;">{{ __('Rütbe (BU)') }}</th>
+                    <th style="width: 160px;">{{ __('Rank (BU)') }}</th>
                     <th style="width: 140px;" class="text-end">{{ __('Kapasite (BV)') }}</th>
-                    <th style="width: 130px;" class="text-center">{{ __('Olan Sayısı (BW)') }}</th>
+                    <th style="width: 130px;" class="text-center">{{ __('Current Count (BW)') }}</th>
                     <th style="width: 180px;" class="text-end">{{ __('Harcanan XP (CA)') }}</th>
                     <th style="width: 160px;" class="text-end text-success">{{ __('Hesaplanan Net XP (BZ)') }}</th>
                   </tr>
@@ -2631,11 +2631,11 @@
         <!-- Modal Footer -->
         <div class="modal-footer p-3 p-md-4 d-flex align-items-center justify-content-between">
           <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
-            {{ __('Vazgeç') }}
+            {{ __('Cancel') }}
           </button>
           <button type="submit" class="btn btn-warning btn-sm fw-bold" id="btnSubmitEditGuildPool">
             <i class="icon-base ti tabler-check me-1 fs-5"></i>
-            <span>{{ __('Havuz Değerlerini Güncelle') }}</span>
+            <span>{{ __('Update Pool Values') }}</span>
           </button>
         </div>
       </form>
@@ -2796,7 +2796,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (addPartyCountLabel) {
-      addPartyCountLabel.textContent = `${otherPlayers.length} Diğer Oyuncu (+1 Raporlayan = ${totalPlayers} Kişi)`;
+      addPartyCountLabel.textContent = `${otherPlayers.length} {{ __("Other Players") }} (+1 {{ __("Reporter") }} = ${totalPlayers} {{ __("Total") }})`;
     }
 
     const calc = calculateFormula(
@@ -2838,16 +2838,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (distSummaryBadge) {
-      distSummaryBadge.textContent = `${totalPlayers} Oyuncu • Kişi Başı: ${calc.avgReward.toFixed(2)} XP`;
+      distSummaryBadge.textContent = `${totalPlayers} {{ __("Players") }} • {{ __("Per Person:") }} ${calc.avgReward.toFixed(2)} XP`;
     }
 
     if (distHint) {
-      distHint.innerHTML = `<i class="icon-base ti tabler-info-circle text-info me-1"></i>Kaydedildiğinde kadrodaki <strong>${totalPlayers}</strong> maceracıya kişi başı <strong>+${calc.avgReward.toFixed(2)} XP</strong> otomatik yansıtılacaktır.`;
+      distHint.innerHTML = `<i class="icon-base ti tabler-info-circle text-info me-1"></i>{{ __("When saved, automatically +:xp XP will be awarded to each of the :count adventurers.", ["xp" => "", "count" => ""]) }}`.replace(':count', `<strong>${totalPlayers}</strong>`).replace(':xp', `<strong>+${calc.avgReward.toFixed(2)} XP</strong>`);
     }
 
     if (sumCheckText) {
       const sumTotal = (totalPlayers * calc.avgReward).toFixed(2);
-      sumCheckText.textContent = `Dağıtılan Toplam: ${totalPlayers} × ${calc.avgReward.toFixed(2)} = ${sumTotal} XP (Net Havuz: ${calc.netPool.toFixed(2)} XP)`;
+      sumCheckText.textContent = `{{ __("Total Distributed:") }} ${totalPlayers} × ${calc.avgReward.toFixed(2)} = ${sumTotal} XP ({{ __("Net Pool:") }} ${calc.netPool.toFixed(2)} XP)`;
     }
 
     // Render Per-Player Interactive Roster in Add modal
@@ -2870,9 +2870,9 @@ document.addEventListener('DOMContentLoaded', function () {
           <div class="d-flex align-items-center gap-2">
             <div class="text-end">
               <div class="fw-bold text-warning font-monospace" style="font-size: 0.85rem;">+${calc.avgReward.toFixed(2)} XP</div>
-              <small class="text-muted" style="font-size: 0.65rem;">Kişi Başı Pay</small>
+              <small class="text-muted" style="font-size: 0.65rem;">{{ __("Share Per Person") }}</small>
             </div>
-            <span class="badge bg-label-secondary py-1 px-2" style="font-size: 0.7rem;" title="Lider kadrodan çıkarılamaz">
+            <span class="badge bg-label-secondary py-1 px-2" style="font-size: 0.7rem;" title="{{ __("Leader cannot be removed from party") }}">
               <i class="icon-base ti tabler-lock"></i>
             </span>
           </div>
@@ -2890,7 +2890,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div>
                   <div class="fw-bold text-heading" style="font-size: 0.88rem;">${pName}</div>
                   <div class="d-flex align-items-center gap-1">
-                    <span class="badge bg-label-secondary py-0 px-1" style="font-size: 0.65rem;">Grup Üyesi</span>
+                    <span class="badge bg-label-secondary py-0 px-1" style="font-size: 0.65rem;">{{ __("Party Member") }}</span>
                     <span class="badge bg-label-info py-0 px-1" style="font-size: 0.65rem;">Lvl ${charLvl}</span>
                   </div>
                 </div>
@@ -2898,11 +2898,11 @@ document.addEventListener('DOMContentLoaded', function () {
               <div class="d-flex align-items-center gap-2">
                 <div class="text-end">
                   <div class="fw-bold text-primary font-monospace" style="font-size: 0.85rem;">+${calc.avgReward.toFixed(2)} XP</div>
-                  <small class="text-muted" style="font-size: 0.65rem;">Kişi Başı Pay</small>
+                  <small class="text-muted" style="font-size: 0.65rem;">{{ __("Share Per Person") }}</small>
                 </div>
-                <button type="button" class="btn btn-remove-roster-player btn-add-modal-remove" data-name="${pName}" title="${pName} maceracısını kadrodan çıkar">
+                <button type="button" class="btn btn-remove-roster-player btn-add-modal-remove" data-name="${pName}" title="{{ __("Remove adventurer from party") }}">
                   <i class="icon-base ti tabler-trash" style="font-size: 0.85rem;"></i>
-                  <span>Çıkar</span>
+                  <span>{{ __("Remove") }}</span>
                 </button>
               </div>
             </div>
@@ -2911,7 +2911,7 @@ document.addEventListener('DOMContentLoaded', function () {
       } else {
         html += `
           <div class="text-center py-2 text-muted small fst-italic">
-            <i class="icon-base ti tabler-info-circle me-1"></i>Henüz başka maceracı eklenmedi. Yukarıdan isim yazıp <strong>Ekle</strong> butonuna basabilirsiniz.
+            <i class="icon-base ti tabler-info-circle me-1"></i>{{ __("No other adventurers added yet. Type a name above and click Add.") }}
           </div>
         `;
       }
@@ -3074,7 +3074,7 @@ document.addEventListener('DOMContentLoaded', function () {
       .then(data => {
         if (submitBtn) submitBtn.disabled = false;
         if (!data.success) {
-          alert(data.message || 'Görev raporu kaydedilemedi.');
+          alert(data.message || '{{ __("Could not save quest report.") }}');
           return;
         }
 
@@ -3093,13 +3093,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (window.Swal) {
           let distributeMsg = '';
           if (data.distribution && data.distribution.total_awarded_count > 0) {
-            distributeMsg = ` ve ${data.distribution.total_awarded_count} maceracıya +${data.distribution.xp_per_player} XP aktarıldı`;
+            distributeMsg = ` and +${data.distribution.xp_per_player} XP awarded to ${data.distribution.total_awarded_count} adventurers`;
           }
 
           Swal.fire({
             icon: 'success',
-            title: '{{ __("Görev Raporu Eklendi!") }}',
-            text: `"${newRep.title}" görevi (Kişi başı ortalama: ${newRep.avg_reward} XP)${distributeMsg} başarıyla arşive işlendi.`,
+            title: '{{ __("Quest Report Added!") }}',
+            text: `"${newRep.title}" {{ __("quest report (Average per person: :avg XP) was successfully archived.", ["avg" => ""]) }}${newRep.avg_reward} XP)${distributeMsg}`,
             timer: 2400,
             showConfirmButton: false
           });
@@ -3107,7 +3107,7 @@ document.addEventListener('DOMContentLoaded', function () {
       })
       .catch(err => {
         if (submitBtn) submitBtn.disabled = false;
-        alert('Sunucu iletişim hatası oluştu.');
+        alert('{{ __("Server communication error occurred.") }}');
       });
     });
   }
@@ -3176,7 +3176,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (editPartyCountLabel) {
-      editPartyCountLabel.textContent = `${otherPlayers.length} Diğer Oyuncu (+1 Raporlayan = ${totalPlayers} Kişi)`;
+      editPartyCountLabel.textContent = `${otherPlayers.length} {{ __("Other Players") }} (+1 {{ __("Reporter") }} = ${totalPlayers} {{ __("Total") }})`;
     }
 
     const calc = calculateFormula(
@@ -3217,12 +3217,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (distSummaryBadge) {
-      distSummaryBadge.textContent = `${totalPlayers} Oyuncu • Kişi Başı: ${calc.avgReward.toFixed(2)} XP`;
+      distSummaryBadge.textContent = `${totalPlayers} {{ __("Players") }} • {{ __("Per Person:") }} ${calc.avgReward.toFixed(2)} XP`;
     }
 
     if (sumCheckText) {
       const sumTotal = (totalPlayers * calc.avgReward).toFixed(2);
-      sumCheckText.textContent = `Dağıtılan Toplam: ${totalPlayers} × ${calc.avgReward.toFixed(2)} = ${sumTotal} XP (Net Havuz: ${calc.netPool.toFixed(2)} XP)`;
+      sumCheckText.textContent = `{{ __("Total Distributed:") }} ${totalPlayers} × ${calc.avgReward.toFixed(2)} = ${sumTotal} XP ({{ __("Net Pool:") }} ${calc.netPool.toFixed(2)} XP)`;
     }
 
     // Render Per-Player Interactive Roster in Edit modal
@@ -3244,9 +3244,9 @@ document.addEventListener('DOMContentLoaded', function () {
           <div class="d-flex align-items-center gap-2">
             <div class="text-end">
               <div class="fw-bold text-warning font-monospace" style="font-size: 0.85rem;">+${calc.avgReward.toFixed(2)} XP</div>
-              <small class="text-muted" style="font-size: 0.65rem;">Kişi Başı Pay</small>
+              <small class="text-muted" style="font-size: 0.65rem;">{{ __("Share Per Person") }}</small>
             </div>
-            <span class="badge bg-label-secondary py-1 px-2" style="font-size: 0.7rem;" title="Lider kadrodan çıkarılamaz">
+            <span class="badge bg-label-secondary py-1 px-2" style="font-size: 0.7rem;" title="{{ __("Leader cannot be removed from party") }}">
               <i class="icon-base ti tabler-lock"></i>
             </span>
           </div>
@@ -3263,7 +3263,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div>
                   <div class="fw-bold text-heading" style="font-size: 0.88rem;">${pName}</div>
                   <div class="d-flex align-items-center gap-1">
-                    <span class="badge bg-label-secondary py-0 px-1" style="font-size: 0.65rem;">Grup Üyesi</span>
+                    <span class="badge bg-label-secondary py-0 px-1" style="font-size: 0.65rem;">{{ __("Party Member") }}</span>
                     <span class="badge bg-label-info py-0 px-1" style="font-size: 0.65rem;">Lvl ${charLvl}</span>
                   </div>
                 </div>
@@ -3271,11 +3271,11 @@ document.addEventListener('DOMContentLoaded', function () {
               <div class="d-flex align-items-center gap-2">
                 <div class="text-end">
                   <div class="fw-bold text-primary font-monospace" style="font-size: 0.85rem;">+${calc.avgReward.toFixed(2)} XP</div>
-                  <small class="text-muted" style="font-size: 0.65rem;">Kişi Başı Pay</small>
+                  <small class="text-muted" style="font-size: 0.65rem;">{{ __("Share Per Person") }}</small>
                 </div>
-                <button type="button" class="btn btn-remove-roster-player btn-edit-modal-remove" data-name="${pName}" title="${pName} maceracısını kadrodan çıkar">
+                <button type="button" class="btn btn-remove-roster-player btn-edit-modal-remove" data-name="${pName}" title="{{ __("Remove adventurer from party") }}">
                   <i class="icon-base ti tabler-trash" style="font-size: 0.85rem;"></i>
-                  <span>Çıkar</span>
+                  <span>{{ __("Remove") }}</span>
                 </button>
               </div>
             </div>
@@ -3284,7 +3284,7 @@ document.addEventListener('DOMContentLoaded', function () {
       } else {
         html += `
           <div class="text-center py-2 text-muted small fst-italic">
-            <i class="icon-base ti tabler-info-circle me-1"></i>Henüz başka maceracı eklenmedi. Yukarıdan isim yazıp <strong>Ekle</strong> butonuna basabilirsiniz.
+            <i class="icon-base ti tabler-info-circle me-1"></i>{{ __("No other adventurers added yet. Type a name above and click Add.") }}
           </div>
         `;
       }
@@ -3405,7 +3405,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const report = reportsData.find(r => r.id === parseInt(id, 10));
     if (!report) return;
 
-    document.getElementById('editReportSubtitle').textContent = `Rapor #${report.id} - ${report.title} düzenleniyor`;
+    document.getElementById('editReportSubtitle').textContent = `{{ __("Report") }} #${report.id} - ${report.title} ({{ __("Editing") }})`;
     editId.value = report.id;
     editTitle.value = report.title;
     editDate.value = formatDateForInput(report.date);
@@ -3487,7 +3487,7 @@ document.addEventListener('DOMContentLoaded', function () {
       .then(data => {
         if (submitBtn) submitBtn.disabled = false;
         if (!data.success) {
-          alert(data.message || 'Güncelleme başarısız oldu.');
+          alert(data.message || '{{ __("Update failed.") }}');
           return;
         }
 
@@ -3505,8 +3505,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (window.Swal) {
           Swal.fire({
             icon: 'success',
-            title: '{{ __("Görev Raporu Güncellendi!") }}',
-            text: `"${data.report.title}" görevi ve hesaplanan yeni ortalama (${data.report.avg_reward} XP) başarıyla güncellendi.`,
+            title: '{{ __("Quest Report Updated!") }}',
+            text: `"${data.report.title}" {{ __("quest report and new average (:avg XP) were successfully updated.", ["avg" => ""]) }}${data.report.avg_reward} XP)`,
             timer: 2000,
             showConfirmButton: false
           });
@@ -3514,7 +3514,7 @@ document.addEventListener('DOMContentLoaded', function () {
       })
       .catch(err => {
         if (submitBtn) submitBtn.disabled = false;
-        alert('Sunucu iletişim hatası oluştu.');
+        alert('{{ __("Server communication error occurred.") }}');
       });
     });
   }
@@ -3527,20 +3527,20 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!report) return;
 
     if (!window.Swal) {
-      if (!confirm(`"${report.title}" görev raporunu silmek istediğinize emin misiniz?`)) return;
+      if (!confirm(`{{ __("Are you sure you want to delete this quest report?") }} (${report.title})`)) return;
       executeDelete(id);
       return;
     }
 
     Swal.fire({
       title: '{{ __("Rapor Silinsin mi?") }}',
-      text: `"${report.title}" sefer kaydı arşivden tamamen silinecek.`,
+      text: `"${report.title}" {{ __("expedition record will be permanently deleted from archives.") }}`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#ea5455',
       cancelButtonColor: '#82868b',
       confirmButtonText: 'Evet, Sil!',
-      cancelButtonText: 'Vazgeç'
+      cancelButtonText: '{{ __("Cancel") }}'
     }).then((result) => {
       if (result.isConfirmed) {
         executeDelete(id);
@@ -3559,7 +3559,7 @@ document.addEventListener('DOMContentLoaded', function () {
       .then(res => res.json())
       .then(data => {
         if (!data.success) {
-          alert(data.message || 'Silme işlemi başarısız.');
+          alert(data.message || '{{ __("Deletion failed.") }}');
           return;
         }
 
@@ -3571,7 +3571,7 @@ document.addEventListener('DOMContentLoaded', function () {
           Swal.fire({
             icon: 'success',
             title: '{{ __("Silindi!") }}',
-            text: 'Görev raporu başarıyla silindi.',
+            text: '{{ __("Quest report successfully deleted.") }}',
             timer: 1600,
             showConfirmButton: false
           });
@@ -3593,14 +3593,14 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     Swal.fire({
-      title: '{{ __("XP\'leri Maceracılara Aktar?") }}',
-      html: `Bu görevdeki <b>${report.avg_reward} Ortalama XP</b>, kadroda bulunan maceracıların (<i>${[report.reporter, ...(report.other_players || [])].join(', ')}</i>) Player XP Tracker profillerine işlenecek.`,
+      title: '{{ __("Transfer XP to Adventurers?") }}',
+      html: `{{ __("Average XP (:avg XP) from this quest will be transferred to party adventurers:", ["avg" => ""]) }}${report.avg_reward} XP (<i>${[report.reporter, ...(report.other_players || [])].join(', ')}</i>)`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#28c76f',
       cancelButtonColor: '#82868b',
-      confirmButtonText: 'Evet, XP\'leri Dağıt!',
-      cancelButtonText: 'Vazgeç'
+      confirmButtonText: '{{ __("Yes, Distribute XP!") }}',
+      cancelButtonText: '{{ __("Cancel") }}'
     }).then((res) => {
       if (res.isConfirmed) {
         executeDistribute(id);
@@ -3619,7 +3619,7 @@ document.addEventListener('DOMContentLoaded', function () {
       .then(res => res.json())
       .then(data => {
         if (!data.success) {
-          alert(data.message || 'XP dağıtılamadı.');
+          alert(data.message || '{{ __("Could not distribute XP.") }}');
           return;
         }
 
@@ -3633,8 +3633,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
           Swal.fire({
             icon: 'success',
-            title: '{{ __("XP Başarıyla Dağıtıldı!") }}',
-            html: `Görevden <b>${data.data.total_awarded_count}</b> maceracıya kişi başı <b>+${data.data.xp_per_player} XP</b> eklendi:${listHtml}`,
+            title: '{{ __("XP Successfully Distributed!") }}',
+            html: `+${data.data.xp_per_player} XP {{ __("awarded to :count adventurers from quest:", ["count" => ""]) }}${data.data.total_awarded_count}</b>:${listHtml}`,
             confirmButtonColor: '#7367f0'
           });
         }
@@ -3658,21 +3658,21 @@ document.addEventListener('DOMContentLoaded', function () {
     btnResetToMasterDefaults.addEventListener('click', function () {
       if (window.Swal) {
         Swal.fire({
-          title: '{{ __("Google Sheet Verilerine Sıfırlansın mı?") }}',
-          text: 'Tüm eklenen özel raporlar temizlenecek ve tablonuz Google Sheet orijinal 32 satırına sıfırlanacaktır.',
+          title: '{{ __("Reset to Google Sheet Data?") }}',
+          text: '{{ __("All custom added reports will be removed and your table will be reset to Google Sheet original 32 rows.") }}',
           icon: 'warning',
           showCancelButton: true,
           confirmButtonColor: '#f59e0b',
           cancelButtonColor: '#82868b',
-          confirmButtonText: 'Evet, Sıfırla!',
-          cancelButtonText: 'Vazgeç'
+          confirmButtonText: '{{ __("Yes, Reset!") }}',
+          cancelButtonText: '{{ __("Cancel") }}'
         }).then((result) => {
           if (result.isConfirmed) {
             executeResetToDefaults();
           }
         });
       } else {
-        if (confirm('Master Sheet verilerine sıfırlansın mı?')) {
+        if (confirm('{{ __("Reset to Master Sheet data?") }}')) {
           executeResetToDefaults();
         }
       }
@@ -3689,7 +3689,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(res => res.json())
         .then(data => {
           if (!data.success) {
-            alert('Sıfırlama başarısız.');
+            alert('{{ __("Reset failed.") }}');
             return;
           }
           reportsData = data.reports;
@@ -3700,8 +3700,8 @@ document.addEventListener('DOMContentLoaded', function () {
           if (window.Swal) {
             Swal.fire({
               icon: 'success',
-              title: '{{ __("Tablo Sıfırlandı!") }}',
-              text: 'Görev Raporları tablosu Master Sheet verilerine (1.528 rapor) başarıyla sıfırlandı.',
+              title: '{{ __("Table Reset!") }}',
+              text: '{{ __("Quest Reports table was successfully reset to Master Sheet data (1,528 reports).") }}',
               timer: 2000,
               showConfirmButton: false
             });
@@ -3749,30 +3749,30 @@ document.addEventListener('DOMContentLoaded', function () {
     if (tierBadge) {
       if (r.mq === 'epic' || r.tier_type === 'epic') {
         tierBadge.className = 'badge badge-mq-epic font-monospace';
-        tierBadge.textContent = '✓✓ {{ __("Epik Ana Görev") }} (3x)';
+        tierBadge.textContent = '✓✓ {{ __("Epic Main Quest") }} (3x)';
       } else if (r.is_main || r.mq === 'main') {
         tierBadge.className = 'badge badge-mq-main font-monospace';
-        tierBadge.textContent = '✓ {{ __("Ana Görev") }} (1x)';
+        tierBadge.textContent = '✓ {{ __("Main Quest") }} (1x)';
       } else {
         tierBadge.className = 'badge badge-mq-side font-monospace';
-        tierBadge.textContent = '✗ {{ __("Yan Görev") }}';
+        tierBadge.textContent = '✗ {{ __("Side Quest") }}';
       }
     }
 
     if (statusBadge) {
       if ((r.status || 'success') === 'failed') {
         statusBadge.className = 'badge bg-label-danger text-danger border border-danger border-opacity-25';
-        statusBadge.textContent = 'x {{ __("Başarısız") }}';
+        statusBadge.textContent = 'x {{ __("Failed") }}';
       } else {
         statusBadge.className = 'badge bg-label-success text-success border border-success border-opacity-25';
-        statusBadge.textContent = '✓ {{ __("Başarılı") }}';
+        statusBadge.textContent = '✓ {{ __("Successful") }}';
       }
     }
 
     // Debrief narrative
     const fullTextEl = document.getElementById('modalReportFullText');
     const enemiesEl = document.getElementById('modalReportEnemies');
-    if (fullTextEl) fullTextEl.textContent = r.full_report || r.report_summary || 'Görev detayları kaydedildi.';
+    if (fullTextEl) fullTextEl.textContent = r.full_report || r.report_summary || '{{ __("Quest details recorded.") }}';
     if (enemiesEl) enemiesEl.textContent = r.enemies || 'Gizemli Tehditler';
 
     // Party Roster
@@ -3794,7 +3794,7 @@ document.addEventListener('DOMContentLoaded', function () {
       (r.other_players || []).forEach(name => {
         allMembers.push({
           name: name,
-          role: 'Diğer Oyuncu',
+          role: '{{ __("Other Player") }}',
           level: r.level || 1,
           xp: avgVal
         });
@@ -3850,7 +3850,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const kpiDepoVal = document.getElementById('kpiTotalDepoCutVal');
     const totalSpan = document.getElementById('totalReportsSpan');
 
-    if (kpiTotalBadge) kpiTotalBadge.textContent = `${s.total_quests} {{ __('Kayıtlı Sefer') }}`;
+    if (kpiTotalBadge) kpiTotalBadge.textContent = `${s.total_quests} {{ __('Recorded Expeditions') }}`;
     if (kpiTotalVal) kpiTotalVal.textContent = s.total_quests;
     if (kpiMainVal) kpiMainVal.innerHTML = `${s.main_quests + s.epic_quests} <span class="small text-muted font-normal" style="font-size: 0.72rem;">(${s.epic_quests} Epik)</span>`;
     if (kpiSideVal) kpiSideVal.textContent = s.side_quests;
@@ -4016,7 +4016,7 @@ document.addEventListener('DOMContentLoaded', function () {
     paginationContainer.classList.remove('d-none');
 
     if (infoText) {
-      infoText.innerHTML = `Gösterilen: <span class="text-primary fw-bold">${(startIndex + 1).toLocaleString()}</span> - <span class="text-primary fw-bold">${endIndex.toLocaleString()}</span> / Toplam <span class="fw-bold">${totalItems.toLocaleString()}</span> Rapor <span class="badge bg-label-primary font-monospace ms-1">Sayfa ${currPage} / ${totalPages}</span>`;
+      infoText.innerHTML = `{{ __("Showing:") }} <span class="text-primary fw-bold">${(startIndex + 1).toLocaleString()}</span> - <span class="text-primary fw-bold">${endIndex.toLocaleString()}</span> / {{ __("Total") }} <span class="fw-bold">${totalItems.toLocaleString()}</span> {{ __("Reports") }} <span class="badge bg-label-primary font-monospace ms-1">{{ __("Page") }} ${currPage} / ${totalPages}</span>`;
     }
 
     if (btnFirst) {
@@ -4099,7 +4099,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="avatar avatar-xl bg-label-secondary mx-auto mb-3 rounded-circle d-flex align-items-center justify-content-center">
               <i class="icon-base ti tabler-file-search fs-1 text-muted"></i>
             </div>
-            <h5 class="fw-bold text-heading">{{ __('Kriterlere uygun görev raporu bulunamadı.') }}</h5>
+            <h5 class="fw-bold text-heading">{{ __('No quest reports found matching the criteria.') }}</h5>
           </td>
         </tr>
       `;
@@ -4115,11 +4115,11 @@ document.addEventListener('DOMContentLoaded', function () {
       // MQ Badge
       let mqBadge = '';
       if (q.mq === 'epic' || q.tier_type === 'epic') {
-        mqBadge = `<span class="badge badge-mq-epic font-monospace px-2 py-1" title="Epik Ana Görev (3x)">✓✓</span>`;
+        mqBadge = `<span class="badge badge-mq-epic font-monospace px-2 py-1" title="{{ __("Epic Main Quest (3x)") }}">✓✓</span>`;
       } else if (q.is_main || q.mq === 'main') {
-        mqBadge = `<span class="badge badge-mq-main font-monospace px-2 py-1" title="Ana Görev (1x)">✓</span>`;
+        mqBadge = `<span class="badge badge-mq-main font-monospace px-2 py-1" title="{{ __("Main Quest (1x)") }}">✓</span>`;
       } else {
-        mqBadge = `<span class="badge badge-mq-side font-monospace px-2 py-1" title="Yan Görev (1x)">✗</span>`;
+        mqBadge = `<span class="badge badge-mq-side font-monospace px-2 py-1" title="{{ __("Side Quest (1x)") }}">✗</span>`;
       }
 
       // Depo status
@@ -4163,10 +4163,10 @@ document.addEventListener('DOMContentLoaded', function () {
           <td>
             <div class="d-flex align-items-center">
               ${(q.mq === 'epic' || q.tier_type === 'epic')
-                ? `<span class="badge bg-warning text-dark me-2 px-2 py-0" title="Epik Görev (3x XP)">✓✓</span>`
+                ? `<span class="badge bg-warning text-dark me-2 px-2 py-0" title="{{ __("Epic Quest (3x XP)") }}">✓✓</span>`
                 : (q.is_main || q.mq === 'main')
-                  ? `<span class="badge bg-primary me-2 px-2 py-0" title="Ana Görev">✓</span>`
-                  : `<span class="badge bg-secondary me-2 px-2 py-0" title="Yan Görev">✗</span>`}
+                  ? `<span class="badge bg-primary me-2 px-2 py-0" title="{{ __("Main Quest") }}">✓</span>`
+                  : `<span class="badge bg-secondary me-2 px-2 py-0" title="{{ __("Side Quest") }}">✗</span>`}
               <div>
                 <span class="fw-bold text-heading quest-title-text d-block" style="cursor: pointer;" onclick="openReportDetail(${q.id})">
                   ${q.title}
@@ -4242,13 +4242,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
           <td class="text-end">
             <div class="d-inline-flex align-items-center gap-1">
-              <button type="button" class="btn btn-icon btn-sm btn-outline-primary" onclick="openReportDetail(${q.id})" title="{{ __('Rapor Detayları') }}">
+              <button type="button" class="btn btn-icon btn-sm btn-outline-primary" onclick="openReportDetail(${q.id})" title="{{ __('Report Details') }}">
                 <i class="icon-base ti tabler-file-text fs-6"></i>
               </button>
-              <button type="button" class="btn btn-icon btn-sm btn-outline-warning" onclick="openEditReportModal(${q.id})" title="{{ __('Düzenle') }}">
+              <button type="button" class="btn btn-icon btn-sm btn-outline-warning" onclick="openEditReportModal(${q.id})" title="{{ __('Edit') }}">
                 <i class="icon-base ti tabler-edit fs-6"></i>
               </button>
-              <button type="button" class="btn btn-icon btn-sm btn-outline-success" onclick="distributeReportXp(${q.id})" title="{{ __('Maceracılara XP Dağıt') }}">
+              <button type="button" class="btn btn-icon btn-sm btn-outline-success" onclick="distributeReportXp(${q.id})" title="{{ __('Distribute XP to Adventurers') }}">
                 <i class="icon-base ti tabler-bolt fs-6"></i>
               </button>
               <button type="button" class="btn btn-icon btn-sm btn-outline-danger" onclick="deleteReportItem(${q.id})" title="{{ __('Sil') }}">
@@ -4623,14 +4623,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const grandTotalText = document.getElementById('livePoolGrandTotalText');
     const equationsText = document.getElementById('livePoolEquationsText');
 
-    if (payBadge) payBadge.textContent = `Uzman Payı: ${Number(uzmanPay).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} XP`;
+    if (payBadge) payBadge.textContent = `{{ __("Expert Share:") }} ${Number(uzmanPay).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} XP`;
     if (wikiRemText) wikiRemText.textContent = `${Number(wikiRem).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} XP`;
     if (uzmanCapText) uzmanCapText.textContent = `${Number(uzmanCap).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} XP`;
     if (ranksTotalText) ranksTotalText.textContent = `${Number(totalSpent).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} XP`;
     if (grandTotalText) grandTotalText.textContent = `${Number(grandTotal).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} XP`;
 
     if (equationsText) {
-      equationsText.textContent = `Uzman Payı = Havuz [${Number(poolTotal).toLocaleString(undefined, {maximumFractionDigits: 2})}] / Uzman Sayısı [${uzmanCount}] = ${Number(uzmanPay).toLocaleString(undefined, {maximumFractionDigits: 2})} XP | Grand Total = Rütbeler [${Number(totalSpent).toLocaleString(undefined, {maximumFractionDigits: 2})}] + Ek [${Number(extraFund).toLocaleString(undefined, {maximumFractionDigits: 2})}] = ${Number(grandTotal).toLocaleString(undefined, {maximumFractionDigits: 2})} XP`;
+      equationsText.textContent = `{{ __("Expert Share") }} = {{ __("Pool") }} [${Number(poolTotal).toLocaleString(undefined, {maximumFractionDigits: 2})}] / {{ __("Expert Count") }} [${uzmanCount}] = ${Number(uzmanPay).toLocaleString(undefined, {maximumFractionDigits: 2})} XP | Grand Total = {{ __("Ranks") }} [${Number(totalSpent).toLocaleString(undefined, {maximumFractionDigits: 2})}] + {{ __("Extra") }} [${Number(extraFund).toLocaleString(undefined, {maximumFractionDigits: 2})}] = ${Number(grandTotal).toLocaleString(undefined, {maximumFractionDigits: 2})} XP`;
     }
   }
 
@@ -4732,7 +4732,7 @@ document.addEventListener('DOMContentLoaded', function () {
       .then(data => {
         if (submitBtn) submitBtn.disabled = false;
         if (!data.success) {
-          alert(data.message || 'Güncelleme başarısız oldu.');
+          alert(data.message || '{{ __("Update failed.") }}');
           return;
         }
 
@@ -4744,8 +4744,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (window.Swal) {
           Swal.fire({
             icon: 'success',
-            title: '{{ __("Havuz Güncellendi!") }}',
-            text: 'Lonca XP Havuzu ve Rütbe Dağılım verileri başarıyla kaydedildi.',
+            title: '{{ __("Pool Updated!") }}',
+            text: '{{ __("Guild XP Pool and Rank Distribution data was successfully saved.") }}',
             timer: 2000,
             showConfirmButton: false
           });
@@ -4753,7 +4753,7 @@ document.addEventListener('DOMContentLoaded', function () {
       })
       .catch(err => {
         if (submitBtn) submitBtn.disabled = false;
-        alert('Sunucu iletişim hatası oluştu.');
+        alert('{{ __("Server communication error occurred.") }}');
       });
     });
   }
@@ -4764,21 +4764,21 @@ document.addEventListener('DOMContentLoaded', function () {
     btnResetPool.addEventListener('click', function () {
       if (window.Swal) {
         Swal.fire({
-          title: '{{ __("Havuz Verileri Sıfırlansın mı?") }}',
-          text: 'Lonca XP Havuzu ve Rütbeler tablosu Google Sheet orijinal değerlerine sıfırlanacaktır.',
+          title: '{{ __("Reset Pool Data?") }}',
+          text: '{{ __("Guild XP Pool and Ranks table will be reset to Google Sheet original values.") }}',
           icon: 'warning',
           showCancelButton: true,
           confirmButtonColor: '#f59e0b',
           cancelButtonColor: '#82868b',
-          confirmButtonText: 'Evet, Sıfırla!',
-          cancelButtonText: 'Vazgeç'
+          confirmButtonText: '{{ __("Yes, Reset!") }}',
+          cancelButtonText: '{{ __("Cancel") }}'
         }).then((result) => {
           if (result.isConfirmed) {
             executeResetPool();
           }
         });
       } else {
-        if (confirm('Havuz verileri Google Sheet orijinal değerlerine sıfırlansın mı?')) {
+        if (confirm('{{ __("Reset pool data to Google Sheet original values?") }}')) {
           executeResetPool();
         }
       }
@@ -4795,7 +4795,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(res => res.json())
         .then(data => {
           if (!data.success) {
-            alert('Sıfırlama başarısız.');
+            alert('{{ __("Reset failed.") }}');
             return;
           }
           updateGuildPoolDom(data.guildPoolData);
@@ -4803,8 +4803,8 @@ document.addEventListener('DOMContentLoaded', function () {
           if (window.Swal) {
             Swal.fire({
               icon: 'success',
-              title: '{{ __("Havuz Sıfırlandı!") }}',
-              text: 'Lonca XP Havuzu ve Rütbeler tablosu Master Sheet değerlerine döndürüldü.',
+              title: '{{ __("Pool Reset!") }}',
+              text: '{{ __("Guild XP Pool and Ranks table was restored to Master Sheet values.") }}',
               timer: 2000,
               showConfirmButton: false
             });

@@ -31,16 +31,31 @@
                 <span class="badge bg-label-primary font-monospace fs-7 d-inline-flex align-items-center">ID: #{{ Auth::user()->id }}</span>
               </div>
               @endif
-              <ul class="list-inline mb-0 d-flex align-items-center flex-wrap justify-content-sm-start justify-content-center gap-4 my-2">
-                @php
-                  $userRole = Auth::user()->role ?? 'User';
-                  $roleIcon = match($userRole) {
-                    'Admin' => 'ti tabler-crown text-danger',
-                    'Bailiff' => 'ti tabler-shield text-warning',
-                    default => 'ti tabler-user text-primary',
-                  };
-                @endphp
-                <li class="list-inline-item d-flex gap-2 align-items-center"><i class="icon-base {{ $roleIcon }} icon-lg"></i><span class="fw-medium">{{ $userRole }}</span></li>
+              <!-- Discord-style User Roles (Ordered from Highest Authority to Least) -->
+              @php
+                $profileUser = Auth::user() ?? ($user ?? null);
+                $profileRoles = $profileUser ? $profileUser->ordered_roles : collect();
+              @endphp
+              <div class="d-flex align-items-center flex-wrap justify-content-sm-start justify-content-center gap-2 my-2" id="userRolesContainer">
+                @forelse($profileRoles as $role)
+                  @php
+                    $roleColor = $role->color ?: '#7367f0';
+                    $roleIcon = $role->icon ?: 'ti tabler-shield';
+                  @endphp
+                  <span class="badge rounded-pill d-inline-flex align-items-center gap-1_5 px-3 py-1_5 shadow-xs"
+                        style="background-color: {{ $roleColor }}20; color: {{ $roleColor }}; border: 1px solid {{ $roleColor }}55; font-size: 0.82rem; font-weight: 600; letter-spacing: 0.3px;"
+                        title="{{ $role->description ? __($role->description) : '' }} ({{ __('Authority') }}: {{ $role->priority }})">
+                    <span class="badge-dot-indicator rounded-circle" style="width: 8px; height: 8px; background-color: {{ $roleColor }}; display: inline-block;"></span>
+                    <span>{{ __($role->name) }}</span>
+                  </span>
+                @empty
+                  <span class="badge rounded-pill bg-label-secondary d-inline-flex align-items-center gap-1_5 px-3 py-1">
+                    <span class="badge-dot-indicator rounded-circle" style="width: 8px; height: 8px; background-color: #82868b; display: inline-block;"></span>
+                    <span>{{ __('Adventurer') }}</span>
+                  </span>
+                @endforelse
+              </div>
+              <ul class="list-inline mb-0 d-flex align-items-center flex-wrap justify-content-sm-start justify-content-center gap-4 mt-2">
                 <li class="list-inline-item d-flex gap-2 align-items-center"><i class="icon-base ti tabler-map-pin icon-lg"></i><span class="fw-medium">{{ Auth::user()->country ?? 'Vatican City' }}</span></li>
                 <li class="list-inline-item d-flex gap-2 align-items-center"><i class="icon-base ti tabler-calendar icon-lg"></i><span class="fw-medium"> Joined {{ Auth::user() && Auth::user()->created_at ? Auth::user()->created_at->translatedFormat('F Y') : 'April 2021' }}</span></li>
               </ul>
