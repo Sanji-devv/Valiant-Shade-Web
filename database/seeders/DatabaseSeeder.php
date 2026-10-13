@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             RankSeeder::class,
             LevelThresholdSeeder::class,
             AdminUserSeeder::class,
+            RoleSeeder::class,
             NewsSeeder::class,
         ]);
     }

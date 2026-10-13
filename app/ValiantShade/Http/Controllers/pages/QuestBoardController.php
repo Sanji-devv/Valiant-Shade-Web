@@ -3,6 +3,7 @@
 namespace App\ValiantShade\Http\Controllers\pages;
 
 use App\ValiantShade\Http\Controllers\Controller;
+use App\ValiantShade\Services\DiscordWebhookService;
 use App\ValiantShade\Services\QuestBoardService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,7 +13,8 @@ use Illuminate\View\View;
 class QuestBoardController extends Controller
 {
     public function __construct(
-        protected QuestBoardService $service
+        protected QuestBoardService $service,
+        protected DiscordWebhookService $discordService
     ) {}
 
     /**
@@ -38,10 +40,6 @@ class QuestBoardController extends Controller
      */
     public function index(Request $request): View|JsonResponse|Response
     {
-        if (!session()->has('locale')) {
-            app()->setLocale('tr');
-        }
-
         $filters = [
             'category' => $request->get('category', 'all'),
             'eligibility' => $request->get('eligibility', 'all'),
@@ -66,6 +64,12 @@ class QuestBoardController extends Controller
 
         $isAdmin = auth()->user()?->hasPermission('quests.manage') ?? false;
 
+        $discordConfig = [
+            'configured' => !empty($this->discordService->getWebhookUrl()),
+            'enabled' => $this->discordService->isEnabled(),
+            'webhook_url' => $this->discordService->getWebhookUrl(),
+        ];
+
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
@@ -73,6 +77,7 @@ class QuestBoardController extends Controller
                 'counts' => $counts,
                 'guild_info' => $guildInfo,
                 'is_admin' => $isAdmin,
+                'discord_config' => $discordConfig,
             ]);
         }
 
@@ -81,12 +86,13 @@ class QuestBoardController extends Controller
             'counts',
             'guildInfo',
             'isAdmin',
-            'filters'
+            'filters',
+            'discordConfig'
         ));
     }
 
     /**
-     * Admin pins a new parchment quest onto the notice board.
+     * Admin pins a new parchment quest onto the notice board (with optional Discord broadcast).
      */
     public function store(Request $request): JsonResponse
     {
@@ -101,18 +107,71 @@ class QuestBoardController extends Controller
             'character' => 'nullable|string|max:100',
             'location' => 'nullable|string|max:255',
             'reward' => 'nullable|string|max:255',
-            'description' => 'required|string|max:2000',
+            'description' => 'required|string|max:4000',
+            'send_discord' => 'nullable|boolean',
         ]);
+
+        $quest = $this->service->createQuest($validated);
+
+        $discordSent = false;
+        $discordMsg = '';
+        if ($request->boolean('send_discord')) {
+            $discordRes = $this->discordService->sendQuestDecree($quest, 'pinned');
+            $discordSent = $discordRes['success'];
+            $discordMsg = $discordRes['message'] ?? '';
+        }
 
         return response()->json([
             'success' => true,
-            'message' => __("Quest \":title\" was successfully sealed and pinned to the board!", ['title' => $validated['title']]),
-            'quest' => array_merge($validated, [
-                'id' => rand(100, 999),
-                'status' => 'active',
-                'seal_color' => $validated['category'] === 'main' ? 'red' : 'gold',
-            ]),
+            'message' => __("Quest \":title\" was successfully sealed and pinned to the board!", ['title' => $quest['title']]),
+            'quest' => $quest,
+            'discord_sent' => $discordSent,
+            'discord_message' => $discordMsg,
         ], 201);
+    }
+
+    /**
+     * Admin updates an existing quest decree.
+     */
+    public function update(Request $request, int $id): JsonResponse
+    {
+        if ($deny = $this->checkAdmin($request)) {
+            return $deny;
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'category' => 'required|string|in:main,side,recurring,character',
+            'eligibility' => 'required|string|max:100',
+            'character' => 'nullable|string|max:100',
+            'location' => 'nullable|string|max:255',
+            'reward' => 'nullable|string|max:255',
+            'description' => 'required|string|max:4000',
+            'status' => 'nullable|string|in:active,on_hold,completed,cancelled',
+            'send_discord' => 'nullable|boolean',
+        ]);
+
+        $quest = $this->service->updateQuest($id, $validated);
+
+        if (!$quest) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Quest not found.'),
+            ], 404);
+        }
+
+        $discordSent = false;
+        if ($request->boolean('send_discord')) {
+            $discordRes = $this->discordService->sendQuestDecree($quest, 'updated');
+            $discordSent = $discordRes['success'];
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => __("Quest decree \":title\" was successfully updated!", ['title' => $quest['title']]),
+            'quest' => $quest,
+            'discord_sent' => $discordSent,
+        ]);
     }
 
     /**
@@ -126,7 +185,17 @@ class QuestBoardController extends Controller
 
         $validated = $request->validate([
             'status' => 'required|string|in:active,on_hold,completed,cancelled',
+            'send_discord' => 'nullable|boolean',
         ]);
+
+        $quest = $this->service->updateStatus($id, $validated['status']);
+
+        if (!$quest) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Quest not found.'),
+            ], 404);
+        }
 
         $statusLabels = [
             'active' => __('Pinned on Board (Active)'),
@@ -135,10 +204,117 @@ class QuestBoardController extends Controller
             'cancelled' => __('Quest Cancelled'),
         ];
 
+        if ($request->boolean('send_discord')) {
+            $this->discordService->sendQuestDecree($quest, 'status');
+        }
+
         return response()->json([
             'success' => true,
             'message' => __('Quest status updated to ":status".', ['status' => $statusLabels[$validated['status']] ?? $validated['status']]),
-            'status' => $validated['status'],
+            'quest' => $quest,
         ]);
+    }
+
+    /**
+     * Permanently remove a quest notice from the board.
+     */
+    public function destroy(Request $request, int $id): JsonResponse
+    {
+        if ($deny = $this->checkAdmin($request)) {
+            return $deny;
+        }
+
+        $deleted = $this->service->deleteQuest($id);
+
+        if (!$deleted) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Quest decree not found or could not be removed.'),
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => __('Quest notice removed from the board.'),
+        ]);
+    }
+
+    /**
+     * Broadcast an existing quest to Discord.
+     */
+    public function broadcastQuest(Request $request, int $id): JsonResponse
+    {
+        if ($deny = $this->checkAdmin($request)) {
+            return $deny;
+        }
+
+        $quest = $this->service->getQuestById($id);
+        if (!$quest) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Quest decree not found.'),
+            ], 404);
+        }
+
+        $result = $this->discordService->sendQuestDecree($quest, 'pinned');
+
+        return response()->json($result);
+    }
+
+    /**
+     * Reset quest board to factory default sheet records.
+     */
+    public function resetDefaults(Request $request): JsonResponse
+    {
+        if ($deny = $this->checkAdmin($request)) {
+            return $deny;
+        }
+
+        $raw = $this->service->resetToDefaults();
+
+        return response()->json([
+            'success' => true,
+            'message' => __('Quest Board has been restored to master sheet defaults.'),
+            'count' => count($raw),
+        ]);
+    }
+
+    /**
+     * Save Discord Webhook configuration.
+     */
+    public function saveDiscordSettings(Request $request): JsonResponse
+    {
+        if ($deny = $this->checkAdmin($request)) {
+            return $deny;
+        }
+
+        $validated = $request->validate([
+            'webhook_url' => 'nullable|string|max:500',
+            'enabled' => 'required|boolean',
+        ]);
+
+        $this->discordService->saveSettings($validated['webhook_url'] ?? '', $validated['enabled']);
+
+        return response()->json([
+            'success' => true,
+            'message' => __('Discord Webhook settings saved successfully.'),
+            'configured' => !empty($validated['webhook_url']),
+            'enabled' => $validated['enabled'],
+        ]);
+    }
+
+    /**
+     * Test Discord Webhook connection.
+     */
+    public function testDiscordWebhook(Request $request): JsonResponse
+    {
+        if ($deny = $this->checkAdmin($request)) {
+            return $deny;
+        }
+
+        $url = $request->input('webhook_url');
+        $result = $this->discordService->sendTestMessage($url);
+
+        return response()->json($result);
     }
 }

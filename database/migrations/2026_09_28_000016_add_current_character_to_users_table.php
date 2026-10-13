@@ -9,12 +9,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'display_name')) {
-                $table->string('display_name')->nullable();
-            }
-            if (!Schema::hasColumn('users', 'real_name')) {
-                $table->string('real_name')->nullable();
-            }
             if (!Schema::hasColumn('users', 'current_character')) {
                 $table->string('current_character')->nullable();
             }
@@ -31,7 +25,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $cols = array_filter(
-                ['real_name', 'current_character', 'active_main_character_id', 'active_clerk_character_id'],
+                ['current_character', 'active_main_character_id', 'active_clerk_character_id'],
                 fn($col) => Schema::hasColumn('users', $col)
             );
             if (!empty($cols)) {

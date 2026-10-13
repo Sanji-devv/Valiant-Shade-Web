@@ -59,9 +59,18 @@ $configData = \App\ValiantShade\Helpers\Helpers::appClasses();
     @php
       $isLoginSlug = ($menu->slug === 'auth-login-basic');
       $isRegisterSlug = ($menu->slug === 'auth-register-basic');
+      $isAdminOnlyItem = (
+        $menu->slug === 'app-roles' ||
+        $menu->slug === 'app-audit-logs' ||
+        (isset($menu->url) && (str_contains($menu->url, '/app/roles') || str_contains($menu->url, '/app/audit-logs')))
+      );
     @endphp
 
     @if (Auth::check() && $isRegisterSlug)
+      @continue
+    @endif
+
+    @if ($isAdminOnlyItem && (!Auth::check() || !Auth::user()->isAdmin()))
       @continue
     @endif
 

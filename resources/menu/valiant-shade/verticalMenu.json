@@ -16,6 +16,18 @@
             "url": "/valiant-shade/app/user/list"
         },
         {
+            "name": "Roles & Permissions",
+            "icon": "menu-icon icon-base ti tabler-shield-lock",
+            "slug": "app-roles",
+            "url": "/valiant-shade/app/roles"
+        },
+        {
+            "name": "Audit Logs",
+            "icon": "menu-icon icon-base ti tabler-history-toggle",
+            "slug": "app-audit-logs",
+            "url": "/valiant-shade/app/audit-logs"
+        },
+        {
             "name": "User Profile",
             "icon": "menu-icon icon-base ti tabler-user",
             "slug": "pages-profile-user",

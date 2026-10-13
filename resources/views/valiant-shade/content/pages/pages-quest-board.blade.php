@@ -626,6 +626,19 @@
         </div>
 
         @if($isAdmin)
+          <!-- Discord Settings Button -->
+          <button type="button" class="btn btn-outline-warning btn-sm rounded-pill shadow-xs" data-bs-toggle="modal" data-bs-target="#modalDiscordSettings" title="{{ __('Discord Webhook Ferman Ayarları') }}">
+            <i class="icon-base ti tabler-brand-discord me-1"></i> {{ __('Discord') }}
+            @if(!empty($discordConfig['configured']) && !empty($discordConfig['enabled']))
+              <span class="badge bg-success rounded-pill ms-1 p-1" style="font-size: 0.6rem;" title="{{ __('Discord Aktif') }}">●</span>
+            @endif
+          </button>
+
+          <!-- Reset Defaults Button -->
+          <button type="button" class="btn btn-outline-danger btn-sm rounded-pill shadow-xs" id="btnResetQuestDefaults" title="{{ __('Varsayılan Görev Listesine Sıfırla') }}">
+            <i class="icon-base ti tabler-rotate me-1"></i> {{ __('Sıfırla') }}
+          </button>
+
           <!-- Pin New Quest Button -->
           <button type="button" class="btn btn-warning btn-sm rounded-pill waves-effect shadow-xs fw-bold" data-bs-toggle="modal" data-bs-target="#modalPinQuest">
             <i class="icon-base ti tabler-plus me-1"></i> {{ __('Pin New Quest') }}
@@ -803,24 +816,74 @@
                 @endif
               </div>
 
-              <!-- Bottom Row: Status Badge & Inspect Trigger -->
+              <!-- Bottom Row: Status Badge & Admin / Inspect Actions -->
               <div class="d-flex justify-content-between align-items-center pt-2 mt-auto" style="border-top: 1px solid rgba(140, 100, 50, 0.25);">
-                <span class="badge {{ $statusBadge }} rounded-pill font-monospace">
-                  {{ $statusText }}
-                </span>
+                <div class="d-flex align-items-center gap-1.5">
+                  <span class="badge {{ $statusBadge }} rounded-pill font-monospace">
+                    {{ $statusText }}
+                  </span>
+                  @if($isAdmin)
+                    <div class="dropdown d-inline-block">
+                      <button class="btn btn-xs btn-outline-secondary rounded-pill p-1 lh-1" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="{{ __('Durumu Hızlı Değiştir') }}" style="font-size: 11px;">
+                        <i class="icon-base ti tabler-chevron-down"></i>
+                      </button>
+                      <ul class="dropdown-menu dropdown-menu-dark shadow-sm py-1" style="font-size: 0.8rem; min-width: 130px;">
+                        <li><h6 class="dropdown-header py-1 text-muted" style="font-size: 0.72rem;">{{ __('Durum Değiştir') }}</h6></li>
+                        <li><a class="dropdown-item py-1 cursor-pointer btn-quick-status" data-id="{{ $q['id'] }}" data-status="active"><span class="badge bg-success me-1">●</span> {{ __('Aktif') }}</a></li>
+                        <li><a class="dropdown-item py-1 cursor-pointer btn-quick-status" data-id="{{ $q['id'] }}" data-status="on_hold"><span class="badge bg-info me-1">●</span> {{ __('Askıda') }}</a></li>
+                        <li><a class="dropdown-item py-1 cursor-pointer btn-quick-status" data-id="{{ $q['id'] }}" data-status="completed"><span class="badge bg-danger me-1">●</span> {{ __('Tamamlandı') }}</a></li>
+                        <li><a class="dropdown-item py-1 cursor-pointer btn-quick-status" data-id="{{ $q['id'] }}" data-status="cancelled"><span class="badge bg-secondary me-1">●</span> {{ __('İptal') }}</a></li>
+                      </ul>
+                    </div>
+                  @endif
+                </div>
 
-                <button type="button" class="btn btn-xs btn-outline-dark rounded-pill btn-inspect-quest fw-bold px-3 py-1"
-                        data-title="{{ $q['title'] }}"
-                        data-category="{{ $q['category_label'] }}" data-category-key="{{ $q['category'] }}"
-                        data-eligibility="{{ $q['eligibility_key'] ?? $q['eligibility'] }}"
-                        data-character="{{ $q['character'] ?? __('Guild') }}"
-                        data-location="{{ $q['location'] ?? __('Unknown') }}"
-                        data-reward="{{ $q['reward'] ?? __('Standard Reward') }}"
-                        data-status="{{ $q['status'] }}" data-status-label="{{ $statusText }}"
-                        data-badge-class="{{ $eligBadgeClass }}"
-                        data-description="{{ $q['description'] }}">
-                  <i class="icon-base ti tabler-eye me-1"></i> {{ __('Inspect Decree') }}
-                </button>
+                <div class="d-flex align-items-center gap-1">
+                  @if($isAdmin)
+                    <!-- Discord Broadcast Button -->
+                    <button type="button" class="btn btn-xs btn-outline-warning rounded-circle p-1 btn-broadcast-discord" 
+                            data-id="{{ $q['id'] }}" data-title="{{ $q['title'] }}" 
+                            title="{{ __('Discord\'a Ferman Duyur') }}" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;">
+                      <i class="icon-base ti tabler-brand-discord fs-6"></i>
+                    </button>
+
+                    <!-- Edit Quest Button -->
+                    <button type="button" class="btn btn-xs btn-outline-primary rounded-circle p-1 btn-edit-quest" 
+                            data-id="{{ $q['id'] }}"
+                            data-title="{{ $q['title'] }}"
+                            data-category="{{ $q['category'] }}"
+                            data-eligibility="{{ $q['eligibility_key'] ?? $q['eligibility'] }}"
+                            data-character="{{ $q['character'] ?? '' }}"
+                            data-location="{{ $q['location'] ?? '' }}"
+                            data-reward="{{ $q['reward'] ?? '' }}"
+                            data-status="{{ $q['status'] }}"
+                            data-description="{{ $q['description'] }}"
+                            title="{{ __('Fermanı Düzenle') }}" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;">
+                      <i class="icon-base ti tabler-pencil fs-6"></i>
+                    </button>
+
+                    <!-- Delete Quest Button -->
+                    <button type="button" class="btn btn-xs btn-outline-danger rounded-circle p-1 btn-delete-quest" 
+                            data-id="{{ $q['id'] }}" data-title="{{ $q['title'] }}"
+                            title="{{ __('Panodan Kaldır') }}" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;">
+                      <i class="icon-base ti tabler-trash fs-6"></i>
+                    </button>
+                  @endif
+
+                  <button type="button" class="btn btn-xs btn-outline-dark rounded-pill btn-inspect-quest fw-bold px-2.5 py-1"
+                          data-id="{{ $q['id'] }}"
+                          data-title="{{ $q['title'] }}"
+                          data-category="{{ $q['category_label'] }}" data-category-key="{{ $q['category'] }}"
+                          data-eligibility="{{ $q['eligibility_key'] ?? $q['eligibility'] }}"
+                          data-character="{{ $q['character'] ?? __('Guild') }}"
+                          data-location="{{ $q['location'] ?? __('Unknown') }}"
+                          data-reward="{{ $q['reward'] ?? __('Standard Reward') }}"
+                          data-status="{{ $q['status'] }}" data-status-label="{{ $statusText }}"
+                          data-badge-class="{{ $eligBadgeClass }}"
+                          data-description="{{ $q['description'] }}">
+                    <i class="icon-base ti tabler-eye me-1"></i> {{ __('Inspect') }}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -913,18 +976,46 @@
                 </span>
               </td>
               <td class="text-end">
-                <button type="button" class="btn btn-xs btn-outline-dark rounded-pill btn-inspect-quest"
-                        data-title="{{ $q['title'] }}"
-                        data-category="{{ $q['category_label'] }}" data-category-key="{{ $q['category'] }}"
-                        data-eligibility="{{ $q['eligibility_key'] ?? $q['eligibility'] }}"
-                        data-character="{{ $q['character'] ?? __('Guild') }}"
-                        data-location="{{ $q['location'] ?? __('Unknown') }}"
-                        data-reward="{{ $q['reward'] ?? __('Standard Reward') }}"
-                        data-status="{{ $q['status'] }}" data-status-label="{{ $statusText }}"
-                        data-badge-class="{{ $eligBadgeClass }}"
-                        data-description="{{ $q['description'] }}">
-                  <i class="icon-base ti tabler-eye"></i>
-                </button>
+                <div class="d-inline-flex align-items-center gap-1">
+                  @if($isAdmin)
+                    <button type="button" class="btn btn-xs btn-outline-warning rounded-circle p-1 btn-broadcast-discord"
+                            data-id="{{ $q['id'] }}" data-title="{{ $q['title'] }}" title="{{ __('Discord\'a Duyur') }}"
+                            style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;">
+                      <i class="icon-base ti tabler-brand-discord fs-6"></i>
+                    </button>
+                    <button type="button" class="btn btn-xs btn-outline-primary rounded-circle p-1 btn-edit-quest"
+                            data-id="{{ $q['id'] }}"
+                            data-title="{{ $q['title'] }}"
+                            data-category="{{ $q['category'] }}"
+                            data-eligibility="{{ $q['eligibility_key'] ?? $q['eligibility'] }}"
+                            data-character="{{ $q['character'] ?? '' }}"
+                            data-location="{{ $q['location'] ?? '' }}"
+                            data-reward="{{ $q['reward'] ?? '' }}"
+                            data-status="{{ $q['status'] }}"
+                            data-description="{{ $q['description'] }}"
+                            title="{{ __('Düzenle') }}" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;">
+                      <i class="icon-base ti tabler-pencil fs-6"></i>
+                    </button>
+                    <button type="button" class="btn btn-xs btn-outline-danger rounded-circle p-1 btn-delete-quest"
+                            data-id="{{ $q['id'] }}" data-title="{{ $q['title'] }}" title="{{ __('Kaldır') }}"
+                            style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;">
+                      <i class="icon-base ti tabler-trash fs-6"></i>
+                    </button>
+                  @endif
+                  <button type="button" class="btn btn-xs btn-outline-dark rounded-pill btn-inspect-quest"
+                          data-id="{{ $q['id'] }}"
+                          data-title="{{ $q['title'] }}"
+                          data-category="{{ $q['category_label'] }}" data-category-key="{{ $q['category'] }}"
+                          data-eligibility="{{ $q['eligibility_key'] ?? $q['eligibility'] }}"
+                          data-character="{{ $q['character'] ?? __('Guild') }}"
+                          data-location="{{ $q['location'] ?? __('Unknown') }}"
+                          data-reward="{{ $q['reward'] ?? __('Standard Reward') }}"
+                          data-status="{{ $q['status'] }}" data-status-label="{{ $statusText }}"
+                          data-badge-class="{{ $eligBadgeClass }}"
+                          data-description="{{ $q['description'] }}">
+                    <i class="icon-base ti tabler-eye"></i>
+                  </button>
+                </div>
               </td>
             </tr>
           @endforeach
@@ -1091,11 +1182,20 @@
           </div>
         </div>
       </div>
-      <div class="modal-footer border-top d-flex justify-content-end gap-2 py-3 px-4" style="border-color: rgba(140, 100, 50, 0.35) !important;">
-        <button type="button" class="btn btn-outline-dark btn-sm rounded-pill px-3" data-bs-dismiss="modal">{{ __('Close') }}</button>
-        <button type="button" class="btn btn-warning btn-sm rounded-pill fw-bold px-3 shadow-sm" onclick="Swal.fire('{{ __('Quest Claimed!') }}', '{{ __('You applied to the guild clerk to claim this quest.') }}', 'success');">
-          <i class="icon-base ti tabler-send me-1"></i> {{ __('Claim Quest') }}
-        </button>
+      <div class="modal-footer border-top d-flex justify-content-between gap-2 py-3 px-4" style="border-color: rgba(140, 100, 50, 0.35) !important;">
+        <div>
+          @if($isAdmin)
+            <button type="button" class="btn btn-outline-warning btn-sm rounded-pill px-3 shadow-xs" id="inspectBtnDiscord">
+              <i class="icon-base ti tabler-brand-discord me-1"></i> {{ __('Discord\'a Duyur') }}
+            </button>
+          @endif
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <button type="button" class="btn btn-outline-dark btn-sm rounded-pill px-3" data-bs-dismiss="modal">{{ __('Close') }}</button>
+          <button type="button" class="btn btn-warning btn-sm rounded-pill fw-bold px-3 shadow-sm" onclick="Swal.fire('{{ __('Quest Claimed!') }}', '{{ __('You applied to the guild clerk to claim this quest.') }}', 'success');">
+            <i class="icon-base ti tabler-send me-1"></i> {{ __('Claim Quest') }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -1159,15 +1259,179 @@
               <input type="text" class="form-control" id="inputQuestReward" placeholder="{{ __('e.g., 10,000 XP & 500 SP') }}">
             </div>
 
-            <div class="mb-0">
+            <div class="mb-3">
               <label class="form-label fw-semibold" for="inputQuestDesc">{{ __('Quest Notice & Details') }} <span class="text-danger">*</span></label>
               <textarea class="form-control" id="inputQuestDesc" rows="3" required placeholder="{{ __('Quest objectives, hazards, and expectations from adventurers...') }}"></textarea>
+            </div>
+
+            <div class="form-check form-switch mb-0">
+              <input class="form-check-input" type="checkbox" id="inputQuestSendDiscord" checked>
+              <label class="form-check-label fw-semibold text-warning small" for="inputQuestSendDiscord">
+                <i class="icon-base ti tabler-brand-discord me-1"></i> {{ __('Bu fermanı Discord lonca kanalına otomatik duyur') }}
+              </label>
             </div>
           </div>
           <div class="modal-footer border-top">
             <button type="button" class="btn btn-label-secondary rounded-pill" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
             <button type="submit" class="btn btn-warning rounded-pill fw-bold" id="btnSubmitPinQuest">
               <i class="icon-base ti tabler-pin me-1"></i> {{ __('Seal & Pin to Board') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Modal: Edit Quest Decree -->
+  <div class="modal fade" id="modalEditQuest" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header border-bottom">
+          <h5 class="modal-title fw-bold text-heading d-flex align-items-center gap-2">
+            <i class="icon-base ti tabler-pencil text-primary fs-4"></i>
+            <span>{{ __('Edit Quest Decree') }}</span>
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('Close') }}"></button>
+        </div>
+        <form id="formEditQuest">
+          @csrf
+          <input type="hidden" id="editQuestId">
+          <div class="modal-body p-4">
+            <div class="mb-3">
+              <label class="form-label fw-semibold" for="editQuestTitle">{{ __('Quest Title') }} <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="editQuestTitle" required>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-6">
+                <label class="form-label fw-semibold" for="editQuestCategory">{{ __('Category') }} <span class="text-danger">*</span></label>
+                <select class="form-select" id="editQuestCategory" required>
+                  <option value="main">{{ __('Main Quest') }}</option>
+                  <option value="side">{{ __('Side Quest') }}</option>
+                  <option value="recurring">{{ __('Recurring Quests / Patrols') }}</option>
+                  <option value="character">{{ __('Member Request') }}</option>
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label fw-semibold" for="editQuestEligibility">{{ __('Eligibility') }} <span class="text-danger">*</span></label>
+                <select class="form-select" id="editQuestEligibility" required>
+                  <option value="all_ranks">{{ __('All (All Ranks)') }}</option>
+                  <option value="candidate_member">{{ __('Candidate / Member') }}</option>
+                  <option value="member_senior">{{ __('Member / Senior') }}</option>
+                  <option value="senior_expert">{{ __('Senior / Expert') }}</option>
+                  <option value="expert">{{ __('Expert Only') }}</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-6">
+                <label class="form-label fw-semibold" for="editQuestCharacter">{{ __('Assigned Adventurer') }}</label>
+                <input type="text" class="form-control" id="editQuestCharacter">
+              </div>
+              <div class="col-6">
+                <label class="form-label fw-semibold" for="editQuestStatus">{{ __('Status') }} <span class="text-danger">*</span></label>
+                <select class="form-select" id="editQuestStatus" required>
+                  <option value="active">{{ __('Pinned on Board (Active)') }}</option>
+                  <option value="on_hold">{{ __('Suspended (On Hold)') }}</option>
+                  <option value="completed">{{ __('Quest Finished (Completed)') }}</option>
+                  <option value="cancelled">{{ __('Cancelled Quests') }}</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-6">
+                <label class="form-label fw-semibold" for="editQuestLocation">{{ __('Location / Region') }}</label>
+                <input type="text" class="form-control" id="editQuestLocation">
+              </div>
+              <div class="col-6">
+                <label class="form-label fw-semibold" for="editQuestReward">{{ __('Reward') }}</label>
+                <input type="text" class="form-control" id="editQuestReward">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold" for="editQuestDesc">{{ __('Quest Notice & Details') }} <span class="text-danger">*</span></label>
+              <textarea class="form-control" id="editQuestDesc" rows="3" required></textarea>
+            </div>
+
+            <div class="form-check form-switch mb-0">
+              <input class="form-check-input" type="checkbox" id="editQuestSendDiscord">
+              <label class="form-check-label fw-semibold text-warning small" for="editQuestSendDiscord">
+                <i class="icon-base ti tabler-brand-discord me-1"></i> {{ __('Güncellemeyi Discord lonca kanalına duyur') }}
+              </label>
+            </div>
+          </div>
+          <div class="modal-footer border-top">
+            <button type="button" class="btn btn-label-secondary rounded-pill" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+            <button type="submit" class="btn btn-primary rounded-pill fw-bold" id="btnSubmitEditQuest">
+              <i class="icon-base ti tabler-check me-1"></i> {{ __('Save Changes') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Modal: Discord Webhook Settings -->
+  <div class="modal fade" id="modalDiscordSettings" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-warning shadow-lg">
+        <div class="modal-header border-bottom py-3">
+          <h5 class="modal-title fw-bold text-heading d-flex align-items-center gap-2 mb-0">
+            <i class="icon-base ti tabler-brand-discord text-warning fs-3"></i>
+            <span>{{ __('Discord Ferman Bildirim Ayarları') }}</span>
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('Close') }}"></button>
+        </div>
+        <form id="formDiscordSettings">
+          @csrf
+          <div class="modal-body p-4">
+            <p class="text-body-secondary small mb-3">
+              {{ __('Panoya yeni bir ferman asıldığında veya ferman güncellendiğinde, Discord sunucunuzun görev kanalına otomatik Orta Çağ mühürlü duyuru gönderilir.') }}
+            </p>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold" for="inputDiscordWebhookUrl">
+                {{ __('Discord Webhook URL') }}
+              </label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="icon-base ti tabler-link"></i></span>
+                <input type="url" class="form-control font-monospace" id="inputDiscordWebhookUrl" 
+                       placeholder="https://discord.com/api/webhooks/..." 
+                       value="{{ $discordConfig['webhook_url'] ?? '' }}">
+              </div>
+              <small class="text-muted d-block mt-1">
+                {{ __('Discord Sunucu Ayarları > Entegrasyonlar > Webhooklar bölümünden oluşturduğunuz webhook adresini yapıştırın.') }}
+              </small>
+            </div>
+
+            <div class="card p-3 bg-label-secondary border-0 rounded-3 mb-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <span class="fw-bold d-block text-heading">{{ __('Otomatik Bildirimler') }}</span>
+                  <small class="text-muted">{{ __('Yeni fermanlar asıldığında Discord\'a iletilsin mi?') }}</small>
+                </div>
+                <div class="form-check form-switch mb-0">
+                  <input class="form-check-input" type="checkbox" id="switchDiscordEnabled" {{ !empty($discordConfig['enabled']) ? 'checked' : '' }}>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center pt-2">
+              <span class="text-muted small">
+                {{ __('Bağlantıyı doğrulamak için test mesajı gönderebilirsiniz:') }}
+              </span>
+              <button type="button" class="btn btn-outline-warning btn-sm rounded-pill" id="btnTestDiscordWebhook">
+                <i class="icon-base ti tabler-bell-ringing me-1"></i> {{ __('Test Gönder') }}
+              </button>
+            </div>
+          </div>
+          <div class="modal-footer border-top d-flex justify-content-between py-3">
+            <button type="button" class="btn btn-label-secondary btn-sm rounded-pill" data-bs-dismiss="modal">{{ __('Close') }}</button>
+            <button type="submit" class="btn btn-warning btn-sm rounded-pill fw-bold px-3" id="btnSaveDiscordSettings">
+              <i class="icon-base ti tabler-check me-1"></i> {{ __('Ayarları Kaydet') }}
             </button>
           </div>
         </form>
@@ -1456,9 +1720,15 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Inspect Quest Modal Trigger
+  // Inspect Quest Modal Trigger & Current Active ID
+  let currentInspectedQuestId = null;
+  let currentInspectedQuestTitle = '';
+
   document.querySelectorAll('.btn-inspect-quest').forEach(btn => {
     btn.addEventListener('click', function() {
+      currentInspectedQuestId = this.dataset.id || null;
+      currentInspectedQuestTitle = this.dataset.title || '';
+
       document.getElementById('inspectQuestTitle').textContent = this.dataset.title;
       const catEl = document.getElementById('inspectQuestCategory');
       catEl.textContent = this.dataset.category;
@@ -1490,6 +1760,371 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
+  // Helper: Broadcast decree to Discord
+  function broadcastDecree(id, title) {
+    if (!id) return;
+    Swal.fire({
+      title: '{{ __("Discord Ferman Duyurusu") }}',
+      text: '"' + title + '" {{ __("fermanı Discord lonca kanalına gönderilsin mi?") }}',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: '{{ __("Evet, Duyur!") }}',
+      cancelButtonText: '{{ __("İptal") }}',
+      confirmButtonColor: '#f59e0b',
+    }).then(result => {
+      if (result.isConfirmed) {
+        Swal.fire({
+          title: '{{ __("İletiliyor...") }}',
+          text: '{{ __("Discord sunucusuna ferman iletiliyor.") }}',
+          allowOutsideClick: false,
+          didOpen: () => Swal.showLoading()
+        });
+
+        fetch("{{ url('/valiant-shade/pages/quest-board') }}/" + id + "/broadcast", {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            Swal.fire({
+              icon: 'success',
+              title: '{{ __("Duyuruldu!") }}',
+              text: data.message,
+              timer: 2000,
+              showConfirmButton: false
+            });
+          } else {
+            Swal.fire({
+              icon: 'error',
+              title: '{{ __("Duyuru Gönderilemedi") }}',
+              text: data.message
+            });
+          }
+        })
+        .catch(() => {
+          Swal.fire({ icon: 'error', title: '{{ __("Hata!") }}', text: '{{ __("Sunucuya erişilemedi.") }}' });
+        });
+      }
+    });
+  }
+
+  // Inspect Modal Discord Trigger
+  const inspectBtnDiscord = document.getElementById('inspectBtnDiscord');
+  if (inspectBtnDiscord) {
+    inspectBtnDiscord.addEventListener('click', function() {
+      if (currentInspectedQuestId) {
+        broadcastDecree(currentInspectedQuestId, currentInspectedQuestTitle);
+      }
+    });
+  }
+
+  // Card / Table Discord Trigger
+  document.querySelectorAll('.btn-broadcast-discord').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      broadcastDecree(this.dataset.id, this.dataset.title);
+    });
+  });
+
+  // Admin Quick Status Change
+  document.querySelectorAll('.btn-quick-status').forEach(item => {
+    item.addEventListener('click', function(e) {
+      e.preventDefault();
+      const id = this.dataset.id;
+      const status = this.dataset.status;
+
+      fetch("{{ url('/valiant-shade/pages/quest-board') }}/" + id + "/status", {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ status: status })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          Swal.fire({
+            icon: 'success',
+            title: '{{ __("Durum Güncellendi!") }}',
+            text: data.message,
+            timer: 1200,
+            showConfirmButton: false
+          }).then(() => location.reload());
+        } else {
+          Swal.fire({ icon: 'error', title: '{{ __("Hata!") }}', text: data.message });
+        }
+      })
+      .catch(() => {
+        Swal.fire({ icon: 'error', title: '{{ __("Hata!") }}', text: '{{ __("Sunucuya erişilemedi.") }}' });
+      });
+    });
+  });
+
+  // Admin Open Edit Quest Modal
+  document.querySelectorAll('.btn-edit-quest').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      document.getElementById('editQuestId').value = this.dataset.id;
+      document.getElementById('editQuestTitle').value = this.dataset.title || '';
+      document.getElementById('editQuestCategory').value = this.dataset.category || 'side';
+      document.getElementById('editQuestEligibility').value = this.dataset.eligibility || 'all_ranks';
+      document.getElementById('editQuestCharacter').value = this.dataset.character || '';
+      document.getElementById('editQuestStatus').value = this.dataset.status || 'active';
+      document.getElementById('editQuestLocation').value = this.dataset.location || '';
+      document.getElementById('editQuestReward').value = this.dataset.reward || '';
+      document.getElementById('editQuestDesc').value = this.dataset.description || '';
+      document.getElementById('editQuestSendDiscord').checked = false;
+
+      const modal = new bootstrap.Modal(document.getElementById('modalEditQuest'));
+      modal.show();
+    });
+  });
+
+  // Admin Submit Edit Quest Form
+  const formEdit = document.getElementById('formEditQuest');
+  if (formEdit) {
+    formEdit.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const id = document.getElementById('editQuestId').value;
+      const btn = document.getElementById('btnSubmitEditQuest');
+      btn.disabled = true;
+
+      const payload = {
+        title: document.getElementById('editQuestTitle').value,
+        category: document.getElementById('editQuestCategory').value,
+        eligibility: document.getElementById('editQuestEligibility').value,
+        character: document.getElementById('editQuestCharacter').value,
+        status: document.getElementById('editQuestStatus').value,
+        location: document.getElementById('editQuestLocation').value,
+        reward: document.getElementById('editQuestReward').value,
+        description: document.getElementById('editQuestDesc').value,
+        send_discord: document.getElementById('editQuestSendDiscord').checked
+      };
+
+      fetch("{{ url('/valiant-shade/pages/quest-board') }}/" + id, {
+        method: 'PUT',
+        headers: {
+          'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => {
+        btn.disabled = false;
+        if (data.success) {
+          Swal.fire({
+            icon: 'success',
+            title: '{{ __("Ferman Güncellendi!") }}',
+            text: data.message,
+            timer: 1500,
+            showConfirmButton: false
+          }).then(() => location.reload());
+        } else {
+          Swal.fire({ icon: 'error', title: '{{ __("Hata!") }}', text: data.message });
+        }
+      })
+      .catch(() => {
+        btn.disabled = false;
+        Swal.fire({ icon: 'error', title: '{{ __("Hata!") }}', text: '{{ __("Sunucuya erişilemedi.") }}' });
+      });
+    });
+  }
+
+  // Admin Delete Quest Decree
+  document.querySelectorAll('.btn-delete-quest').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const id = this.dataset.id;
+      const title = this.dataset.title;
+
+      Swal.fire({
+        title: '{{ __("Fermanı Kaldır?") }}',
+        text: '"' + title + '" {{ __("fermanı panodan kalıcı olarak sökülecektir.") }}',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: '{{ __("Evet, Sök!") }}',
+        cancelButtonText: '{{ __("Vazgeç") }}'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch("{{ url('/valiant-shade/pages/quest-board') }}/" + id, {
+            method: 'DELETE',
+            headers: {
+              'X-CSRF-TOKEN': '{{ csrf_token() }}',
+              'Accept': 'application/json'
+            }
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              Swal.fire({
+                icon: 'success',
+                title: '{{ __("Ferman Söküldü!") }}',
+                text: data.message,
+                timer: 1400,
+                showConfirmButton: false
+              }).then(() => location.reload());
+            } else {
+              Swal.fire({ icon: 'error', title: '{{ __("Hata!") }}', text: data.message });
+            }
+          })
+          .catch(() => {
+            Swal.fire({ icon: 'error', title: '{{ __("Hata!") }}', text: '{{ __("Sunucuya erişilemedi.") }}' });
+          });
+        }
+      });
+    });
+  });
+
+  // Admin Reset to Master Defaults
+  const btnResetDefaults = document.getElementById('btnResetQuestDefaults');
+  if (btnResetDefaults) {
+    btnResetDefaults.addEventListener('click', function() {
+      Swal.fire({
+        title: '{{ __("Varsayılan Görevlere Sıfırla?") }}',
+        text: '{{ __("Tüm panodaki fermanlar orijinal Görev Listesi verilerine geri döndürülecektir.") }}',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: '{{ __("Evet, Sıfırla!") }}',
+        cancelButtonText: '{{ __("İptal") }}'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch("{{ route('valiant-shade.pages-quest-board.reset-defaults') }}", {
+            method: 'POST',
+            headers: {
+              'X-CSRF-TOKEN': '{{ csrf_token() }}',
+              'Accept': 'application/json'
+            }
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              Swal.fire({
+                icon: 'success',
+                title: '{{ __("Sıfırlandı!") }}',
+                text: data.message,
+                timer: 1600,
+                showConfirmButton: false
+              }).then(() => location.reload());
+            } else {
+              Swal.fire({ icon: 'error', title: '{{ __("Hata!") }}', text: data.message });
+            }
+          })
+          .catch(() => {
+            Swal.fire({ icon: 'error', title: '{{ __("Hata!") }}', text: '{{ __("Sunucuya erişilemedi.") }}' });
+          });
+        }
+      });
+    });
+  }
+
+  // Admin Discord Settings Form Save
+  const formDiscord = document.getElementById('formDiscordSettings');
+  if (formDiscord) {
+    formDiscord.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSaveDiscordSettings');
+      btn.disabled = true;
+
+      const payload = {
+        webhook_url: document.getElementById('inputDiscordWebhookUrl').value.trim(),
+        enabled: document.getElementById('switchDiscordEnabled').checked
+      };
+
+      fetch("{{ route('valiant-shade.pages-quest-board.discord-settings') }}", {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => {
+        btn.disabled = false;
+        if (data.success) {
+          Swal.fire({
+            icon: 'success',
+            title: '{{ __("Kaydedildi!") }}',
+            text: data.message,
+            timer: 1500,
+            showConfirmButton: false
+          }).then(() => location.reload());
+        } else {
+          Swal.fire({ icon: 'error', title: '{{ __("Hata!") }}', text: data.message });
+        }
+      })
+      .catch(() => {
+        btn.disabled = false;
+        Swal.fire({ icon: 'error', title: '{{ __("Hata!") }}', text: '{{ __("Sunucuya erişilemedi.") }}' });
+      });
+    });
+  }
+
+  // Admin Discord Test Message
+  const btnTestDiscord = document.getElementById('btnTestDiscordWebhook');
+  if (btnTestDiscord) {
+    btnTestDiscord.addEventListener('click', function() {
+      const url = document.getElementById('inputDiscordWebhookUrl').value.trim();
+      if (!url) {
+        Swal.fire({
+          icon: 'warning',
+          title: '{{ __("URL Gerekli") }}',
+          text: '{{ __("Lütfen önce bir Discord Webhook URL adresi girin.") }}'
+        });
+        return;
+      }
+
+      btnTestDiscord.disabled = true;
+      btnTestDiscord.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> {{ __("Gönderiliyor...") }}';
+
+      fetch("{{ route('valiant-shade.pages-quest-board.discord-test') }}", {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ webhook_url: url })
+      })
+      .then(res => res.json())
+      .then(data => {
+        btnTestDiscord.disabled = false;
+        btnTestDiscord.innerHTML = '<i class="icon-base ti tabler-bell-ringing me-1"></i> {{ __("Test Gönder") }}';
+        if (data.success) {
+          Swal.fire({
+            icon: 'success',
+            title: '{{ __("Bağlantı Başarılı!") }}',
+            text: data.message
+          });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: '{{ __("Bağlantı Başarısız") }}',
+            text: data.message
+          });
+        }
+      })
+      .catch(() => {
+        btnTestDiscord.disabled = false;
+        btnTestDiscord.innerHTML = '<i class="icon-base ti tabler-bell-ringing me-1"></i> {{ __("Test Gönder") }}';
+        Swal.fire({ icon: 'error', title: '{{ __("Hata!") }}', text: '{{ __("Sunucuya erişilemedi.") }}' });
+      });
+    });
+  }
+
   // Admin Form: Pin New Quest
   const formPin = document.getElementById('formPinQuest');
   if (formPin) {
@@ -1505,7 +2140,8 @@ document.addEventListener('DOMContentLoaded', function() {
         character: document.getElementById('inputQuestCharacter').value || '{{ __('Guild') }}',
         location: document.getElementById('inputQuestLocation').value,
         reward: document.getElementById('inputQuestReward').value,
-        description: document.getElementById('inputQuestDesc').value
+        description: document.getElementById('inputQuestDesc').value,
+        send_discord: document.getElementById('inputQuestSendDiscord') ? document.getElementById('inputQuestSendDiscord').checked : false
       };
 
       fetch("{{ route('valiant-shade.pages-quest-board.store') }}", {
@@ -1524,7 +2160,7 @@ document.addEventListener('DOMContentLoaded', function() {
           Swal.fire({
             icon: 'success',
             title: '{{ __('Notice Pinned!') }}',
-            text: data.message,
+            text: data.message + (data.discord_sent ? ' (Discord\'a iletildi)' : ''),
             timer: 1600,
             showConfirmButton: false
           }).then(() => location.reload());

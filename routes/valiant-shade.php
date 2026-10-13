@@ -17,6 +17,7 @@ use App\ValiantShade\Http\Controllers\authentications\RegisterBasic;
 use App\ValiantShade\Http\Controllers\authentications\LogoutController;
 use App\ValiantShade\Http\Controllers\apps\UserList;
 use App\ValiantShade\Http\Controllers\apps\RoleController;
+use App\ValiantShade\Http\Controllers\apps\AuditLogController;
 use App\ValiantShade\Http\Controllers\pages\NewsController;
 
 /*
@@ -113,8 +114,16 @@ Route::post('/pages/maceraci-info/reset-defaults', [\App\ValiantShade\Http\Contr
 // Medieval Quest Board (Lonca Görev Panosu) Routes
 Route::get('/pages/quest-board', [\App\ValiantShade\Http\Controllers\pages\QuestBoardController::class, 'index'])->name('valiant-shade.pages-quest-board');
 Route::get('/pages/gorev-listesi', [\App\ValiantShade\Http\Controllers\pages\QuestBoardController::class, 'index'])->name('valiant-shade.pages-gorev-listesi');
-Route::post('/pages/quest-board', [\App\ValiantShade\Http\Controllers\pages\QuestBoardController::class, 'store'])->name('valiant-shade.pages-quest-board.store');
-Route::post('/pages/quest-board/{id}/status', [\App\ValiantShade\Http\Controllers\pages\QuestBoardController::class, 'updateStatus'])->name('valiant-shade.pages-quest-board.status');
+Route::middleware(['throttle:valiant-shade.quest-mutations'])->group(function () {
+    Route::post('/pages/quest-board', [\App\ValiantShade\Http\Controllers\pages\QuestBoardController::class, 'store'])->name('valiant-shade.pages-quest-board.store');
+    Route::put('/pages/quest-board/{id}', [\App\ValiantShade\Http\Controllers\pages\QuestBoardController::class, 'update'])->name('valiant-shade.pages-quest-board.update');
+    Route::delete('/pages/quest-board/{id}', [\App\ValiantShade\Http\Controllers\pages\QuestBoardController::class, 'destroy'])->name('valiant-shade.pages-quest-board.destroy');
+    Route::post('/pages/quest-board/{id}/status', [\App\ValiantShade\Http\Controllers\pages\QuestBoardController::class, 'updateStatus'])->name('valiant-shade.pages-quest-board.status');
+    Route::post('/pages/quest-board/{id}/broadcast', [\App\ValiantShade\Http\Controllers\pages\QuestBoardController::class, 'broadcastQuest'])->name('valiant-shade.pages-quest-board.broadcast');
+    Route::post('/pages/quest-board/reset-defaults', [\App\ValiantShade\Http\Controllers\pages\QuestBoardController::class, 'resetDefaults'])->name('valiant-shade.pages-quest-board.reset-defaults');
+    Route::post('/pages/quest-board/discord-settings', [\App\ValiantShade\Http\Controllers\pages\QuestBoardController::class, 'saveDiscordSettings'])->name('valiant-shade.pages-quest-board.discord-settings');
+    Route::post('/pages/quest-board/discord-test', [\App\ValiantShade\Http\Controllers\pages\QuestBoardController::class, 'testDiscordWebhook'])->name('valiant-shade.pages-quest-board.discord-test');
+});
 
 // Quest Reports (Görev Raporları) Routes
 Route::get('/pages/quest-reports', [\App\ValiantShade\Http\Controllers\pages\QuestReportsController::class, 'index'])->name('valiant-shade.pages-quest-reports');
@@ -197,10 +206,20 @@ Route::delete('/app/user/{id}/character', [UserList::class, 'destroyCharacter'])
 Route::post('/app/user/{id}/character/clear', [UserList::class, 'destroyCharacter'])->name('valiant-shade.app-user-list.clear-character');
 Route::post('/app/user/sync-character', [UserList::class, 'syncCharacter'])->name('valiant-shade.app-user-list.sync-character');
 Route::put('/app/user/{id}/role', [UserList::class, 'updateRole'])->name('valiant-shade.app-user-list.update-role');
-Route::get('/app/roles', [RoleController::class, 'index'])->name('valiant-shade.app-roles.index');
-Route::post('/app/roles', [RoleController::class, 'store'])->name('valiant-shade.app-roles.store');
-Route::put('/app/roles/{role}', [RoleController::class, 'update'])->name('valiant-shade.app-roles.update');
-Route::delete('/app/roles/{role}', [RoleController::class, 'destroy'])->name('valiant-shade.app-roles.destroy');
+// Roles & Permissions Management (Strictly Admin Only)
+Route::middleware([\App\ValiantShade\Http\Middleware\EnsureUserIsAdmin::class])->group(function () {
+    Route::get('/app/roles', [RoleController::class, 'index'])->name('valiant-shade.app-roles.index');
+    Route::get('/app/roles-permissions', [RoleController::class, 'index'])->name('valiant-shade.app-roles-permissions');
+    Route::get('/app/audit-logs', [AuditLogController::class, 'index'])->name('valiant-shade.app-audit-logs');
+
+    Route::middleware(['throttle:valiant-shade.admin-mutations'])->group(function () {
+        Route::post('/app/roles', [RoleController::class, 'store'])->name('valiant-shade.app-roles.store');
+        Route::put('/app/roles/{role}', [RoleController::class, 'update'])->name('valiant-shade.app-roles.update');
+        Route::delete('/app/roles/{role}', [RoleController::class, 'destroy'])->name('valiant-shade.app-roles.destroy');
+        Route::post('/app/roles/{role}/toggle-permission', [RoleController::class, 'togglePermission'])->name('valiant-shade.app-roles.toggle-permission');
+        Route::delete('/app/audit-logs/clear', [AuditLogController::class, 'clear'])->name('valiant-shade.app-audit-logs.clear');
+    });
+});
 Route::match(['GET', 'POST'], '/logout', [LogoutController::class, 'logout'])->name('logout');
 Route::match(['GET', 'POST'], '/auth/logout', [LogoutController::class, 'logout'])->name('valiant-shade.auth-logout');
 

@@ -23,11 +23,13 @@ return new class extends Migration
             $table->decimal('buy_price', 14, 2)->default(0);    // Alım (Birim Ederi)
             $table->text('notes')->nullable();
             $table->tinyInteger('status')->default(0); // enums/.php dosyasına bakıp
-            $table->timestamps();
 
             $table->index('inventory_item_type_id');
             $table->index('slug');
             $table->index('status');
+
+            $table->softDeletes();
+            $table->timestamps();
         });
     }
 

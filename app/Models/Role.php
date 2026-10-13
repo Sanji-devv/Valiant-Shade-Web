@@ -38,6 +38,11 @@ class Role extends Model
             'inventory.manage' => 'Manage inventory and guild vault',
             'xp.manage' => 'Manage player experience',
             'quests.manage' => 'Manage quest board',
+            'discipline.manage' => 'Manage guild discipline and sanctions',
+            'hr.manage' => 'Manage hero resources and rank promotions',
+            'archives.manage' => 'Manage guild archives and chronicles',
+            'diplomacy.manage' => 'Manage guild representation and diplomacy',
+            'oaths.manage' => 'Manage sacred oaths and covenant compliance',
         ];
     }
 

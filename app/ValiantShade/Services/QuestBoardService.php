@@ -3,16 +3,285 @@
 namespace App\ValiantShade\Services;
 
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class QuestBoardService
 {
     /**
+     * Storage path for the Quest Board dataset.
+     */
+    protected function getStoragePath(): string
+    {
+        return storage_path('app/quest_board.json');
+    }
+
+    /**
+     * Ensure the storage file is initialized with the master Görev Listesi quests.
+     */
+    public function ensureInitialized(): void
+    {
+        $path = $this->getStoragePath();
+        if (!file_exists($path)) {
+            $this->resetToDefaults();
+        }
+    }
+
+    /**
+     * Reset quest board dataset to the master Görev Listesi default records.
+     */
+    public function resetToDefaults(): array
+    {
+        $raw = $this->getRawQuestData();
+        $this->saveQuestsData($raw);
+        return $raw;
+    }
+
+    /**
+     * Clear cached quests dataset (Cache Invalidation).
+     */
+    public function clearCache(): void
+    {
+        Cache::forget('valiant_shade.quests.raw');
+    }
+
+    /**
+     * Get all raw quest array items from Cache with JSON storage fallback (Cache-Aside Pattern).
+     */
+    public function getAllQuestsRaw(): array
+    {
+        return Cache::remember('valiant_shade.quests.raw', 3600, function () {
+            $this->ensureInitialized();
+            $path = $this->getStoragePath();
+            if (file_exists($path)) {
+                $fp = fopen($path, 'rb');
+                if ($fp) {
+                    flock($fp, LOCK_SH);
+                    $json = stream_get_contents($fp);
+                    flock($fp, LOCK_UN);
+                    fclose($fp);
+
+                    if (!empty($json)) {
+                        $decoded = json_decode($json, true);
+                        if (is_array($decoded) && !empty($decoded)) {
+                            return $decoded;
+                        }
+                    }
+                }
+            }
+            return $this->getRawQuestData();
+        });
+    }
+
+    /**
+     * Persist quests array to storage with Atomic Exclusive File Locking (LOCK_EX) and Cache Invalidation.
+     */
+    protected function saveQuestsData(array $quests): void
+    {
+        $path = $this->getStoragePath();
+        $dir = dirname($path);
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        $json = json_encode(array_values($quests), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $tempPath = $path . '.' . uniqid('lock_', true) . '.tmp';
+
+        $fp = fopen($tempPath, 'wb');
+        if ($fp) {
+            if (flock($fp, LOCK_EX)) {
+                fwrite($fp, $json);
+                fflush($fp);
+                flock($fp, LOCK_UN);
+                fclose($fp);
+                rename($tempPath, $path);
+            } else {
+                fclose($fp);
+                @unlink($tempPath);
+                file_put_contents($path, $json, LOCK_EX);
+            }
+        } else {
+            file_put_contents($path, $json, LOCK_EX);
+        }
+
+        $this->clearCache();
+    }
+
+    /**
+     * Get a specific quest by ID.
+     */
+    public function getQuestById(int|string $id): ?array
+    {
+        $quests = $this->getAllQuestsRaw();
+        foreach ($quests as $q) {
+            if ((int) $q['id'] === (int) $id) {
+                return $q;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Create and pin a new quest parchment to the board.
+     */
+    public function createQuest(array $data): array
+    {
+        $quests = $this->getAllQuestsRaw();
+
+        $maxId = 0;
+        foreach ($quests as $q) {
+            if (isset($q['id']) && (int) $q['id'] > $maxId) {
+                $maxId = (int) $q['id'];
+            }
+        }
+        $newId = $maxId + 1;
+
+        $category = $data['category'] ?? 'side';
+        $categoryLabel = match($category) {
+            'main' => 'Main Quest',
+            'character' => 'Member Request',
+            'recurring' => 'Recurring',
+            default => 'Side Quest',
+        };
+
+        $eligKey = $data['eligibility'] ?? 'all_ranks';
+        $eligLabel = match($eligKey) {
+            'all_ranks' => 'All Ranks',
+            'candidate_member' => 'Candidate / Member',
+            'member_senior' => 'Member / Senior',
+            'senior_expert' => 'Senior / Expert',
+            'expert' => 'Expert',
+            default => ($data['eligibility_label'] ?? $eligKey),
+        };
+
+        $sealColor = match($category) {
+            'main' => 'red',
+            'character' => 'bronze',
+            'recurring' => 'blue',
+            default => 'gold',
+        };
+
+        $newQuest = [
+            'id' => $newId,
+            'category' => $category,
+            'category_label' => $categoryLabel,
+            'title' => trim($data['title']),
+            'eligibility_key' => $eligKey,
+            'eligibility' => $eligLabel,
+            'character' => !empty($data['character']) ? trim($data['character']) : 'Guild',
+            'status' => $data['status'] ?? 'active',
+            'priority' => $data['priority'] ?? ($category === 'main' ? 'high' : 'medium'),
+            'seal_color' => $data['seal_color'] ?? $sealColor,
+            'description' => trim($data['description'] ?? ''),
+            'location' => !empty($data['location']) ? trim($data['location']) : 'Unknown',
+            'reward' => !empty($data['reward']) ? trim($data['reward']) : 'Standard Reward',
+            'created_at' => now()->toIso8601String(),
+        ];
+
+        // Newest quest at the beginning of list
+        array_unshift($quests, $newQuest);
+        $this->saveQuestsData($quests);
+
+        return $newQuest;
+    }
+
+    /**
+     * Update an existing quest decree.
+     */
+    public function updateQuest(int|string $id, array $data): ?array
+    {
+        $quests = $this->getAllQuestsRaw();
+        $foundIndex = null;
+
+        foreach ($quests as $idx => $q) {
+            if ((int) $q['id'] === (int) $id) {
+                $foundIndex = $idx;
+                break;
+            }
+        }
+
+        if ($foundIndex === null) {
+            return null;
+        }
+
+        $current = $quests[$foundIndex];
+
+        if (isset($data['category'])) {
+            $current['category'] = $data['category'];
+            $current['category_label'] = match($data['category']) {
+                'main' => 'Main Quest',
+                'character' => 'Member Request',
+                'recurring' => 'Recurring',
+                default => 'Side Quest',
+            };
+            $current['seal_color'] = match($data['category']) {
+                'main' => 'red',
+                'character' => 'bronze',
+                'recurring' => 'blue',
+                default => 'gold',
+            };
+        }
+
+        if (isset($data['eligibility'])) {
+            $eligKey = $data['eligibility'];
+            $current['eligibility_key'] = $eligKey;
+            $current['eligibility'] = match($eligKey) {
+                'all_ranks' => 'All Ranks',
+                'candidate_member' => 'Candidate / Member',
+                'member_senior' => 'Member / Senior',
+                'senior_expert' => 'Senior / Expert',
+                'expert' => 'Expert',
+                default => ($data['eligibility_label'] ?? $eligKey),
+            };
+        }
+
+        if (isset($data['title'])) $current['title'] = trim($data['title']);
+        if (isset($data['character'])) $current['character'] = trim($data['character']);
+        if (isset($data['location'])) $current['location'] = trim($data['location']);
+        if (isset($data['reward'])) $current['reward'] = trim($data['reward']);
+        if (isset($data['description'])) $current['description'] = trim($data['description']);
+        if (isset($data['status'])) $current['status'] = $data['status'];
+        if (isset($data['seal_color'])) $current['seal_color'] = $data['seal_color'];
+        if (isset($data['priority'])) $current['priority'] = $data['priority'];
+
+        $current['updated_at'] = now()->toIso8601String();
+
+        $quests[$foundIndex] = $current;
+        $this->saveQuestsData($quests);
+
+        return $current;
+    }
+
+    /**
+     * Update quest status (active, on_hold, completed, cancelled).
+     */
+    public function updateStatus(int|string $id, string $status): ?array
+    {
+        return $this->updateQuest($id, ['status' => $status]);
+    }
+
+    /**
+     * Delete quest decree permanently from board.
+     */
+    public function deleteQuest(int|string $id): bool
+    {
+        $quests = $this->getAllQuestsRaw();
+        $filtered = array_filter($quests, fn($q) => (int) $q['id'] !== (int) $id);
+
+        if (count($filtered) === count($quests)) {
+            return false;
+        }
+
+        $this->saveQuestsData(array_values($filtered));
+        return true;
+    }
+
+    /**
      * Get all quests from the Master Sheet Görev Listesi tab.
-     * Fully in-memory, static and richly decorated for the Medieval Quest Board.
+     * Fully persistent and richly decorated for the Medieval Quest Board.
      */
     public function getAllQuests(array $filters = []): Collection
     {
-        $quests = collect($this->getRawQuestData());
+        $quests = collect($this->getAllQuestsRaw());
 
         // Filter by category
         if (!empty($filters['category']) && $filters['category'] !== 'all') {

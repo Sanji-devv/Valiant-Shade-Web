@@ -2,102 +2,257 @@
 
 namespace App\ValiantShade\Http\Controllers\apps;
 
-use App\Models\Role;
 use App\ValiantShade\Http\Controllers\Controller;
+use App\ValiantShade\Services\RoleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
+use Illuminate\Http\Response;
+use Illuminate\View\View;
 
 class RoleController extends Controller
 {
-    public function index(): JsonResponse
-    {
-        $this->authorizeRoleManagement();
+    public function __construct(
+        protected RoleService $roleService,
+        protected \App\ValiantShade\Services\AuditLogService $auditLogService
+    ) {}
 
-        return response()->json([
-            'roles' => Role::withCount('users')->orderByDesc('priority')->orderBy('id')->get(),
-            'permissions' => Role::permissionCatalog(),
-        ]);
+    /**
+     * Check if current user is an authorized Administrator.
+     */
+    protected function authorizeAdmin(Request $request): ?JsonResponse
+    {
+        $user = auth()->user();
+
+        // Strictly must be authenticated and strictly an Administrator (No bypass)
+        $hasAccess = $user && $user->isAdmin();
+
+        if (!$hasAccess) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('Access denied. Strictly restricted to system Administrators.'),
+                ], 403);
+            }
+            abort(403, __('Access denied. Strictly restricted to system Administrators.'));
+        }
+
+        return null;
     }
 
+    /**
+     * Display the Roles & Permissions Management page.
+     */
+    public function index(Request $request): View|JsonResponse|Response
+    {
+        if ($deny = $this->authorizeAdmin($request)) {
+            return $deny;
+        }
+
+        $roles = $this->roleService->getAllRoles();
+        $permissions = $this->roleService->getPermissionCatalog();
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'roles' => $roles,
+                'permissions' => $permissions,
+            ]);
+        }
+
+        return view('valiant-shade.content.apps.app-access-roles', compact(
+            'roles',
+            'permissions'
+        ));
+    }
+
+    /**
+     * Create a new role.
+     */
     public function store(Request $request): JsonResponse
     {
-        $this->authorizeRoleManagement();
-        $validated = $this->validateRole($request);
-        $slug = strtoupper(Str::slug($validated['name'], '_'));
-        $slug = $slug !== '' ? $slug : 'ROLE_' . Str::upper(Str::random(8));
-
-        if (Role::where('slug', $slug)->exists()) {
-            return response()->json(['message' => 'A role with this name already exists.'], 422);
+        if ($deny = $this->authorizeAdmin($request)) {
+            return $deny;
         }
 
-        $role = Role::create([
-            'slug' => $slug,
-            'name' => $validated['name'],
-            'description' => $validated['description'] ?? null,
-            'color' => $validated['color'] ?? '#7367f0',
-            'icon' => $validated['icon'] ?? 'ti tabler-shield',
-            'priority' => (int) ($validated['priority'] ?? 10),
-            'permissions' => $validated['permissions'] ?? [],
+        $validated = $request->validate([
+            'name' => 'required|string|max:60',
+            'description' => 'nullable|string|max:255',
+            'color' => 'nullable|string|max:30',
+            'icon' => 'nullable|string|max:50',
+            'priority' => 'nullable|integer|min:0|max:100',
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'string',
+            'is_bailiff' => 'nullable|boolean',
+            'bailiff_tier' => 'nullable|string|max:80',
         ]);
 
-        return response()->json(['success' => true, 'role' => $role], 201);
+        try {
+            $role = $this->roleService->createRole($validated);
+
+            // Audit Trail
+            $this->auditLogService->log(
+                'role.created',
+                __('Created role ":name" (:slug) with priority #:priority.', [
+                    'name' => $role['name'],
+                    'slug' => $role['slug'],
+                    'priority' => $role['priority'] ?? 10,
+                ]),
+                'Role',
+                $role['id'],
+                [],
+                $role
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => __('Role ":name" created successfully!', ['name' => $role['name']]),
+                'role' => $role,
+            ], 201);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
     }
 
-    public function update(Request $request, Role $role): JsonResponse
+    /**
+     * Update an existing role.
+     */
+    public function update(Request $request, string|int $role): JsonResponse
     {
-        $this->authorizeRoleManagement();
-        $validated = $this->validateRole($request, $role);
-
-        if ($role->slug === 'ADMIN' && !in_array('roles.manage', $validated['permissions'] ?? [], true)) {
-            return response()->json(['message' => 'The Admin role must retain role-management permission.'], 422);
+        if ($deny = $this->authorizeAdmin($request)) {
+            return $deny;
         }
 
-        $role->update([
-            'name' => $validated['name'],
-            'description' => $validated['description'] ?? $role->description,
-            'color' => $validated['color'] ?? $role->color,
-            'icon' => $validated['icon'] ?? $role->icon,
-            'priority' => isset($validated['priority']) ? (int) $validated['priority'] : $role->priority,
-            'permissions' => $validated['permissions'] ?? [],
+        $validated = $request->validate([
+            'name' => 'required|string|max:60',
+            'description' => 'nullable|string|max:255',
+            'color' => 'nullable|string|max:30',
+            'icon' => 'nullable|string|max:50',
+            'priority' => 'nullable|integer|min:0|max:100',
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'string',
+            'is_bailiff' => 'nullable|boolean',
+            'bailiff_tier' => 'nullable|string|max:80',
         ]);
 
-        return response()->json(['success' => true, 'role' => $role->fresh()]);
+        try {
+            $oldRole = $this->roleService->findRole($role);
+            $updated = $this->roleService->updateRole($role, $validated);
+
+            // Audit Trail
+            $this->auditLogService->log(
+                'role.updated',
+                __('Updated role ":name" (:slug).', [
+                    'name' => $updated['name'],
+                    'slug' => $updated['slug'],
+                ]),
+                'Role',
+                $updated['id'],
+                $oldRole ?: [],
+                $updated
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => __('Role ":name" updated successfully!', ['name' => $updated['name']]),
+                'role' => $updated,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
     }
 
-    public function destroy(Role $role): JsonResponse
+    /**
+     * Quick toggle permission for a role.
+     */
+    public function togglePermission(Request $request, string|int $role): JsonResponse
     {
-        $this->authorizeRoleManagement();
-
-        if ($role->is_system) {
-            return response()->json(['message' => 'Built-in roles cannot be deleted.'], 422);
+        if ($deny = $this->authorizeAdmin($request)) {
+            return $deny;
         }
 
-        if ($role->users()->exists()) {
-            return response()->json(['message' => 'Move users to another role before deleting this role.'], 422);
-        }
-
-        $role->delete();
-
-        return response()->json(['success' => true]);
-    }
-
-    private function authorizeRoleManagement(): void
-    {
-        abort_unless(auth()->user()?->hasPermission('roles.manage'), 403);
-    }
-
-    private function validateRole(Request $request, ?Role $role = null): array
-    {
-        return $request->validate([
-            'name' => ['required', 'string', 'max:60'],
-            'description' => ['nullable', 'string', 'max:255'],
-            'color' => ['nullable', 'string', 'max:30'],
-            'icon' => ['nullable', 'string', 'max:50'],
-            'priority' => ['nullable', 'integer', 'min:0', 'max:100'],
-            'permissions' => ['nullable', 'array'],
-            'permissions.*' => ['string', Rule::in(array_keys(Role::permissionCatalog()))],
+        $validated = $request->validate([
+            'permission' => 'required|string',
+            'enabled' => 'required|boolean',
         ]);
+
+        try {
+            $oldRole = $this->roleService->findRole($role);
+            $updated = $this->roleService->togglePermission($role, $validated['permission'], $validated['enabled']);
+
+            // Audit Trail
+            $actionDesc = $validated['enabled'] ? __('Granted') : __('Revoked');
+            $this->auditLogService->log(
+                'permission.toggled',
+                __(':action permission ":perm" for role ":name".', [
+                    'action' => $actionDesc,
+                    'perm' => $validated['permission'],
+                    'name' => $updated['name'],
+                ]),
+                'Role',
+                $updated['id'],
+                ['permission' => $validated['permission'], 'enabled' => !$validated['enabled']],
+                ['permission' => $validated['permission'], 'enabled' => $validated['enabled']]
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => __('Permission updated for role ":name".', ['name' => $updated['name']]),
+                'role' => $updated,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Delete a custom role.
+     */
+    public function destroy(Request $request, string|int $role): JsonResponse
+    {
+        if ($deny = $this->authorizeAdmin($request)) {
+            return $deny;
+        }
+
+        try {
+            $oldRole = $this->roleService->findRole($role);
+            $deleted = $this->roleService->deleteRole($role);
+            if ($deleted) {
+                // Audit Trail
+                $this->auditLogService->log(
+                    'role.deleted',
+                    __('Deleted custom role ":name" (:slug).', [
+                        'name' => $oldRole['name'] ?? (string) $role,
+                        'slug' => $oldRole['slug'] ?? (string) $role,
+                    ]),
+                    'Role',
+                    $oldRole['id'] ?? (string) $role,
+                    $oldRole ?: [],
+                    []
+                );
+
+                return response()->json([
+                    'success' => true,
+                    'message' => __('Role was deleted successfully.'),
+                ]);
+            }
+            return response()->json([
+                'success' => false,
+                'message' => __('Role not found.'),
+            ], 404);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
     }
 }

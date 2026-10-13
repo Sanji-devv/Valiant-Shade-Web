@@ -17,6 +17,16 @@
                     "slug": "app-user-list"
                 },
                 {
+                    "url": "/valiant-shade/app/roles",
+                    "name": "Roles & Permissions",
+                    "slug": "app-roles"
+                },
+                {
+                    "url": "/valiant-shade/app/audit-logs",
+                    "name": "Audit Logs",
+                    "slug": "app-audit-logs"
+                },
+                {
                     "url": "/valiant-shade/pages/profile-user",
                     "name": "User Profile",
                     "slug": "pages-profile-user"

@@ -8,9 +8,18 @@ use Illuminate\Support\Facades\Route;
     @php
       $isLoginSub = ($submenu->slug === 'auth-login-basic');
       $isRegisterSub = ($submenu->slug === 'auth-register-basic');
+      $isAdminOnlySub = (
+        $submenu->slug === 'app-roles' ||
+        $submenu->slug === 'app-audit-logs' ||
+        (isset($submenu->url) && (str_contains($submenu->url, '/app/roles') || str_contains($submenu->url, '/app/audit-logs')))
+      );
     @endphp
 
     @if (Auth::check() && $isRegisterSub)
+      @continue
+    @endif
+
+    @if ($isAdminOnlySub && (!Auth::check() || !Auth::user()->isAdmin()))
       @continue
     @endif
 

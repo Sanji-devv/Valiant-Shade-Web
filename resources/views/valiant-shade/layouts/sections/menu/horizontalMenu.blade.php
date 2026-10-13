@@ -29,7 +29,16 @@
                             }
                         }
                     }
+                    $isAdminOnly = (
+                        $menu->slug === 'app-roles' ||
+                        $menu->slug === 'app-audit-logs' ||
+                        (isset($menu->url) && (str_contains($menu->url, '/app/roles') || str_contains($menu->url, '/app/audit-logs')))
+                    );
                 @endphp
+
+                @if ($isAdminOnly && (!Auth::check() || !Auth::user()->isAdmin()))
+                    @continue
+                @endif
 
                 {{-- main menu --}}
                 <li class="menu-item {{ $activeClass }}">

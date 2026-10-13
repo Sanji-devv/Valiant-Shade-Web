@@ -230,9 +230,17 @@ class User extends Authenticatable
     /**
      * Check if user has a specific role slug (e.g. 'ADMIN', 'GM').
      */
-    public function hasRole(string|array $roleSlugs): bool
+    public function hasRole(string|array ...$roleSlugs): bool
     {
-        $slugs = array_map('strtoupper', (array) $roleSlugs);
+        $flattened = [];
+        foreach ($roleSlugs as $item) {
+            if (is_array($item)) {
+                $flattened = array_merge($flattened, $item);
+            } else {
+                $flattened[] = $item;
+            }
+        }
+        $slugs = array_map('strtoupper', $flattened);
 
         // Check assigned roles
         if ($this->relationLoaded('roles')) {
@@ -332,11 +340,18 @@ class User extends Authenticatable
             } catch (\Throwable $e) {}
         }
 
-        try {
-            return $this->roleDefinition?->hasPermission($permission) ?? false;
-        } catch (\Throwable) {
-            return false;
+        // Check primary/legacy role via RoleService
+        $primarySlug = strtoupper((string) ($this->attributes['role'] ?? ''));
+        if (!empty($primarySlug)) {
+            try {
+                $roleData = app(\App\ValiantShade\Services\RoleService::class)->findRole($primarySlug);
+                if ($roleData && in_array($permission, $roleData['permissions'] ?? [], true)) {
+                    return true;
+                }
+            } catch (\Throwable $e) {}
         }
+
+        return false;
     }
 
     public function isAdmin(): bool
@@ -352,5 +367,54 @@ class User extends Authenticatable
     public function isPlayer(): bool
     {
         return $this->hasRole('PLAYER') || strtoupper($this->attributes['role'] ?? '') === 'PLAYER';
+    }
+
+    public function isBailiff(): bool
+    {
+        return $this->isAdmin() || $this->hasRole(
+            'BAILIFF',
+            'BAILIFF_DISCIPLINE',
+            'BAILIFF_HERO_RESOURCES',
+            'BAILIFF_REPRESENTATIVE',
+            'BAILIFF_ARCHIVIST',
+            'BAILIFF_OATHKEEPER',
+            'BAILIFF_INVENTORY',
+            'BAILIFF_QUESTMASTER'
+        );
+    }
+
+    public function isDisciplineBailiff(): bool
+    {
+        return $this->isAdmin() || $this->hasRole('BAILIFF_DISCIPLINE', 'BAILIFF') || $this->hasPermission('discipline.manage');
+    }
+
+    public function isHeroResourcesBailiff(): bool
+    {
+        return $this->isAdmin() || $this->hasRole('BAILIFF_HERO_RESOURCES', 'BAILIFF') || $this->hasPermission('hr.manage');
+    }
+
+    public function isRepresentativeBailiff(): bool
+    {
+        return $this->isAdmin() || $this->hasRole('BAILIFF_REPRESENTATIVE', 'BAILIFF') || $this->hasPermission('diplomacy.manage');
+    }
+
+    public function isArchivistBailiff(): bool
+    {
+        return $this->isAdmin() || $this->hasRole('BAILIFF_ARCHIVIST', 'BAILIFF') || $this->hasPermission('archives.manage');
+    }
+
+    public function isOathkeeperBailiff(): bool
+    {
+        return $this->isAdmin() || $this->hasRole('BAILIFF_OATHKEEPER', 'BAILIFF') || $this->hasPermission('oaths.manage');
+    }
+
+    public function isInventoryBailiff(): bool
+    {
+        return $this->isAdmin() || $this->hasRole('BAILIFF_INVENTORY', 'BAILIFF') || $this->hasPermission('inventory.manage');
+    }
+
+    public function isQuestmasterBailiff(): bool
+    {
+        return $this->isAdmin() || $this->hasRole('BAILIFF_QUESTMASTER', 'BAILIFF') || $this->hasPermission('quests.manage');
     }
 }
