@@ -44,7 +44,9 @@ class EnsureCanManageRoles
                 ], 403);
             }
 
-            abort(403, __('Access denied. You do not have permission to manage roles.'));
+            return redirect()
+                ->route('valiant-shade.dashboard-analytics')
+                ->with('error', __('Access denied. You do not have permission to manage roles.'));
         }
 
         return $next($request);

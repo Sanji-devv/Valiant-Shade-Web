@@ -66,6 +66,8 @@
 
           @yield('content')
 
+          @include('valiant-shade.layouts/sections/flash-toast')
+
         </div>
         <!-- / Content -->
 

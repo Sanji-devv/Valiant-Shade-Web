@@ -5,6 +5,7 @@ namespace App\ValiantShade\Http\Controllers\apps;
 use App\ValiantShade\Http\Controllers\Controller;
 use App\ValiantShade\Services\RoleService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\View\View;
@@ -18,7 +19,7 @@ class RoleController extends Controller
     /**
      * Check if current user is an authorized Administrator.
      */
-    protected function authorizeRoleManagement(Request $request, string $ability = 'read'): ?JsonResponse
+    protected function authorizeRoleManagement(Request $request, string $ability = 'read'): JsonResponse|RedirectResponse|null
     {
         $user = auth()->user();
         $permission = $ability === 'read' ? 'roles.read' : 'roles.update';
@@ -29,13 +30,18 @@ class RoleController extends Controller
         );
 
         if (! $hasAccess) {
+            $message = __('Access denied. You do not have permission to manage roles.');
+
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => __('Access denied. You do not have permission to manage roles.'),
+                    'message' => $message,
                 ], 403);
             }
-            abort(403, __('Access denied. You do not have permission to manage roles.'));
+
+            return redirect()
+                ->route('valiant-shade.dashboard-analytics')
+                ->with('error', $message);
         }
 
         return null;
@@ -44,7 +50,7 @@ class RoleController extends Controller
     /**
      * Display the Roles & Permissions Management page.
      */
-    public function index(Request $request): View|JsonResponse|Response
+    public function index(Request $request): View|JsonResponse|RedirectResponse|Response
     {
         if ($deny = $this->authorizeRoleManagement($request, 'read')) {
             return $deny;
