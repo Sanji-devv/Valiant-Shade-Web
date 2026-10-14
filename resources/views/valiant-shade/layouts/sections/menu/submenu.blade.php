@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\Route;
       $isAdminOnlySub = (
         $submenu->slug === 'app-roles' ||
         $submenu->slug === 'app-audit-logs' ||
-        (isset($submenu->url) && (str_contains($submenu->url, '/app/roles') || str_contains($submenu->url, '/app/audit-logs')))
+        $submenu->slug === 'app-health' ||
+        (isset($submenu->url) && (str_contains($submenu->url, '/app/roles') || str_contains($submenu->url, '/app/audit-logs') || str_contains($submenu->url, '/app/health')))
       );
     @endphp
 

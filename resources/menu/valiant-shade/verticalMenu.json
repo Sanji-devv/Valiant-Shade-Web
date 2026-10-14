@@ -28,6 +28,12 @@
             "url": "/valiant-shade/app/audit-logs"
         },
         {
+            "name": "Health",
+            "icon": "menu-icon icon-base ti tabler-heartbeat",
+            "slug": "app-health",
+            "url": "/valiant-shade/app/health"
+        },
+        {
             "name": "User Profile",
             "icon": "menu-icon icon-base ti tabler-user",
             "slug": "pages-profile-user",

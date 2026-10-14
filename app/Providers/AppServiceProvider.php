@@ -9,6 +9,14 @@ use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use Spatie\Health\Facades\Health;
+use Spatie\Health\Checks\Checks\CacheCheck;
+use Spatie\Health\Checks\Checks\DatabaseCheck;
+use Spatie\Health\Checks\Checks\DebugModeCheck;
+use Spatie\Health\Checks\Checks\EnvironmentCheck;
+use Spatie\Health\Checks\Checks\OptimizedAppCheck;
+use Spatie\Health\Checks\Checks\UsedDiskSpaceCheck;
+use App\ValiantShade\Health\Checks\CpuLoadCheck;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -82,5 +90,25 @@ class AppServiceProvider extends ServiceProvider
                     ], 429);
                 });
         });
+
+        Health::checks([
+            CpuLoadCheck::new()
+                ->label('CPU Load')
+                ->warnWhenLoadPerCoreIsAbove(0.85)
+                ->failWhenLoadPerCoreIsAbove(1.25),
+            UsedDiskSpaceCheck::new()
+                ->label('Disk Space')
+                ->warnWhenUsedSpaceIsAbovePercentage(70)
+                ->failWhenUsedSpaceIsAbovePercentage(90),
+            DatabaseCheck::new()->label('Database'),
+            CacheCheck::new()->label('Cache'),
+            DebugModeCheck::new()
+                ->label('Debug Mode (APP_DEBUG)')
+                ->expectedToBe(false),
+            EnvironmentCheck::new()
+                ->label('Production Environment (APP_ENV)')
+                ->expectEnvironment('production'),
+            OptimizedAppCheck::new()->label('Optimized Application'),
+        ]);
     }
 }

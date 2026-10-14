@@ -27,6 +27,11 @@
                     "slug": "app-audit-logs"
                 },
                 {
+                    "url": "/valiant-shade/app/health",
+                    "name": "Health",
+                    "slug": "app-health"
+                },
+                {
                     "url": "/valiant-shade/pages/profile-user",
                     "name": "User Profile",
                     "slug": "pages-profile-user"

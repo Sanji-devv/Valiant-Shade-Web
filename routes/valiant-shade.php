@@ -18,6 +18,7 @@ use App\ValiantShade\Http\Controllers\authentications\LogoutController;
 use App\ValiantShade\Http\Controllers\apps\UserList;
 use App\ValiantShade\Http\Controllers\apps\RoleController;
 use App\ValiantShade\Http\Controllers\apps\AuditLogController;
+use App\ValiantShade\Http\Controllers\apps\HealthController;
 use App\ValiantShade\Http\Controllers\NewsController;
 
 /*
@@ -220,6 +221,7 @@ Route::put('/app/user/{id}/role', [UserList::class, 'updateRole'])->name('valian
 Route::get('/app/user/{id}/access', [UserList::class, 'access'])->name('valiant-shade.app-user-list.access');
 // Roles & Permissions Management (Strictly Admin Only)
 Route::middleware([\App\ValiantShade\Http\Middleware\EnsureUserIsAdmin::class])->group(function () {
+    Route::get('/app/health', [HealthController::class, 'index'])->name('valiant-shade.app-health');
     Route::get('/app/audit-logs', [AuditLogController::class, 'index'])->name('valiant-shade.app-audit-logs');
     Route::middleware(['throttle:valiant-shade.admin-mutations'])->group(function () {
         Route::delete('/app/audit-logs/clear', [AuditLogController::class, 'clear'])->name('valiant-shade.app-audit-logs.clear');

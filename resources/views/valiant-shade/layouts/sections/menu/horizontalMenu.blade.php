@@ -32,7 +32,8 @@
                     $isAdminOnly = (
                         $menu->slug === 'app-roles' ||
                         $menu->slug === 'app-audit-logs' ||
-                        (isset($menu->url) && (str_contains($menu->url, '/app/roles') || str_contains($menu->url, '/app/audit-logs')))
+                        $menu->slug === 'app-health' ||
+                        (isset($menu->url) && (str_contains($menu->url, '/app/roles') || str_contains($menu->url, '/app/audit-logs') || str_contains($menu->url, '/app/health')))
                     );
                 @endphp
 
