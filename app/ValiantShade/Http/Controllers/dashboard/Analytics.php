@@ -3,7 +3,7 @@
 namespace App\ValiantShade\Http\Controllers\dashboard;
 
 use App\ValiantShade\Http\Controllers\Controller;
-use App\ValiantShade\Http\Controllers\pages\NewsController;
+use App\ValiantShade\Http\Controllers\NewsController;
 use App\Models\InventoryItem;
 use App\Models\GuildVault;
 use Illuminate\Http\Request;

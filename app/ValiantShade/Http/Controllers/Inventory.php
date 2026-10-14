@@ -1,6 +1,6 @@
 <?php
 
-namespace App\ValiantShade\Http\Controllers\pages;
+namespace App\ValiantShade\Http\Controllers;
 
 use App\ValiantShade\Http\Controllers\Controller;
 use App\ValiantShade\Services\InventoryService;
@@ -75,7 +75,7 @@ class Inventory extends Controller
             ]);
         }
 
-        return view('valiant-shade.content.pages.pages-inventory', [
+        return view('valiant-shade.content.inventory', [
             'items' => $items,
             'metrics' => $metrics,
             'vault' => $vault,

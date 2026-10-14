@@ -1,6 +1,6 @@
 <?php
 
-namespace App\ValiantShade\Http\Controllers\pages;
+namespace App\ValiantShade\Http\Controllers;
 
 use App\Models\CharacterProfile;
 use App\Models\User;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\ValiantShade\Http\Controllers\pages;
+namespace App\ValiantShade\Http\Controllers;
 
 use App\Models\PlayerXp;
 use App\ValiantShade\Http\Controllers\Controller;
@@ -177,6 +177,6 @@ class AdventurerInfoController extends Controller
 }
 
 // Backward compatibility alias
-if (!class_exists('App\ValiantShade\Http\Controllers\pages\MaceraciInfoController', false)) {
-    class_alias(AdventurerInfoController::class, 'App\ValiantShade\Http\Controllers\pages\MaceraciInfoController');
+if (!class_exists('App\ValiantShade\Http\Controllers\MaceraciInfoController', false)) {
+    class_alias(AdventurerInfoController::class, 'App\ValiantShade\Http\Controllers\MaceraciInfoController');
 }
