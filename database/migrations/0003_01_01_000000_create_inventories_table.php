@@ -11,7 +11,7 @@ return new class extends Migration
     {
         Schema::create('inventories', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->default('Valiant Shade Parti Envanteri');
+            $table->string('name');
             $table->string('slug')->unique();
             $table->decimal('total_value', 14, 2)->default(0);
             $table->decimal('estimated_value', 14, 2)->default(0);
@@ -22,8 +22,8 @@ return new class extends Migration
         });
 
         DB::table('inventories')->insert([
-            'name' => 'Valiant Shade Parti Envanteri',
-            'slug' => 'party',
+            'name' => 'Valiant Shade Lonca Envanteri',
+            'slug' => 'valiant_shade_lonca',
             'total_value' => 0,
             'estimated_value' => 0,
             'notes' => 'Lonca/parti ortak eşya stoğu (Pathfinder 1e).',

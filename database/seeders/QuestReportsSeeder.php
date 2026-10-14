@@ -19,8 +19,8 @@ class QuestReportsSeeder extends Seeder
     {
         ini_set('memory_limit', '512M');
 
-        $primaryPath = file_exists('C:/Users/erdem/Desktop/PROJECTS/Utility/JSONS/Görev Raporları.json') 
-            ? 'C:/Users/erdem/Desktop/PROJECTS/Utility/JSONS/Görev Raporları.json' 
+        $primaryPath = file_exists('C:/Users/erdem/Desktop/PROJECTS/Utility/JSONS/Görev Raporları.json')
+            ? 'C:/Users/erdem/Desktop/PROJECTS/Utility/JSONS/Görev Raporları.json'
             : 'C:/Users/erdem/Desktop/PROJECTS/Utility/EXCEL_JSONS/Görev Raporları.json';
         $fallbackPath = file_exists(database_path('data/jsons/Görev Raporları.json'))
             ? database_path('data/jsons/Görev Raporları.json')
@@ -45,7 +45,6 @@ class QuestReportsSeeder extends Seeder
             [
                 'name' => 'Valiant Adventurer',
                 'display_name' => 'Valiant Adventurer',
-                'real_name' => 'Valiant Adventurer',
                 'username' => 'valiant_adventurer',
                 'password' => bcrypt('123456'),
                 'password_hash' => bcrypt('123456'),

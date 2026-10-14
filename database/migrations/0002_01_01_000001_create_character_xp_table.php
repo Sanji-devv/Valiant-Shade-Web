@@ -19,14 +19,6 @@ return new class extends Migration
             $table->decimal('bailiff_xp', 12, 2)->default(0.00);
             $table->decimal('ex_char_xp', 12, 2)->default(0.00);
             $table->decimal('wiki_xp', 12, 2)->default(0.00);
-
-
-            /**
-             * @todo bu rank floor xp başka tabloda canlı bir hesaplama ile çalışmalı
-             */
-            $table->decimal('rank_floor_xp', 12, 2)->default(0.00);
-
-
             $table->softDeletes();
             $table->timestamps();
         });

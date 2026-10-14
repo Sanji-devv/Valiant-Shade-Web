@@ -68,7 +68,6 @@ class AccountSettingsAccount extends Controller
 
         $user->display_name = $displayName;
         $user->name = $displayName;
-        $user->real_name = $displayName;
         $user->username = $validated['username'];
         $user->email = $validated['email'];
 

@@ -119,8 +119,7 @@
       $rolePerms = $rArr['permissions'] ?? [];
       $isSystem = !empty($rArr['is_system']);
       $usersCount = $rArr['users_count'] ?? 0;
-      $isBailiff = !empty($rArr['is_bailiff']) || str_starts_with($rArr['slug'] ?? '', 'BAILIFF');
-      $bailiffTier = $rArr['bailiff_tier'] ?? null;
+      $isBailiff = str_starts_with($rArr['slug'] ?? '', 'BAILIFF');
 
       $category = 'adventurers';
       if (in_array($rArr['slug'] ?? '', ['ADMIN', 'GM'], true)) {
@@ -133,7 +132,7 @@
     <div class="col-12 col-md-6 col-xl-4 role-item-col" id="role-card-{{ $rArr['id'] }}" data-category="{{ $category }}">
       <div class="card h-100 role-card shadow-xs {{ $isBailiff ? 'border-warning-subtle' : '' }}">
         <div class="card-body p-4 d-flex flex-column">
-          
+
           <!-- Top Row: Avatar & Priority Badge -->
           <div class="d-flex align-items-start justify-content-between mb-3">
             <div class="d-flex align-items-center gap-3">
@@ -162,7 +161,7 @@
           <!-- Bailiff Sub-tier Tag if applicable -->
           @if($isBailiff)
             <div class="mb-3">
-              <span class="badge rounded-pill d-inline-flex align-items-center gap-1.5 shadow-xs px-2.5 py-1.5" 
+              <span class="badge rounded-pill d-inline-flex align-items-center gap-1.5 shadow-xs px-2.5 py-1.5"
                     style="background-color: {{ $roleColor }}18; color: {{ $roleColor }}; border: 1px solid {{ $roleColor }}40; font-size: 0.73rem;">
                 <i class="icon-base ti tabler-shield-check"></i>
                 <span>{{ __('Bailiff Sub-tier:') }} <strong>{{ __($bailiffTier ?: 'Bailiff Council') }}</strong></span>
@@ -201,7 +200,7 @@
           <!-- Bottom Row: Users & Actions -->
           <div class="d-flex align-items-center justify-content-between pt-3 mt-auto border-top">
             <span class="small fw-semibold text-body-secondary">
-              <i class="icon-base ti tabler-users me-1 text-primary"></i> 
+              <i class="icon-base ti tabler-users me-1 text-primary"></i>
               {{ $usersCount }} {{ __('Adventurers') }}
             </span>
 
@@ -263,7 +262,7 @@
           @foreach($roles as $r)
             @php
               $rArr = is_array($r) ? $r : $r->toArray();
-              $isBailiff = !empty($rArr['is_bailiff']) || str_starts_with($rArr['slug'] ?? '', 'BAILIFF');
+              $isBailiff = str_starts_with($rArr['slug'] ?? '', 'BAILIFF');
             @endphp
             <th class="text-center {{ $isBailiff ? 'bailiff-header-col' : '' }}" style="min-width: 145px;">
               <span class="d-block fw-bold" style="color: {{ $rArr['color'] ?? '#7367f0' }}; font-size: 0.88rem;">
@@ -272,11 +271,6 @@
               <span class="badge bg-label-secondary font-monospace" style="font-size: 0.65rem;">
                 {{ $rArr['slug'] }}
               </span>
-              @if($isBailiff)
-                <span class="badge bg-label-warning d-block mt-1 font-monospace" style="font-size: 0.63rem;">
-                  <i class="icon-base ti tabler-shield-check me-0.5"></i> {{ __($rArr['bailiff_tier'] ?? 'Bailiff') }}
-                </span>
-              @endif
             </th>
           @endforeach
         </tr>
@@ -305,13 +299,13 @@
                 $hasPerm = in_array($permKey, $rArr['permissions'] ?? [], true);
                 $isAdminRole = ($rArr['slug'] === 'ADMIN');
                 $isLocked = ($isAdminRole && $permKey === 'roles.manage');
-                $isBailiff = !empty($rArr['is_bailiff']) || str_starts_with($rArr['slug'] ?? '', 'BAILIFF');
+                $isBailiff = str_starts_with($rArr['slug'] ?? '', 'BAILIFF');
               @endphp
 
               <td class="text-center {{ $isBailiff ? 'bailiff-body-col' : '' }}">
                 <div class="form-check form-switch d-inline-block mb-0">
-                  <input class="form-check-input matrix-switch toggle-perm-checkbox" 
-                         type="checkbox" 
+                  <input class="form-check-input matrix-switch toggle-perm-checkbox"
+                         type="checkbox"
                          data-role-id="{{ $rArr['id'] }}"
                          data-perm="{{ $permKey }}"
                          data-role-slug="{{ $rArr['slug'] }}"
@@ -344,7 +338,7 @@
         @csrf
         <input type="hidden" id="editRoleId">
         <input type="hidden" id="editRoleSlug">
-        
+
         <div class="modal-body p-4">
           <!-- Row 1: Name, Color, Priority -->
           <div class="row g-3 mb-3">
@@ -897,9 +891,7 @@ document.addEventListener('DOMContentLoaded', function() {
         color: document.getElementById('editRoleColorHex').value.trim(),
         icon: document.getElementById('editRoleIcon').value,
         priority: parseInt(document.getElementById('editRolePriority').value) || 10,
-        permissions: perms,
-        is_bailiff: isBailiffVal,
-        bailiff_tier: bailiffTierVal
+        permissions: perms
       };
 
       fetch("{{ url('/valiant-shade/app/roles') }}/" + id, {
@@ -955,9 +947,7 @@ document.addEventListener('DOMContentLoaded', function() {
         color: document.getElementById('addRoleColorHex').value.trim(),
         icon: document.getElementById('addRoleIcon').value,
         priority: parseInt(document.getElementById('addRolePriority').value) || 10,
-        permissions: perms,
-        is_bailiff: isBailiffVal,
-        bailiff_tier: bailiffTierVal
+        permissions: perms
       };
 
       fetch("{{ route('valiant-shade.app-roles.store') }}", {

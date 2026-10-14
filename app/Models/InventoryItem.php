@@ -5,19 +5,24 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class InventoryItem extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'inventory_items';
 
     protected $fillable = [
+        'inventory_id',
+        'inventory_item_type_id',
         'character_id',
         'name',
         'display_name',
         'slug',
         'quality',
+        'uses_remaining',
         'type',
         'quantity',
         'unit_price',
@@ -25,6 +30,7 @@ class InventoryItem extends Model
         'market_value',
         'buy_price',
         'notes',
+        'status',
     ];
 
     protected static function booted(): void
@@ -42,8 +48,12 @@ class InventoryItem extends Model
     protected function casts(): array
     {
         return [
+            'inventory_id' => 'integer',
+            'inventory_item_type_id' => 'integer',
             'character_id' => 'integer',
+            'uses_remaining' => 'integer',
             'quantity' => 'integer',
+            'status' => 'integer',
             'unit_price' => 'decimal:2',
             'total_price' => 'decimal:2',
             'market_value' => 'decimal:2',
@@ -51,9 +61,24 @@ class InventoryItem extends Model
         ];
     }
 
+    public function inventory(): BelongsTo
+    {
+        return $this->belongsTo(Inventory::class, 'inventory_id');
+    }
+
+    public function itemType(): BelongsTo
+    {
+        return $this->belongsTo(InventoryItemType::class, 'inventory_item_type_id');
+    }
+
     public function character(): BelongsTo
     {
         return $this->belongsTo(Character::class, 'character_id');
+    }
+
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(CharacterInventoryAssignment::class, 'inventory_item_id');
     }
 
     public function user(): BelongsTo

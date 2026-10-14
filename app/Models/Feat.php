@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Feat extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'feats';
 
@@ -20,6 +21,7 @@ class Feat extends Model
         'benefit',
         'normal_effect',
         'special',
+        'external_url',
     ];
 
     public const CATEGORY_COMBAT = 'COMBAT';

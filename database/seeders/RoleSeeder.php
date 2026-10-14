@@ -28,8 +28,6 @@ class RoleSeeder extends Seeder
                     'priority' => $roleData['priority'] ?? 10,
                     'permissions' => $roleData['permissions'] ?? [],
                     'is_system' => !empty($roleData['is_system']),
-                    'is_bailiff' => !empty($roleData['is_bailiff']),
-                    'bailiff_tier' => $roleData['bailiff_tier'] ?? null,
                 ]
             );
         }

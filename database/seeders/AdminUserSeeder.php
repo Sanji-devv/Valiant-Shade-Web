@@ -15,7 +15,6 @@ class AdminUserSeeder extends Seeder
                 'username' => 'admin',
                 'name' => 'Admin',
                 'display_name' => 'Admin',
-                'real_name' => 'Admin',
                 'password' => '123456',
                 'role' => 'ADMIN',
                 'status' => 1,

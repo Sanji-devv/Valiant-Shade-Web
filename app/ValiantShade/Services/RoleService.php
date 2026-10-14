@@ -118,7 +118,6 @@ class RoleService
                 'priority' => 100,
                 'permissions' => $allPermissions,
                 'is_system' => true,
-                'is_bailiff' => false,
                 'users_count' => 1,
             ],
             [
@@ -131,7 +130,6 @@ class RoleService
                 'priority' => 80,
                 'permissions' => ['quests.manage', 'xp.manage', 'guild.manage', 'archives.manage'],
                 'is_system' => true,
-                'is_bailiff' => false,
                 'users_count' => 2,
             ],
             [
@@ -153,8 +151,6 @@ class RoleService
                     'oaths.manage',
                 ],
                 'is_system' => true,
-                'is_bailiff' => true,
-                'bailiff_tier' => 'Council President',
                 'users_count' => 1,
             ],
             [
@@ -167,8 +163,6 @@ class RoleService
                 'priority' => 65,
                 'permissions' => ['discipline.manage', 'users.manage', 'guild.manage'],
                 'is_system' => true,
-                'is_bailiff' => true,
-                'bailiff_tier' => 'Discipline & Conduct',
                 'users_count' => 1,
             ],
             [
@@ -181,8 +175,6 @@ class RoleService
                 'priority' => 65,
                 'permissions' => ['hr.manage', 'xp.manage', 'users.manage', 'guild.manage'],
                 'is_system' => true,
-                'is_bailiff' => true,
-                'bailiff_tier' => 'Hero Resources & Roster',
                 'users_count' => 1,
             ],
             [
@@ -195,8 +187,6 @@ class RoleService
                 'priority' => 65,
                 'permissions' => ['diplomacy.manage', 'guild.manage', 'users.manage'],
                 'is_system' => true,
-                'is_bailiff' => true,
-                'bailiff_tier' => 'Diplomacy & Representation',
                 'users_count' => 1,
             ],
             [
@@ -209,8 +199,6 @@ class RoleService
                 'priority' => 65,
                 'permissions' => ['archives.manage', 'quests.manage', 'guild.manage'],
                 'is_system' => true,
-                'is_bailiff' => true,
-                'bailiff_tier' => 'Archives & Chronicles',
                 'users_count' => 1,
             ],
             [
@@ -223,8 +211,6 @@ class RoleService
                 'priority' => 65,
                 'permissions' => ['oaths.manage', 'discipline.manage', 'guild.manage'],
                 'is_system' => true,
-                'is_bailiff' => true,
-                'bailiff_tier' => 'Sacred Oaths & Covenants',
                 'users_count' => 1,
             ],
             [
@@ -237,8 +223,6 @@ class RoleService
                 'priority' => 60,
                 'permissions' => ['inventory.manage', 'guild.manage'],
                 'is_system' => true,
-                'is_bailiff' => true,
-                'bailiff_tier' => 'Vault & Treasury',
                 'users_count' => 1,
             ],
             [
@@ -251,8 +235,6 @@ class RoleService
                 'priority' => 60,
                 'permissions' => ['quests.manage', 'guild.manage'],
                 'is_system' => true,
-                'is_bailiff' => true,
-                'bailiff_tier' => 'Expeditions & Decrees',
                 'users_count' => 1,
             ],
             [
@@ -265,7 +247,6 @@ class RoleService
                 'priority' => 40,
                 'permissions' => [],
                 'is_system' => false,
-                'is_bailiff' => false,
                 'users_count' => 22,
             ],
             [
@@ -278,7 +259,6 @@ class RoleService
                 'priority' => 20,
                 'permissions' => [],
                 'is_system' => false,
-                'is_bailiff' => false,
                 'users_count' => 18,
             ],
             [
@@ -291,7 +271,6 @@ class RoleService
                 'priority' => 10,
                 'permissions' => [],
                 'is_system' => true,
-                'is_bailiff' => false,
                 'users_count' => 273,
             ],
         ];
@@ -332,14 +311,7 @@ class RoleService
             } else {
                 foreach ($existing as &$er) {
                     if ($er['slug'] === $defaultRole['slug']) {
-                        if (!isset($er['is_bailiff']) && isset($defaultRole['is_bailiff'])) {
-                            $er['is_bailiff'] = $defaultRole['is_bailiff'];
-                            $updated = true;
-                        }
-                        if (!isset($er['bailiff_tier']) && isset($defaultRole['bailiff_tier'])) {
-                            $er['bailiff_tier'] = $defaultRole['bailiff_tier'];
-                            $updated = true;
-                        }
+                        $updated = true;
                     }
                 }
                 unset($er);
@@ -559,8 +531,6 @@ class RoleService
             }
         }
 
-        $isBailiff = !empty($data['is_bailiff']) || str_starts_with($slug, 'BAILIFF');
-        $bailiffTier = $data['bailiff_tier'] ?? ($isBailiff ? 'Bailiff Sub-tier' : null);
 
         $newRole = [
             'id' => $maxId + 1,
@@ -572,8 +542,6 @@ class RoleService
             'priority' => (int) ($data['priority'] ?? 10),
             'permissions' => $data['permissions'] ?? [],
             'is_system' => false,
-            'is_bailiff' => $isBailiff,
-            'bailiff_tier' => $bailiffTier,
             'users_count' => 0,
         ];
 
@@ -643,8 +611,6 @@ class RoleService
         if (isset($data['icon'])) $current['icon'] = $data['icon'];
         if (isset($data['priority'])) $current['priority'] = (int) $data['priority'];
         if (isset($data['permissions'])) $current['permissions'] = array_values($data['permissions']);
-        if (array_key_exists('is_bailiff', $data)) $current['is_bailiff'] = (bool) $data['is_bailiff'];
-        if (array_key_exists('bailiff_tier', $data)) $current['bailiff_tier'] = $data['bailiff_tier'];
 
         $allRoles[$targetIndex] = $current;
         $this->saveRolesData($allRoles);

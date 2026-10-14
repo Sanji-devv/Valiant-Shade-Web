@@ -60,7 +60,7 @@ class UserList extends Controller
 
             return [
                 'id' => $u->id,
-                'full_name' => $u->name ?: ($u->real_name ?: $u->username),
+                'full_name' => $u->name ?: ($u->username),
                 'role' => $highest?->name ?? 'Player',
                 'role_slug' => $highest?->slug ?? 'PLAYER',
                 'roles' => $orderedRoles->map(fn($r) => [
@@ -115,7 +115,6 @@ class UserList extends Controller
         $user = User::create([
             'display_name' => $validated['userFullname'],
             'name' => $validated['userFullname'],
-            'real_name' => $validated['userFullname'],
             'email' => $validated['userEmail'],
             'password' => Hash::make(Str::random(12)),
             'role' => $role,

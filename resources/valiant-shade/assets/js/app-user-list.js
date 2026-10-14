@@ -587,7 +587,6 @@ document.addEventListener('DOMContentLoaded', function (e) {
           if (dt_user) dt_user.ajax.reload(null, false);
         }).catch(error => alert(error.message));
     });
-    });
   }
 
   // Layout formatting adjustments

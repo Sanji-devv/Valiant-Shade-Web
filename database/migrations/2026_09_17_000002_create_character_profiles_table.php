@@ -35,6 +35,7 @@ return new class extends Migration
             $table->string('will_save')->nullable();
             $table->text('bio')->nullable();
             $table->text('notes')->nullable();
+            $table->softDeletes();
             $table->timestamps();
 
             $table->index('character_name');

@@ -53,11 +53,6 @@ class PlayerTrackerSeeder extends Seeder
         // 3. Collect unique players and initialize Users
         $playerUsers = [];
         $existingUsers = User::all();
-        foreach ($existingUsers as $u) {
-            if ($u->real_name) {
-                $playerUsers[trim($u->real_name)] = $u;
-            }
-        }
 
         $usernamesInUse = $existingUsers->pluck('username')->filter()->flip()->toArray();
         $emailsInUse = $existingUsers->pluck('email')->filter()->flip()->toArray();
@@ -95,7 +90,6 @@ class PlayerTrackerSeeder extends Seeder
             $user = User::create([
                 'name' => $playerName,
                 'display_name' => $playerName,
-                'real_name' => $playerName,
                 'username' => $username,
                 'email' => $email,
                 'password' => $passwordHash,

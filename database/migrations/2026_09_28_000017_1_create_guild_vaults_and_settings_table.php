@@ -42,6 +42,7 @@ return new class extends Migration
                 $table->string('status')->default('active');
                 $table->integer('order_index')->default(0);
                 $table->text('notes')->nullable();
+                $table->softDeletes();
                 $table->timestamps();
 
                 $table->index('character_name');

@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PathfinderTrait extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'traits';
 
@@ -15,6 +16,16 @@ class PathfinderTrait extends Model
         'name',
         'category',
         'description',
-        'source_url',
+        'external_url',
     ];
+
+    public function getSourceUrlAttribute(): ?string
+    {
+        return $this->attributes['external_url'] ?? null;
+    }
+
+    public function setSourceUrlAttribute($value): void
+    {
+        $this->attributes['external_url'] = $value;
+    }
 }

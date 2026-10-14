@@ -221,8 +221,7 @@ class AdventurerInfoService
                         $q->where('name', $like, "%{$term}%")
                           ->orWhereHas('user', function ($uq) use ($term, $like) {
                               $uq->where('display_name', $like, "%{$term}%")
-                                 ->orWhere('name', $like, "%{$term}%")
-                                 ->orWhere('real_name', $like, "%{$term}%");
+                                 ->orWhere('name', $like, "%{$term}%");
                           });
                     });
                 }

@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CharacterFeat extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'character_feats';
 
@@ -27,6 +28,7 @@ class CharacterFeat extends Model
         'notes',
         'is_class_feat',
         'sort_order',
+        'notes',
     ];
 
     protected $casts = [

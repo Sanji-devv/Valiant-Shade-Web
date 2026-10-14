@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
@@ -15,7 +17,7 @@ use Illuminate\Support\Str;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes;
 
     protected $table = 'users';
 
@@ -25,7 +27,6 @@ class User extends Authenticatable
         'password',
         'password_hash',
         'display_name',
-        'real_name',
         'name',
         'role',
         'status',
@@ -50,11 +51,10 @@ class User extends Authenticatable
             if (empty($user->username) && !empty($user->email)) {
                 $user->username = Str::slug(explode('@', $user->email)[0], '_') . '_' . Str::random(4);
             }
-            $displayName = $user->display_name ?: ($user->name ?: ($user->real_name ?: $user->username));
+            $displayName = $user->display_name ?: ($user->name ?: ($user->username));
             if (!empty($displayName)) {
                 $user->display_name = $displayName;
                 $user->name = $displayName;
-                $user->real_name = $displayName;
             }
         });
     }
@@ -69,7 +69,15 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'status' => 'integer',
+            'active_main_character_id' => 'integer',
+            'active_clerk_character_id' => 'integer',
         ];
+    }
+
+    public function userXp(): HasOne
+    {
+        return $this->hasOne(UserXp::class, 'user_id');
     }
 
     public function setPasswordAttribute($value): void
@@ -83,28 +91,24 @@ class User extends Authenticatable
     {
         $this->attributes['display_name'] = $value;
         $this->attributes['name'] = $value;
-        $this->attributes['real_name'] = $value;
     }
 
     public function setRealNameAttribute($value): void
     {
         $this->attributes['display_name'] = $value;
         $this->attributes['name'] = $value;
-        $this->attributes['real_name'] = $value;
     }
 
     public function setNameAttribute($value): void
     {
         $this->attributes['name'] = $value;
         $this->attributes['display_name'] = $value;
-        $this->attributes['real_name'] = $value;
     }
 
     public function getDisplayNameAttribute(): string
     {
         return $this->attributes['display_name']
             ?? $this->attributes['name']
-            ?? $this->attributes['real_name']
             ?? $this->username
             ?? '';
     }

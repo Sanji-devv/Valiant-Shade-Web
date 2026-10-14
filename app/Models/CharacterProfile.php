@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CharacterProfile extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'character_profiles';
 
@@ -38,6 +39,8 @@ class CharacterProfile extends Model
     ];
 
     protected $casts = [
+        'character_id' => 'integer',
+        'user_id' => 'integer',
         'level' => 'integer',
         'sheet_data' => 'array',
     ];

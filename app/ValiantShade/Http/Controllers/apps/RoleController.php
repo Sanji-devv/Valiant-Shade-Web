@@ -82,8 +82,6 @@ class RoleController extends Controller
             'priority' => 'nullable|integer|min:0|max:100',
             'permissions' => 'nullable|array',
             'permissions.*' => 'string',
-            'is_bailiff' => 'nullable|boolean',
-            'bailiff_tier' => 'nullable|string|max:80',
         ]);
 
         try {
@@ -133,8 +131,6 @@ class RoleController extends Controller
             'priority' => 'nullable|integer|min:0|max:100',
             'permissions' => 'nullable|array',
             'permissions.*' => 'string',
-            'is_bailiff' => 'nullable|boolean',
-            'bailiff_tier' => 'nullable|string|max:80',
         ]);
 
         try {

@@ -9,15 +9,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Character extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'characters';
 
     protected $fillable = [
         'user_id',
+        'parent_id',
         'name',
         'character_type',
         'status',
@@ -34,6 +36,7 @@ class Character extends Model
     ];
 
     protected $casts = [
+        'parent_id' => 'integer',
         'current_level' => 'integer',
         'allowance_sp' => 'float',
         'total_xp' => 'float',
@@ -112,6 +115,21 @@ class Character extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Character::class, 'parent_id');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(Character::class, 'parent_id');
+    }
+
+    public function xpRecord(): HasOne
+    {
+        return $this->hasOne(CharacterXp::class, 'character_id');
     }
 
     public function rank(): BelongsTo
@@ -209,6 +227,11 @@ class Character extends Model
     public function inventoryItems(): HasMany
     {
         return $this->hasMany(InventoryItem::class, 'character_id');
+    }
+
+    public function inventoryAssignments(): HasMany
+    {
+        return $this->hasMany(CharacterInventoryAssignment::class, 'character_id');
     }
 
     // Scopes
