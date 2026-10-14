@@ -206,19 +206,25 @@ Route::delete('/app/user/{id}/character', [UserList::class, 'destroyCharacter'])
 Route::post('/app/user/{id}/character/clear', [UserList::class, 'destroyCharacter'])->name('valiant-shade.app-user-list.clear-character');
 Route::post('/app/user/sync-character', [UserList::class, 'syncCharacter'])->name('valiant-shade.app-user-list.sync-character');
 Route::put('/app/user/{id}/role', [UserList::class, 'updateRole'])->name('valiant-shade.app-user-list.update-role');
+Route::get('/app/user/{id}/access', [UserList::class, 'access'])->name('valiant-shade.app-user-list.access');
 // Roles & Permissions Management (Strictly Admin Only)
 Route::middleware([\App\ValiantShade\Http\Middleware\EnsureUserIsAdmin::class])->group(function () {
-    Route::get('/app/roles', [RoleController::class, 'index'])->name('valiant-shade.app-roles.index');
-    Route::get('/app/roles-permissions', [RoleController::class, 'index'])->name('valiant-shade.app-roles-permissions');
     Route::get('/app/audit-logs', [AuditLogController::class, 'index'])->name('valiant-shade.app-audit-logs');
-
     Route::middleware(['throttle:valiant-shade.admin-mutations'])->group(function () {
-        Route::post('/app/roles', [RoleController::class, 'store'])->name('valiant-shade.app-roles.store');
-        Route::put('/app/roles/{role}', [RoleController::class, 'update'])->name('valiant-shade.app-roles.update');
-        Route::delete('/app/roles/{role}', [RoleController::class, 'destroy'])->name('valiant-shade.app-roles.destroy');
-        Route::post('/app/roles/{role}/toggle-permission', [RoleController::class, 'togglePermission'])->name('valiant-shade.app-roles.toggle-permission');
         Route::delete('/app/audit-logs/clear', [AuditLogController::class, 'clear'])->name('valiant-shade.app-audit-logs.clear');
     });
+});
+
+Route::middleware([\App\ValiantShade\Http\Middleware\EnsureCanManageRoles::class . ':read'])->group(function () {
+    Route::get('/app/roles', [RoleController::class, 'index'])->name('valiant-shade.app-roles.index');
+    Route::get('/app/roles-permissions', [RoleController::class, 'index'])->name('valiant-shade.app-roles-permissions');
+});
+
+Route::middleware([\App\ValiantShade\Http\Middleware\EnsureCanManageRoles::class . ':write', 'throttle:valiant-shade.admin-mutations'])->group(function () {
+    Route::post('/app/roles', [RoleController::class, 'store'])->name('valiant-shade.app-roles.store');
+    Route::put('/app/roles/{role}', [RoleController::class, 'update'])->name('valiant-shade.app-roles.update');
+    Route::delete('/app/roles/{role}', [RoleController::class, 'destroy'])->name('valiant-shade.app-roles.destroy');
+    Route::post('/app/roles/{role}/toggle-permission', [RoleController::class, 'togglePermission'])->name('valiant-shade.app-roles.toggle-permission');
 });
 Route::match(['GET', 'POST'], '/logout', [LogoutController::class, 'logout'])->name('logout');
 Route::match(['GET', 'POST'], '/auth/logout', [LogoutController::class, 'logout'])->name('valiant-shade.auth-logout');

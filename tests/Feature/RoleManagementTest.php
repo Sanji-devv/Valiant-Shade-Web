@@ -19,21 +19,22 @@ class RoleManagementTest extends TestCase
 
         $response = $this->actingAs($admin)->postJson('/valiant-shade/app/roles', [
             'name' => 'Quartermaster',
-            'permissions' => ['inventory.manage'],
+            'permissions' => ['inventory.all'],
         ]);
 
         $response->assertCreated()->assertJsonPath('role.slug', 'QUARTERMASTER');
         $roleId = $response->json('role.id');
         $this->putJson("/valiant-shade/app/roles/{$roleId}", [
             'name' => 'Senior Quartermaster',
-            'permissions' => ['inventory.manage', 'xp.manage'],
+            'permissions' => ['inventory.all', 'xp.all'],
         ])->assertOk();
         $this->putJson("/valiant-shade/app/user/{$playerId}/role", ['role' => 'QUARTERMASTER'])->assertOk();
 
         $assignedUser = User::findOrFail($playerId);
-        $this->assertTrue($assignedUser->hasPermission('inventory.manage'));
-        $this->assertTrue($assignedUser->hasPermission('xp.manage'));
-        $this->assertFalse($assignedUser->hasPermission('users.manage'));
+        $this->assertTrue($assignedUser->hasPermission('inventory.read'));
+        $this->assertTrue($assignedUser->hasPermission('inventory.all'));
+        $this->assertTrue($assignedUser->hasPermission('xp.all'));
+        $this->assertFalse($assignedUser->hasPermission('users.read'));
     }
 
     public function test_role_manager_can_open_the_user_and_role_management_screen(): void

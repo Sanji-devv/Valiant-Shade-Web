@@ -19,21 +19,24 @@ class RoleController extends Controller
     /**
      * Check if current user is an authorized Administrator.
      */
-    protected function authorizeAdmin(Request $request): ?JsonResponse
+    protected function authorizeRoleManagement(Request $request, string $ability = 'read'): ?JsonResponse
     {
         $user = auth()->user();
+        $permission = $ability === 'read' ? 'roles.read' : 'roles.update';
+        $hasAccess = $user && (
+            $user->isAdmin()
+            || $user->hasPermission('roles.all')
+            || $user->hasPermission($permission)
+        );
 
-        // Strictly must be authenticated and strictly an Administrator (No bypass)
-        $hasAccess = $user && $user->isAdmin();
-
-        if (!$hasAccess) {
+        if (! $hasAccess) {
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => __('Access denied. Strictly restricted to system Administrators.'),
+                    'message' => __('Access denied. You do not have permission to manage roles.'),
                 ], 403);
             }
-            abort(403, __('Access denied. Strictly restricted to system Administrators.'));
+            abort(403, __('Access denied. You do not have permission to manage roles.'));
         }
 
         return null;
@@ -44,24 +47,27 @@ class RoleController extends Controller
      */
     public function index(Request $request): View|JsonResponse|Response
     {
-        if ($deny = $this->authorizeAdmin($request)) {
+        if ($deny = $this->authorizeRoleManagement($request, 'read')) {
             return $deny;
         }
 
         $roles = $this->roleService->getAllRoles();
         $permissions = $this->roleService->getPermissionCatalog();
+        $flatPermissions = $this->roleService->getFlatPermissionCatalog();
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
                 'roles' => $roles,
                 'permissions' => $permissions,
+                'flat_permissions' => $flatPermissions,
             ]);
         }
 
         return view('valiant-shade.content.apps.app-access-roles', compact(
             'roles',
-            'permissions'
+            'permissions',
+            'flatPermissions'
         ));
     }
 
@@ -70,7 +76,7 @@ class RoleController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        if ($deny = $this->authorizeAdmin($request)) {
+        if ($deny = $this->authorizeRoleManagement($request, 'write')) {
             return $deny;
         }
 
@@ -119,7 +125,7 @@ class RoleController extends Controller
      */
     public function update(Request $request, string|int $role): JsonResponse
     {
-        if ($deny = $this->authorizeAdmin($request)) {
+        if ($deny = $this->authorizeRoleManagement($request, 'write')) {
             return $deny;
         }
 
@@ -168,7 +174,7 @@ class RoleController extends Controller
      */
     public function togglePermission(Request $request, string|int $role): JsonResponse
     {
-        if ($deny = $this->authorizeAdmin($request)) {
+        if ($deny = $this->authorizeRoleManagement($request, 'write')) {
             return $deny;
         }
 
@@ -214,7 +220,7 @@ class RoleController extends Controller
      */
     public function destroy(Request $request, string|int $role): JsonResponse
     {
-        if ($deny = $this->authorizeAdmin($request)) {
+        if ($deny = $this->authorizeRoleManagement($request, 'write')) {
             return $deny;
         }
 

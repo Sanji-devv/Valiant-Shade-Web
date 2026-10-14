@@ -5,7 +5,6 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -13,11 +12,15 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Spatie\Permission\Traits\HasPermissions;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, SoftDeletes;
+    use HasFactory, HasPermissions, HasRoles, Notifiable, SoftDeletes;
+
+    protected string $guard_name = 'web';
 
     protected $table = 'users';
 
@@ -155,18 +158,6 @@ class User extends Authenticatable
     }
 
     /**
-     * Many-to-many relationship: User <──> Roles (Discord-style multi-roles).
-     * Automatically sorted from highest authority (priority DESC) to lowest.
-     */
-    public function roles(): BelongsToMany
-    {
-        return $this->belongsToMany(Role::class, 'role_user')
-            ->withTimestamps()
-            ->orderByDesc('priority')
-            ->orderBy('name');
-    }
-
-    /**
      * Get all roles sorted by authority hierarchy (highest authority first).
      */
     public function getOrderedRolesAttribute()
@@ -183,12 +174,14 @@ class User extends Authenticatable
             'permissions' => [],
         ]]);
 
-        if (!$this->exists) {
+        if (! $this->exists) {
             return $fallback;
         }
 
         try {
-            $loaded = $this->relationLoaded('roles') ? $this->roles : $this->roles()->get();
+            $loaded = $this->relationLoaded('roles')
+                ? $this->roles
+                : $this->roles()->orderByDesc('priority')->orderBy('name')->get();
             if ($loaded->isNotEmpty()) {
                 return $loaded->sortByDesc('priority')->values();
             }
@@ -202,6 +195,16 @@ class User extends Authenticatable
         }
 
         return $fallback;
+    }
+
+    /**
+     * Direct permission names (Spatie), excluding those inherited only via roles.
+     *
+     * @return list<string>
+     */
+    public function directPermissionNames(): array
+    {
+        return $this->permissions->pluck('name')->all();
     }
 
     /**
@@ -273,45 +276,38 @@ class User extends Authenticatable
     /**
      * Assign a role to the user without duplication.
      */
-    public function assignRole(Role|string $role): void
+    public function assignGuildRole(Role|string $role): void
     {
         $roleModel = is_string($role) ? Role::where('slug', strtoupper($role))->first() : $role;
         if ($roleModel) {
-            $this->roles()->syncWithoutDetaching([$roleModel->id]);
+            $this->assignRole($roleModel);
+            $this->updatePrimaryRole();
+        }
+    }
+
+    public function removeGuildRole(Role|string $role): void
+    {
+        $roleModel = is_string($role) ? Role::where('slug', strtoupper($role))->first() : $role;
+        if ($roleModel) {
+            $this->removeRole($roleModel);
             $this->updatePrimaryRole();
         }
     }
 
     /**
-     * Remove a role from the user.
+     * Sync user roles by slug or ID list (guild multi-roles).
      */
-    public function removeRole(Role|string $role): void
+    public function syncGuildRoles(array $roleIdentifiers): void
     {
-        $roleModel = is_string($role) ? Role::where('slug', strtoupper($role))->first() : $role;
-        if ($roleModel) {
-            $this->roles()->detach($roleModel->id);
-            $this->updatePrimaryRole();
-        }
-    }
-
-    /**
-     * Sync user roles by slug or ID list.
-     */
-    public function syncRoles(array $roleIdentifiers): void
-    {
-        $ids = [];
-        foreach ($roleIdentifiers as $identifier) {
+        $roles = collect($roleIdentifiers)->map(function ($identifier) {
             if (is_numeric($identifier)) {
-                $ids[] = (int) $identifier;
-            } else {
-                $role = Role::where('slug', strtoupper((string) $identifier))->first();
-                if ($role) {
-                    $ids[] = $role->id;
-                }
+                return Role::find((int) $identifier);
             }
-        }
 
-        $this->roles()->sync($ids);
+            return Role::where('slug', strtoupper((string) $identifier))->first();
+        })->filter();
+
+        $this->syncRoles($roles);
         $this->updatePrimaryRole();
     }
 
@@ -333,26 +329,22 @@ class User extends Authenticatable
             return true;
         }
 
-        if ($this->exists) {
-            try {
-                $roles = $this->relationLoaded('roles') ? $this->roles : $this->roles()->get();
-                foreach ($roles as $role) {
-                    if ($role instanceof Role && $role->hasPermission($permission)) {
-                        return true;
-                    }
-                }
-            } catch (\Throwable $e) {}
-        }
+        $permission = str_ends_with($permission, '.manage')
+            ? str_replace('.manage', '.all', $permission)
+            : $permission;
 
-        // Check primary/legacy role via RoleService
-        $primarySlug = strtoupper((string) ($this->attributes['role'] ?? ''));
-        if (!empty($primarySlug)) {
-            try {
-                $roleData = app(\App\ValiantShade\Services\RoleService::class)->findRole($primarySlug);
-                if ($roleData && in_array($permission, $roleData['permissions'] ?? [], true)) {
-                    return true;
-                }
-            } catch (\Throwable $e) {}
+        try {
+            if ($this->can($permission)) {
+                return true;
+            }
+
+            if (str_contains($permission, '.')) {
+                [$module] = explode('.', $permission, 2);
+
+                return $this->can("{$module}.all");
+            }
+        } catch (\Throwable $e) {
+            return false;
         }
 
         return false;

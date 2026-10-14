@@ -22,7 +22,7 @@ class QuestBoardController extends Controller
      */
     protected function checkAdmin(Request $request): ?JsonResponse
     {
-        $isAdmin = auth()->user()?->hasPermission('quests.manage') ?? false;
+        $isAdmin = auth()->user()?->hasPermission('quests.read') ?? false;
         if (!$isAdmin) {
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
@@ -62,7 +62,7 @@ class QuestBoardController extends Controller
             'completed' => $this->service->getAllQuests(['status' => 'completed'])->count(),
         ];
 
-        $isAdmin = auth()->user()?->hasPermission('quests.manage') ?? false;
+        $isAdmin = auth()->user()?->hasPermission('quests.read') ?? false;
 
         $discordConfig = [
             'configured' => !empty($this->discordService->getWebhookUrl()),

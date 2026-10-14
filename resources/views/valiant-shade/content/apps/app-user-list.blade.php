@@ -214,6 +214,31 @@
   </div>
 
   @if ($canManageRoles)
+    <div class="modal fade" id="userAccessModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">{{ __('User roles & direct permissions') }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <form id="user-access-form">
+            <div class="modal-body">
+              <input type="hidden" id="user-access-id">
+              <h6 class="mb-2">{{ __('Assigned roles') }}</h6>
+              <div id="user-access-roles" class="d-grid gap-2 border rounded p-3 mb-4" style="max-height: 160px; overflow-y: auto;"></div>
+              <h6 class="mb-2">{{ __('Direct permissions (override / extra)') }}</h6>
+              <p class="small text-body-secondary">{{ __('These apply in addition to role permissions. Use module.all for full access to a route.') }}</p>
+              <div id="user-access-permissions" class="d-grid gap-2 border rounded p-3" style="max-height: 240px; overflow-y: auto;"></div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+              <button type="submit" class="btn btn-primary">{{ __('Save access') }}</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <div class="modal fade" id="roleManagementModal" tabindex="-1" aria-labelledby="roleManagementModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">

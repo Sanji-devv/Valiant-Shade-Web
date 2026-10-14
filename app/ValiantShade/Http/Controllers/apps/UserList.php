@@ -5,6 +5,7 @@ namespace App\ValiantShade\Http\Controllers\apps;
 use App\Models\User;
 use App\Models\Role;
 use App\ValiantShade\Http\Controllers\Controller;
+use App\ValiantShade\Services\RoleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -13,11 +14,29 @@ use Illuminate\Support\Str;
 
 class UserList extends Controller
 {
+    protected function canManageUsers(?string $action = 'read'): bool
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return true;
+        }
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return match ($action) {
+            'create' => $user->hasPermission('users.create'),
+            'update' => $user->hasPermission('users.update'),
+            'delete' => $user->hasPermission('users.delete'),
+            default => $user->hasPermission('users.read') || $user->hasPermission('users.all'),
+        };
+    }
+
     public function index()
     {
         $currentUser = auth()->user();
-        $isAdmin = $currentUser ? ($currentUser->isAdmin() || $currentUser->hasPermission('users.manage')) : true;
-        $canManageRoles = Schema::hasTable('roles') && ($currentUser ? ($currentUser->isAdmin() || $currentUser->hasPermission('roles.manage')) : false);
+        $isAdmin = $currentUser ? ($currentUser->isAdmin() || $currentUser->hasPermission('users.all') || $currentUser->hasPermission('users.read')) : true;
+        $canManageRoles = Schema::hasTable('roles') && ($currentUser ? ($currentUser->isAdmin() || $currentUser->hasPermission('roles.all') || $currentUser->hasPermission('roles.read')) : false);
 
         $totalUsers = User::count();
         $adminUsers = User::where('role', 'ADMIN')->count();
@@ -52,7 +71,7 @@ class UserList extends Controller
     {
         $users = User::with('roles')->orderBy('id', 'desc')->get();
         $currentUser = auth()->user();
-        $isAdmin = $currentUser ? ($currentUser->isAdmin() || $currentUser->hasPermission('users.manage')) : true;
+        $isAdmin = $currentUser ? ($currentUser->isAdmin() || $currentUser->hasPermission('users.all') || $currentUser->hasPermission('users.read')) : true;
 
         $data = $users->map(function ($u) {
             $orderedRoles = $u->ordered_roles;
@@ -100,7 +119,7 @@ class UserList extends Controller
     public function store(Request $request): JsonResponse
     {
         if (auth()->check()) {
-            abort_unless(auth()->user()->isAdmin() || auth()->user()->hasPermission('users.manage'), 403);
+            abort_unless($this->canManageUsers('create'), 403);
         }
 
         $validated = $request->validate([
@@ -132,7 +151,7 @@ class UserList extends Controller
     public function destroy($id): JsonResponse
     {
         if (auth()->check()) {
-            abort_unless(auth()->user()->isAdmin() || auth()->user()->hasPermission('users.manage'), 403);
+            abort_unless($this->canManageUsers('delete'), 403);
 
             if (auth()->id() === (int) $id) {
                 return response()->json([
@@ -164,7 +183,7 @@ class UserList extends Controller
             ], 404);
         }
 
-        $isAdmin = auth()->check() ? (auth()->user()->isAdmin() || auth()->user()->hasPermission('users.manage')) : true;
+        $isAdmin = auth()->check() ? $this->canManageUsers('update') : true;
         $isSelf = auth()->check() && auth()->id() === $user->id;
 
         if (auth()->check() && !$isAdmin && !$isSelf) {
@@ -211,21 +230,27 @@ class UserList extends Controller
     public function updateRole(Request $request, int $id): JsonResponse
     {
         if (auth()->check()) {
-            abort_unless(auth()->user()->isAdmin() || auth()->user()->hasPermission('users.manage'), 403);
+            abort_unless($this->canManageUsers('update'), 403);
         }
 
         $validated = $request->validate([
             'role' => ['nullable', 'string'],
             'roles' => ['nullable', 'array'],
             'roles.*' => ['string'],
+            'permissions' => ['nullable', 'array'],
+            'permissions.*' => ['string'],
         ]);
 
         $user = User::findOrFail($id);
 
-        if (!empty($validated['roles'])) {
-            $user->syncRoles($validated['roles']);
-        } elseif (!empty($validated['role'])) {
-            $user->assignRole($validated['role']);
+        if (! empty($validated['roles'])) {
+            $user->syncGuildRoles($validated['roles']);
+        } elseif (! empty($validated['role'])) {
+            $user->assignGuildRole($validated['role']);
+        }
+
+        if (array_key_exists('permissions', $validated)) {
+            app(RoleService::class)->syncUserDirectPermissions($user, $validated['permissions'] ?? []);
         }
 
         $highest = $user->highest_role;
@@ -235,6 +260,27 @@ class UserList extends Controller
             'role' => $highest?->slug ?? 'PLAYER',
             'role_name' => $highest?->name ?? 'Player',
             'roles' => $user->ordered_roles,
+            'permissions' => $user->getAllPermissions()->pluck('name')->values()->all(),
+            'direct_permissions' => $user->directPermissionNames(),
+        ]);
+    }
+
+    public function access(int $id): JsonResponse
+    {
+        abort_unless($this->canManageUsers('read'), 403);
+
+        $user = User::with(['roles', 'permissions'])->findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'roles' => $user->ordered_roles->map(fn ($r) => [
+                'id' => $r->id,
+                'slug' => $r->slug,
+                'name' => $r->name,
+            ])->values()->all(),
+            'permissions' => $user->getAllPermissions()->pluck('name')->values()->all(),
+            'direct_permissions' => $user->directPermissionNames(),
+            'flat_permissions' => app(RoleService::class)->getFlatPermissionCatalog(),
         ]);
     }
 }

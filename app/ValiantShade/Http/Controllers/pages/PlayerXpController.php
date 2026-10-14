@@ -21,7 +21,7 @@ class PlayerXpController extends Controller
      */
     protected function checkAdmin(Request $request): ?JsonResponse
     {
-        $isAdmin = auth()->user()?->hasPermission('xp.manage') ?? false;
+        $isAdmin = auth()->user()?->hasPermission('xp.read') ?? false;
         if (!$isAdmin) {
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
@@ -68,7 +68,7 @@ class PlayerXpController extends Controller
         $ranks = PlayerXp::RANKS;
         $fastThresholds = PlayerXp::getXpThresholds();
         $xpFailsafes = PlayerXp::getXpFailsafes();
-        $isAdmin = auth()->user()?->hasPermission('xp.manage') ?? false;
+        $isAdmin = auth()->user()?->hasPermission('xp.read') ?? false;
 
         // Lightweight map for JS drawers (Profile & Edit) to eliminate megabytes of duplicated HTML attributes
         $adventurersData = [];

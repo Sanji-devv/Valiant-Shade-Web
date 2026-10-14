@@ -47,70 +47,265 @@
   .matrix-switch {
     cursor: pointer;
   }
-  .btn-role-filter.active {
-    background-color: var(--bs-primary) !important;
+  .roles-main-card .nav-tabs .nav-link {
+    font-weight: 600;
+  }
+  .matrix-row-hidden,
+  .role-item-col.role-card-hidden {
+    display: none !important;
+  }
+  .role-filter-list .list-group-item {
+    border: 0;
+    border-radius: 0.5rem;
+    margin-bottom: 0.35rem;
+    padding: 0.65rem 0.85rem;
+    font-weight: 500;
+  }
+  .role-filter-list .list-group-item.active {
+    background: var(--bs-primary);
+    color: #fff;
+  }
+  .role-filter-list .list-group-item.active .badge {
+    background: rgba(255, 255, 255, 0.25) !important;
     color: #fff !important;
+  }
+  .role-filter-list .list-group-item:not(.active):hover {
+    background: rgba(var(--bs-primary-rgb), 0.08);
+  }
+  .roles-cards-sidebar {
+    background: rgba(var(--bs-body-bg-rgb), 0.6);
+  }
+  @media (min-width: 992px) {
+    .roles-cards-sidebar {
+      min-height: 420px;
+    }
   }
 </style>
 @endsection
 
 @section('content')
-<!-- Header Banner -->
-<div class="card mb-6 border-0 shadow-sm" style="background: linear-gradient(135deg, rgba(234, 84, 85, 0.12) 0%, rgba(255, 159, 67, 0.12) 50%, rgba(115, 103, 240, 0.15) 100%);">
-  <div class="card-body p-4">
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-      <div class="d-flex align-items-center gap-3">
-        <div class="avatar avatar-lg">
-          <span class="avatar-initial rounded-3 bg-danger text-white shadow-sm fs-2">
-            <i class="icon-base ti tabler-shield-lock"></i>
-          </span>
-        </div>
-        <div>
-          <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
-            <h4 class="mb-0 fw-bold text-heading">{{ __('Roles & Permissions Management') }}</h4>
-            <span class="badge bg-label-danger font-monospace text-uppercase" style="font-size: 0.72rem;">
-              <i class="icon-base ti tabler-lock me-1"></i> {{ __('Admin Only') }}
-            </span>
-            <span class="badge bg-label-warning font-monospace text-uppercase" style="font-size: 0.72rem;">
-              <i class="icon-base ti tabler-shield-check me-1"></i> {{ __('Bailiff Council') }}
+@php
+  $rolesPayload = collect($roles)->map(function ($r) {
+    $a = is_array($r) ? $r : $r->toArray();
+    return [
+      'id' => $a['id'],
+      'slug' => $a['slug'],
+      'name' => $a['name'],
+      'description' => $a['description'] ?? '',
+      'color' => $a['color'] ?? '#7367f0',
+      'icon' => $a['icon'] ?? 'ti tabler-shield',
+      'priority' => $a['priority'] ?? 10,
+      'is_system' => ! empty($a['is_system']),
+      'users_count' => $a['users_count'] ?? 0,
+      'permissions' => array_values($a['permissions'] ?? []),
+    ];
+  })->values();
+@endphp
+
+<script type="application/json" id="roles-page-bootstrap">{!! json_encode([
+  'roles' => $rolesPayload,
+  'flatPermissions' => $flatPermissions,
+  'permissions' => $permissions,
+], JSON_UNESCAPED_UNICODE) !!}</script>
+
+@php
+  $roleCountByCategory = ['all' => count($roles), 'bailiff' => 0, 'management' => 0, 'adventurers' => 0];
+  foreach ($roles as $r) {
+    $slug = is_array($r) ? ($r['slug'] ?? '') : $r->slug;
+    if (in_array($slug, ['ADMIN', 'GM'], true)) {
+      $roleCountByCategory['management']++;
+    } elseif (str_starts_with($slug, 'BAILIFF')) {
+      $roleCountByCategory['bailiff']++;
+    } else {
+      $roleCountByCategory['adventurers']++;
+    }
+  }
+@endphp
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-6 gap-4">
+  <div class="d-flex flex-column justify-content-center">
+    <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+      <h4 class="mb-0">{{ __('Roles & Permissions') }}</h4>
+      <span class="badge bg-label-danger">{{ __('Admin') }}</span>
+    </div>
+    <p class="mb-0 text-body">
+      {{ __('Guild roles, Bailiff Council units, and granular route permissions (read / create / update / delete / all).') }}
+    </p>
+  </div>
+  <div class="d-flex align-content-center flex-wrap gap-3">
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAddRole">
+      <i class="icon-base ti tabler-plus me-1"></i> {{ __('Add New Role') }}
+    </button>
+  </div>
+</div>
+
+<div class="card roles-main-card">
+  <div class="card-header border-bottom">
+    <ul class="nav nav-tabs card-header-tabs mb-0" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="tab-matrix-btn" data-bs-toggle="tab" data-bs-target="#tab-matrix-pane" type="button" role="tab">
+          <i class="icon-base ti tabler-table-alias me-1"></i> {{ __('Permission Matrix') }}
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-cards-btn" data-bs-toggle="tab" data-bs-target="#tab-cards-pane" type="button" role="tab">
+          <i class="icon-base ti tabler-id-badge-2 me-1"></i> {{ __('Role Cards') }}
+          <span class="badge rounded-pill bg-label-primary ms-1">{{ count($roles) }}</span>
+        </button>
+      </li>
+    </ul>
+  </div>
+
+  <div class="tab-content">
+    <!-- Tab 1: Matrix (default) -->
+    <div class="tab-pane fade show active" id="tab-matrix-pane" role="tabpanel">
+      <div class="card-body border-bottom">
+        <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
+          <div>
+            <h6 class="mb-1 fw-semibold">{{ __('Permission Matrix (Quick Access & Comparison)') }}</h6>
+            <p class="mb-0 text-body-secondary small">{{ __('Toggle switches to grant or revoke permissions per role. Changes sync instantly to role cards.') }}</p>
+          </div>
+          <div class="d-flex flex-column flex-sm-row align-items-stretch gap-2">
+            <div class="input-group input-group-merge">
+              <span class="input-group-text"><i class="icon-base ti tabler-search"></i></span>
+              <input type="text" class="form-control" id="matrixSearch" placeholder="{{ __('Search permission...') }}">
+            </div>
+            <select class="form-select w-100 w-sm-auto" id="matrixModuleFilter" style="min-width: 11rem;">
+              <option value="">{{ __('All modules') }}</option>
+              @foreach($permissions as $moduleKey => $module)
+                <option value="{{ $moduleKey }}">{{ __($module['name']) }}</option>
+              @endforeach
+            </select>
+            <span class="badge bg-label-success d-inline-flex align-items-center justify-content-center px-3">
+              <i class="icon-base ti tabler-bolt me-1"></i> {{ __('Live sync') }}
             </span>
           </div>
-          <p class="mb-0 text-body-secondary small">
-            {{ __('Manage all guild roles, Bailiff Council divisions (Discipline, Hero Resources, Inventory, Questmaster, Representative, Archivist, Oathkeeper), hierarchy priorities, and system permissions.') }}
-          </p>
         </div>
       </div>
-      <div>
-        <button type="button" class="btn btn-primary rounded-pill fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddRole">
-          <i class="icon-base ti tabler-plus me-1"></i> {{ __('Add New Role') }}
-        </button>
+      <div class="table-responsive text-nowrap">
+        <table class="table table-hover align-middle mb-0 matrix-table">
+          <thead>
+            <tr class="table-light">
+              <th style="min-width: 270px;">{{ __('System Permission') }}</th>
+              @foreach($roles as $r)
+                @php
+                  $rArr = is_array($r) ? $r : $r->toArray();
+                  $isBailiff = str_starts_with($rArr['slug'] ?? '', 'BAILIFF');
+                @endphp
+                <th class="text-center {{ $isBailiff ? 'bailiff-header-col' : '' }} matrix-role-col" data-role-id="{{ $rArr['id'] }}" style="min-width: 145px;">
+                  <span class="d-block fw-bold matrix-role-name" style="color: {{ $rArr['color'] ?? '#7367f0' }}; font-size: 0.88rem;">
+                    {{ __($rArr['name']) }}
+                  </span>
+                  <span class="badge bg-label-secondary font-monospace matrix-role-slug" style="font-size: 0.65rem;">
+                    {{ $rArr['slug'] }}
+                  </span>
+                </th>
+              @endforeach
+            </tr>
+          </thead>
+          <tbody id="matrixTableBody">
+            @foreach($flatPermissions as $permKey => $p)
+              <tr class="matrix-row" data-module="{{ $p['module'] ?? '' }}" data-search="{{ strtolower($permKey . ' ' . ($p['name'] ?? '') . ' ' . ($p['description'] ?? '')) }}">
+                <td>
+                  <div class="d-flex align-items-center gap-2.5">
+                    <span class="avatar avatar-xs">
+                      <span class="avatar-initial rounded {{ $p['badge'] ?? 'bg-label-primary' }}">
+                        <i class="icon-base {{ $p['icon'] }}" style="font-size: 14px;"></i>
+                      </span>
+                    </span>
+                    <div>
+                      <span class="fw-bold text-heading d-block" style="font-size: 0.88rem;">{{ __($p['name']) }}</span>
+                      <small class="text-muted d-block font-monospace" style="font-size: 0.72rem;">{{ $permKey }}</small>
+                    </div>
+                  </div>
+                </td>
+
+                @foreach($roles as $r)
+                  @php
+                    $rArr = is_array($r) ? $r : $r->toArray();
+                    $rolePermList = $rArr['permissions'] ?? [];
+                    $moduleAll = ($p['module'] ?? '') . '.all';
+                    $hasPerm = in_array($permKey, $rolePermList, true)
+                        || (($p['action'] ?? '') !== 'all' && in_array($moduleAll, $rolePermList, true));
+                    $isAdminRole = ($rArr['slug'] === 'ADMIN');
+                    $isLocked = ($isAdminRole && in_array($permKey, ['roles.all', 'roles.manage'], true));
+                    $isBailiff = str_starts_with($rArr['slug'] ?? '', 'BAILIFF');
+                  @endphp
+
+                  <td class="text-center {{ $isBailiff ? 'bailiff-body-col' : '' }}">
+                    <div class="form-check form-switch d-inline-block mb-0">
+                      <input class="form-check-input matrix-switch toggle-perm-checkbox"
+                             type="checkbox"
+                             data-role-id="{{ $rArr['id'] }}"
+                             data-perm="{{ $permKey }}"
+                             data-module="{{ $p['module'] ?? '' }}"
+                             data-action="{{ $p['action'] ?? '' }}"
+                             data-role-slug="{{ $rArr['slug'] }}"
+                             {{ $hasPerm ? 'checked' : '' }}
+                             {{ $isLocked ? 'disabled title="' . __('The Administrator role must retain role management authority.') . '"' : '' }}>
+                    </div>
+                  </td>
+                @endforeach
+              </tr>
+            @endforeach
+          </tbody>
+        </table>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- Section 1: Role Filter Tabs & Role Cards Grid -->
-<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-  <div class="nav nav-pills gap-1 p-1 rounded bg-body shadow-xs" id="roleFilterTabs" role="tablist">
-    <button class="nav-link active rounded-pill px-3 py-1.5 btn-role-filter" data-filter="all">
-      <i class="icon-base ti tabler-cards me-1"></i> {{ __('All Roles') }} ({{ count($roles) }})
-    </button>
-    <button class="nav-link rounded-pill px-3 py-1.5 btn-role-filter" data-filter="bailiff">
-      <i class="icon-base ti tabler-shield-check me-1 text-warning"></i> {{ __('Bailiff Council') }}
-    </button>
-    <button class="nav-link rounded-pill px-3 py-1.5 btn-role-filter" data-filter="management">
-      <i class="icon-base ti tabler-crown me-1 text-danger"></i> {{ __('Guild Leadership') }}
-    </button>
-    <button class="nav-link rounded-pill px-3 py-1.5 btn-role-filter" data-filter="adventurers">
-      <i class="icon-base ti tabler-swords me-1 text-info"></i> {{ __('Adventurers') }}
-    </button>
-  </div>
-  <small class="text-body-secondary">
-    {{ __('Hierarchy priority (#100 is highest authority).') }}
-  </small>
-</div>
-
-<div class="row g-4 mb-6" id="rolesCardsGrid">
+    <!-- Tab 2: Role cards -->
+    <div class="tab-pane fade" id="tab-cards-pane" role="tabpanel">
+      <div class="row g-0">
+        <div class="col-12 col-lg-3 border-end roles-cards-sidebar">
+          <div class="p-4">
+            <h6 class="text-body-secondary text-uppercase small fw-semibold mb-3">{{ __('Role groups') }}</h6>
+            <div class="list-group role-filter-list" id="roleFilterTabs">
+              <button type="button" class="list-group-item list-group-item-action d-flex align-items-center gap-2 btn-role-filter active" data-filter="all">
+                <span class="avatar avatar-xs">
+                  <span class="avatar-initial rounded bg-label-primary"><i class="icon-base ti tabler-cards ti-xs"></i></span>
+                </span>
+                <span class="flex-grow-1 text-start">{{ __('All Roles') }}</span>
+                <span class="badge rounded-pill bg-label-primary">{{ $roleCountByCategory['all'] }}</span>
+              </button>
+              <button type="button" class="list-group-item list-group-item-action d-flex align-items-center gap-2 btn-role-filter" data-filter="management">
+                <span class="avatar avatar-xs">
+                  <span class="avatar-initial rounded bg-label-danger"><i class="icon-base ti tabler-crown ti-xs"></i></span>
+                </span>
+                <span class="flex-grow-1 text-start">{{ __('Guild Leadership') }}</span>
+                <span class="badge rounded-pill bg-label-danger">{{ $roleCountByCategory['management'] }}</span>
+              </button>
+              <button type="button" class="list-group-item list-group-item-action d-flex align-items-center gap-2 btn-role-filter" data-filter="bailiff">
+                <span class="avatar avatar-xs">
+                  <span class="avatar-initial rounded bg-label-warning"><i class="icon-base ti tabler-shield-check ti-xs"></i></span>
+                </span>
+                <span class="flex-grow-1 text-start">{{ __('Bailiff Council') }}</span>
+                <span class="badge rounded-pill bg-label-warning">{{ $roleCountByCategory['bailiff'] }}</span>
+              </button>
+              <button type="button" class="list-group-item list-group-item-action d-flex align-items-center gap-2 btn-role-filter" data-filter="adventurers">
+                <span class="avatar avatar-xs">
+                  <span class="avatar-initial rounded bg-label-info"><i class="icon-base ti tabler-swords ti-xs"></i></span>
+                </span>
+                <span class="flex-grow-1 text-start">{{ __('Adventurers') }}</span>
+                <span class="badge rounded-pill bg-label-info">{{ $roleCountByCategory['adventurers'] }}</span>
+              </button>
+            </div>
+            <div class="mt-4 p-3 rounded border bg-body">
+              <div class="d-flex align-items-start gap-2">
+                <i class="icon-base ti tabler-info-circle text-primary mt-1"></i>
+                <p class="mb-0 small text-body-secondary">{{ __('Hierarchy priority: #100 is highest authority (Administrator). Lower numbers indicate standard adventurer tiers.') }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-lg-9">
+          <div class="p-4 border-bottom">
+            <div class="input-group input-group-merge">
+              <span class="input-group-text"><i class="icon-base ti tabler-search"></i></span>
+              <input type="text" class="form-control" id="cardsRoleSearch" placeholder="{{ __('Search role by name or slug...') }}">
+            </div>
+          </div>
+          <div class="p-4">
+            <div class="row g-4" id="rolesCardsGrid">
   @foreach($roles as $r)
     @php
       $rArr = is_array($r) ? $r : $r->toArray();
@@ -129,7 +324,7 @@
       }
     @endphp
 
-    <div class="col-12 col-md-6 col-xl-4 role-item-col" id="role-card-{{ $rArr['id'] }}" data-category="{{ $category }}">
+    <div class="col-12 col-md-6 col-xl-6 role-item-col" id="role-card-{{ $rArr['id'] }}" data-category="{{ $category }}" data-search="{{ strtolower(($rArr['name'] ?? '') . ' ' . ($rArr['slug'] ?? '')) }}">
       <div class="card h-100 role-card shadow-xs {{ $isBailiff ? 'border-warning-subtle' : '' }}">
         <div class="card-body p-4 d-flex flex-column">
 
@@ -165,13 +360,13 @@
 
           <!-- Permissions Summary -->
           <div class="mb-4">
-            <span class="fw-semibold small text-body-secondary d-block mb-1.5" style="font-size: 0.75rem;">
-              {{ __('Assigned Permissions:') }} ({{ count($rolePerms) }})
+            <span class="fw-semibold small text-body-secondary d-block mb-1.5 role-perm-count" style="font-size: 0.75rem;">
+              {{ __('Assigned Permissions:') }} (<span class="role-perm-count-num">{{ count($rolePerms) }}</span>)
             </span>
-            <div class="d-flex flex-wrap gap-1">
+            <div class="d-flex flex-wrap gap-1 role-perm-badges">
               @forelse($rolePerms as $permKey)
                 @php
-                  $pInfo = $permissions[$permKey] ?? null;
+                  $pInfo = $flatPermissions[$permKey] ?? null;
                   $pName = $pInfo['name'] ?? $permKey;
                   $pBadge = $pInfo['badge'] ?? 'bg-label-primary';
                 @endphp
@@ -225,86 +420,11 @@
       </div>
     </div>
   @endforeach
-</div>
-
-<!-- Section 2: Permission Matrix Table (Interactive Permission Grid) -->
-<div class="card shadow-sm border-0 mb-6">
-  <div class="card-header border-bottom py-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
-    <div>
-      <h5 class="mb-0 fw-bold text-heading d-flex align-items-center gap-2">
-        <i class="icon-base ti tabler-table-alias text-warning"></i>
-        <span>{{ __('Permission Matrix (Quick Access & Comparison)') }}</span>
-      </h5>
-      <small class="text-body-secondary">{{ __('Toggle switches to instantly grant or revoke authority for any role.') }}</small>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <span class="badge bg-label-info font-monospace" style="font-size: 0.75rem;">
-      <i class="icon-base ti tabler-bolt me-1"></i> {{ __('Auto-Sync (Instant Save)') }}
-    </span>
-  </div>
-  <div class="table-responsive text-nowrap">
-    <table class="table table-hover align-middle mb-0 matrix-table">
-      <thead>
-        <tr class="table-light">
-          <th style="min-width: 270px;">{{ __('System Permission') }}</th>
-          @foreach($roles as $r)
-            @php
-              $rArr = is_array($r) ? $r : $r->toArray();
-              $isBailiff = str_starts_with($rArr['slug'] ?? '', 'BAILIFF');
-            @endphp
-            <th class="text-center {{ $isBailiff ? 'bailiff-header-col' : '' }}" style="min-width: 145px;">
-              <span class="d-block fw-bold" style="color: {{ $rArr['color'] ?? '#7367f0' }}; font-size: 0.88rem;">
-                {{ __($rArr['name']) }}
-              </span>
-              <span class="badge bg-label-secondary font-monospace" style="font-size: 0.65rem;">
-                {{ $rArr['slug'] }}
-              </span>
-            </th>
-          @endforeach
-        </tr>
-      </thead>
-      <tbody>
-        @foreach($permissions as $permKey => $p)
-          <tr>
-            <td>
-              <div class="d-flex align-items-center gap-2.5">
-                <span class="avatar avatar-xs">
-                  <span class="avatar-initial rounded {{ $p['badge'] ?? 'bg-label-primary' }}">
-                    <i class="icon-base {{ $p['icon'] }}" style="font-size: 14px;"></i>
-                  </span>
-                </span>
-                <div>
-                  <span class="fw-bold text-heading d-block" style="font-size: 0.88rem;">{{ __($p['name']) }}</span>
-                  <small class="text-muted d-block font-monospace" style="font-size: 0.72rem;">{{ $permKey }}</small>
-                  <small class="text-body-secondary d-block" style="font-size: 0.75rem;">{{ __($p['description']) }}</small>
-                </div>
-              </div>
-            </td>
-
-            @foreach($roles as $r)
-              @php
-                $rArr = is_array($r) ? $r : $r->toArray();
-                $hasPerm = in_array($permKey, $rArr['permissions'] ?? [], true);
-                $isAdminRole = ($rArr['slug'] === 'ADMIN');
-                $isLocked = ($isAdminRole && $permKey === 'roles.manage');
-                $isBailiff = str_starts_with($rArr['slug'] ?? '', 'BAILIFF');
-              @endphp
-
-              <td class="text-center {{ $isBailiff ? 'bailiff-body-col' : '' }}">
-                <div class="form-check form-switch d-inline-block mb-0">
-                  <input class="form-check-input matrix-switch toggle-perm-checkbox"
-                         type="checkbox"
-                         data-role-id="{{ $rArr['id'] }}"
-                         data-perm="{{ $permKey }}"
-                         data-role-slug="{{ $rArr['slug'] }}"
-                         {{ $hasPerm ? 'checked' : '' }}
-                         {{ $isLocked ? 'disabled title="' . __('The Administrator role must retain role management authority.') . '"' : '' }}>
-                </div>
-              </td>
-            @endforeach
-          </tr>
-        @endforeach
-      </tbody>
-    </table>
   </div>
 </div>
 
@@ -392,21 +512,22 @@
           </div>
 
           <div class="row g-3">
-            @foreach($permissions as $permKey => $p)
+            @foreach($permissions as $moduleKey => $module)
               <div class="col-12 col-md-6">
                 <div class="card border p-3 rounded-3 h-100 bg-body">
-                  <div class="form-check form-switch mb-0 d-flex align-items-start gap-2">
-                    <input class="form-check-input mt-1 edit-perm-checkbox" type="checkbox" id="edit_perm_{{ str_replace('.', '_', $permKey) }}" value="{{ $permKey }}">
-                    <label class="form-check-label w-100 cursor-pointer" for="edit_perm_{{ str_replace('.', '_', $permKey) }}">
-                      <div class="d-flex align-items-center gap-1.5 mb-0.5">
-                        <span class="badge {{ $p['badge'] ?? 'bg-label-primary' }} rounded-pill" style="font-size: 0.7rem;">
-                          <i class="icon-base {{ $p['icon'] }} me-0.5" style="font-size: 11px;"></i> {{ __($p['name']) }}
-                        </span>
+                  <div class="d-flex align-items-center gap-1.5 mb-2">
+                    <span class="badge {{ $module['badge'] ?? 'bg-label-primary' }} rounded-pill" style="font-size: 0.7rem;">
+                      <i class="icon-base {{ $module['icon'] }} me-0.5" style="font-size: 11px;"></i> {{ __($module['name']) }}
+                    </span>
+                  </div>
+                  <small class="text-body-secondary d-block mb-2" style="font-size: 0.75rem;">{{ __($module['description']) }}</small>
+                  <div class="d-flex flex-wrap gap-2">
+                    @foreach($module['actions'] as $action)
+                      <div class="form-check form-switch mb-0">
+                        <input class="form-check-input edit-perm-checkbox module-{{ $moduleKey }}-all-toggle" type="checkbox" id="edit_perm_{{ str_replace('.', '_', $action['key']) }}" value="{{ $action['key'] }}" data-module="{{ $moduleKey }}">
+                        <label class="form-check-label small" for="edit_perm_{{ str_replace('.', '_', $action['key']) }}">{{ $action['label'] }}</label>
                       </div>
-                      <small class="text-body-secondary d-block" style="font-size: 0.75rem; line-height: 1.4;">
-                        {{ __($p['description']) }}
-                      </small>
-                    </label>
+                    @endforeach
                   </div>
                 </div>
               </div>
@@ -524,21 +645,22 @@
           </div>
 
           <div class="row g-3">
-            @foreach($permissions as $permKey => $p)
+            @foreach($permissions as $moduleKey => $module)
               <div class="col-12 col-md-6">
                 <div class="card border p-3 rounded-3 h-100 bg-body">
-                  <div class="form-check form-switch mb-0 d-flex align-items-start gap-2">
-                    <input class="form-check-input mt-1 add-perm-checkbox" type="checkbox" id="add_perm_{{ str_replace('.', '_', $permKey) }}" value="{{ $permKey }}">
-                    <label class="form-check-label w-100 cursor-pointer" for="add_perm_{{ str_replace('.', '_', $permKey) }}">
-                      <div class="d-flex align-items-center gap-1.5 mb-0.5">
-                        <span class="badge {{ $p['badge'] ?? 'bg-label-primary' }} rounded-pill" style="font-size: 0.7rem;">
-                          <i class="icon-base {{ $p['icon'] }} me-0.5" style="font-size: 11px;"></i> {{ __($p['name']) }}
-                        </span>
+                  <div class="d-flex align-items-center gap-1.5 mb-2">
+                    <span class="badge {{ $module['badge'] ?? 'bg-label-primary' }} rounded-pill" style="font-size: 0.7rem;">
+                      <i class="icon-base {{ $module['icon'] }} me-0.5" style="font-size: 11px;"></i> {{ __($module['name']) }}
+                    </span>
+                  </div>
+                  <small class="text-body-secondary d-block mb-2" style="font-size: 0.75rem;">{{ __($module['description']) }}</small>
+                  <div class="d-flex flex-wrap gap-2">
+                    @foreach($module['actions'] as $action)
+                      <div class="form-check form-switch mb-0">
+                        <input class="form-check-input add-perm-checkbox" type="checkbox" id="add_perm_{{ str_replace('.', '_', $action['key']) }}" value="{{ $action['key'] }}">
+                        <label class="form-check-label small" for="add_perm_{{ str_replace('.', '_', $action['key']) }}">{{ $action['label'] }}</label>
                       </div>
-                      <small class="text-body-secondary d-block" style="font-size: 0.75rem; line-height: 1.4;">
-                        {{ __($p['description']) }}
-                      </small>
-                    </label>
+                    @endforeach
                   </div>
                 </div>
               </div>
@@ -562,6 +684,105 @@
 @section('page-script')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+
+  const bootstrapEl = document.getElementById('roles-page-bootstrap');
+  const bootstrapData = bootstrapEl ? JSON.parse(bootstrapEl.textContent || '{}') : {};
+  const flatPermissions = bootstrapData.flatPermissions || {};
+  const rolesState = {};
+  (bootstrapData.roles || []).forEach(r => { rolesState[String(r.id)] = { ...r, permissions: [...(r.permissions || [])] }; });
+
+  function escapeHtml(str) {
+    return String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function roleHasPermission(permissions, permKey) {
+    if (!Array.isArray(permissions)) return false;
+    if (permissions.includes(permKey)) return true;
+    const meta = flatPermissions[permKey];
+    if (!meta) return false;
+    const moduleAll = `${meta.module}.all`;
+    if (meta.action !== 'all' && permissions.includes(moduleAll)) return true;
+    return false;
+  }
+
+  function syncMatrixColumn(roleId, permissions) {
+    document.querySelectorAll(`.toggle-perm-checkbox[data-role-id="${roleId}"]`).forEach(sw => {
+      sw.checked = roleHasPermission(permissions, sw.dataset.perm);
+    });
+  }
+
+  function renderRoleCardPermissions(role) {
+    const card = document.getElementById('role-card-' + role.id);
+    if (!card) return;
+    const badgesWrap = card.querySelector('.role-perm-badges');
+    const countNum = card.querySelector('.role-perm-count-num');
+    const perms = role.permissions || [];
+    if (countNum) countNum.textContent = String(perms.length);
+    if (!badgesWrap) return;
+    if (!perms.length) {
+      badgesWrap.innerHTML = `<span class="text-muted small fst-italic" style="font-size: 0.78rem;"><i class="icon-base ti tabler-circle-x me-1"></i> {{ __('Standard adventurer permissions') }}</span>`;
+      return;
+    }
+    badgesWrap.innerHTML = perms.map(permKey => {
+      const pInfo = flatPermissions[permKey] || {};
+      const pName = pInfo.name || permKey;
+      const pBadge = pInfo.badge || 'bg-label-primary';
+      return `<span class="badge ${pBadge} rounded-pill" style="font-size: 0.72rem;" title="${escapeHtml(permKey)}">${escapeHtml(pName)}</span>`;
+    }).join('');
+    const editBtn = card.querySelector('.btn-edit-role');
+    if (editBtn) {
+      editBtn.dataset.permissions = JSON.stringify(perms);
+      editBtn.dataset.name = role.name;
+      editBtn.dataset.description = role.description || '';
+      editBtn.dataset.color = role.color || '#7367f0';
+      editBtn.dataset.icon = role.icon || 'ti tabler-shield';
+      editBtn.dataset.priority = String(role.priority ?? 10);
+    }
+  }
+
+  function applyRoleUpdate(role) {
+    if (!role || role.id == null) return;
+    const id = String(role.id);
+    rolesState[id] = { ...(rolesState[id] || {}), ...role, permissions: [...(role.permissions || [])] };
+    renderRoleCardPermissions(rolesState[id]);
+    syncMatrixColumn(id, rolesState[id].permissions);
+  }
+
+  const tabMatrixBtn = document.getElementById('tab-matrix-btn');
+  const tabCardsBtn = document.getElementById('tab-cards-btn');
+  tabMatrixBtn?.addEventListener('shown.bs.tab', () => sessionStorage.setItem('rolesActiveTab', 'matrix'));
+  tabCardsBtn?.addEventListener('shown.bs.tab', () => sessionStorage.setItem('rolesActiveTab', 'cards'));
+  if (sessionStorage.getItem('rolesActiveTab') === 'cards' && tabCardsBtn) {
+    bootstrap.Tab.getOrCreateInstance(tabCardsBtn).show();
+  }
+
+  let activeRoleCategory = 'all';
+  const cardsRoleSearch = document.getElementById('cardsRoleSearch');
+  function applyRoleCardsFilter() {
+    const q = (cardsRoleSearch?.value || '').trim().toLowerCase();
+    document.querySelectorAll('.role-item-col').forEach(cardCol => {
+      const cat = cardCol.dataset.category;
+      const matchCategory = activeRoleCategory === 'all' || cat === activeRoleCategory;
+      const matchSearch = !q || (cardCol.dataset.search || '').includes(q);
+      cardCol.classList.toggle('role-card-hidden', !(matchCategory && matchSearch));
+    });
+  }
+  cardsRoleSearch?.addEventListener('input', applyRoleCardsFilter);
+
+  // Matrix filters
+  const matrixSearch = document.getElementById('matrixSearch');
+  const matrixModuleFilter = document.getElementById('matrixModuleFilter');
+  function filterMatrixRows() {
+    const q = (matrixSearch?.value || '').trim().toLowerCase();
+    const mod = matrixModuleFilter?.value || '';
+    document.querySelectorAll('#matrixTableBody .matrix-row').forEach(row => {
+      const matchModule = !mod || row.dataset.module === mod;
+      const matchSearch = !q || (row.dataset.search || '').includes(q);
+      row.classList.toggle('matrix-row-hidden', !(matchModule && matchSearch));
+    });
+  }
+  matrixSearch?.addEventListener('input', filterMatrixRows);
+  matrixModuleFilter?.addEventListener('change', filterMatrixRows);
 
   // Color input sync for Edit Modal
   const editColorInput = document.getElementById('editRoleColor');
@@ -591,21 +812,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Role category filter tabs
   document.querySelectorAll('.btn-role-filter').forEach(btn => {
     btn.addEventListener('click', function() {
       document.querySelectorAll('.btn-role-filter').forEach(b => b.classList.remove('active'));
       this.classList.add('active');
-
-      const filter = this.dataset.filter;
-      document.querySelectorAll('.role-item-col').forEach(cardCol => {
-        const cat = cardCol.dataset.category;
-        if (filter === 'all' || cat === filter) {
-          cardCol.style.display = '';
-        } else {
-          cardCol.style.display = 'none';
-        }
-      });
+      activeRoleCategory = this.dataset.filter || 'all';
+      applyRoleCardsFilter();
     });
   });
 
@@ -623,7 +835,7 @@ document.addEventListener('DOMContentLoaded', function() {
           priority: 65,
           desc: 'Oversees guild discipline, rule compliance, sanctions, and member conduct.',
           icon: 'ti tabler-gavel',
-          perms: ['discipline.manage', 'users.manage', 'guild.manage']
+          perms: ['discipline.all', 'users.all', 'guild.read']
         },
         bailiff_hr: {
           name: 'Hero Resources Bailiff',
@@ -631,7 +843,7 @@ document.addEventListener('DOMContentLoaded', function() {
           priority: 65,
           desc: 'Manages adventurer intake, rank advancement, roster assignments, and progression.',
           icon: 'ti tabler-users-group',
-          perms: ['hr.manage', 'xp.manage', 'users.manage', 'guild.manage']
+          perms: ['hr.all', 'xp.all', 'users.all', 'guild.read']
         },
         bailiff_representative: {
           name: 'Guild Representative Bailiff',
@@ -639,7 +851,7 @@ document.addEventListener('DOMContentLoaded', function() {
           priority: 65,
           desc: 'Official guild ambassador managing diplomatic relations, external delegations, and alliance treaties.',
           icon: 'ti tabler-flag',
-          perms: ['diplomacy.manage', 'guild.manage']
+          perms: ['diplomacy.all', 'guild.read']
         },
         bailiff_archivist: {
           name: 'Archivist Bailiff',
@@ -647,7 +859,7 @@ document.addEventListener('DOMContentLoaded', function() {
           priority: 65,
           desc: 'Guardian of the Great Library, guild annals, quest archives, and ancient historical scrolls.',
           icon: 'ti tabler-books',
-          perms: ['archives.manage', 'guild.manage']
+          perms: ['archives.all', 'guild.read']
         },
         bailiff_oathkeeper: {
           name: 'Oathkeeper Bailiff',
@@ -655,7 +867,7 @@ document.addEventListener('DOMContentLoaded', function() {
           priority: 65,
           desc: 'Keeper of blood bonds, initiation vows, adventurer pledges, and sacred covenants.',
           icon: 'ti tabler-shield-lock',
-          perms: ['oaths.manage', 'discipline.manage', 'guild.manage']
+          perms: ['oaths.all', 'discipline.all', 'guild.read']
         },
         bailiff_inventory: {
           name: 'Inventory Bailiff',
@@ -663,7 +875,7 @@ document.addEventListener('DOMContentLoaded', function() {
           priority: 60,
           desc: 'Manages the guild communal vault, magic artifacts, and treasury assets.',
           icon: 'ti tabler-package',
-          perms: ['inventory.manage', 'guild.manage']
+          perms: ['inventory.all', 'guild.read']
         },
         bailiff_questmaster: {
           name: 'Questmaster Bailiff',
@@ -671,7 +883,7 @@ document.addEventListener('DOMContentLoaded', function() {
           priority: 60,
           desc: 'Supervises quest board notices, decrees, and expedition debriefs.',
           icon: 'ti tabler-scroll',
-          perms: ['quests.manage', 'guild.manage']
+          perms: ['quests.all', 'guild.read']
         },
         bailiff_custom: {
           name: 'Custom Bailiff',
@@ -679,7 +891,7 @@ document.addEventListener('DOMContentLoaded', function() {
           priority: 60,
           desc: 'Special bailiff council division officer.',
           icon: 'ti tabler-shield-check',
-          perms: ['guild.manage']
+          perms: ['guild.read']
         },
         veteran: {
           name: 'Veteran Adventurer',
@@ -729,15 +941,15 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('editRolePriority').value = priority;
       document.getElementById('editRoleIcon').value = icon;
 
-      // Reset checkboxes
+      // Reset checkboxes (respect module.all implied grants)
       document.querySelectorAll('.edit-perm-checkbox').forEach(cb => {
-        cb.checked = perms.includes(cb.value);
+        cb.checked = roleHasPermission(perms, cb.value);
         cb.disabled = false;
       });
 
       // Guard Admin from unchecking roles.manage
       if (slug === 'ADMIN') {
-        const adminPerm = document.getElementById('edit_perm_roles_manage');
+        const adminPerm = document.getElementById('edit_perm_roles_all');
         if (adminPerm) {
           adminPerm.checked = true;
           adminPerm.disabled = true;
@@ -761,7 +973,7 @@ document.addEventListener('DOMContentLoaded', function() {
     btnDeselectAll.addEventListener('click', function() {
       const slug = document.getElementById('editRoleSlug').value;
       document.querySelectorAll('.edit-perm-checkbox').forEach(cb => {
-        if (slug === 'ADMIN' && cb.value === 'roles.manage') {
+        if (slug === 'ADMIN' && (cb.value === 'roles.all' || cb.value === 'roles.manage')) {
           cb.checked = true;
         } else {
           cb.checked = false;
@@ -806,13 +1018,15 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(data => {
         btn.disabled = false;
         if (data.success) {
+          applyRoleUpdate(data.role);
+          bootstrap.Modal.getInstance(document.getElementById('modalEditRole'))?.hide();
           Swal.fire({
             icon: 'success',
             title: '{{ __("Success!") }}',
             text: data.message,
-            timer: 1500,
+            timer: 1400,
             showConfirmButton: false
-          }).then(() => location.reload());
+          });
         } else {
           Swal.fire({ icon: 'error', title: '{{ __("Error!") }}', text: data.message });
         }
@@ -933,57 +1147,64 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // Interactive Permission Matrix Quick Toggle Switch
-  document.querySelectorAll('.toggle-perm-checkbox').forEach(sw => {
-    sw.addEventListener('change', function() {
-      const roleId = this.dataset.roleId;
-      const perm = this.dataset.perm;
-      const enabled = this.checked;
-      const roleSlug = this.dataset.roleSlug;
+  // Interactive Permission Matrix Quick Toggle Switch (delegated — survives filters)
+  document.getElementById('matrixTableBody')?.addEventListener('change', function(e) {
+    const sw = e.target.closest('.toggle-perm-checkbox');
+    if (!sw) return;
 
-      if (roleSlug === 'ADMIN' && perm === 'roles.manage' && !enabled) {
-        this.checked = true;
-        Swal.fire({
-          icon: 'warning',
-          title: '{{ __("Action Blocked") }}',
-          text: '{{ __("The Administrator role must retain role management authority.") }}'
-        });
-        return;
-      }
+    const roleId = sw.dataset.roleId;
+    const perm = sw.dataset.perm;
+    const enabled = sw.checked;
+    const roleSlug = sw.dataset.roleSlug;
+    const previousPerms = [...(rolesState[roleId]?.permissions || [])];
 
-      fetch("{{ url('/valiant-shade/app/roles') }}/" + roleId + "/toggle-permission", {
-        method: 'POST',
-        headers: {
-          'X-CSRF-TOKEN': '{{ csrf_token() }}',
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          permission: perm,
-          enabled: enabled
-        })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: data.message,
-            showConfirmButton: false,
-            timer: 2000,
-            timerProgressBar: true
-          });
-        } else {
-          sw.checked = !enabled;
-          Swal.fire({ icon: 'error', title: '{{ __("Error!") }}', text: data.message });
-        }
-      })
-      .catch(() => {
-        sw.checked = !enabled;
-        Swal.fire({ icon: 'error', title: '{{ __("Error!") }}', text: '{{ __("Cannot reach server.") }}' });
+    if (roleSlug === 'ADMIN' && (perm === 'roles.manage' || perm === 'roles.all') && !enabled) {
+      sw.checked = true;
+      Swal.fire({
+        icon: 'warning',
+        title: '{{ __("Action Blocked") }}',
+        text: '{{ __("The Administrator role must retain role management authority.") }}'
       });
+      return;
+    }
+
+    sw.disabled = true;
+
+    fetch("{{ url('/valiant-shade/app/roles') }}/" + roleId + "/toggle-permission", {
+      method: 'POST',
+      headers: {
+        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ permission: perm, enabled: enabled })
+    })
+    .then(res => res.json())
+    .then(data => {
+      sw.disabled = false;
+      if (data.success && data.role) {
+        applyRoleUpdate(data.role);
+        const toast = Swal.mixin({
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 1800,
+          timerProgressBar: true
+        });
+        toast.fire({ icon: 'success', title: data.message });
+      } else {
+        sw.checked = !enabled;
+        rolesState[roleId] = { ...rolesState[roleId], permissions: previousPerms };
+        syncMatrixColumn(roleId, previousPerms);
+        Swal.fire({ icon: 'error', title: '{{ __("Error!") }}', text: data.message || '{{ __("Update failed.") }}' });
+      }
+    })
+    .catch(() => {
+      sw.disabled = false;
+      sw.checked = !enabled;
+      rolesState[roleId] = { ...rolesState[roleId], permissions: previousPerms };
+      syncMatrixColumn(roleId, previousPerms);
+      Swal.fire({ icon: 'error', title: '{{ __("Error!") }}', text: '{{ __("Cannot reach server.") }}' });
     });
   });
 

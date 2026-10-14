@@ -189,7 +189,12 @@ document.addEventListener('DOMContentLoaded', function (e) {
             let deleteBtnHtml = '';
 
             // Delete button only shown if Admin
+            let accessBtnHtml = '';
             if (currentUserIsAdmin) {
+              accessBtnHtml = `
+                <a href="javascript:;" class="btn btn-text-primary rounded-pill waves-effect btn-icon user-access-btn me-1" data-id="${userId}" title="Roles & direct permissions">
+                  <i class="icon-base ti tabler-key icon-22px"></i>
+                </a>`;
               deleteBtnHtml = `
                 <a href="javascript:;" class="btn btn-text-danger rounded-pill waves-effect btn-icon delete-record" data-id="${userId}" title="Delete">
                   <i class="icon-base ti tabler-trash icon-22px"></i>
@@ -202,6 +207,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
                 <a href="${userView}" class="btn btn-text-secondary rounded-pill waves-effect btn-icon me-1" title="View Profile">
                   <i class="icon-base ti tabler-eye icon-22px"></i>
                 </a>
+                ${accessBtnHtml}
                 ${deleteBtnHtml}
               </div>
             `;
@@ -471,6 +477,60 @@ document.addEventListener('DOMContentLoaded', function (e) {
     });
   }
 
+  const userAccessModal = document.getElementById('userAccessModal');
+  if (userAccessModal) {
+    const accessForm = document.getElementById('user-access-form');
+    const accessUserId = document.getElementById('user-access-id');
+    const accessRolesWrap = document.getElementById('user-access-roles');
+    const accessPermsWrap = document.getElementById('user-access-permissions');
+    const accessCsrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+    document.addEventListener('click', event => {
+      const btn = event.target.closest('.user-access-btn');
+      if (!btn) return;
+      const userId = btn.dataset.id;
+      fetch(baseAppUrl + 'app/user/' + userId + '/access', { headers: { Accept: 'application/json' } })
+        .then(r => r.json())
+        .then(data => {
+          if (!data.success) throw new Error('Unable to load user access.');
+          accessUserId.value = userId;
+          const assignedSlugs = (data.roles || []).map(r => r.slug);
+          accessRolesWrap.innerHTML = availableRoles.map(role => `
+            <label class="form-check">
+              <input class="form-check-input" type="checkbox" name="roles[]" value="${escapeHtml(role.slug)}" ${assignedSlugs.includes(role.slug) ? 'checked' : ''}>
+              <span class="form-check-label">${escapeHtml(role.name)}</span>
+            </label>`).join('');
+          const direct = data.direct_permissions || [];
+          const flat = data.flat_permissions || {};
+          accessPermsWrap.innerHTML = Object.entries(flat).map(([key, meta]) => `
+            <label class="form-check">
+              <input class="form-check-input" type="checkbox" name="direct_permissions[]" value="${escapeHtml(key)}" ${direct.includes(key) ? 'checked' : ''}>
+              <span class="form-check-label">${escapeHtml(meta.name || key)}</span>
+            </label>`).join('');
+          bootstrap.Modal.getOrCreateInstance(userAccessModal).show();
+        })
+        .catch(err => alert(err.message));
+    });
+
+    accessForm?.addEventListener('submit', event => {
+      event.preventDefault();
+      const userId = accessUserId.value;
+      const roles = Array.from(accessForm.querySelectorAll('[name="roles[]"]:checked')).map(i => i.value);
+      const permissions = Array.from(accessForm.querySelectorAll('[name="direct_permissions[]"]:checked')).map(i => i.value);
+      fetch(baseAppUrl + 'app/user/' + userId + '/role', {
+        method: 'PUT',
+        headers: { 'X-CSRF-TOKEN': accessCsrf, Accept: 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roles, permissions })
+      }).then(r => r.json().then(data => ({ ok: r.ok, data })))
+        .then(({ ok, data }) => {
+          if (!ok) throw new Error(data.message || 'Save failed.');
+          bootstrap.Modal.getInstance(userAccessModal)?.hide();
+          if (dt_user) dt_user.ajax.reload(null, false);
+        })
+        .catch(err => alert(err.message));
+    });
+  }
+
   const roleModal = document.getElementById('roleManagementModal');
   const roleForm = document.getElementById('role-form');
   if (roleModal && roleForm) {
@@ -507,10 +567,11 @@ document.addEventListener('DOMContentLoaded', function (e) {
         return response.json();
       })
       .then(data => {
-        permissionList.innerHTML = Object.entries(data.permissions || {}).map(([key, label]) => `
+        const flat = data.flat_permissions || {};
+        permissionList.innerHTML = Object.entries(flat).map(([key, meta]) => `
           <label class="form-check">
             <input class="form-check-input" type="checkbox" name="permissions[]" value="${escapeHtml(key)}">
-            <span class="form-check-label">${escapeHtml(label)}</span>
+            <span class="form-check-label">${escapeHtml(meta.name || key)}</span>
           </label>`).join('');
         roleList.innerHTML = (data.roles || []).map(role => {
           const color = role.color || '#7367f0';

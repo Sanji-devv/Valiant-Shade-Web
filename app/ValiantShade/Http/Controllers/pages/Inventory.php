@@ -16,10 +16,16 @@ class Inventory extends Controller
     /**
      * Check if current user is an authorized admin.
      */
-    protected function checkAdmin(Request $request): ?JsonResponse
+    protected function checkAdmin(Request $request, string $action = 'update'): ?JsonResponse
     {
-        $isAdmin = auth()->user()?->hasPermission('inventory.manage') ?? false;
-        if (!$isAdmin) {
+        $permission = match ($action) {
+            'create' => 'inventory.create',
+            'delete' => 'inventory.delete',
+            'read' => 'inventory.read',
+            default => 'inventory.update',
+        };
+        $isAdmin = auth()->user()?->hasPermission($permission) ?? false;
+        if (! $isAdmin) {
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
@@ -55,7 +61,7 @@ class Inventory extends Controller
         $metrics = $this->inventoryService->getMetrics($currency);
         $categories = $this->inventoryService->getCategories();
         $vault = $this->inventoryService->getVault();
-        $isAdmin = auth()->user()?->hasPermission('inventory.manage') ?? false;
+        $isAdmin = auth()->user()?->hasPermission('inventory.read') ?? false;
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -87,7 +93,7 @@ class Inventory extends Controller
      */
     public function updateVault(Request $request): JsonResponse|RedirectResponse
     {
-        if ($forbidden = $this->checkAdmin($request)) {
+        if ($forbidden = $this->checkAdmin($request, 'update')) {
             return $forbidden;
         }
 
@@ -130,7 +136,7 @@ class Inventory extends Controller
      */
     public function store(Request $request): JsonResponse|RedirectResponse
     {
-        if ($forbidden = $this->checkAdmin($request)) {
+        if ($forbidden = $this->checkAdmin($request, 'create')) {
             return $forbidden;
         }
 
@@ -196,7 +202,7 @@ class Inventory extends Controller
      */
     public function destroy(Request $request, int $id): JsonResponse|RedirectResponse
     {
-        if ($forbidden = $this->checkAdmin($request)) {
+        if ($forbidden = $this->checkAdmin($request, 'delete')) {
             return $forbidden;
         }
 
