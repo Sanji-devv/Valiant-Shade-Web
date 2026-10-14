@@ -21,3 +21,5 @@ Route::get('/login', function () {
 })->name('login');
 
 Route::post('/logout', [\App\ValiantShade\Http\Controllers\authentications\LogoutController::class, 'logout'])->name('logout.root');
+
+require __DIR__.'/world-maps.php';

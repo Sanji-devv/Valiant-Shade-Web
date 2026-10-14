@@ -12,8 +12,13 @@ use Illuminate\Validation\ValidationException;
 
 class LoginBasic extends Controller
 {
-  public function index()
+  public function index(Request $request)
   {
+    $redirect = $request->query('redirect');
+    if (is_string($redirect) && $redirect !== '' && str_starts_with($redirect, url('/'))) {
+      redirect()->setIntendedUrl($redirect);
+    }
+
     $pageConfigs = ['myLayout' => 'blank'];
     return view('valiant-shade.content.authentications.auth-login-basic', ['pageConfigs' => $pageConfigs]);
   }

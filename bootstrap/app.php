@@ -12,6 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->alias([
+            'map.editor' => \App\Http\Middleware\EnsureMapEditor::class,
+        ]);
         $middleware->web(append: [
             \App\ValiantShade\Http\Middleware\LocaleMiddleware::class,
         ]);

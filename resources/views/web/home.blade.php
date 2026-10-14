@@ -19,7 +19,10 @@
         <h1>Valiant Shade</h1>
         <p>Front-facing member and visitor portal — ready for adventure.</p>
         <nav>
-            <a href="{{ url('/valiant-shade') }}">Valiant Shade</a>
+            <a href="{{ route('valiant-shade.dashboard-analytics') }}">Valiant Shade Panel</a>
+            <a href="{{ route('web.feldan') }}">Feldan Krallığı</a>
+            <a href="{{ route('web.rovesta') }}">Rovesta Krallığı</a>
+            <a href="{{ route('web.valiant-shade') }}">Lonca Arazisi</a>
             <a href="{{ url('/admin') }}">Control Panel</a>
             <a href="{{ url('/demo-vuexy') }}">Vuexy Demo Reference</a>
         </nav>

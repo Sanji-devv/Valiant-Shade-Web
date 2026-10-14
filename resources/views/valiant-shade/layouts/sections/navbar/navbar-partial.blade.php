@@ -460,6 +460,16 @@ use Illuminate\Support\Facades\Route;
             href="{{ Route::has('profile.show') ? route('profile.show') : url('/valiant-shade/pages/profile-user') }}">
             <i class="icon-base ti tabler-user me-3 icon-md"></i><span class="align-middle">{{ __('My Profile') }}</span> </a>
         </li>
+        <li>
+          <a class="dropdown-item" href="{{ route('web.feldan') }}">
+            <i class="icon-base ti tabler-map-2 me-3 icon-md"></i><span class="align-middle">Feldan Krallığı</span>
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item" href="{{ route('web.rovesta') }}">
+            <i class="icon-base ti tabler-map me-3 icon-md"></i><span class="align-middle">Rovesta Krallığı</span>
+          </a>
+        </li>
         @if (class_exists(\Laravel\Jetstream\Jetstream::class) && \Laravel\Jetstream\Jetstream::hasApiFeatures())
         <li>
           <a class="dropdown-item" href="{{ route('api-tokens.index') }}">
