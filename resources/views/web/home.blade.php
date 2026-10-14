@@ -23,6 +23,7 @@
             <a href="{{ route('web.feldan') }}">Feldan Krallığı</a>
             <a href="{{ route('web.rovesta') }}">Rovesta Krallığı</a>
             <a href="{{ route('web.valiant-shade') }}">Lonca Arazisi</a>
+            <a href="{{ route('web.newspaper') }}">Gazete</a>
             <a href="{{ url('/admin') }}">Control Panel</a>
             <a href="{{ url('/demo-vuexy') }}">Vuexy Demo Reference</a>
         </nav>

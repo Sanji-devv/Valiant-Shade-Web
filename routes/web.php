@@ -12,9 +12,13 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+use App\Http\Controllers\Web\NewspaperController;
+
 Route::get('/', function () {
     return view('web.home');
 })->name('web.home');
+
+Route::get('/newspaper', [NewspaperController::class, 'show'])->name('web.newspaper');
 
 Route::get('/login', function () {
     return redirect()->route('valiant-shade.auth-login-basic');

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\BuildingTypeController;
+use App\Http\Controllers\Api\PublicNewsController;
 use App\Http\Controllers\Api\MapBuildingController;
 use App\Http\Controllers\Api\MapEditorController;
 use App\Http\Controllers\Api\MapTerrainController;
@@ -42,6 +43,16 @@ Route::prefix('world')->group(function () {
 });
 
 Route::prefix('api')->group(function () {
+    Route::prefix('public/news')->group(function () {
+        Route::get('/bootstrap', [PublicNewsController::class, 'bootstrap'])->name('api.public.news.bootstrap');
+        Route::get('/featured', [PublicNewsController::class, 'featured'])->name('api.public.news.featured');
+        Route::get('/', [PublicNewsController::class, 'index'])->name('api.public.news.index');
+        Route::get('/{id}', [PublicNewsController::class, 'show'])->whereNumber('id')->name('api.public.news.show');
+        Route::post('/submissions', [PublicNewsController::class, 'submit'])
+            ->middleware('throttle:public.news.submissions')
+            ->name('api.public.news.submit');
+    });
+
     Route::get('/maps/{slug}', [TerritoryMapController::class, 'show'])->name('api.maps.show');
 
     Route::middleware(['auth', 'map.editor'])->group(function () {

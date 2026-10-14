@@ -166,6 +166,33 @@
     font-size: 0.78rem;
     color: #94a3b8;
   }
+  .vs-type-picker { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .vs-type-picker__btn {
+    flex: 1 1 calc(16.666% - 0.5rem);
+    min-width: 4.5rem;
+    max-width: 5.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.55rem 0.35rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(15, 23, 42, 0.55);
+    color: #94a3b8;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+  }
+  .vs-type-picker__btn:hover { border-color: rgba(168, 85, 247, 0.45); color: #e2e8f0; }
+  .vs-type-picker__btn.is-selected {
+    border-color: rgba(168, 85, 247, 0.85);
+    background: rgba(168, 85, 247, 0.18);
+    color: #f5f3ff;
+    box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.35);
+  }
+  .vs-type-picker__icon { display: flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; }
+  .vs-type-picker--admin .vs-type-picker__icon i { font-size: 1.35rem; }
+  .vs-type-picker__label { font-size: 0.62rem; line-height: 1.15; text-align: center; font-weight: 600; }
 </style>
 @endsection
 
@@ -209,6 +236,53 @@
       </button>
     </div>
   </div>
+
+  @if(isset($pendingNews) && $pendingNews->isNotEmpty())
+  <div class="card border border-warning border-opacity-50 mb-4">
+    <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <div>
+        <h5 class="mb-0 text-warning d-flex align-items-center gap-2">
+          <i class="icon-base ti tabler-hourglass"></i>
+          <span>{{ __('Pending Rumors & Submissions') }} ({{ $pendingNews->count() }})</span>
+        </h5>
+        <small class="text-body-secondary">{{ __('Review public submissions before publishing to the gazette.') }}</small>
+      </div>
+      <a href="{{ route('web.newspaper') }}" class="btn btn-sm btn-label-primary" target="_blank" rel="noopener">
+        <i class="icon-base ti tabler-world me-1"></i> {{ __('Open Public Newspaper') }}
+      </a>
+    </div>
+    <div class="list-group list-group-flush">
+      @foreach($pendingNews as $pending)
+      <div class="list-group-item bg-transparent">
+        <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
+          <div>
+            <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+              <span class="badge bg-label-warning">{{ $pending->news_type ? (config('news.types.'.$pending->news_type.'.label') ?? $pending->category) : $pending->category }}</span>
+              <span class="text-body-secondary small">{{ $pending->date_text }}</span>
+            </div>
+            <h6 class="mb-1 text-white">{{ $pending->title }}</h6>
+            <p class="mb-0 text-body-secondary small">{{ \Illuminate\Support\Str::limit($pending->description, 180) }}</p>
+          </div>
+          <div class="d-flex gap-2 flex-shrink-0">
+            <form method="post" action="{{ route('valiant-shade.pages-news.approve', $pending->id) }}">
+              @csrf
+              <button type="submit" class="btn btn-sm btn-success">
+                <i class="icon-base ti tabler-check me-1"></i> {{ __('Publish') }}
+              </button>
+            </form>
+            <form method="post" action="{{ route('valiant-shade.pages-news.reject', $pending->id) }}">
+              @csrf
+              <button type="submit" class="btn btn-sm btn-outline-danger">
+                <i class="icon-base ti tabler-x me-1"></i> {{ __('Reject') }}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+      @endforeach
+    </div>
+  </div>
+  @endif
 
   <!-- Featured Headlines / Breaking News Banner -->
   @if($featuredNews)
@@ -596,13 +670,14 @@
           <input type="text" class="form-control" id="whisperSubject" placeholder="{{ __('e.g. Suspicious elf meeting at Red Inn...') }}">
         </div>
         <div class="mb-3">
-          <label class="form-label text-white small fw-medium">{{ __('Category') }}</label>
-          <select class="form-select" id="whisperCategory">
-            <option value="rumors">{{ __('Tavern Gossip') }}</option>
-            <option value="casualties">{{ __('Dungeon Loss & Casualty Report') }}</option>
-            <option value="assassination">{{ __('Suspicious Conspiracy / Treason') }}</option>
-            <option value="expedition">{{ __('Hidden Treasure / Map Tip') }}</option>
-          </select>
+          <label class="form-label text-white small fw-medium d-block mb-2">{{ __('Category') }}</label>
+          @include('web.partials.news-type-picker', [
+              'variant' => 'admin',
+              'groupId' => 'whisperTypePicker',
+              'inputId' => 'whisperNewsType',
+              'inputName' => 'news_type',
+              'ariaLabel' => __('Category'),
+          ])
         </div>
         <div class="mb-3">
           <label class="form-label text-white small fw-medium">{{ __('Whisper Details & Eyewitness Account') }}</label>
@@ -786,8 +861,24 @@
     }
   }
 
+  function initNewsTypePicker(groupEl, inputEl) {
+    if (!groupEl || !inputEl) return;
+    groupEl.addEventListener('click', function (event) {
+      const btn = event.target.closest('[data-type]');
+      if (!btn || !groupEl.contains(btn)) return;
+      groupEl.querySelectorAll('.vs-type-picker__btn').forEach(function (item) {
+        item.classList.remove('is-selected');
+        item.setAttribute('aria-checked', 'false');
+      });
+      btn.classList.add('is-selected');
+      btn.setAttribute('aria-checked', 'true');
+      inputEl.value = btn.dataset.type;
+    });
+  }
+
   // DOM Loaded Event Bindings
   document.addEventListener('DOMContentLoaded', function () {
+    initNewsTypePicker(document.getElementById('whisperTypePicker'), document.getElementById('whisperNewsType'));
     const cards = document.querySelectorAll('.news-item-col');
     const filterButtons = document.querySelectorAll('#categoryFilterGroup .category-filter-btn');
     const searchInput = document.getElementById('liveSearchInput');
@@ -855,33 +946,63 @@
     // Submit Whisper Modal Handling
     const btnSubmitWhisper = document.getElementById('btnSubmitWhisper');
     if (btnSubmitWhisper) {
-      btnSubmitWhisper.addEventListener('click', function () {
+      btnSubmitWhisper.addEventListener('click', async function () {
         const subject = document.getElementById('whisperSubject').value.trim();
         const msg = document.getElementById('whisperMessage').value.trim();
+        const newsType = document.getElementById('whisperNewsType').value;
+        const anonymous = document.getElementById('anonymousWhisperCheck').checked;
 
         if (!subject || !msg) {
           alert('{{ __("Please fill in both whisper subject and message.") }}');
           return;
         }
 
-        const modalEl = document.getElementById('whisperTipModal');
-        const modal = bootstrap.Modal.getInstance(modalEl);
-        if (modal) modal.hide();
-
-        document.getElementById('whisperSubject').value = '';
-        document.getElementById('whisperMessage').value = '';
-
-        if (typeof Swal !== 'undefined') {
-          Swal.fire({
-            title: '🤫 {{ __("Whisper Received!") }}',
-            text: '{{ __("Your tip was delivered secretly to the Valiant Shade Intelligence Division. Veteran scouts have commenced immediate investigations.") }}',
-            icon: 'success',
-            confirmButtonText: '{{ __("Understood") }}',
-            customClass: { confirmButton: 'btn btn-warning' },
-            buttonsStyling: false
+        btnSubmitWhisper.disabled = true;
+        try {
+          const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+          const response = await fetch('{{ route('api.public.news.submit') }}', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'X-CSRF-TOKEN': token || '',
+            },
+            body: JSON.stringify({
+              title: subject,
+              news_type: newsType,
+              description: msg,
+              anonymous: anonymous,
+            }),
           });
-        } else {
-          alert('{{ __("Your whisper was sent successfully.") }}');
+          const result = await response.json();
+          if (!response.ok || !result.success) {
+            throw new Error(result.message || '{{ __("Submission failed.") }}');
+          }
+
+          const modalEl = document.getElementById('whisperTipModal');
+          const modal = bootstrap.Modal.getInstance(modalEl);
+          if (modal) modal.hide();
+
+          document.getElementById('whisperSubject').value = '';
+          document.getElementById('whisperMessage').value = '';
+
+          if (typeof Swal !== 'undefined') {
+            Swal.fire({
+              title: '🤫 {{ __("Whisper Received!") }}',
+              text: result.message,
+              icon: 'success',
+              confirmButtonText: '{{ __("Understood") }}',
+              customClass: { confirmButton: 'btn btn-warning' },
+              buttonsStyling: false
+            }).then(() => window.location.reload());
+          } else {
+            alert(result.message);
+            window.location.reload();
+          }
+        } catch (error) {
+          alert(error.message || '{{ __("Submission failed.") }}');
+        } finally {
+          btnSubmitWhisper.disabled = false;
         }
       });
     }

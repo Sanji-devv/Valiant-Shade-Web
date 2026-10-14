@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\ValiantShade\Services\PublicNewsService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\BaseModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -15,12 +16,21 @@ class News extends BaseModel
     protected $fillable = [
         'title',
         'category',
+        'news_type',
+        'status',
         'badge_color',
         'category_icon',
         'tag',
         'tag_icon',
         'date_text',
+        'read_time',
+        'published_date',
         'description',
+        'full_story',
+        'testimony',
+        'author',
+        'author_role',
+        'author_avatar',
         'image_url',
         'stats',
         'button_text',
@@ -30,13 +40,28 @@ class News extends BaseModel
         'location_badge',
         'order',
         'is_active',
+        'is_breaking',
+        'views_count',
     ];
 
     protected $casts = [
         'stats' => 'array',
         'is_active' => 'boolean',
+        'is_breaking' => 'boolean',
         'order' => 'integer',
+        'views_count' => 'integer',
     ];
+
+    protected static function booted(): void
+    {
+        static::saved(function (): void {
+            app(PublicNewsService::class)->bumpCacheVersion();
+        });
+
+        static::deleted(function (): void {
+            app(PublicNewsService::class)->bumpCacheVersion();
+        });
+    }
 
     public function getImageAssetAttribute(): string
     {

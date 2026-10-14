@@ -91,6 +91,8 @@ Route::delete('/pages/news/{id}', [NewsController::class, 'destroy'])->name('val
 Route::delete('/pages/guild-news/{id}', [NewsController::class, 'destroy'])->name('valiant-shade.pages-guild-news.destroy');
 Route::post('/pages/news/{id}/toggle', [NewsController::class, 'toggleActive'])->name('valiant-shade.pages-news.toggle');
 Route::post('/pages/guild-news/{id}/toggle', [NewsController::class, 'toggleActive'])->name('valiant-shade.pages-guild-news.toggle');
+Route::post('/pages/news/{id}/approve', [NewsController::class, 'approve'])->name('valiant-shade.pages-news.approve');
+Route::post('/pages/news/{id}/reject', [NewsController::class, 'reject'])->name('valiant-shade.pages-news.reject');
 
 // Player XP Tracker Routes
 Route::get('/pages/xp-tracker', [PlayerXpController::class, 'index'])->name('valiant-shade.pages-xp-tracker');

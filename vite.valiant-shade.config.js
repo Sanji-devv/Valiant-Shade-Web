@@ -52,6 +52,8 @@ export default defineConfig({
         'resources/js/valiant-shade/map.js',
         'resources/css/valiant-shade/image-map.css',
         'resources/js/valiant-shade/image-map.js',
+        'resources/css/valiant-shade/newspaper.css',
+        'resources/js/valiant-shade/newspaper.js',
         ...pageJsFiles,
         ...vendorJsFiles,
         ...libsJsFiles,

@@ -665,7 +665,11 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
      */
     public static function getActiveNews(): Collection
     {
-        $dbNews = News::where('is_active', true)->orderBy('order')->get();
+        $dbNews = News::query()
+            ->where('is_active', true)
+            ->where('status', 'published')
+            ->orderBy('order')
+            ->get();
         if ($dbNews->isNotEmpty()) {
             return $dbNews;
         }
@@ -681,7 +685,16 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
      */
     public function index(Request $request): View
     {
-        $dbNews = News::orderBy('order')->orderBy('created_at', 'desc')->get();
+        $pendingNews = News::query()
+            ->where('status', 'pending')
+            ->orderByDesc('created_at')
+            ->get();
+
+        $dbNews = News::query()
+            ->where('status', 'published')
+            ->orderBy('order')
+            ->orderByDesc('created_at')
+            ->get();
         $allNews = $dbNews->isNotEmpty() ? $dbNews : self::getNewsData();
 
         // Optional category filtering
@@ -737,6 +750,7 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
         return view('valiant-shade.content.pages.pages-news', [
             'news' => $filteredNews->values(),
             'allNews' => $allNews,
+            'pendingNews' => $pendingNews,
             'featuredNews' => $featuredNews,
             'statsSummary' => $statsSummary,
             'activeCategory' => $activeCategory,
@@ -749,7 +763,10 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
      */
     public function show(int $id, Request $request): JsonResponse|View
     {
-        $newsItem = self::getNewsData()->firstWhere('id', $id);
+        $newsItem = News::query()->where('status', 'published')->find($id);
+        if (! $newsItem) {
+            $newsItem = self::getNewsData()->firstWhere('id', $id);
+        }
 
         if (!$newsItem) {
             if ($request->wantsJson() || $request->ajax()) {
@@ -842,6 +859,7 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
             'location_badge' => $validated['location_badge'] ?? null,
             'order' => $validated['order'] ?? (News::max('order') + 1),
             'is_active' => $request->has('is_active') ? (bool) $request->is_active : true,
+            'status' => 'published',
         ]);
 
         if ($request->wantsJson() || $request->ajax()) {
@@ -967,6 +985,43 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
 
         $redirectRoute = str_contains($request->path(), 'guild-news') ? 'valiant-shade.pages-guild-news' : 'valiant-shade.pages-news';
         return redirect()->route($redirectRoute)->with('success', __('Status updated.'));
+    }
+
+    /**
+     * Approve a pending rumor / submission for public display.
+     */
+    public function approve(int $id, Request $request): RedirectResponse|JsonResponse
+    {
+        $news = News::findOrFail($id);
+        $news->update([
+            'status' => 'published',
+            'is_active' => true,
+            'date_text' => $news->date_text ?: now()->locale(app()->getLocale())->translatedFormat('d M Y, H:i'),
+        ]);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => __('News published.'), 'news' => $news]);
+        }
+
+        return redirect()->route('valiant-shade.pages-news')->with('success', __('News published.'));
+    }
+
+    /**
+     * Reject a pending submission.
+     */
+    public function reject(int $id, Request $request): RedirectResponse|JsonResponse
+    {
+        $news = News::findOrFail($id);
+        $news->update([
+            'status' => 'rejected',
+            'is_active' => false,
+        ]);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => __('Submission rejected.'), 'news' => $news]);
+        }
+
+        return redirect()->route('valiant-shade.pages-news')->with('success', __('Submission rejected.'));
     }
 
     /**
