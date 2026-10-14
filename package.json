@@ -7,6 +7,7 @@
         "build:demo-vuexy": "vite build --config vite.demo-vuexy.config.js",
         "build:admin": "vite build --config vite.admin.config.js",
         "build:valiant-shade": "vite build --config vite.valiant-shade.config.js",
+        "build:valiant-shade:local": "npm run build:valiant-shade && rm -f public/static/valiant-shade.hot",
         "build:panels": "npm run build:demo-vuexy && npm run build:admin && npm run build:valiant-shade",
         "dev": "vite --config vite.valiant-shade.config.js",
         "dev:demo-vuexy": "vite --config vite.demo-vuexy.config.js",
