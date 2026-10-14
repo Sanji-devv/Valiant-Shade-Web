@@ -75,7 +75,7 @@ class Inventory extends Controller
             ]);
         }
 
-        return view('valiant-shade.content.inventory', [
+        return view('valiant-shade.content.pages.pages-inventory', [
             'items' => $items,
             'metrics' => $metrics,
             'vault' => $vault,

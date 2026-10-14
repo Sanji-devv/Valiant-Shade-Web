@@ -2,8 +2,9 @@
 
 namespace App\ValiantShade\Services;
 
-use App\Models\PermissionRoute;
 use App\Models\Permission;
+use App\Models\PermissionRoute;
+use Spatie\Activitylog\Facades\Activity;
 use Spatie\Permission\PermissionRegistrar;
 
 class PermissionSyncService
@@ -13,6 +14,13 @@ class PermissionSyncService
     ) {}
 
     public function syncFromRoutesTable(): void
+    {
+        Activity::withoutLogging(function (): void {
+            $this->performSyncFromRoutesTable();
+        });
+    }
+
+    protected function performSyncFromRoutesTable(): void
     {
         $guard = config('auth.defaults.guard', 'web');
         $routes = PermissionRoute::query()->where('is_active', true)->orderBy('sort_order')->get();
