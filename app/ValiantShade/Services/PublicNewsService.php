@@ -38,18 +38,53 @@ class PublicNewsService
         $dbNews = News::query()
             ->where('status', 'published')
             ->where('is_active', true)
-            ->orderBy('order')
             ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->get();
 
         if ($dbNews->isNotEmpty()) {
-            return $dbNews;
+            return $this->sortNewestFirst($dbNews);
         }
 
-        return NewsController::getNewsData()
-            ->where('is_active', true)
-            ->sortBy('order')
+        return $this->sortNewestFirst(
+            NewsController::getNewsData()->where('is_active', true)
+        );
+    }
+
+    /**
+     * @param  Collection<int, News|object>  $items
+     * @return Collection<int, News|object>
+     */
+    protected function sortNewestFirst(Collection $items): Collection
+    {
+        return $items
+            ->sort(function ($a, $b) {
+                $timeCompare = $this->recencyTimestamp($b) <=> $this->recencyTimestamp($a);
+                if ($timeCompare !== 0) {
+                    return $timeCompare;
+                }
+
+                return ((int) ($b->id ?? 0)) <=> ((int) ($a->id ?? 0));
+            })
             ->values();
+    }
+
+    protected function recencyTimestamp(mixed $item): int
+    {
+        if (isset($item->created_at) && $item->created_at) {
+            if ($item->created_at instanceof \DateTimeInterface) {
+                return $item->created_at->getTimestamp();
+            }
+
+            $parsed = strtotime((string) $item->created_at);
+
+            return $parsed !== false ? $parsed : 0;
+        }
+
+        // Statik/demo haberlerde düşük order = daha yeni içerik
+        $order = (int) ($item->order ?? (int) ($item->id ?? 0));
+
+        return 1_000_000 - $order;
     }
 
     public function transformItem(mixed $item): array
@@ -96,19 +131,11 @@ class PublicNewsService
         $locale = app()->getLocale();
 
         return Cache::remember($this->cacheKey("featured.{$locale}.{$limit}"), $this->cacheTtl(), function () use ($limit) {
-            $items = $this->publishedSource();
-            $breaking = $items->first(fn ($n) => (bool) ($n->is_breaking ?? false));
-
-            $ordered = $items
-                ->sortByDesc(fn ($n) => (bool) ($n->is_breaking ?? false))
-                ->sortBy('order')
-                ->values();
-
-            if ($breaking) {
-                $ordered = $ordered->sortByDesc(fn ($n) => (int) $n->id === (int) $breaking->id)->values();
-            }
-
-            return $ordered->take($limit)->map(fn ($item) => $this->transformItem($item))->values()->all();
+            return $this->publishedSource()
+                ->take($limit)
+                ->map(fn ($item) => $this->transformItem($item))
+                ->values()
+                ->all();
         });
     }
 
