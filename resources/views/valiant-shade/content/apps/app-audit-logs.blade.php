@@ -41,7 +41,7 @@
               <i class="icon-base ti tabler-lock me-1"></i> {{ __('Admin Only') }}
             </span>
             <span class="badge bg-label-success font-monospace text-uppercase" style="font-size: 0.72rem;">
-              <i class="icon-base ti tabler-bolt me-1"></i> {{ __('Async Queue Logging') }}
+              <i class="icon-base ti tabler-bolt me-1"></i> {{ __('Spatie Activity Log') }}
             </span>
           </div>
           <p class="mb-0 text-body-secondary small">
@@ -114,8 +114,8 @@
           </span>
         </div>
         <div>
-          <span class="text-body-secondary small d-block">{{ __('Security Status') }}</span>
-          <h5 class="mb-0 fw-bold text-warning">{{ __('Monitored') }}</h5>
+          <span class="text-body-secondary small d-block">{{ __('Guest / Anonymous Events') }}</span>
+          <h4 class="mb-0 fw-bold text-warning">{{ $stats['guest_events'] ?? 0 }}</h4>
         </div>
       </div>
     </div>
@@ -126,23 +126,58 @@
 <div class="card border-0 shadow-xs mb-4">
   <div class="card-body p-3">
     <form method="GET" action="{{ route('valiant-shade.app-audit-logs') }}" class="row g-2 align-items-center">
-      <div class="col-12 col-md-4">
+      <div class="col-12 col-md-3">
         <div class="input-group input-group-sm">
           <span class="input-group-text"><i class="icon-base ti tabler-search"></i></span>
           <input type="text" name="search" class="form-control" placeholder="{{ __('Search summary, actor, IP...') }}" value="{{ $filters['search'] ?? '' }}">
         </div>
       </div>
-      <div class="col-6 col-md-3">
-        <select name="action" class="form-select form-select-sm">
-          <option value="">-- {{ __('All Action Types') }} --</option>
-          <option value="role." {{ ($filters['action'] ?? '') === 'role.' ? 'selected' : '' }}>{{ __('Role Management') }}</option>
-          <option value="permission." {{ ($filters['action'] ?? '') === 'permission.' ? 'selected' : '' }}>{{ __('Permission Toggles') }}</option>
-          <option value="user." {{ ($filters['action'] ?? '') === 'user.' ? 'selected' : '' }}>{{ __('User Management') }}</option>
-          <option value="audit." {{ ($filters['action'] ?? '') === 'audit.' ? 'selected' : '' }}>{{ __('Audit Cleared') }}</option>
+      <div class="col-6 col-md-2">
+        <select name="log_name" class="form-select form-select-sm">
+          <option value="">-- {{ __('All Channels') }} --</option>
+          @foreach(['model', 'http', 'auth', 'permissions', 'audit'] as $channel)
+            <option value="{{ $channel }}" {{ ($filters['log_name'] ?? '') === $channel ? 'selected' : '' }}>{{ strtoupper($channel) }}</option>
+          @endforeach
         </select>
       </div>
-      <div class="col-6 col-md-3">
-        <input type="text" name="actor" class="form-control form-control-sm" placeholder="{{ __('Filter by actor name...') }}" value="{{ $filters['actor'] ?? '' }}">
+      <div class="col-6 col-md-2">
+        <select name="event" class="form-select form-select-sm">
+          <option value="">-- {{ __('All Events') }} --</option>
+          <option value="created" {{ ($filters['event'] ?? '') === 'created' ? 'selected' : '' }}>{{ __('Created') }}</option>
+          <option value="updated" {{ ($filters['event'] ?? '') === 'updated' ? 'selected' : '' }}>{{ __('Updated') }}</option>
+          <option value="deleted" {{ ($filters['event'] ?? '') === 'deleted' ? 'selected' : '' }}>{{ __('Deleted') }}</option>
+          <option value="permission." {{ ($filters['event'] ?? '') === 'permission.' ? 'selected' : '' }}>{{ __('Permissions') }}</option>
+          <option value="auth." {{ ($filters['event'] ?? '') === 'auth.' ? 'selected' : '' }}>{{ __('Authentication') }}</option>
+          <option value="http." {{ ($filters['event'] ?? '') === 'http.' ? 'selected' : '' }}>{{ __('HTTP (mutations)') }}</option>
+          <option value="audit." {{ ($filters['event'] ?? '') === 'audit.' ? 'selected' : '' }}>{{ __('Audit Admin') }}</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <input type="text" name="subject_type" class="form-control form-control-sm" placeholder="{{ __('Model (e.g. Character)') }}" value="{{ $filters['subject_type'] ?? '' }}">
+      </div>
+      <div class="col-6 col-md-1">
+        <input type="number" name="subject_id" class="form-control form-control-sm" placeholder="{{ __('Rec. ID') }}" value="{{ $filters['subject_id'] ?? '' }}">
+      </div>
+      <div class="col-6 col-md-2">
+        <input type="text" name="actor" class="form-control form-control-sm" placeholder="{{ __('Actor name / email') }}" value="{{ $filters['actor'] ?? '' }}">
+      </div>
+      <div class="col-6 col-md-2">
+        <input type="text" name="causer_id" class="form-control form-control-sm" placeholder="{{ __('User ID or guest') }}" value="{{ $filters['causer_id'] ?? '' }}">
+      </div>
+      <div class="col-6 col-md-2">
+        <select name="period" class="form-select form-select-sm">
+          <option value="">-- {{ __('All time') }} --</option>
+          <option value="today" {{ ($filters['period'] ?? '') === 'today' ? 'selected' : '' }}>{{ __('Today') }}</option>
+          <option value="week" {{ ($filters['period'] ?? '') === 'week' ? 'selected' : '' }}>{{ __('Last 7 days') }}</option>
+          <option value="month" {{ ($filters['period'] ?? '') === 'month' ? 'selected' : '' }}>{{ __('Last 30 days') }}</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <select name="report_period" class="form-select form-select-sm">
+          <option value="daily" {{ ($reportPeriod ?? 'daily') === 'daily' ? 'selected' : '' }}>{{ __('Report: Daily') }}</option>
+          <option value="weekly" {{ ($reportPeriod ?? '') === 'weekly' ? 'selected' : '' }}>{{ __('Report: Weekly') }}</option>
+          <option value="monthly" {{ ($reportPeriod ?? '') === 'monthly' ? 'selected' : '' }}>{{ __('Report: Monthly') }}</option>
+        </select>
       </div>
       <div class="col-12 col-md-2 d-flex gap-1 justify-content-end">
         <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3">{{ __('Filter') }}</button>
@@ -151,6 +186,27 @@
     </form>
   </div>
 </div>
+
+@if(!empty($periodReport))
+<div class="card border-0 shadow-xs mb-4">
+  <div class="card-header border-0 pb-0">
+    <h6 class="mb-0 fw-bold text-heading">{{ __('Change volume') }} ({{ strtoupper($reportPeriod ?? 'daily') }})</h6>
+  </div>
+  <div class="card-body pt-3">
+    <div class="d-flex flex-wrap gap-2 align-items-end">
+      @php $maxTotal = max(1, collect($periodReport)->max('total') ?? 1); @endphp
+      @foreach($periodReport as $row)
+        @php $h = max(4, (int) round(($row['total'] / $maxTotal) * 72)); @endphp
+        <div class="text-center" style="min-width: 48px;">
+          <div class="bg-primary rounded-top opacity-75 mx-auto" style="width: 28px; height: {{ $h }}px;"></div>
+          <small class="d-block font-monospace text-muted" style="font-size: 0.65rem;">{{ $row['bucket'] }}</small>
+          <small class="fw-bold">{{ $row['total'] }}</small>
+        </div>
+      @endforeach
+    </div>
+  </div>
+</div>
+@endif
 
 <!-- Audit Log Table -->
 <div class="card border-0 shadow-sm">
@@ -198,6 +254,18 @@
                 </span>
                 <div>
                   <span class="d-block small fw-bold text-heading">{{ $item['actor_name'] ?? 'System' }}</span>
+                  @if(!empty($item['actor_id']))
+                    <span class="d-block font-monospace text-muted" style="font-size: 0.68rem;">
+                      #{{ $item['actor_id'] }}
+                      @if(!empty($item['actor_username']))
+                        · {{ $item['actor_username'] }}
+                      @elseif(!empty($item['actor_email']))
+                        · {{ $item['actor_email'] }}
+                      @endif
+                    </span>
+                  @else
+                    <span class="d-block text-muted" style="font-size: 0.68rem;">{{ __('No authenticated user') }}</span>
+                  @endif
                   <span class="badge bg-label-dark font-monospace" style="font-size: 0.65rem;">
                     {{ $item['actor_role'] ?? 'SYSTEM' }}
                   </span>

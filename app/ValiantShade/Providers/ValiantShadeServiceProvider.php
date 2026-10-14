@@ -52,6 +52,7 @@ class ValiantShadeServiceProvider extends ServiceProvider
             'web',
             \App\ValiantShade\Http\Middleware\LocaleMiddleware::class,
             \App\ValiantShade\Http\Middleware\GuestInteractionMiddleware::class,
+            \App\ValiantShade\Http\Middleware\LogValiantShadeActivity::class,
         ])
             ->prefix('valiant-shade')
             ->group(base_path('routes/valiant-shade.php'));

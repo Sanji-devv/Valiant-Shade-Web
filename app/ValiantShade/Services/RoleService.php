@@ -342,6 +342,20 @@ class RoleService
             $role->revokePermissionTo($permission);
         }
 
+        activity('permissions')
+            ->causedBy(auth()->user())
+            ->performedOn($role)
+            ->event('permission.toggled')
+            ->withProperties([
+                'permission' => $permission,
+                'enabled' => $enabled,
+                'role_slug' => $role->slug,
+                'ip' => request()?->ip(),
+            ])
+            ->log($enabled
+                ? __('Granted permission ":perm" for role ":name".', ['perm' => $permission, 'name' => $role->name])
+                : __('Revoked permission ":perm" for role ":name".', ['perm' => $permission, 'name' => $role->name]));
+
         $this->clearCache();
 
         return $this->formatRole($role->fresh(['permissions'])->loadCount('users'));
@@ -372,6 +386,17 @@ class RoleService
     {
         $normalized = array_map(fn ($p) => $this->normalizePermissionKey($p), $permissions);
         $user->syncPermissions($normalized);
+
+        activity('permissions')
+            ->causedBy(auth()->user())
+            ->performedOn($user)
+            ->event('permission.user_sync')
+            ->withProperties([
+                'permissions' => $normalized,
+                'user_id' => $user->id,
+                'ip' => request()?->ip(),
+            ])
+            ->log(__('Synchronized direct permissions for user ":name".', ['name' => $user->display_name ?? $user->name]));
     }
 
     protected function syncRolePermissions(Role $role, array $permissions): void
@@ -382,6 +407,17 @@ class RoleService
         )));
 
         $role->syncPermissions($normalized);
+
+        activity('permissions')
+            ->causedBy(auth()->user())
+            ->performedOn($role)
+            ->event('permission.sync')
+            ->withProperties([
+                'permissions' => $normalized,
+                'role_slug' => $role->slug,
+                'ip' => request()?->ip(),
+            ])
+            ->log(__('Synchronized permissions for role ":name".', ['name' => $role->name]));
     }
 
     protected function normalizePermissionKey(string $permission): string

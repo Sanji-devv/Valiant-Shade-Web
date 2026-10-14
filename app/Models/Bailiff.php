@@ -3,13 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use App\Models\BaseModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Legacy bailiffs table (0099 migration). Guild council uses {@see GuildBailiff}.
  */
-class Bailiff extends Model
+class Bailiff extends BaseModel
 {
     use HasFactory, SoftDeletes;
 

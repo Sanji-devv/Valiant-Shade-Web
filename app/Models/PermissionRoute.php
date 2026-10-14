@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Models\BaseModel;
 
-class PermissionRoute extends Model
+class PermissionRoute extends BaseModel
 {
     protected $table = 'routes';
 

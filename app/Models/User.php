@@ -12,13 +12,14 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use App\Models\Concerns\LogsGuildActivity;
 use Spatie\Permission\Traits\HasPermissions;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasPermissions, HasRoles, Notifiable, SoftDeletes;
+    use HasFactory, HasPermissions, HasRoles, LogsGuildActivity, Notifiable, SoftDeletes;
 
     protected string $guard_name = 'web';
 

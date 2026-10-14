@@ -12,8 +12,7 @@ use Illuminate\View\View;
 class RoleController extends Controller
 {
     public function __construct(
-        protected RoleService $roleService,
-        protected \App\ValiantShade\Services\AuditLogService $auditLogService
+        protected RoleService $roleService
     ) {}
 
     /**
@@ -93,20 +92,6 @@ class RoleController extends Controller
         try {
             $role = $this->roleService->createRole($validated);
 
-            // Audit Trail
-            $this->auditLogService->log(
-                'role.created',
-                __('Created role ":name" (:slug) with priority #:priority.', [
-                    'name' => $role['name'],
-                    'slug' => $role['slug'],
-                    'priority' => $role['priority'] ?? 10,
-                ]),
-                'Role',
-                $role['id'],
-                [],
-                $role
-            );
-
             return response()->json([
                 'success' => true,
                 'message' => __('Role ":name" created successfully!', ['name' => $role['name']]),
@@ -140,21 +125,7 @@ class RoleController extends Controller
         ]);
 
         try {
-            $oldRole = $this->roleService->findRole($role);
             $updated = $this->roleService->updateRole($role, $validated);
-
-            // Audit Trail
-            $this->auditLogService->log(
-                'role.updated',
-                __('Updated role ":name" (:slug).', [
-                    'name' => $updated['name'],
-                    'slug' => $updated['slug'],
-                ]),
-                'Role',
-                $updated['id'],
-                $oldRole ?: [],
-                $updated
-            );
 
             return response()->json([
                 'success' => true,
@@ -184,23 +155,7 @@ class RoleController extends Controller
         ]);
 
         try {
-            $oldRole = $this->roleService->findRole($role);
             $updated = $this->roleService->togglePermission($role, $validated['permission'], $validated['enabled']);
-
-            // Audit Trail
-            $actionDesc = $validated['enabled'] ? __('Granted') : __('Revoked');
-            $this->auditLogService->log(
-                'permission.toggled',
-                __(':action permission ":perm" for role ":name".', [
-                    'action' => $actionDesc,
-                    'perm' => $validated['permission'],
-                    'name' => $updated['name'],
-                ]),
-                'Role',
-                $updated['id'],
-                ['permission' => $validated['permission'], 'enabled' => !$validated['enabled']],
-                ['permission' => $validated['permission'], 'enabled' => $validated['enabled']]
-            );
 
             return response()->json([
                 'success' => true,
@@ -228,19 +183,6 @@ class RoleController extends Controller
             $oldRole = $this->roleService->findRole($role);
             $deleted = $this->roleService->deleteRole($role);
             if ($deleted) {
-                // Audit Trail
-                $this->auditLogService->log(
-                    'role.deleted',
-                    __('Deleted custom role ":name" (:slug).', [
-                        'name' => $oldRole['name'] ?? (string) $role,
-                        'slug' => $oldRole['slug'] ?? (string) $role,
-                    ]),
-                    'Role',
-                    $oldRole['id'] ?? (string) $role,
-                    $oldRole ?: [],
-                    []
-                );
-
                 return response()->json([
                     'success' => true,
                     'message' => __('Role was deleted successfully.'),
