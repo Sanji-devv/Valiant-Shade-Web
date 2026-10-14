@@ -29,6 +29,14 @@ use App\ValiantShade\Http\Controllers\NewsController;
 |
 */
 
+//prefix örneği
+Route::prefix('/groupName')->group(function () {
+    Route::get('/icsayfa', [Analytics::class, 'index'])->name('routeName');
+
+});
+
+
+
 // Dashboards
 Route::get('/', [Analytics::class, 'index'])->name('valiant-shade.dashboard-analytics');
 Route::get('/dashboard/analytics', [Analytics::class, 'index'])->name('valiant-shade.dashboard-analytics');
@@ -38,6 +46,7 @@ Route::get('/dashboard/crm', [Crm::class, 'index'])->name('valiant-shade.dashboa
 Route::get('/lang/{locale}', [LanguageController::class, 'swap']);
 
 // Pages
+
 Route::get('/pages/profile-user', [UserProfile::class, 'index'])->name('valiant-shade.pages-profile-user');
 Route::post('/pages/profile-user/vault-transfer', [UserProfile::class, 'vaultTransfer'])->name('valiant-shade.pages-profile-user.vault-transfer');
 Route::get('/pages/profile-teams', [UserTeams::class, 'index'])->name('valiant-shade.pages-profile-teams');
@@ -57,6 +66,8 @@ Route::post('/character/claim', [UserProfile::class, 'claimCharacter'])->name('v
 Route::post('/character/delete/{id}', [UserProfile::class, 'deleteCharacter'])->name('valiant-shade.character.delete');
 Route::delete('/character/{id}', [UserProfile::class, 'deleteCharacter'])->name('valiant-shade.character.destroy');
 Route::post('/character/set-active', [UserProfile::class, 'setActiveCharacter'])->name('valiant-shade.character.set-active');
+
+
 Route::get('/pages/inventory', [Inventory::class, 'index'])->name('valiant-shade.pages-inventory');
 Route::post('/pages/inventory', [Inventory::class, 'store'])->name('valiant-shade.pages-inventory.store');
 Route::put('/pages/inventory/{id}', [Inventory::class, 'update'])->name('valiant-shade.pages-inventory.update');
