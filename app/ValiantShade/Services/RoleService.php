@@ -95,6 +95,7 @@ class RoleService
                 'name' => __('Oaths & Covenant Enforcement'),
                 'description' => __('Oversee sworn oaths, membership vows, and code of honor fidelity.'),
                 'icon' => 'ti tabler-shield-lock',
+                'badge' => 'bg-label-danger',
             ],
         ];
     });

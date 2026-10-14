@@ -1307,6 +1307,8 @@
     "Select All": "Tümünü Seç",
     "Deselect All": "Tümünü Kaldır",
     "Create New Guild Role & Bailiff Tier": "Yeni Lonca Rolü & Bailiff Katmanı Oluştur",
+    "Create New Guild Role": "Yeni Lonca Rolü Oluştur",
+    "Custom Bailiff Role (Priority 60)": "Özel Kâhyalık Rolü (Öncelik 60)",
     "Quick Role / Bailiff Template": "Hızlı Rol / Bailiff Şablonu",
     "Auto-fill Form": "Otomatik Form Doldurma",
     "Select a Template (Optional)": "Hazır Şablon Seçin (İsteğe Bağlı)",

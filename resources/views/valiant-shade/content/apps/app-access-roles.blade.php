@@ -72,7 +72,7 @@
               <i class="icon-base ti tabler-lock me-1"></i> {{ __('Admin Only') }}
             </span>
             <span class="badge bg-label-warning font-monospace text-uppercase" style="font-size: 0.72rem;">
-              <i class="icon-base ti tabler-shield-check me-1"></i> {{ __('Bailiff Council Sub-tiers Active') }}
+              <i class="icon-base ti tabler-shield-check me-1"></i> {{ __('Bailiff Council') }}
             </span>
           </div>
           <p class="mb-0 text-body-secondary small">
@@ -96,7 +96,7 @@
       <i class="icon-base ti tabler-cards me-1"></i> {{ __('All Roles') }} ({{ count($roles) }})
     </button>
     <button class="nav-link rounded-pill px-3 py-1.5 btn-role-filter" data-filter="bailiff">
-      <i class="icon-base ti tabler-shield-check me-1 text-warning"></i> {{ __('Bailiff Council & Sub-tiers') }}
+      <i class="icon-base ti tabler-shield-check me-1 text-warning"></i> {{ __('Bailiff Council') }}
     </button>
     <button class="nav-link rounded-pill px-3 py-1.5 btn-role-filter" data-filter="management">
       <i class="icon-base ti tabler-crown me-1 text-danger"></i> {{ __('Guild Leadership') }}
@@ -158,17 +158,6 @@
             </div>
           </div>
 
-          <!-- Bailiff Sub-tier Tag if applicable -->
-          @if($isBailiff)
-            <div class="mb-3">
-              <span class="badge rounded-pill d-inline-flex align-items-center gap-1.5 shadow-xs px-2.5 py-1.5"
-                    style="background-color: {{ $roleColor }}18; color: {{ $roleColor }}; border: 1px solid {{ $roleColor }}40; font-size: 0.73rem;">
-                <i class="icon-base ti tabler-shield-check"></i>
-                <span>{{ __('Bailiff Sub-tier:') }} <strong>{{ __($bailiffTier ?: 'Bailiff Council') }}</strong></span>
-              </span>
-            </div>
-          @endif
-
           <!-- Description -->
           <p class="text-body-secondary small mb-3" style="min-height: 38px; line-height: 1.5;">
             {{ __($rArr['description'] ?: 'Custom guild role and permission assignment.') }}
@@ -215,9 +204,7 @@
                       data-icon="{{ $roleIcon }}"
                       data-priority="{{ $rArr['priority'] ?? 10 }}"
                       data-permissions="{{ json_encode($rolePerms) }}"
-                      data-is-system="{{ $isSystem ? '1' : '0' }}"
-                      data-is-bailiff="{{ $isBailiff ? '1' : '0' }}"
-                      data-bailiff-tier="{{ $bailiffTier ?? '' }}">
+                      data-is-system="{{ $isSystem ? '1' : '0' }}">
                 <i class="icon-base ti tabler-pencil me-1"></i> {{ __('Configure Permissions') }}
               </button>
 
@@ -281,7 +268,7 @@
             <td>
               <div class="d-flex align-items-center gap-2.5">
                 <span class="avatar avatar-xs">
-                  <span class="avatar-initial rounded {{ $p['badge'] }}">
+                  <span class="avatar-initial rounded {{ $p['badge'] ?? 'bg-label-primary' }}">
                     <i class="icon-base {{ $p['icon'] }}" style="font-size: 14px;"></i>
                   </span>
                 </span>
@@ -389,22 +376,6 @@
             </div>
           </div>
 
-          <!-- Row 3: Bailiff Sub-tier Settings -->
-          <div class="row g-3 mb-4 p-3 rounded-3 bg-label-secondary border">
-            <div class="col-12 col-md-5">
-              <div class="form-check form-switch mt-1">
-                <input class="form-check-input" type="checkbox" id="editRoleIsBailiff">
-                <label class="form-check-label fw-semibold" for="editRoleIsBailiff">
-                  <i class="icon-base ti tabler-shield-check text-warning me-1"></i> {{ __('Bailiff Council Sub-tier') }}
-                </label>
-              </div>
-            </div>
-            <div class="col-12 col-md-7" id="editRoleBailiffTierWrapper">
-              <label class="form-label fw-semibold small mb-1" for="editRoleBailiffTier">{{ __('Bailiff Department / Jurisdiction') }}</label>
-              <input type="text" class="form-control form-control-sm" id="editRoleBailiffTier" placeholder="e.g. Discipline & Conduct">
-            </div>
-          </div>
-
           <!-- Section: Permissions Selection -->
           <div class="d-flex align-items-center justify-content-between mb-2 pb-1 border-bottom">
             <div>
@@ -428,7 +399,7 @@
                     <input class="form-check-input mt-1 edit-perm-checkbox" type="checkbox" id="edit_perm_{{ str_replace('.', '_', $permKey) }}" value="{{ $permKey }}">
                     <label class="form-check-label w-100 cursor-pointer" for="edit_perm_{{ str_replace('.', '_', $permKey) }}">
                       <div class="d-flex align-items-center gap-1.5 mb-0.5">
-                        <span class="badge {{ $p['badge'] }} rounded-pill" style="font-size: 0.7rem;">
+                        <span class="badge {{ $p['badge'] ?? 'bg-label-primary' }} rounded-pill" style="font-size: 0.7rem;">
                           <i class="icon-base {{ $p['icon'] }} me-0.5" style="font-size: 11px;"></i> {{ __($p['name']) }}
                         </span>
                       </div>
@@ -461,7 +432,7 @@
       <div class="modal-header border-bottom py-3">
         <h5 class="modal-title fw-bold text-heading d-flex align-items-center gap-2 mb-0">
           <i class="icon-base ti tabler-shield-plus text-primary fs-4"></i>
-          <span>{{ __('Create New Guild Role & Bailiff Tier') }}</span>
+          <span>{{ __('Create New Guild Role') }}</span>
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('Close') }}"></button>
       </div>
@@ -487,7 +458,7 @@
               <option value="bailiff_oathkeeper">🔒 {{ __('Oathkeeper Bailiff (Sacred Oaths & Covenants, Priority 65)') }}</option>
               <option value="bailiff_inventory">📦 {{ __('Inventory Bailiff (Vault & Storage, Priority 60)') }}</option>
               <option value="bailiff_questmaster">📜 {{ __('Questmaster Bailiff (Quest Board & Decrees, Priority 60)') }}</option>
-              <option value="bailiff_custom">🛡️ {{ __('Custom Bailiff Tier (Priority 60)') }}</option>
+              <option value="bailiff_custom">🛡️ {{ __('Custom Bailiff Role (Priority 60)') }}</option>
               <option value="veteran">⚔️ {{ __('Veteran Adventurer (Priority 40)') }}</option>
             </select>
           </div>
@@ -541,22 +512,6 @@
             </div>
           </div>
 
-          <!-- Row 3: Bailiff Sub-tier Settings -->
-          <div class="row g-3 mb-4 p-3 rounded-3 bg-label-secondary border">
-            <div class="col-12 col-md-5">
-              <div class="form-check form-switch mt-1">
-                <input class="form-check-input" type="checkbox" id="addRoleIsBailiff">
-                <label class="form-check-label fw-semibold" for="addRoleIsBailiff">
-                  <i class="icon-base ti tabler-shield-check text-warning me-1"></i> {{ __('Bailiff Council Sub-tier') }}
-                </label>
-              </div>
-            </div>
-            <div class="col-12 col-md-7" id="addRoleBailiffTierWrapper" style="display: none;">
-              <label class="form-label fw-semibold small mb-1" for="addRoleBailiffTier">{{ __('Bailiff Department / Jurisdiction') }}</label>
-              <input type="text" class="form-control form-control-sm" id="addRoleBailiffTier" placeholder="e.g. Discipline & Conduct">
-            </div>
-          </div>
-
           <!-- Section: Permissions Selection -->
           <div class="d-flex align-items-center justify-content-between mb-2 pb-1 border-bottom">
             <div>
@@ -576,7 +531,7 @@
                     <input class="form-check-input mt-1 add-perm-checkbox" type="checkbox" id="add_perm_{{ str_replace('.', '_', $permKey) }}" value="{{ $permKey }}">
                     <label class="form-check-label w-100 cursor-pointer" for="add_perm_{{ str_replace('.', '_', $permKey) }}">
                       <div class="d-flex align-items-center gap-1.5 mb-0.5">
-                        <span class="badge {{ $p['badge'] }} rounded-pill" style="font-size: 0.7rem;">
+                        <span class="badge {{ $p['badge'] ?? 'bg-label-primary' }} rounded-pill" style="font-size: 0.7rem;">
                           <i class="icon-base {{ $p['icon'] }} me-0.5" style="font-size: 11px;"></i> {{ __($p['name']) }}
                         </span>
                       </div>
@@ -636,23 +591,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Bailiff switch toggles department input
-  const addIsBailiff = document.getElementById('addRoleIsBailiff');
-  const addTierWrapper = document.getElementById('addRoleBailiffTierWrapper');
-  if (addIsBailiff && addTierWrapper) {
-    addIsBailiff.addEventListener('change', function() {
-      addTierWrapper.style.display = this.checked ? 'block' : 'none';
-    });
-  }
-
-  const editIsBailiff = document.getElementById('editRoleIsBailiff');
-  const editTierWrapper = document.getElementById('editRoleBailiffTierWrapper');
-  if (editIsBailiff && editTierWrapper) {
-    editIsBailiff.addEventListener('change', function() {
-      editTierWrapper.style.display = this.checked ? 'block' : 'none';
-    });
-  }
-
   // Role category filter tabs
   document.querySelectorAll('.btn-role-filter').forEach(btn => {
     btn.addEventListener('click', function() {
@@ -685,8 +623,6 @@ document.addEventListener('DOMContentLoaded', function() {
           priority: 65,
           desc: 'Oversees guild discipline, rule compliance, sanctions, and member conduct.',
           icon: 'ti tabler-gavel',
-          isBailiff: true,
-          bailiffTier: 'Discipline & Conduct',
           perms: ['discipline.manage', 'users.manage', 'guild.manage']
         },
         bailiff_hr: {
@@ -695,8 +631,6 @@ document.addEventListener('DOMContentLoaded', function() {
           priority: 65,
           desc: 'Manages adventurer intake, rank advancement, roster assignments, and progression.',
           icon: 'ti tabler-users-group',
-          isBailiff: true,
-          bailiffTier: 'Hero Resources & Roster',
           perms: ['hr.manage', 'xp.manage', 'users.manage', 'guild.manage']
         },
         bailiff_representative: {
@@ -705,8 +639,6 @@ document.addEventListener('DOMContentLoaded', function() {
           priority: 65,
           desc: 'Official guild ambassador managing diplomatic relations, external delegations, and alliance treaties.',
           icon: 'ti tabler-flag',
-          isBailiff: true,
-          bailiffTier: 'Diplomacy & Representation',
           perms: ['diplomacy.manage', 'guild.manage']
         },
         bailiff_archivist: {
@@ -715,8 +647,6 @@ document.addEventListener('DOMContentLoaded', function() {
           priority: 65,
           desc: 'Guardian of the Great Library, guild annals, quest archives, and ancient historical scrolls.',
           icon: 'ti tabler-books',
-          isBailiff: true,
-          bailiffTier: 'Archives & Chronicles',
           perms: ['archives.manage', 'guild.manage']
         },
         bailiff_oathkeeper: {
@@ -725,8 +655,6 @@ document.addEventListener('DOMContentLoaded', function() {
           priority: 65,
           desc: 'Keeper of blood bonds, initiation vows, adventurer pledges, and sacred covenants.',
           icon: 'ti tabler-shield-lock',
-          isBailiff: true,
-          bailiffTier: 'Sacred Oaths & Covenants',
           perms: ['oaths.manage', 'discipline.manage', 'guild.manage']
         },
         bailiff_inventory: {
@@ -735,8 +663,6 @@ document.addEventListener('DOMContentLoaded', function() {
           priority: 60,
           desc: 'Manages the guild communal vault, magic artifacts, and treasury assets.',
           icon: 'ti tabler-package',
-          isBailiff: true,
-          bailiffTier: 'Vault & Treasury',
           perms: ['inventory.manage', 'guild.manage']
         },
         bailiff_questmaster: {
@@ -745,18 +671,14 @@ document.addEventListener('DOMContentLoaded', function() {
           priority: 60,
           desc: 'Supervises quest board notices, decrees, and expedition debriefs.',
           icon: 'ti tabler-scroll',
-          isBailiff: true,
-          bailiffTier: 'Expeditions & Decrees',
           perms: ['quests.manage', 'guild.manage']
         },
         bailiff_custom: {
-          name: 'Custom Bailiff Tier',
+          name: 'Custom Bailiff',
           color: '#ff9f43',
           priority: 60,
           desc: 'Special bailiff council division officer.',
           icon: 'ti tabler-shield-check',
-          isBailiff: true,
-          bailiffTier: 'Custom Division',
           perms: ['guild.manage']
         },
         veteran: {
@@ -765,8 +687,6 @@ document.addEventListener('DOMContentLoaded', function() {
           priority: 40,
           desc: 'Hardened veterans who survived high-stakes guild expeditions.',
           icon: 'ti tabler-swords',
-          isBailiff: false,
-          bailiffTier: '',
           perms: []
         }
       };
@@ -780,14 +700,6 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('addRolePriority').value = t.priority;
       document.getElementById('addRoleDescription').value = t.desc;
       document.getElementById('addRoleIcon').value = t.icon;
-
-      const isBailiffCb = document.getElementById('addRoleIsBailiff');
-      const tierInput = document.getElementById('addRoleBailiffTier');
-      const tierWrapperEl = document.getElementById('addRoleBailiffTierWrapper');
-
-      if (isBailiffCb) isBailiffCb.checked = t.isBailiff;
-      if (tierWrapperEl) tierWrapperEl.style.display = t.isBailiff ? 'block' : 'none';
-      if (tierInput) tierInput.value = t.bailiffTier || '';
 
       document.querySelectorAll('.add-perm-checkbox').forEach(cb => {
         cb.checked = t.perms.includes(cb.value);
@@ -807,8 +719,6 @@ document.addEventListener('DOMContentLoaded', function() {
       const priority = this.dataset.priority || '50';
       const perms = JSON.parse(this.dataset.permissions || '[]');
       const isSystem = this.dataset.isSystem === '1';
-      const isBailiff = this.dataset.isBailiff === '1';
-      const bailiffTier = this.dataset.bailiffTier || '';
 
       document.getElementById('editRoleId').value = id;
       document.getElementById('editRoleSlug').value = slug;
@@ -818,14 +728,6 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('editRoleColorHex').value = color;
       document.getElementById('editRolePriority').value = priority;
       document.getElementById('editRoleIcon').value = icon;
-
-      const editIsBailiffCb = document.getElementById('editRoleIsBailiff');
-      const editTierInput = document.getElementById('editRoleBailiffTier');
-      const editTierWrapperEl = document.getElementById('editRoleBailiffTierWrapper');
-
-      if (editIsBailiffCb) editIsBailiffCb.checked = isBailiff;
-      if (editTierInput) editTierInput.value = bailiffTier;
-      if (editTierWrapperEl) editTierWrapperEl.style.display = isBailiff ? 'block' : 'none';
 
       // Reset checkboxes
       document.querySelectorAll('.edit-perm-checkbox').forEach(cb => {
@@ -882,9 +784,6 @@ document.addEventListener('DOMContentLoaded', function() {
         perms.push(cb.value);
       });
 
-      const isBailiffVal = document.getElementById('editRoleIsBailiff')?.checked ?? false;
-      const bailiffTierVal = isBailiffVal ? document.getElementById('editRoleBailiffTier')?.value.trim() : null;
-
       const payload = {
         name: document.getElementById('editRoleName').value.trim(),
         description: document.getElementById('editRoleDescription').value.trim(),
@@ -937,9 +836,6 @@ document.addEventListener('DOMContentLoaded', function() {
       document.querySelectorAll('.add-perm-checkbox:checked').forEach(cb => {
         perms.push(cb.value);
       });
-
-      const isBailiffVal = document.getElementById('addRoleIsBailiff')?.checked ?? false;
-      const bailiffTierVal = isBailiffVal ? document.getElementById('addRoleBailiffTier')?.value.trim() : null;
 
       const payload = {
         name: document.getElementById('addRoleName').value.trim(),
