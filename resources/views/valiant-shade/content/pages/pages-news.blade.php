@@ -301,7 +301,7 @@
             <button type="button" class="btn btn-sm btn-outline-warning" onclick="openEditNewsModal({{ $pending->id }})">
               <i class="icon-base ti tabler-edit me-1"></i> {{ __('Edit') }}
             </button>
-            <button type="button" class="btn btn-sm btn-danger" onclick="confirmDeleteNews({{ $pending->id }}, @json($pending->title))">
+            <button type="button" class="btn btn-sm btn-danger js-delete-news-btn" data-news-id="{{ $pending->id }}">
               <i class="icon-base ti tabler-trash me-1"></i> {{ __('Delete') }}
             </button>
             @endif
@@ -591,7 +591,7 @@
               </button>
               @endif
               @if(($canDeleteNews ?? false) && ($item instanceof \App\Models\News))
-              <button type="button" class="btn btn-outline-danger btn-sm px-2" title="{{ __('Delete') }}" onclick="confirmDeleteNews({{ $item->id }}, @json($item->title))">
+              <button type="button" class="btn btn-outline-danger btn-sm px-2 js-delete-news-btn" title="{{ __('Delete') }}" data-news-id="{{ $item->id }}">
                 <i class="icon-base ti tabler-trash"></i>
               </button>
               @endif
@@ -899,16 +899,21 @@
     form.submit();
   }
 
+  function newsTitleForId(newsId) {
+    const item = masterNewsStore.find(n => Number(n.id) === Number(newsId));
+    return item?.title ?? '';
+  }
+
   function confirmDeleteNews(newsId, title) {
-    const headline = title ? String(title) : '{{ __("this article") }}';
+    const headline = title ? String(title) : @json(__('this article'));
     if (typeof Swal !== 'undefined') {
       Swal.fire({
-        title: '{{ __("Delete news?") }}',
+        title: @json(__('Delete news?')),
         text: headline,
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: '{{ __("Yes, delete") }}',
-        cancelButtonText: '{{ __("Cancel") }}',
+        confirmButtonText: @json(__('Yes, delete')),
+        cancelButtonText: @json(__('Cancel')),
         customClass: {
           confirmButton: 'btn btn-danger me-2',
           cancelButton: 'btn btn-label-secondary',
@@ -921,10 +926,23 @@
       });
       return;
     }
-    if (window.confirm('{{ __("Delete this news item?") }}\n' + headline)) {
+    if (window.confirm(@json(__('Delete this news item?')) + '\n' + headline)) {
       submitNewsDelete(newsId);
     }
   }
+
+  document.addEventListener('click', (event) => {
+    const deleteBtn = event.target.closest('.js-delete-news-btn');
+    if (!deleteBtn) {
+      return;
+    }
+    event.preventDefault();
+    const newsId = parseInt(deleteBtn.dataset.newsId, 10);
+    if (!Number.isFinite(newsId)) {
+      return;
+    }
+    confirmDeleteNews(newsId, newsTitleForId(newsId));
+  });
 
   // Open Full Story Reader Modal
   function openNewsDetail(newsId) {
