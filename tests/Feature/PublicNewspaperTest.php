@@ -11,9 +11,20 @@ class PublicNewspaperTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_newspaper_page_is_public(): void
+    public function test_newspaper_page_is_public_on_gazette_subdomain(): void
     {
-        $this->get('/newspaper')->assertOk()->assertSee('Valiant Shade Gazetesi');
+        $host = config('gazette.domain');
+
+        $this->withServerVariables(['HTTP_HOST' => $host])
+            ->get('http://'.$host.'/')
+            ->assertOk()
+            ->assertSee('Valiant Shade Gazetesi');
+    }
+
+    public function test_main_domain_newspaper_path_redirects_to_gazette_subdomain(): void
+    {
+        $this->get('/newspaper')
+            ->assertRedirect(route('web.newspaper'));
     }
 
     public function test_public_api_lists_only_published_news(): void

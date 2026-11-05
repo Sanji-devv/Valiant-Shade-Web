@@ -4,19 +4,6 @@ const ZOOM_STEP = 0.2;
 const HD_ZOOM_THRESHOLD = 1.15;
 const MOBILE_QUERY = window.matchMedia('(max-width: 768px)');
 
-document.querySelectorAll('[data-location-link]').forEach((link) => {
-    link.addEventListener('click', (event) => {
-        const label =
-            link.getAttribute('aria-label') ??
-            link.querySelector('.vs-image-map-sidebar__label')?.textContent?.trim() ??
-            'bu bölgeye';
-        const ok = window.confirm(`${label} gitmek istiyor musunuz?`);
-        if (!ok) {
-            event.preventDefault();
-        }
-    });
-});
-
 document.querySelectorAll('[data-image-map-zoom]').forEach((frame) => {
     initImageMapZoom(frame);
 });

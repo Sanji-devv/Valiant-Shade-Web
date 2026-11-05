@@ -6,37 +6,38 @@ use App\Http\Controllers\Api\MapBuildingController;
 use App\Http\Controllers\Api\MapEditorController;
 use App\Http\Controllers\Api\MapTerrainController;
 use App\Http\Controllers\Api\TerritoryMapController;
-use App\Http\Controllers\Web\ImageMapController;
 use App\Http\Controllers\Web\IsonburgCityController;
 use App\Http\Controllers\Web\MapPageController;
-use App\Http\Controllers\Web\ValiantShadeController;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Dünya / lonca harita rotaları (lonca-haritası branch)
+| Ana domain: harita yönlendirmeleri, düzenleme rotaları, API
 |--------------------------------------------------------------------------
 |
-| Mevcut ana sayfa (/) ve Valiant Shade panel rotalarına dokunulmaz.
+| Halka açık harita sayfaları map.{domain} üzerinde (routes/map.php).
 |
 */
 
-Route::get('/feldan', [ImageMapController::class, 'feldan'])->name('web.feldan');
+Route::get('/feldan', fn () => redirect()->route('web.feldan', status: 301));
+Route::get('/rovesta', fn () => redirect()->route('web.rovesta', status: 301));
+Route::get('/isonburg', fn () => redirect()->route('web.isonburg', status: 301));
+Route::get('/isonburg/sehir', fn () => redirect()->route('web.isonburg.city', status: 301));
+Route::get('/isonburg/arazi', fn () => redirect()->route('web.isonburg.terrain', status: 301));
 
-Route::get('/rovesta', [ImageMapController::class, 'rovestaKingdom'])->name('web.rovesta');
-Route::get('/isonburg', [ImageMapController::class, 'isonburgKingdom'])->name('web.isonburg');
-Route::get('/isonburg/sehir', [IsonburgCityController::class, 'show'])->name('web.isonburg.city');
+Route::prefix('world')->group(function () {
+    Route::get('/valiant-shade', fn () => redirect()->route('web.valiant-shade', status: 301));
+});
+
 Route::get('/isonburg/sehir/edit', [IsonburgCityController::class, 'edit'])
     ->middleware(['auth', 'map.editor'])
     ->name('web.isonburg.city.edit');
 
-Route::get('/isonburg/arazi', fn () => app(MapPageController::class)->show('isonburg'))->name('web.isonburg.terrain');
 Route::get('/isonburg/arazi/edit', fn () => app(MapPageController::class)->edit('isonburg'))
     ->middleware(['auth', 'map.editor'])
     ->name('web.isonburg.terrain.edit');
 
 Route::prefix('world')->group(function () {
-    Route::get('/valiant-shade', [ValiantShadeController::class, 'show'])->name('web.valiant-shade');
     Route::get('/valiant-shade/edit', fn () => app(MapPageController::class)->edit('valiant-shade'))
         ->middleware(['auth', 'map.editor'])
         ->name('web.valiant-shade.edit');

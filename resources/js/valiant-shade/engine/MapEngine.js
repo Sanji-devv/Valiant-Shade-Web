@@ -235,17 +235,13 @@ export class MapEngine {
         }
 
         const urls = {
-            'valiant-shade': '/valiant-shade',
+            'valiant-shade': '/world/valiant-shade',
             'isonburg': '/isonburg/arazi',
             'isonburg-sehir': '/isonburg/sehir',
         };
 
         const target = urls[slug] ?? `/${slug}`;
-        const label = portal.name ?? slug;
-        const go = window.confirm(`${label} haritasına gitmek istiyor musunuz?`);
-        if (go) {
-            window.location.href = target;
-        }
+        window.location.href = target;
     }
 
     setupPanzoom() {
