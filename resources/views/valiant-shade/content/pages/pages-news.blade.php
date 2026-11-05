@@ -276,6 +276,11 @@
                 <i class="icon-base ti tabler-x me-1"></i> {{ __('Reject') }}
               </button>
             </form>
+            @if($canManageNews ?? false)
+            <button type="button" class="btn btn-sm btn-danger" onclick="confirmDeleteNews({{ $pending->id }}, @json($pending->title))">
+              <i class="icon-base ti tabler-trash me-1"></i> {{ __('Delete') }}
+            </button>
+            @endif
           </div>
         </div>
       </div>
@@ -549,16 +554,23 @@
           </div>
 
           <!-- Card Footer Action -->
-          <div class="pt-3 border-top border-white border-opacity-10 d-flex align-items-center justify-content-between">
+          <div class="pt-3 border-top border-white border-opacity-10 d-flex align-items-center justify-content-between flex-wrap gap-2">
             <span class="guild-seal-stamp">
               <i class="icon-base ti tabler-shield-check text-{{ $item->badge_color ?? 'primary' }}"></i>
               <span>{{ __('Verified') }}</span>
             </span>
 
-            <button type="button" class="btn btn-outline-{{ $item->button_color ?? 'primary' }} btn-sm px-3 d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#newsDetailModal" onclick="openNewsDetail({{ $item->id }})">
-              <i class="{{ $item->button_icon ?: 'icon-base ti tabler-book-2' }}"></i>
-              <span>{{ __('Read More') }}</span>
-            </button>
+            <div class="d-flex align-items-center gap-2 ms-auto">
+              @if(($canManageNews ?? false) && ($usesDatabaseNews ?? false))
+              <button type="button" class="btn btn-outline-danger btn-sm px-2" title="{{ __('Delete') }}" onclick="confirmDeleteNews({{ $item->id }}, @json($item->title))">
+                <i class="icon-base ti tabler-trash"></i>
+              </button>
+              @endif
+              <button type="button" class="btn btn-outline-{{ $item->button_color ?? 'primary' }} btn-sm px-3 d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#newsDetailModal" onclick="openNewsDetail({{ $item->id }})">
+                <i class="{{ $item->button_icon ?: 'icon-base ti tabler-book-2' }}"></i>
+                <span>{{ __('Read More') }}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -641,10 +653,18 @@
 
       <!-- Modal Footer with RPG Actions -->
       <div class="modal-footer border-top border-white border-opacity-10 p-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
-        <div class="d-flex align-items-center gap-2" id="modalDynamicActions">
+        <div class="d-flex align-items-center gap-2 flex-wrap" id="modalDynamicActions">
           <!-- Action buttons injected based on category -->
         </div>
-        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">{{ __('Close') }}</button>
+        <div class="d-flex align-items-center gap-2 ms-auto">
+          @if(($canManageNews ?? false) && ($usesDatabaseNews ?? false))
+          <button type="button" class="btn btn-outline-danger d-none d-inline-flex align-items-center gap-1" id="modalDeleteNewsBtn">
+            <i class="icon-base ti tabler-trash"></i>
+            <span>{{ __('Delete') }}</span>
+          </button>
+          @endif
+          <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">{{ __('Close') }}</button>
+        </div>
       </div>
     </div>
   </div>
@@ -704,6 +724,46 @@
 <script>
   // Complete Static News Store (Mirroring Controller)
   const masterNewsStore = @json($allNews);
+  const canManageNews = @json($canManageNews ?? false);
+  const usesDatabaseNews = @json($usesDatabaseNews ?? false);
+  const newsDeleteUrlBase = @json(url('/valiant-shade/pages/news'));
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+  function submitNewsDelete(newsId) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `${newsDeleteUrlBase}/${newsId}`;
+    form.innerHTML = `<input type="hidden" name="_token" value="${csrfToken}"><input type="hidden" name="_method" value="DELETE">`;
+    document.body.appendChild(form);
+    form.submit();
+  }
+
+  function confirmDeleteNews(newsId, title) {
+    const headline = title ? String(title) : '{{ __("this article") }}';
+    if (typeof Swal !== 'undefined') {
+      Swal.fire({
+        title: '{{ __("Delete news?") }}',
+        text: headline,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '{{ __("Yes, delete") }}',
+        cancelButtonText: '{{ __("Cancel") }}',
+        customClass: {
+          confirmButton: 'btn btn-danger me-2',
+          cancelButton: 'btn btn-label-secondary',
+        },
+        buttonsStyling: false,
+      }).then((result) => {
+        if (result.isConfirmed) {
+          submitNewsDelete(newsId);
+        }
+      });
+      return;
+    }
+    if (window.confirm('{{ __("Delete this news item?") }}\n' + headline)) {
+      submitNewsDelete(newsId);
+    }
+  }
 
   // Open Full Story Reader Modal
   function openNewsDetail(newsId) {
@@ -794,6 +854,17 @@
           <span>{{ __('Celebrate Victory & Cheers') }}</span>
         </button>
       `;
+    }
+
+    const modalDeleteBtn = document.getElementById('modalDeleteNewsBtn');
+    if (modalDeleteBtn) {
+      if (canManageNews && usesDatabaseNews) {
+        modalDeleteBtn.classList.remove('d-none');
+        modalDeleteBtn.onclick = () => confirmDeleteNews(item.id, item.title);
+      } else {
+        modalDeleteBtn.classList.add('d-none');
+        modalDeleteBtn.onclick = null;
+      }
     }
 
     const modal = new bootstrap.Modal(document.getElementById('newsDetailModal'));

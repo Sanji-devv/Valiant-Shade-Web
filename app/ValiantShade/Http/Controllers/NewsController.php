@@ -747,6 +747,14 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
             'decrees' => $decreeNewsCount,
         ];
 
+        $user = auth()->user();
+        $canManageNews = $user && (
+            $user->isAdmin()
+            || $user->hasPermission('archives.delete')
+            || $user->hasPermission('archives.update')
+            || $user->hasPermission('archives.all')
+        );
+
         return view('valiant-shade.content.pages.pages-news', [
             'news' => $filteredNews->values(),
             'allNews' => $allNews,
@@ -755,7 +763,22 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
             'statsSummary' => $statsSummary,
             'activeCategory' => $activeCategory,
             'searchQuery' => $searchQuery,
+            'usesDatabaseNews' => $dbNews->isNotEmpty(),
+            'canManageNews' => $canManageNews,
         ]);
+    }
+
+    protected function authorizeNewsManagement(string $action = 'delete'): void
+    {
+        $user = auth()->user();
+        abort_unless($user, 403);
+
+        if ($user->isAdmin() || $user->hasPermission('archives.all')) {
+            return;
+        }
+
+        $permission = $action === 'delete' ? 'archives.delete' : 'archives.update';
+        abort_unless($user->hasPermission($permission), 403, __('Access denied. You do not have permission to manage news.'));
     }
 
     /**
@@ -959,6 +982,8 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
      */
     public function destroy(int $id, Request $request): RedirectResponse|JsonResponse
     {
+        $this->authorizeNewsManagement('delete');
+
         $news = News::findOrFail($id);
         $news->delete();
 

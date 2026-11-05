@@ -16,6 +16,9 @@ class ValiantShadeTest extends TestCase
         $response->assertDontSee(url('/valiant-shade'));
         $response->assertDontSee('Valiant Shade Panel');
         $response->assertSee('Valiant Shade');
+        $response->assertSee('Gazette');
+        $response->assertSee('Monster Database');
+        $response->assertSee('Coming soon');
     }
 
     public function test_valiant_shade_dashboard_redirects_guests_to_login(): void
