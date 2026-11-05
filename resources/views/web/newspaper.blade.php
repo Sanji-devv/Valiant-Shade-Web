@@ -19,16 +19,19 @@
         <nav class="vs-newspaper-nav" aria-label="Gazete menüsü">
             <a href="{{ $mainSiteUrl }}" class="vs-newspaper-nav__item" aria-label="Ana Sayfa">
                 <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V9.5z"/></svg>
-                <span class="vs-newspaper-nav__label">Ana Sayfa</span>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">Ana Sayfa</span>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">Ana Sayfa</span>
             </a>
             <span class="vs-newspaper-nav__item vs-newspaper-nav__soon" tabindex="0" aria-disabled="true" aria-label="Lonca Arazisi — {{ __('Coming soon') }}">
                 <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3 4 9v12h6v-7h4v7h6V9l-8-6z"/></svg>
-                <span class="vs-newspaper-nav__label">Lonca</span>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">Lonca Arazisi</span>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">Lonca</span>
                 <span class="vs-newspaper-nav__tooltip" role="tooltip">{{ __('Coming soon') }}</span>
             </span>
             <button type="button" class="vs-newspaper-nav__item vs-newspaper-nav__item--primary" id="openRumorModal" aria-label="Söylenti Gönder">
                 <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8z"/></svg>
-                <span class="vs-newspaper-nav__label">Söylenti</span>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">Söylenti Gönder</span>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">Söylenti</span>
             </button>
         </nav>
     </header>
@@ -59,7 +62,7 @@
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
                     <span id="toggleViewModeLabel">Liste</span>
                 </button>
-                <input type="search" class="vs-search" id="newsSearchInput" placeholder="Ara…" aria-label="Haber ara">
+                <input type="search" class="vs-search" id="newsSearchInput" placeholder="Haber, söylenti veya kahraman ara…" aria-label="Haber ara">
             </div>
             <div class="vs-filter-panel" id="newsFilterPanel" hidden>
                 <div class="vs-filter-group" id="newsFilterGroup"></div>

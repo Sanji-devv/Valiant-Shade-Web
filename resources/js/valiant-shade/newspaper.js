@@ -9,6 +9,7 @@ const state = {
   viewMode: 'grid',
   filterTypes: [],
   filterTypeCounts: {},
+  lastFeedItems: [],
 };
 
 const els = {};
@@ -94,7 +95,7 @@ function renderSlider(featured) {
         </div>
         <h2 class="vs-news-slide__title">${title}</h2>
         <p class="vs-news-slide__desc">${desc}</p>
-        <button type="button" class="vs-news-slide__cta" data-open-id="${item.id}">Haberi Oku</button>
+        <button type="button" class="vs-filter-btn vs-news-slide__cta" data-open-id="${item.id}">Haberi Oku</button>
       </div>
     `;
     track.appendChild(slide);
@@ -147,8 +148,12 @@ function renderFilters(types, typeCounts) {
   updateFilterToggleLabel();
 }
 
+function isMobileGazetteLayout() {
+  return window.matchMedia('(max-width: 767px)').matches;
+}
+
 function applyViewModeClass() {
-  const isList = state.viewMode === 'list';
+  const isList = state.viewMode === 'list' && isMobileGazetteLayout();
   els.newsGrid.classList.toggle('vs-news-list', isList);
   els.newsGrid.classList.toggle('vs-news-grid', !isList);
   if (els.toggleViewModeBtn) {
@@ -167,7 +172,7 @@ function renderGrid(items) {
     return;
   }
 
-  if (state.viewMode === 'list') {
+  if (state.viewMode === 'list' && isMobileGazetteLayout()) {
     els.newsGrid.innerHTML = items
       .map(
         (item) => `
@@ -216,7 +221,14 @@ function syncFilterPanelVisibility() {
   if (!els.filterPanel || !els.toggleFiltersBtn) {
     return;
   }
-  const desktop = window.matchMedia('(min-width: 768px)').matches;
+  if (!isMobileGazetteLayout() && state.viewMode === 'list') {
+    state.viewMode = 'grid';
+    applyViewModeClass();
+    if (state.lastFeedItems.length) {
+      renderGrid(state.lastFeedItems);
+    }
+  }
+  const desktop = !isMobileGazetteLayout();
   if (desktop) {
     els.filterPanel.hidden = false;
     els.toggleFiltersBtn.setAttribute('aria-expanded', 'true');
@@ -237,7 +249,8 @@ async function loadFeed() {
   const payload = await fetchBootstrap();
   renderSlider(payload.featured);
   renderFilters(payload.types, payload.feed.type_counts);
-  renderGrid(payload.feed.data);
+  state.lastFeedItems = payload.feed.data || [];
+  renderGrid(state.lastFeedItems);
   renderPagination(payload.feed.meta);
 }
 
@@ -433,6 +446,9 @@ function bindEvents() {
 
   if (els.toggleViewModeBtn) {
     els.toggleViewModeBtn.addEventListener('click', () => {
+      if (!isMobileGazetteLayout()) {
+        return;
+      }
       state.viewMode = state.viewMode === 'grid' ? 'list' : 'grid';
       try {
         localStorage.setItem('vs.gazette.viewMode', state.viewMode);
@@ -552,9 +568,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initNewsTypePicker(els.rumorTypePicker, els.rumorNewsType);
   try {
-    const savedView = localStorage.getItem('vs.gazette.viewMode');
-    if (savedView === 'list' || savedView === 'grid') {
-      state.viewMode = savedView;
+    if (isMobileGazetteLayout()) {
+      const savedView = localStorage.getItem('vs.gazette.viewMode');
+      if (savedView === 'list' || savedView === 'grid') {
+        state.viewMode = savedView;
+      }
+    } else {
+      state.viewMode = 'grid';
     }
   } catch (e) {
     /* ignore */
