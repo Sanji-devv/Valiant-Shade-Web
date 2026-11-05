@@ -2,278 +2,263 @@
     $appHost = parse_url(config('app.url'), PHP_URL_HOST) ?: 'valiantshade.com';
     $gazetteUrl = 'https://' . config('gazette.domain');
     $monsterDbUrl = 'https://md.' . $appHost;
+
+    $imgGazette = asset('static/valiant-shade/assets/img/news/guild_tavern_whispers.jpg');
+    $imgMonster = asset('static/valiant-shade/assets/img/news/guild_dragon_quest.jpg');
+    $imgMap = asset('static/valiant-shade/world/feldan-kralligi-preview.webp');
+    $imgRecords = asset('static/valiant-shade/assets/img/news/guild_treasury_vault.jpg');
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#1a1520">
     <title>{{ config('app.name', 'Valiant Shade') }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Public+Sans:wght@500;600&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --vs-primary: #7367f0;
-            --vs-primary-rgb: 115, 103, 240;
-            --vs-success: #28c76f;
-            --vs-warning: #ff9f43;
-            --vs-info: #00cfe8;
-            --vs-danger: #ea5455;
-            --vs-bg: #25293c;
-            --vs-bg-deep: #1e2235;
-            --vs-card: rgba(255, 255, 255, 0.04);
-            --vs-border: rgba(255, 255, 255, 0.08);
-            --vs-text: #cfd3ec;
-            --vs-heading: #f8f9fd;
-            --vs-muted: #7983bb;
-        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        *, *::before, *::after { box-sizing: border-box; }
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
 
         body {
-            margin: 0;
-            min-height: 100vh;
-            min-height: 100dvh;
-            font-family: 'Public Sans', system-ui, -apple-system, sans-serif;
-            color: var(--vs-text);
-            background:
-                radial-gradient(ellipse 80% 60% at 10% 0%, rgba(var(--vs-primary-rgb), 0.22), transparent 55%),
-                radial-gradient(ellipse 70% 50% at 90% 100%, rgba(0, 207, 232, 0.12), transparent 50%),
-                linear-gradient(165deg, var(--vs-bg-deep) 0%, var(--vs-bg) 45%, #2f3349 100%);
+            font-family: 'Public Sans', system-ui, sans-serif;
+            background: #0f0d14;
         }
 
-        .vs-portal {
-            min-height: 100vh;
-            min-height: 100dvh;
-            display: flex;
-            flex-direction: column;
-            padding: clamp(1rem, 3vw, 2rem);
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .vs-portal__header {
-            text-align: center;
-            margin-bottom: clamp(1.25rem, 4vw, 2.5rem);
-        }
-
-        .vs-portal__logo {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.65rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .vs-portal__logo-mark {
-            width: 2.75rem;
-            height: 2.75rem;
-            border-radius: 12px;
-            background: linear-gradient(135deg, var(--vs-primary), #9e95f5);
+        .vs-quad {
             display: grid;
-            place-items: center;
-            font-weight: 700;
-            color: #fff;
-            font-size: 1.1rem;
-            box-shadow: 0 8px 24px rgba(var(--vs-primary-rgb), 0.45);
+            width: 100%;
+            height: 100vh;
+            height: 100dvh;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 3px;
+            background: #1a1520;
         }
 
-        .vs-portal__title {
-            margin: 0;
-            font-size: clamp(1.5rem, 4vw, 2rem);
-            font-weight: 700;
-            color: var(--vs-heading);
-            letter-spacing: -0.02em;
-        }
-
-        .vs-portal__subtitle {
-            margin: 0.35rem 0 0;
-            font-size: clamp(0.875rem, 2.5vw, 1rem);
-            color: var(--vs-muted);
-        }
-
-        .vs-portal__grid {
-            flex: 1;
-            display: grid;
-            grid-template-columns: 1fr;
-            grid-template-rows: auto;
-            gap: clamp(0.75rem, 2.5vw, 1.25rem);
-            align-content: stretch;
-        }
-
-        @media (min-width: 640px) {
-            .vs-portal__grid {
-                grid-template-columns: repeat(2, 1fr);
-                grid-template-rows: repeat(2, minmax(200px, 1fr));
-                min-height: min(72vh, 720px);
+        @media (max-width: 639px) {
+            .vs-quad {
+                grid-template-columns: 1fr;
+                grid-template-rows: repeat(4, 1fr);
+                overflow-y: auto;
+                height: auto;
+                min-height: 100dvh;
             }
         }
 
-        .vs-tile {
+        .vs-quad__cell {
             position: relative;
             display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding: clamp(1.25rem, 3vw, 1.75rem);
-            border-radius: 16px;
-            border: 1px solid var(--vs-border);
-            background: var(--vs-card);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            overflow: hidden;
-            min-height: 180px;
+            align-items: center;
+            justify-content: center;
+            min-height: 0;
+            background-color: #1e1a24;
+            background-size: cover;
+            background-position: center;
             text-decoration: none;
-            color: inherit;
-            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+            color: #fff;
+            overflow: hidden;
+            isolation: isolate;
         }
 
-        a.vs-tile:hover {
-            transform: translateY(-4px);
-            border-color: rgba(var(--vs-primary-rgb), 0.45);
-            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+        @media (max-width: 639px) {
+            .vs-quad__cell { min-height: 42vh; }
         }
 
-        a.vs-tile:focus-visible {
-            outline: 2px solid var(--vs-primary);
-            outline-offset: 3px;
-        }
-
-        .vs-tile--disabled {
-            cursor: not-allowed;
-            opacity: 0.72;
-            pointer-events: none;
-        }
-
-        .vs-tile__glow {
+        .vs-quad__cell::before {
+            content: '';
             position: absolute;
-            width: 140px;
-            height: 140px;
-            border-radius: 50%;
-            filter: blur(48px);
-            opacity: 0.55;
-            top: -20px;
-            right: -20px;
-            pointer-events: none;
+            inset: 0;
+            background: linear-gradient(
+                180deg,
+                rgba(8, 6, 12, 0.35) 0%,
+                rgba(8, 6, 12, 0.55) 45%,
+                rgba(8, 6, 12, 0.82) 100%
+            );
+            z-index: 1;
+            transition: opacity 0.35s ease;
         }
 
-        .vs-tile--gazette .vs-tile__glow { background: var(--vs-warning); }
-        .vs-tile--monster .vs-tile__glow { background: var(--vs-danger); }
-        .vs-tile--map .vs-tile__glow { background: var(--vs-info); }
-        .vs-tile--excel .vs-tile__glow { background: var(--vs-success); }
-
-        .vs-tile__icon {
-            width: 3rem;
-            height: 3rem;
-            border-radius: 12px;
-            display: grid;
-            place-items: center;
-            font-size: 1.5rem;
-            margin-bottom: auto;
-            border: 1px solid var(--vs-border);
-            background: rgba(255, 255, 255, 0.06);
+        a.vs-quad__cell:hover::before {
+            opacity: 0.75;
         }
 
-        .vs-tile--gazette .vs-tile__icon { color: var(--vs-warning); }
-        .vs-tile--monster .vs-tile__icon { color: var(--vs-danger); }
-        .vs-tile--map .vs-tile__icon { color: var(--vs-info); }
-        .vs-tile--excel .vs-tile__icon { color: var(--vs-success); }
-
-        .vs-tile__label {
-            font-size: 0.72rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--vs-muted);
-            margin-bottom: 0.25rem;
-        }
-
-        .vs-tile__name {
-            margin: 0;
-            font-size: clamp(1.15rem, 3vw, 1.45rem);
-            font-weight: 700;
-            color: var(--vs-heading);
-            line-height: 1.25;
-        }
-
-        .vs-tile__desc {
-            margin: 0.5rem 0 0;
-            font-size: 0.85rem;
-            color: var(--vs-muted);
-            line-height: 1.45;
-        }
-
-        .vs-tile__badge {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            font-size: 0.68rem;
-            font-weight: 700;
-            text-transform: uppercase;
+        a.vs-quad__cell:hover .vs-quad__title {
+            transform: scale(1.03);
             letter-spacing: 0.06em;
-            padding: 0.35rem 0.65rem;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px dashed rgba(255, 255, 255, 0.2);
-            color: var(--vs-muted);
         }
 
-        .vs-portal__footer {
-            text-align: center;
-            margin-top: clamp(1.5rem, 4vw, 2rem);
-            font-size: 0.75rem;
-            color: var(--vs-muted);
+        a.vs-quad__cell:focus-visible {
+            outline: 3px solid #c9a227;
+            outline-offset: -6px;
+            z-index: 2;
         }
+
+        .vs-quad__title {
+            position: relative;
+            z-index: 2;
+            font-family: 'Cinzel', 'Times New Roman', serif;
+            font-weight: 700;
+            font-size: clamp(1.75rem, 5.5vw, 3.75rem);
+            text-align: center;
+            line-height: 1.15;
+            padding: 1rem 1.25rem;
+            text-shadow:
+                0 0 40px rgba(0, 0, 0, 0.9),
+                0 4px 24px rgba(0, 0, 0, 0.85),
+                0 2px 4px rgba(0, 0, 0, 1);
+            letter-spacing: 0.04em;
+            transition: transform 0.35s ease, letter-spacing 0.35s ease;
+        }
+
+        .vs-quad__cell--gazette .vs-quad__title { color: #f5e6c8; }
+        .vs-quad__cell--monster .vs-quad__title { color: #ffd4d4; }
+        .vs-quad__cell--map .vs-quad__title { color: #b8d4e8; }
+        .vs-quad__cell--records .vs-quad__title { color: #d4e8d0; }
+
+        /* Disabled quadrants */
+        .vs-quad__cell--locked {
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .vs-quad__cell--locked::after {
+            content: '';
+            position: absolute;
+            inset: 10px;
+            border: 3px dashed rgba(201, 162, 39, 0.55);
+            border-radius: 4px;
+            z-index: 3;
+            pointer-events: none;
+            box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.65);
+        }
+
+        .vs-quad__cell--locked::before {
+            background: linear-gradient(
+                180deg,
+                rgba(12, 10, 16, 0.72) 0%,
+                rgba(12, 10, 16, 0.88) 100%
+            );
+        }
+
+        .vs-quad__cell--locked .vs-quad__bg {
+            filter: grayscale(0.85) brightness(0.45) contrast(0.9);
+        }
+
+        .vs-quad__lock-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                -45deg,
+                transparent,
+                transparent 12px,
+                rgba(0, 0, 0, 0.12) 12px,
+                rgba(0, 0, 0, 0.12) 24px
+            );
+        }
+
+        .vs-quad__bg {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            z-index: 0;
+            transition: transform 0.6s ease, filter 0.4s ease;
+        }
+
+        a.vs-quad__cell:hover .vs-quad__bg {
+            transform: scale(1.06);
+        }
+
+        .vs-quad__badge {
+            position: absolute;
+            top: clamp(0.75rem, 2.5vw, 1.25rem);
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 4;
+            font-family: 'Public Sans', sans-serif;
+            font-size: clamp(0.65rem, 1.8vw, 0.8rem);
+            font-weight: 600;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            padding: 0.45rem 1rem;
+            border-radius: 2px;
+            background: rgba(20, 16, 10, 0.92);
+            border: 1px solid rgba(201, 162, 39, 0.65);
+            color: #e8c547;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .vs-quad__cell--locked .vs-quad__title {
+            opacity: 0.72;
+            font-size: clamp(1.5rem, 4.5vw, 3rem);
+        }
+
+        .vs-quad__corner {
+            position: absolute;
+            width: 48px;
+            height: 48px;
+            z-index: 2;
+            opacity: 0.35;
+            border-color: rgba(201, 162, 39, 0.5);
+            border-style: solid;
+            pointer-events: none;
+        }
+        .vs-quad__corner--tl { top: 12px; left: 12px; border-width: 2px 0 0 2px; }
+        .vs-quad__corner--tr { top: 12px; right: 12px; border-width: 2px 2px 0 0; }
+        .vs-quad__corner--bl { bottom: 12px; left: 12px; border-width: 0 0 2px 2px; }
+        .vs-quad__corner--br { bottom: 12px; right: 12px; border-width: 0 2px 2px 0; }
     </style>
 </head>
 <body>
-    <div class="vs-portal">
-        <header class="vs-portal__header">
-            <div class="vs-portal__logo">
-                <span class="vs-portal__logo-mark" aria-hidden="true">VS</span>
-            </div>
-            <h1 class="vs-portal__title">{{ config('app.name', 'Valiant Shade') }}</h1>
-            <p class="vs-portal__subtitle">{{ __('Choose a portal to continue your adventure.') }}</p>
-        </header>
+    <main class="vs-quad" role="navigation" aria-label="{{ __('Portals') }}">
+        <a href="{{ $gazetteUrl }}" class="vs-quad__cell vs-quad__cell--gazette" rel="noopener">
+            <div class="vs-quad__bg" style="background-image: url('{{ $imgGazette }}');" aria-hidden="true"></div>
+            <span class="vs-quad__corner vs-quad__corner--tl" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--tr" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--bl" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--br" aria-hidden="true"></span>
+            <h1 class="vs-quad__title">{{ __('Gazette') }}</h1>
+        </a>
 
-        <main class="vs-portal__grid">
-            <a href="{{ $gazetteUrl }}" class="vs-tile vs-tile--gazette" rel="noopener">
-                <span class="vs-tile__glow" aria-hidden="true"></span>
-                <span class="vs-tile__icon" aria-hidden="true">📰</span>
-                <span class="vs-tile__label">{{ __('Public') }}</span>
-                <h2 class="vs-tile__name">{{ __('Gazette') }}</h2>
-                <p class="vs-tile__desc">{{ __('Guild news, whispers, and chronicles for all visitors.') }}</p>
-            </a>
+        <a href="{{ $monsterDbUrl }}" class="vs-quad__cell vs-quad__cell--monster" rel="noopener">
+            <div class="vs-quad__bg" style="background-image: url('{{ $imgMonster }}');" aria-hidden="true"></div>
+            <span class="vs-quad__corner vs-quad__corner--tl" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--tr" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--bl" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--br" aria-hidden="true"></span>
+            <h1 class="vs-quad__title">{{ __('Monster Database') }}</h1>
+        </a>
 
-            <a href="{{ $monsterDbUrl }}" class="vs-tile vs-tile--monster" rel="noopener">
-                <span class="vs-tile__glow" aria-hidden="true"></span>
-                <span class="vs-tile__icon" aria-hidden="true">🐉</span>
-                <span class="vs-tile__label">PATHGM</span>
-                <h2 class="vs-tile__name">{{ __('Monster Database') }}</h2>
-                <p class="vs-tile__desc">{{ __('Bestiary, spells, and Pathfinder reference tools.') }}</p>
-            </a>
+        <div class="vs-quad__cell vs-quad__cell--map vs-quad__cell--locked" aria-disabled="true">
+            <div class="vs-quad__bg" style="background-image: url('{{ $imgMap }}');" aria-hidden="true"></div>
+            <div class="vs-quad__lock-overlay" aria-hidden="true"></div>
+            <span class="vs-quad__badge">{{ __('Coming soon') }}</span>
+            <span class="vs-quad__corner vs-quad__corner--tl" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--tr" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--bl" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--br" aria-hidden="true"></span>
+            <h1 class="vs-quad__title">{{ __('Map') }}</h1>
+        </div>
 
-            <div class="vs-tile vs-tile--map vs-tile--disabled" aria-disabled="true">
-                <span class="vs-tile__badge">{{ __('Coming soon') }}</span>
-                <span class="vs-tile__glow" aria-hidden="true"></span>
-                <span class="vs-tile__icon" aria-hidden="true">🗺️</span>
-                <span class="vs-tile__label">{{ __('World') }}</span>
-                <h2 class="vs-tile__name">{{ __('Map') }}</h2>
-                <p class="vs-tile__desc">{{ __('Interactive kingdom maps and territories.') }}</p>
-            </div>
-
-            <div class="vs-tile vs-tile--excel vs-tile--disabled" aria-disabled="true">
-                <span class="vs-tile__badge">{{ __('Coming soon') }}</span>
-                <span class="vs-tile__glow" aria-hidden="true"></span>
-                <span class="vs-tile__icon" aria-hidden="true">📊</span>
-                <span class="vs-tile__label">{{ __('Tools') }}</span>
-                <h2 class="vs-tile__name">Excel</h2>
-                <p class="vs-tile__desc">{{ __('Sheets, exports, and party utilities.') }}</p>
-            </div>
-        </main>
-
-        <footer class="vs-portal__footer">
-            &copy; {{ date('Y') }} {{ config('app.name', 'Valiant Shade') }}
-        </footer>
-    </div>
+        <div class="vs-quad__cell vs-quad__cell--records vs-quad__cell--locked" aria-disabled="true">
+            <div class="vs-quad__bg" style="background-image: url('{{ $imgRecords }}');" aria-hidden="true"></div>
+            <div class="vs-quad__lock-overlay" aria-hidden="true"></div>
+            <span class="vs-quad__badge">{{ __('Coming soon') }}</span>
+            <span class="vs-quad__corner vs-quad__corner--tl" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--tr" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--bl" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--br" aria-hidden="true"></span>
+            <h1 class="vs-quad__title">{{ __('Guild Records') }}</h1>
+        </div>
+    </main>
 </body>
 </html>

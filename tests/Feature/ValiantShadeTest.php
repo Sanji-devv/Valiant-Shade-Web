@@ -18,6 +18,7 @@ class ValiantShadeTest extends TestCase
         $response->assertSee('Valiant Shade');
         $response->assertSee('Gazette');
         $response->assertSee('Monster Database');
+        $response->assertSee('Guild Records');
         $response->assertSee('Coming soon');
     }
 

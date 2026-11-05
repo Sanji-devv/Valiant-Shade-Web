@@ -1,3 +1,6 @@
+@php
+    $mainSiteUrl = rtrim((string) config('app.url'), '/');
+@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
@@ -14,8 +17,11 @@
             <p>Kraliyet ve lonca haberleri, söylentiler ve yerel duyurular — giriş yapmadan okuyun.</p>
         </div>
         <nav class="vs-newspaper-nav">
-            <a href="{{ route('web.home') }}">Ana Sayfa</a>
-            <a href="{{ route('web.valiant-shade') }}">Lonca Arazisi</a>
+            <a href="{{ $mainSiteUrl }}">Ana Sayfa</a>
+            <span class="vs-newspaper-nav__soon" tabindex="0" aria-disabled="true">
+                Lonca Arazisi
+                <span class="vs-newspaper-nav__tooltip" role="tooltip">{{ __('Coming soon') }}</span>
+            </span>
             <button type="button" class="primary" id="openRumorModal">Söylenti Gönder</button>
         </nav>
     </header>

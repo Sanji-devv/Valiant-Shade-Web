@@ -70,6 +70,61 @@ body.vs-newspaper-page {
   border-color: transparent;
 }
 
+.vs-newspaper-nav__soon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  color: var(--np-muted, #94a3b8);
+  border: 1px dashed var(--np-border);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.85rem;
+  cursor: not-allowed;
+  opacity: 0.65;
+  user-select: none;
+}
+
+.vs-newspaper-nav__tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  padding: 0.35rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #f8fafc;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid rgba(201, 162, 39, 0.55);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+  z-index: 20;
+}
+
+.vs-newspaper-nav__tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: rgba(201, 162, 39, 0.55);
+}
+
+.vs-newspaper-nav__soon:hover .vs-newspaper-nav__tooltip,
+.vs-newspaper-nav__soon:focus-visible .vs-newspaper-nav__tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
 .vs-newspaper-main {
   max-width: 1200px;
   margin: 0 auto;

@@ -15,10 +15,13 @@ class PublicNewspaperTest extends TestCase
     {
         $host = config('gazette.domain');
 
+        $mainSiteUrl = rtrim((string) config('app.url'), '/');
+
         $this->withServerVariables(['HTTP_HOST' => $host])
             ->get('http://'.$host.'/')
             ->assertOk()
-            ->assertSee('Valiant Shade Gazetesi');
+            ->assertSee('Valiant Shade Gazetesi')
+            ->assertSee('href="'.$mainSiteUrl.'"', false);
     }
 
     public function test_main_domain_newspaper_path_redirects_to_gazette_subdomain(): void

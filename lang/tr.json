@@ -1415,5 +1415,11 @@
     "Clear Audit Logs?": "Denetim Günlüğü Temizlensin mi?",
     "This will erase all historical administrative logs. This action cannot be undone.": "Bu işlem tüm geçmiş yönetici günlüklerini silecektir. Bu işlem geri alınamaz.",
     "Yes, Clear History": "Evet, Geçmişi Temizle",
-    "Cleared!": "Temizlendi!"
+    "Cleared!": "Temizlendi!",
+    "Gazette": "Gazete",
+    "Monster Database": "Canavar Veritabanı",
+    "Map": "Harita",
+    "Guild Records": "Lonca Kayıtları",
+    "Coming soon": "Yakında",
+    "Portals": "Portallar"
 }
