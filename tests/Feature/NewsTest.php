@@ -19,6 +19,7 @@ class NewsTest extends TestCase
         $this->user = User::factory()->create([
             'email' => 'admin@valiantshade.com',
             'name' => 'Guild Master',
+            'role' => 'ADMIN',
         ]);
     }
 
@@ -61,6 +62,25 @@ class NewsTest extends TestCase
             'title' => 'Cenaze Merasimi: Düşen Kahramanlara Veda',
             'category' => 'Anma & Taziye',
         ]);
+    }
+
+    public function test_admin_sees_edit_and_delete_on_database_news_cards(): void
+    {
+        News::create([
+            'title' => 'Yönetilebilir Haber Başlığı Uzun',
+            'category' => 'Lonca Haberi',
+            'status' => 'published',
+            'description' => 'Bu haber kartında düzenle ve sil kontrolleri görünmelidir.',
+            'image_url' => 'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($this->user)->get('/valiant-shade/pages/news');
+        $response->assertOk();
+        $response->assertSee('openEditNewsModal', false);
+        $response->assertSee('confirmDeleteNews', false);
+        $response->assertSee('tabler-edit', false);
+        $response->assertSee('tabler-trash', false);
     }
 
     public function test_dashboard_displays_news_from_news_table(): void

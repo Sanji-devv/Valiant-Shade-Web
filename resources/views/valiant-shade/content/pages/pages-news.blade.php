@@ -222,6 +222,12 @@
       </p>
     </div>
     <div class="col-lg-5 col-md-6 text-md-end d-flex gap-2 justify-content-md-end flex-wrap">
+      @if($canManageNews ?? false)
+      <button type="button" class="btn btn-success d-inline-flex align-items-center gap-1" onclick="openEditNewsModal(null)">
+        <i class="icon-base ti tabler-plus"></i>
+        <span>{{ __('Add News') }}</span>
+      </button>
+      @endif
       <a href="{{ route('valiant-shade.dashboard-analytics') }}" class="btn btn-label-secondary d-inline-flex align-items-center gap-1">
         <i class="icon-base ti tabler-home"></i>
         <span>{{ __('Main Dashboard') }}</span>
@@ -236,6 +242,21 @@
       </button>
     </div>
   </div>
+
+  @if(($canManageNews ?? false) && !($usesDatabaseNews ?? false))
+  <div class="alert alert-warning d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
+    <div>
+      <strong>{{ __('Demo bulletin content') }}</strong>
+      <span class="d-block small">{{ __('Articles are shown from built-in samples. Load them into the database to enable edit and delete on each card.') }}</span>
+    </div>
+    <form method="post" action="{{ route('valiant-shade.pages-news.reset-defaults') }}" class="flex-shrink-0" onsubmit="return confirm(@json(__('Load default bulletins into the database? Existing news rows will be replaced.')));">
+      @csrf
+      <button type="submit" class="btn btn-warning btn-sm">
+        <i class="icon-base ti tabler-database-import me-1"></i> {{ __('Import to database') }}
+      </button>
+    </form>
+  </div>
+  @endif
 
   @if(isset($pendingNews) && $pendingNews->isNotEmpty())
   <div class="card border border-warning border-opacity-50 mb-4">
@@ -276,7 +297,10 @@
                 <i class="icon-base ti tabler-x me-1"></i> {{ __('Reject') }}
               </button>
             </form>
-            @if($canManageNews ?? false)
+            @if(($canDeleteNews ?? false) || ($canManageNews ?? false))
+            <button type="button" class="btn btn-sm btn-outline-warning" onclick="openEditNewsModal({{ $pending->id }})">
+              <i class="icon-base ti tabler-edit me-1"></i> {{ __('Edit') }}
+            </button>
             <button type="button" class="btn btn-sm btn-danger" onclick="confirmDeleteNews({{ $pending->id }}, @json($pending->title))">
               <i class="icon-base ti tabler-trash me-1"></i> {{ __('Delete') }}
             </button>
@@ -561,7 +585,12 @@
             </span>
 
             <div class="d-flex align-items-center gap-2 ms-auto">
-              @if(($canManageNews ?? false) && ($usesDatabaseNews ?? false))
+              @if(($canUpdateNews ?? false) && ($item instanceof \App\Models\News))
+              <button type="button" class="btn btn-outline-warning btn-sm px-2" title="{{ __('Edit') }}" onclick="openEditNewsModal({{ $item->id }})">
+                <i class="icon-base ti tabler-edit"></i>
+              </button>
+              @endif
+              @if(($canDeleteNews ?? false) && ($item instanceof \App\Models\News))
               <button type="button" class="btn btn-outline-danger btn-sm px-2" title="{{ __('Delete') }}" onclick="confirmDeleteNews({{ $item->id }}, @json($item->title))">
                 <i class="icon-base ti tabler-trash"></i>
               </button>
@@ -657,7 +686,13 @@
           <!-- Action buttons injected based on category -->
         </div>
         <div class="d-flex align-items-center gap-2 ms-auto">
-          @if(($canManageNews ?? false) && ($usesDatabaseNews ?? false))
+          @if($canUpdateNews ?? false)
+          <button type="button" class="btn btn-outline-warning d-none d-inline-flex align-items-center gap-1" id="modalEditNewsBtn">
+            <i class="icon-base ti tabler-edit"></i>
+            <span>{{ __('Edit') }}</span>
+          </button>
+          @endif
+          @if($canDeleteNews ?? false)
           <button type="button" class="btn btn-outline-danger d-none d-inline-flex align-items-center gap-1" id="modalDeleteNewsBtn">
             <i class="icon-base ti tabler-trash"></i>
             <span>{{ __('Delete') }}</span>
@@ -669,6 +704,73 @@
     </div>
   </div>
 </div>
+
+<!-- Create / Edit News Modal -->
+@if($canManageNews ?? false)
+<div class="modal fade" id="newsEditModal" tabindex="-1" aria-labelledby="newsEditModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <form method="post" id="newsEditForm" class="modal-content" style="background: #182234; border: 1px solid rgba(255,255,255,0.15);">
+      @csrf
+      <div class="modal-header border-bottom border-white border-opacity-10">
+        <h5 class="modal-title fw-bold text-white" id="newsEditModalTitle">{{ __('Edit News') }}</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{{ __('Close') }}"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label text-white small fw-medium" for="newsEditTitle">{{ __('Title') }}</label>
+            <input type="text" class="form-control" id="newsEditTitle" name="title" required maxlength="255">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-white small fw-medium" for="newsEditCategory">{{ __('Category') }}</label>
+            <input type="text" class="form-control" id="newsEditCategory" name="category" required maxlength="100">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-white small fw-medium" for="newsEditDateText">{{ __('Date label') }}</label>
+            <input type="text" class="form-control" id="newsEditDateText" name="date_text" maxlength="100" placeholder="{{ __('Today, 04:30') }}">
+          </div>
+          <div class="col-12">
+            <label class="form-label text-white small fw-medium" for="newsEditDescription">{{ __('Summary / description') }}</label>
+            <textarea class="form-control" id="newsEditDescription" name="description" rows="4" required></textarea>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-white small fw-medium" for="newsEditLocation">{{ __('Location') }}</label>
+            <input type="text" class="form-control" id="newsEditLocation" name="location_badge" maxlength="150">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-white small fw-medium" for="newsEditImagePreset">{{ __('Cover image') }}</label>
+            <select class="form-select" id="newsEditImagePreset" name="image_preset">
+              @foreach([
+                'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg',
+                'static/valiant-shade/assets/img/news/guild_tavern_whispers.jpg',
+                'static/valiant-shade/assets/img/news/guild_heroes_funeral.jpg',
+                'static/valiant-shade/assets/img/news/guild_shadow_realm.jpg',
+                'static/valiant-shade/assets/img/news/guild_treasury_vault.jpg',
+              ] as $preset)
+              <option value="{{ $preset }}">{{ basename($preset, '.jpg') }}</option>
+              @endforeach
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label text-white small fw-medium" for="newsEditOrder">{{ __('Sort order') }}</label>
+            <input type="number" class="form-control" id="newsEditOrder" name="order" min="0" step="1">
+          </div>
+          <div class="col-md-8 d-flex align-items-end">
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" value="1" id="newsEditIsActive" name="is_active" checked>
+              <label class="form-check-label text-body-secondary" for="newsEditIsActive">{{ __('Published / visible on gazette') }}</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-top border-white border-opacity-10">
+        <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+        <button type="submit" class="btn btn-primary" id="newsEditSubmitBtn">{{ __('Save') }}</button>
+      </div>
+    </form>
+  </div>
+</div>
+@endif
 
 <!-- Send Whisper Tip Modal (Roleplay Feature) -->
 <div class="modal fade" id="whisperTipModal" tabindex="-1" aria-labelledby="whisperTipModalTitle" aria-hidden="true">
@@ -723,11 +825,70 @@
 
 <script>
   // Complete Static News Store (Mirroring Controller)
-  const masterNewsStore = @json($allNews);
+  const masterNewsStore = @json($allNewsJson ?? $allNews);
   const canManageNews = @json($canManageNews ?? false);
-  const usesDatabaseNews = @json($usesDatabaseNews ?? false);
+  const canUpdateNews = @json($canUpdateNews ?? false);
+  const canDeleteNews = @json($canDeleteNews ?? false);
   const newsDeleteUrlBase = @json(url('/valiant-shade/pages/news'));
+  const newsStoreUrl = @json(route('valiant-shade.pages-news.store'));
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+  function isManageableNewsItem(item) {
+    return Boolean(item && item.is_database);
+  }
+
+  window.openEditNewsModal = function (newsId) {
+    if (!canUpdateNews) return;
+    const form = document.getElementById('newsEditForm');
+    const modalEl = document.getElementById('newsEditModal');
+    if (!form || !modalEl) return;
+
+    const titleEl = document.getElementById('newsEditModalTitle');
+    const submitBtn = document.getElementById('newsEditSubmitBtn');
+    const isCreate = newsId === null || newsId === undefined;
+
+    if (isCreate) {
+      form.action = newsStoreUrl;
+      form.querySelector('input[name="_method"]')?.remove();
+      if (titleEl) titleEl.textContent = @json(__('Add News'));
+      if (submitBtn) submitBtn.textContent = @json(__('Create'));
+      form.reset();
+      document.getElementById('newsEditIsActive').checked = true;
+    } else {
+      const item = masterNewsStore.find(n => Number(n.id) === Number(newsId));
+      if (!item || !isManageableNewsItem(item)) {
+        if (typeof Swal !== 'undefined') {
+          Swal.fire({
+            icon: 'info',
+            title: @json(__('Not editable')),
+            text: @json(__('Import demo bulletins to the database first, or create a new article.')),
+            confirmButtonText: @json(__('OK')),
+            customClass: { confirmButton: 'btn btn-primary' },
+            buttonsStyling: false,
+          });
+        }
+        return;
+      }
+      form.action = `${newsDeleteUrlBase}/${item.id}`;
+      form.querySelector('input[name="_method"]')?.remove();
+      if (titleEl) titleEl.textContent = @json(__('Edit News'));
+      if (submitBtn) submitBtn.textContent = @json(__('Save'));
+      document.getElementById('newsEditTitle').value = item.title || '';
+      document.getElementById('newsEditCategory').value = item.category || '';
+      document.getElementById('newsEditDateText').value = item.date_text || '';
+      document.getElementById('newsEditDescription').value = item.description || '';
+      document.getElementById('newsEditLocation').value = item.location_badge || '';
+      document.getElementById('newsEditOrder').value = item.order ?? '';
+      document.getElementById('newsEditIsActive').checked = item.is_active !== false && item.is_active !== 0;
+      const preset = document.getElementById('newsEditImagePreset');
+      if (preset && item.image_url) {
+        const match = Array.from(preset.options).find(o => o.value === item.image_url);
+        preset.value = match ? item.image_url : preset.options[0]?.value;
+      }
+    }
+
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+  };
 
   function submitNewsDelete(newsId) {
     const form = document.createElement('form');
@@ -856,9 +1017,23 @@
       `;
     }
 
+    const modalEditBtn = document.getElementById('modalEditNewsBtn');
+    if (modalEditBtn) {
+      if (canUpdateNews && isManageableNewsItem(item)) {
+        modalEditBtn.classList.remove('d-none');
+        modalEditBtn.onclick = () => {
+          bootstrap.Modal.getInstance(document.getElementById('newsDetailModal'))?.hide();
+          openEditNewsModal(item.id);
+        };
+      } else {
+        modalEditBtn.classList.add('d-none');
+        modalEditBtn.onclick = null;
+      }
+    }
+
     const modalDeleteBtn = document.getElementById('modalDeleteNewsBtn');
     if (modalDeleteBtn) {
-      if (canManageNews && usesDatabaseNews) {
+      if (canDeleteNews && isManageableNewsItem(item)) {
         modalDeleteBtn.classList.remove('d-none');
         modalDeleteBtn.onclick = () => confirmDeleteNews(item.id, item.title);
       } else {

@@ -747,25 +747,77 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
             'decrees' => $decreeNewsCount,
         ];
 
-        $user = auth()->user();
-        $canManageNews = $user && (
-            $user->isAdmin()
-            || $user->hasPermission('archives.delete')
-            || $user->hasPermission('archives.update')
-            || $user->hasPermission('archives.all')
-        );
+        $management = $this->newsManagementFlags();
 
         return view('valiant-shade.content.pages.pages-news', [
             'news' => $filteredNews->values(),
             'allNews' => $allNews,
+            'allNewsJson' => $this->serializeNewsForClient(
+                $allNews->concat($pendingNews)->unique(fn ($item) => (int) (is_object($item) ? $item->id : ($item['id'] ?? 0)))
+            ),
             'pendingNews' => $pendingNews,
             'featuredNews' => $featuredNews,
             'statsSummary' => $statsSummary,
             'activeCategory' => $activeCategory,
             'searchQuery' => $searchQuery,
             'usesDatabaseNews' => $dbNews->isNotEmpty(),
-            'canManageNews' => $canManageNews,
+            ...$management,
         ]);
+    }
+
+    /**
+     * @return array{canManageNews: bool, canUpdateNews: bool, canDeleteNews: bool}
+     */
+    protected function newsManagementFlags(): array
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return [
+                'canManageNews' => false,
+                'canUpdateNews' => false,
+                'canDeleteNews' => false,
+            ];
+        }
+
+        if ($user->isAdmin() || $user->hasPermission('archives.all') || $user->canBailiffArchives()) {
+            return [
+                'canManageNews' => true,
+                'canUpdateNews' => true,
+                'canDeleteNews' => true,
+            ];
+        }
+
+        $canUpdate = $user->hasPermission('archives.update') || $user->hasPermission('archives.create');
+        $canDelete = $user->hasPermission('archives.delete');
+
+        return [
+            'canManageNews' => $canUpdate || $canDelete,
+            'canUpdateNews' => $canUpdate,
+            'canDeleteNews' => $canDelete,
+        ];
+    }
+
+    protected function serializeNewsForClient(Collection $allNews): Collection
+    {
+        $databaseIds = News::query()->pluck('id')->all();
+
+        return $allNews->map(function ($item) use ($databaseIds) {
+            if ($item instanceof News) {
+                $row = $item->toArray();
+                $row['image_asset'] = $item->image_asset;
+                $row['is_database'] = true;
+
+                return $row;
+            }
+
+            $row = (array) $item;
+            if (! isset($row['image_asset']) && ! empty($row['image_url'])) {
+                $row['image_asset'] = asset(ltrim((string) $row['image_url'], '/'));
+            }
+            $row['is_database'] = in_array((int) ($row['id'] ?? 0), $databaseIds, true);
+
+            return $row;
+        })->values();
     }
 
     protected function authorizeNewsManagement(string $action = 'delete'): void
@@ -773,11 +825,16 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
         $user = auth()->user();
         abort_unless($user, 403);
 
-        if ($user->isAdmin() || $user->hasPermission('archives.all')) {
+        if ($user->isAdmin() || $user->hasPermission('archives.all') || $user->canBailiffArchives()) {
             return;
         }
 
-        $permission = $action === 'delete' ? 'archives.delete' : 'archives.update';
+        $permission = match ($action) {
+            'delete' => 'archives.delete',
+            'update' => 'archives.update',
+            'create' => 'archives.create',
+            default => 'archives.all',
+        };
         abort_unless($user->hasPermission($permission), 403, __('Access denied. You do not have permission to manage news.'));
     }
 
@@ -827,6 +884,8 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
      */
     public function store(Request $request): RedirectResponse|JsonResponse
     {
+        $this->authorizeNewsManagement('create');
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'category' => 'required|string|max:100',
@@ -902,6 +961,8 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
      */
     public function update(Request $request, int $id): RedirectResponse|JsonResponse
     {
+        $this->authorizeNewsManagement('update');
+
         $news = News::findOrFail($id);
 
         $validated = $request->validate([
@@ -1054,6 +1115,8 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
      */
     public function resetDefaults(Request $request): RedirectResponse|JsonResponse
     {
+        $this->authorizeNewsManagement('update');
+
         News::truncate();
         if (class_exists(\Database\Seeders\NewsSeeder::class)) {
             $seeder = new \Database\Seeders\NewsSeeder();
