@@ -6,12 +6,23 @@ const state = {
   sliderIndex: 0,
   featured: [],
   sliderTimer: null,
+  viewMode: 'grid',
+  filterTypes: [],
+  filterTypeCounts: {},
 };
 
 const els = {};
 
 function qs(id) {
   return document.getElementById(id);
+}
+
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 function badgeClass(color) {
@@ -70,13 +81,20 @@ function renderSlider(featured) {
     slide.className = 'vs-news-slide';
     slide.style.backgroundImage = `url('${item.image_asset}')`;
     slide.dataset.index = String(index);
+    const typeLabel = escapeHtml(item.news_type_label || item.category || '');
+    const title = escapeHtml(item.title || '');
+    const desc = escapeHtml(item.description || '');
+    const dateText = escapeHtml(item.date_text || '');
     slide.innerHTML = `
       <div class="vs-news-slide__overlay"></div>
       <div class="vs-news-slide__content">
-        <span class="vs-badge" style="border-color:${badgeClass(item.badge_color)}">${item.news_type_label || item.category}</span>
-        <h2 class="vs-news-slide__title">${item.title}</h2>
-        <p class="vs-news-slide__desc">${item.description}</p>
-        <button type="button" class="vs-filter-btn" data-open-id="${item.id}">Haberi Oku</button>
+        <div class="vs-news-slide__meta">
+          <span class="vs-badge" style="border-color:${badgeClass(item.badge_color)}">${typeLabel}</span>
+          ${dateText ? `<span class="vs-news-slide__date">${dateText}</span>` : ''}
+        </div>
+        <h2 class="vs-news-slide__title">${title}</h2>
+        <p class="vs-news-slide__desc">${desc}</p>
+        <button type="button" class="vs-news-slide__cta" data-open-id="${item.id}">Haberi Oku</button>
       </div>
     `;
     track.appendChild(slide);
@@ -111,6 +129,8 @@ function restartSliderAutoplay() {
 }
 
 function renderFilters(types, typeCounts) {
+  state.filterTypes = types || [];
+  state.filterTypeCounts = typeCounts || {};
   const allCount = Object.values(typeCounts || {}).reduce((sum, n) => sum + n, 0);
   const buttons = [
     `<button type="button" class="vs-filter-btn${state.type === 'all' ? ' is-active' : ''}" data-type="all">Tümü (${allCount})</button>`,
@@ -119,16 +139,46 @@ function renderFilters(types, typeCounts) {
   (types || []).forEach((type) => {
     const count = typeCounts?.[type.key] ?? 0;
     buttons.push(
-      `<button type="button" class="vs-filter-btn${state.type === type.key ? ' is-active' : ''}" data-type="${type.key}">${type.label} (${count})</button>`,
+      `<button type="button" class="vs-filter-btn${state.type === type.key ? ' is-active' : ''}" data-type="${type.key}">${escapeHtml(type.label)} (${count})</button>`,
     );
   });
 
   els.filterGroup.innerHTML = buttons.join('');
+  updateFilterToggleLabel();
+}
+
+function applyViewModeClass() {
+  const isList = state.viewMode === 'list';
+  els.newsGrid.classList.toggle('vs-news-list', isList);
+  els.newsGrid.classList.toggle('vs-news-grid', !isList);
+  if (els.toggleViewModeBtn) {
+    els.toggleViewModeBtn.setAttribute('aria-pressed', isList ? 'true' : 'false');
+  }
+  if (els.toggleViewModeLabel) {
+    els.toggleViewModeLabel.textContent = isList ? 'Kart' : 'Liste';
+  }
 }
 
 function renderGrid(items) {
+  applyViewModeClass();
+
   if (!items.length) {
     els.newsGrid.innerHTML = '<div class="vs-loading">Bu sayfada haber bulunamadı.</div>';
+    return;
+  }
+
+  if (state.viewMode === 'list') {
+    els.newsGrid.innerHTML = items
+      .map(
+        (item) => `
+        <article class="vs-news-list__item" data-open-id="${item.id}">
+          <span class="vs-news-list__type">${escapeHtml(item.news_type_label || item.category || '')}</span>
+          <h3 class="vs-news-list__title">${escapeHtml(item.title || '')}</h3>
+          <span class="vs-news-list__meta">${escapeHtml(item.date_text || '')}</span>
+        </article>
+      `,
+      )
+      .join('');
     return;
   }
 
@@ -136,17 +186,44 @@ function renderGrid(items) {
     .map(
       (item) => `
       <article class="vs-news-card" data-open-id="${item.id}">
-        <div class="vs-news-card__thumb" style="background-image:url('${item.image_asset}')"></div>
+        <div class="vs-news-card__thumb" style="background-image:url('${escapeHtml(item.image_asset || '')}')"></div>
         <div class="vs-news-card__body">
-          <span class="vs-badge">${item.news_type_label || item.category}</span>
-          <h3 class="vs-news-card__title">${item.title}</h3>
-          <p class="vs-news-card__desc">${item.description}</p>
-          <small style="color:#94a3b8">${item.date_text || ''}${item.location_badge ? ' • ' + item.location_badge : ''}</small>
+          <span class="vs-badge">${escapeHtml(item.news_type_label || item.category || '')}</span>
+          <h3 class="vs-news-card__title">${escapeHtml(item.title || '')}</h3>
+          <p class="vs-news-card__desc">${escapeHtml(item.description || '')}</p>
+          <small style="color:#94a3b8">${escapeHtml(item.date_text || '')}${item.location_badge ? ' • ' + escapeHtml(item.location_badge) : ''}</small>
         </div>
       </article>
     `,
     )
     .join('');
+}
+
+function updateFilterToggleLabel() {
+  if (!els.toggleFiltersLabel) {
+    return;
+  }
+  if (state.type === 'all') {
+    els.toggleFiltersLabel.textContent = 'Filtreler';
+    return;
+  }
+  const active = (state.filterTypes || []).find((t) => t.key === state.type);
+  const short = active?.label ? active.label.split(' ')[0] : state.type;
+  els.toggleFiltersLabel.textContent = short;
+}
+
+function syncFilterPanelVisibility() {
+  if (!els.filterPanel || !els.toggleFiltersBtn) {
+    return;
+  }
+  const desktop = window.matchMedia('(min-width: 768px)').matches;
+  if (desktop) {
+    els.filterPanel.hidden = false;
+    els.toggleFiltersBtn.setAttribute('aria-expanded', 'true');
+    return;
+  }
+  const expanded = els.toggleFiltersBtn.getAttribute('aria-expanded') === 'true';
+  els.filterPanel.hidden = !expanded;
 }
 
 function renderPagination(meta) {
@@ -162,14 +239,6 @@ async function loadFeed() {
   renderFilters(payload.types, payload.feed.type_counts);
   renderGrid(payload.feed.data);
   renderPagination(payload.feed.meta);
-}
-
-function escapeHtml(text) {
-  return String(text)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }
 
 function renderModalBadges(item) {
@@ -347,8 +416,34 @@ function bindEvents() {
     if (!btn) return;
     state.type = btn.dataset.type;
     state.page = 1;
+    if (window.matchMedia('(max-width: 767px)').matches && els.filterPanel && els.toggleFiltersBtn) {
+      els.filterPanel.hidden = true;
+      els.toggleFiltersBtn.setAttribute('aria-expanded', 'false');
+    }
     loadFeed().catch(console.error);
   });
+
+  if (els.toggleFiltersBtn && els.filterPanel) {
+    els.toggleFiltersBtn.addEventListener('click', () => {
+      const expanded = els.toggleFiltersBtn.getAttribute('aria-expanded') === 'true';
+      els.toggleFiltersBtn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+      els.filterPanel.hidden = expanded;
+    });
+  }
+
+  if (els.toggleViewModeBtn) {
+    els.toggleViewModeBtn.addEventListener('click', () => {
+      state.viewMode = state.viewMode === 'grid' ? 'list' : 'grid';
+      try {
+        localStorage.setItem('vs.gazette.viewMode', state.viewMode);
+      } catch (e) {
+        /* ignore */
+      }
+      loadFeed().catch(console.error);
+    });
+  }
+
+  window.addEventListener('resize', syncFilterPanelVisibility);
 
   let searchTimer;
   els.searchInput.addEventListener('input', () => {
@@ -424,6 +519,11 @@ document.addEventListener('DOMContentLoaded', () => {
   els.prevSlide = qs('newsSliderPrev');
   els.nextSlide = qs('newsSliderNext');
   els.filterGroup = qs('newsFilterGroup');
+  els.filterPanel = qs('newsFilterPanel');
+  els.toggleFiltersBtn = qs('toggleFiltersBtn');
+  els.toggleFiltersLabel = qs('toggleFiltersLabel');
+  els.toggleViewModeBtn = qs('toggleViewModeBtn');
+  els.toggleViewModeLabel = qs('toggleViewModeLabel');
   els.searchInput = qs('newsSearchInput');
   els.newsGrid = qs('newsGrid');
   els.prevPage = qs('newsPrevPage');
@@ -451,6 +551,15 @@ document.addEventListener('DOMContentLoaded', () => {
   els.rumorNewsType = qs('rumorNewsType');
 
   initNewsTypePicker(els.rumorTypePicker, els.rumorNewsType);
+  try {
+    const savedView = localStorage.getItem('vs.gazette.viewMode');
+    if (savedView === 'list' || savedView === 'grid') {
+      state.viewMode = savedView;
+    }
+  } catch (e) {
+    /* ignore */
+  }
+  syncFilterPanelVisibility();
   bindEvents();
   loadFeed().catch((error) => {
     els.newsGrid.innerHTML = `<div class="vs-loading">${error.message}</div>`;
