@@ -45,7 +45,7 @@ async function fetchBootstrap() {
       type: state.type === 'all' ? '' : state.type,
       q: state.search,
     }),
-    { headers: { Accept: 'application/json' } },
+    { headers: { Accept: 'application/json' }, cache: 'no-store' },
   );
   if (!response.ok) {
     throw new Error('Gazete verisi yüklenemedi.');
@@ -164,8 +164,46 @@ async function loadFeed() {
   renderPagination(payload.feed.meta);
 }
 
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function renderModalBadges(item) {
+  const parts = [];
+  const typeLabel = item.news_type_label || item.category;
+  if (typeLabel) {
+    parts.push(`<span class="vs-modal__badge vs-modal__badge--type">${escapeHtml(typeLabel)}</span>`);
+  }
+  if (item.tag) {
+    parts.push(`<span class="vs-modal__badge">${escapeHtml(item.tag)}</span>`);
+  }
+  return parts.join('');
+}
+
+function renderStoryHtml(storyText) {
+  const normalized = String(storyText || '').trim();
+  if (!normalized) {
+    return '';
+  }
+  const paragraphs = normalized.includes('\n\n')
+    ? normalized.split('\n\n')
+    : normalized.split('\n').filter((line) => line.trim() !== '');
+  return paragraphs
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((p) => `<p class="vs-article-p">${escapeHtml(p)}</p>`)
+    .join('');
+}
+
 async function openArticle(id) {
-  const response = await fetch(`/api/public/news/${id}`, { headers: { Accept: 'application/json' } });
+  const response = await fetch(`/api/public/news/${id}`, {
+    headers: { Accept: 'application/json' },
+    cache: 'no-store',
+  });
   if (!response.ok) {
     return;
   }
@@ -173,17 +211,46 @@ async function openArticle(id) {
   const item = payload.news;
   els.modalHero.style.backgroundImage = `url('${item.image_asset}')`;
   els.modalTitle.textContent = item.title;
-  els.modalMeta.textContent = `${item.news_type_label || item.category} • ${item.date_text || ''}${item.location_badge ? ' • ' + item.location_badge : ''}`;
+
+  if (els.modalBadges) {
+    els.modalBadges.innerHTML = renderModalBadges(item);
+  }
+  if (els.modalDate) {
+    const when = item.published_date || item.date_text || '';
+    els.modalDate.textContent = when;
+    els.modalDate.hidden = !when;
+  }
+
+  if (els.modalAuthor) {
+    els.modalAuthor.textContent = item.author || 'Gazete Muhabiri';
+  }
+  if (els.modalAuthorRole) {
+    const role = item.author_role || '';
+    els.modalAuthorRole.textContent = role;
+    els.modalAuthorRole.hidden = !role;
+  }
+
+  if (els.modalLocation) {
+    const loc = item.location_badge || '';
+    els.modalLocation.textContent = loc ? `📍 ${loc}` : '';
+    els.modalLocation.classList.toggle('vs-modal__meta-item--location', Boolean(loc));
+    els.modalLocation.hidden = !loc;
+  }
+  if (els.modalReadTime) {
+    const readTime = item.read_time || '3 dk okuma';
+    els.modalReadTime.textContent = `📖 ${readTime}`;
+    els.modalReadTime.classList.add('vs-modal__meta-item--read');
+  }
+
   const story = item.full_story || item.description;
-  els.modalStory.innerHTML = story
-    .split('\n\n')
-    .map((p) => `<p>${p.trim()}</p>`)
-    .join('');
+  els.modalStory.innerHTML = renderStoryHtml(story);
+
   if (item.testimony) {
-    els.modalQuote.style.display = 'block';
+    els.modalQuote.hidden = false;
     els.modalQuote.textContent = item.testimony;
   } else {
-    els.modalQuote.style.display = 'none';
+    els.modalQuote.hidden = true;
+    els.modalQuote.textContent = '';
   }
   els.detailModal.classList.add('is-open');
 }
@@ -365,7 +432,12 @@ document.addEventListener('DOMContentLoaded', () => {
   els.detailModal = qs('newsDetailModal');
   els.modalHero = qs('newsModalHero');
   els.modalTitle = qs('newsModalTitle');
-  els.modalMeta = qs('newsModalMeta');
+  els.modalBadges = qs('newsModalBadges');
+  els.modalDate = qs('newsModalDate');
+  els.modalAuthor = qs('newsModalAuthor');
+  els.modalAuthorRole = qs('newsModalAuthorRole');
+  els.modalLocation = qs('newsModalLocation');
+  els.modalReadTime = qs('newsModalReadTime');
   els.modalStory = qs('newsModalStory');
   els.modalQuote = qs('newsModalQuote');
   els.modalClose = qs('newsModalClose');

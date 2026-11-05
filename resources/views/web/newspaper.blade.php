@@ -69,10 +69,29 @@
                 <div class="vs-modal__hero-overlay"></div>
             </div>
             <div class="vs-modal__body">
-                <h2 id="newsModalTitle"></h2>
-                <p id="newsModalMeta" style="color:#94a3b8;font-size:.9rem"></p>
-                <blockquote id="newsModalQuote" style="display:none;border-left:3px solid #f59e0b;padding-left:.75rem;color:#e2e8f0;font-style:italic"></blockquote>
-                <div id="newsModalStory" style="line-height:1.7;color:#cbd5e1"></div>
+                <div class="vs-modal__head">
+                    <div class="vs-modal__badges" id="newsModalBadges"></div>
+                    <time class="vs-modal__date" id="newsModalDate"></time>
+                </div>
+                <h2 class="vs-modal__title" id="newsModalTitle"></h2>
+                <div class="vs-modal__byline">
+                    <div class="vs-modal__author">
+                        <span class="vs-modal__author-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                        </span>
+                        <div>
+                            <strong class="vs-modal__author-name" id="newsModalAuthor"></strong>
+                            <span class="vs-modal__author-role" id="newsModalAuthorRole"></span>
+                        </div>
+                    </div>
+                    <div class="vs-modal__article-meta">
+                        <span class="vs-modal__meta-item" id="newsModalLocation"></span>
+                        <span class="vs-modal__meta-item" id="newsModalReadTime"></span>
+                    </div>
+                </div>
+                <hr class="vs-modal__divider">
+                <div class="vs-modal-story" id="newsModalStory"></div>
+                <blockquote class="vs-modal-quote" id="newsModalQuote" hidden></blockquote>
             </div>
         </article>
     </div>

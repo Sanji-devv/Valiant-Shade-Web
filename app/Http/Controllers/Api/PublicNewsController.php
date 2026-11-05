@@ -7,6 +7,7 @@ use App\Models\News;
 use App\ValiantShade\Services\PublicNewsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 
 class PublicNewsController extends Controller
@@ -126,8 +127,12 @@ class PublicNewsController extends Controller
 
     protected function cachedJson(array $payload, int $status = 200): JsonResponse
     {
+        $version = (int) Cache::get('public.news.cache_version', 1);
+
         return response()
             ->json($payload, $status)
-            ->header('Cache-Control', 'public, max-age='.$this->news->cacheTtl());
+            ->header('Cache-Control', 'private, no-cache, must-revalidate')
+            ->header('Pragma', 'no-cache')
+            ->header('X-Public-News-Cache-Version', (string) $version);
     }
 }

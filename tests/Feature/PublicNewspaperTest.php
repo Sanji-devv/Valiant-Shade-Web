@@ -55,7 +55,7 @@ class PublicNewspaperTest extends TestCase
         $response = $this->getJson('/api/public/news/bootstrap');
         $response->assertOk()
             ->assertJsonPath('success', true)
-            ->assertHeader('Cache-Control');
+            ->assertHeader('Cache-Control', 'private, no-cache, must-revalidate');
 
         $titles = collect($response->json('feed.data'))->pluck('title')->all();
         $this->assertContains('Yayında Olan Haber Başlığı Uzun Metin', $titles);
@@ -79,6 +79,32 @@ class PublicNewspaperTest extends TestCase
             'is_active' => false,
             'news_type' => 'environment_rumor',
         ]);
+    }
+
+    public function test_approved_news_appears_in_public_bootstrap_immediately(): void
+    {
+        $user = \App\Models\User::factory()->create(['role' => 'ADMIN']);
+
+        $pending = News::create([
+            'title' => 'Onay Sonrası Görünür Haber Başlığı',
+            'category' => 'Lonca Söylentisi',
+            'news_type' => 'guild_rumor',
+            'status' => 'pending',
+            'description' => 'Bu haber onaylandıktan hemen sonra public bootstrap listesinde yer almalıdır.',
+            'image_url' => 'static/valiant-shade/assets/img/news/guild_tavern_whispers.jpg',
+            'is_active' => false,
+        ]);
+
+        Cache::put('public.news.cache_version', 10, now()->addHour());
+
+        $this->actingAs($user)->post(route('valiant-shade.pages-news.approve', $pending->id))
+            ->assertRedirect(route('valiant-shade.pages-news'));
+
+        $this->assertGreaterThan(10, (int) Cache::get('public.news.cache_version'));
+
+        $response = $this->getJson('/api/public/news/bootstrap');
+        $titles = collect($response->json('feed.data'))->pluck('title')->all();
+        $this->assertContains('Onay Sonrası Görünür Haber Başlığı', $titles);
     }
 
     public function test_cache_version_bumps_after_news_change(): void

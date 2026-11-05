@@ -17,10 +17,15 @@ class PublicNewsService
 
     public function bumpCacheVersion(): void
     {
-        if (! Cache::has('public.news.cache_version')) {
-            Cache::put('public.news.cache_version', 1, now()->addYear());
-        }
-        Cache::increment('public.news.cache_version');
+        Cache::lock('public.news.cache_version.lock', 10)->block(5, function (): void {
+            $next = (int) Cache::get('public.news.cache_version', 0) + 1;
+            Cache::put('public.news.cache_version', $next, now()->addYear());
+        });
+    }
+
+    public function invalidatePublicFeed(): void
+    {
+        $this->bumpCacheVersion();
     }
 
     protected function cacheKey(string $suffix): string
