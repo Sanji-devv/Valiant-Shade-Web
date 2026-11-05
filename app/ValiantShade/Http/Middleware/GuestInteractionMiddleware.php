@@ -52,11 +52,6 @@ class GuestInteractionMiddleware
             return $next($request);
         }
 
-        // Guests are allowed to browse pages freely (GET & HEAD)
-        if ($request->isMethod('GET') || $request->isMethod('HEAD')) {
-            return $next($request);
-        }
-
         // Allow guest authentication actions (login, register, reset password)
         $routeName = $request->route() ? $request->route()->getName() : null;
         if ($routeName && in_array($routeName, $this->allowedRouteNames, true)) {

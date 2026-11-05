@@ -8,21 +8,21 @@ use Tests\TestCase;
 class ValiantShadeTest extends TestCase
 {
     use RefreshDatabase;
-    public function test_home_page_has_valiant_shade_button(): void
+    public function test_home_page_does_not_link_to_valiant_shade_panel(): void
     {
         $response = $this->get('/');
 
         $response->assertStatus(200);
-        $response->assertSee(url('/valiant-shade'));
+        $response->assertDontSee(url('/valiant-shade'));
+        $response->assertDontSee('Valiant Shade Panel');
         $response->assertSee('Valiant Shade');
     }
 
-    public function test_valiant_shade_dashboard_renders_successfully(): void
+    public function test_valiant_shade_dashboard_redirects_guests_to_login(): void
     {
         $response = $this->get('/valiant-shade');
 
-        $response->assertStatus(200);
-        $response->assertSee('Valiant Shade');
+        $response->assertRedirect(route('valiant-shade.auth-login-basic'));
     }
 
     public function test_valiant_shade_login_renders_successfully(): void

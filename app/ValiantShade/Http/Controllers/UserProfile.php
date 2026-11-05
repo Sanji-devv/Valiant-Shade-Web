@@ -10,7 +10,8 @@ class UserProfile extends Controller
 {
   public function index()
   {
-    $user = Auth::user() ?: \App\Models\User::orderBy('id', 'asc')->first();
+    $user = Auth::user();
+    abort_unless($user, 403);
     $loadEnum = function ($file) {
       $candidates = [
         config_path('enums/' . $file),

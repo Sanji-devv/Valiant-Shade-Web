@@ -51,6 +51,7 @@ class ValiantShadeServiceProvider extends ServiceProvider
         Route::middleware([
             'web',
             \App\ValiantShade\Http\Middleware\LocaleMiddleware::class,
+            \App\ValiantShade\Http\Middleware\EnsureValiantShadePanelAccess::class,
             \App\ValiantShade\Http\Middleware\GuestInteractionMiddleware::class,
             \App\ValiantShade\Http\Middleware\LogValiantShadeActivity::class,
         ])
