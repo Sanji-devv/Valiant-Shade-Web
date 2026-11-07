@@ -20,7 +20,7 @@ class PublicNewspaperTest extends TestCase
         $this->withServerVariables(['HTTP_HOST' => $host])
             ->get('http://'.$host.'/')
             ->assertOk()
-            ->assertSee('Valiant Shade Gazetesi')
+            ->assertSee('Lağımdan Sesler')
             ->assertSee('href="'.$mainSiteUrl.'"', false);
     }
 

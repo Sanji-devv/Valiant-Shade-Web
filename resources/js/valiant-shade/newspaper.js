@@ -15,9 +15,23 @@ const state = {
   filterTypeCounts: {},
   lastFeedItems: [],
   lastFeedMeta: null,
+  gazetteIllustrations: {},
+  gazetteIllustrationVariants: [],
 };
 
 const els = {};
+
+function readJsonDataset(camelKey, fallback) {
+  try {
+    const raw = document.body.dataset[camelKey];
+    if (!raw) {
+      return fallback;
+    }
+    return JSON.parse(raw);
+  } catch {
+    return fallback;
+  }
+}
 
 function qs(id) {
   return document.getElementById(id);
@@ -165,9 +179,24 @@ function gazetteBranding() {
   const body = document.body;
   return {
     logo: body.dataset.gazetteLogo || '',
-    name: body.dataset.gazetteName || 'Valiant Shade Gazetesi',
-    motto: body.dataset.gazetteMotto || 'Krallıkların Gölgesinde Doğrulanmış Haber',
+    name: body.dataset.gazetteName || 'Lağımdan Sesler',
+    motto: body.dataset.gazetteMotto || 'Dedikodu burada doğrulanır — ya da en azından mürekkeple basılır.',
+    press: body.dataset.gazettePress || 'Lağımdan Sesler Basın Bürosu',
   };
+}
+
+function gazetteIllustration(item, slotIndex = 0) {
+  const type = item.news_type || 'default';
+  const mapped = state.gazetteIllustrations[type] || state.gazetteIllustrations.default;
+  if (mapped) {
+    return mapped;
+  }
+  const variants = state.gazetteIllustrationVariants;
+  if (variants.length) {
+    const id = Number(item.id) || 0;
+    return variants[(id + slotIndex) % variants.length];
+  }
+  return item.image_asset || '';
 }
 
 function truncateText(text, maxLen) {
@@ -188,23 +217,40 @@ function splitParagraphs(text) {
     : normalized.split('\n').map((p) => p.trim()).filter(Boolean);
 }
 
+function inWorldCalendar() {
+  const body = document.body;
+  return {
+    dateLine:
+      body.dataset.gazetteIssueDate || 'Leos ayının 1. günü, Vonyas (Pazar) — 631',
+    issueNumber: body.dataset.gazetteIssueNumber || '1',
+    issueLabel: body.dataset.gazetteIssueLabel || 'İlk sayı',
+    month: body.dataset.gazetteIssueMonth || 'Leos',
+    day: body.dataset.gazetteIssueDay || '1',
+    year: body.dataset.gazetteIssueYear || '631',
+  };
+}
+
+function inWorldDateShort() {
+  const cal = inWorldCalendar();
+  return `${cal.month} ${cal.day}, ${cal.year}`;
+}
+
 function gazetteIssueLabel(meta) {
   const page = meta?.current_page || state.page || 1;
-  const now = new Date();
-  const dateStr = now.toLocaleDateString('tr-TR', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-  return { page, dateStr };
+  const cal = inWorldCalendar();
+  return {
+    page,
+    dateStr: cal.dateLine,
+    issueNumber: cal.issueNumber,
+    issueLabel: cal.issueLabel,
+  };
 }
 
 const GAZETTE_SIDEBAR_SNIPPETS = [
-  'Çarşı fiyatları: Demir külçe yükseldi; iksir şişeleri stabil.',
-  'Hava: Sisli sabah, öğleden sonra rüzgârlı — liman seferleri gecikmeli.',
-  'Lonca duyurusu: Yeni üyeler için Han kapısında kayıt masası açıldı.',
-  'Büyücüler Birliği uyarısı: Gece yarısı mor ışık görenler rapor versin.',
+  'Lağım Telgrafı: Hanın arka kapısından üç yeni söylenti çıktı — mürekkebi kurumadan yetişin.',
+  'Bugünkü koku indeksi: Orta şiddette söylenti, hafif bira ve bir tutam gizem.',
+  'İlan: Kayıp taç yok; ama taç biçiminde bir küllük bulundu. Sahibi aranıyor.',
+  'Hava: Sisli sabah, öğleden sonra dedikodu — liman söylentileri rüzgârla yayıldı.',
 ];
 
 function sidebarSnippet(page) {
@@ -246,23 +292,26 @@ async function enrichGazetteItems(items) {
   );
 }
 
-function renderGazetteStory(item) {
-  const img = escapeHtml(item.image_asset || '');
+function renderGazetteStory(item, index = 0) {
+  const img = escapeHtml(gazetteIllustration(item, index + 2));
   const title = escapeHtml(item.title || '');
   const type = escapeHtml(item.news_type_label || item.category || '');
-  const body = paragraphsToHtml(articlePlainText(item), 8);
-  const author = escapeHtml(item.author || 'Gazete Muhabiri');
-  const meta = [item.date_text, item.location_badge].filter(Boolean).map(escapeHtml).join(' · ');
+  const body = paragraphsToHtml(articlePlainText(item), index === 0 ? 10 : 7);
+  const author = escapeHtml(item.author || 'Lağım Muhabiri');
+  const meta = [inWorldDateShort(), item.location_badge].filter(Boolean).map(escapeHtml).join(' · ');
+  const wide = index === 0 ? ' vs-gazette-story--wide' : '';
   const thumb = img
     ? `<div class="vs-gazette-story__thumb" style="background-image:url('${img}')" role="img" aria-label=""></div>`
     : '';
   return `
-    <article class="vs-gazette-story">
+    <article class="vs-gazette-story${wide}">
       ${thumb}
-      <div class="vs-gazette-story__type">${type}</div>
-      <h3 class="vs-gazette-story__title">${title}</h3>
-      <div class="vs-gazette-story__body">${body}</div>
-      <div class="vs-gazette-byline">${author}${meta ? ` · ${meta}` : ''}</div>
+      <div class="vs-gazette-story__inner">
+        <div class="vs-gazette-story__type">${type}</div>
+        <h3 class="vs-gazette-story__title">${title}</h3>
+        <div class="vs-gazette-story__body">${body}</div>
+        <div class="vs-gazette-byline">${author}${meta ? ` · ${meta}` : ''}</div>
+      </div>
     </article>
   `;
 }
@@ -273,29 +322,32 @@ function renderGazetteSheet(items, meta) {
   }
 
   const brand = gazetteBranding();
-  const { page, dateStr } = gazetteIssueLabel(meta);
+  const { page, dateStr, issueNumber, issueLabel } = gazetteIssueLabel(meta);
   const lead = items[0];
   const rest = items.slice(1);
   const leadText = articlePlainText(lead);
   const leadParas = splitParagraphs(leadText);
   const deck = leadParas[0] ? truncateText(leadParas[0], 200) : truncateText(leadText, 200);
   const leadBody = paragraphsToHtml(leadText, 14);
-  const leadImg = escapeHtml(lead.image_asset || '');
+  const leadImg = escapeHtml(gazetteIllustration(lead, 0));
   const leadLoc = lead.location_badge ? escapeHtml(lead.location_badge) : '';
-  const leadAuthor = escapeHtml(lead.author || 'Gazete Muhabiri');
-  const leadDate = escapeHtml(lead.date_text || dateStr);
+  const leadAuthor = escapeHtml(lead.author || 'Lağım Muhabiri');
+  const leadDate = escapeHtml(dateStr);
 
   const sheet = `
     <article class="vs-gazette-sheet" id="gazettePrintSheet">
       <header class="vs-gazette-masthead">
-        <div class="vs-gazette-masthead__ornament">✦ ⚔ ✦</div>
+        <div class="vs-gazette-masthead__ornament">☙ &nbsp; Lağımdan Sesler &nbsp; ❧</div>
         <div class="vs-gazette-masthead__row">
-          ${brand.logo ? `<img class="vs-gazette-masthead__crest" src="${escapeHtml(brand.logo)}" width="44" height="44" alt="">` : ''}
-          <h2 class="vs-gazette-masthead__title">${escapeHtml(brand.name)}</h2>
+          ${brand.logo ? `<img class="vs-gazette-masthead__crest" src="${escapeHtml(brand.logo)}" width="72" height="72" alt="">` : ''}
+          <div class="vs-gazette-masthead__titles">
+            <h2 class="vs-gazette-masthead__title">${escapeHtml(brand.name)}</h2>
+            <p class="vs-gazette-masthead__subtitle">Valiant Shade resmî dedikodu bülteni</p>
+          </div>
         </div>
         <div class="vs-gazette-masthead__meta">
-          <span>${leadDate}</span>
-          <span>Sayı ${page}</span>
+          <span class="vs-gazette-masthead__date">${leadDate}</span>
+          <span class="vs-gazette-masthead__issue">${escapeHtml(issueLabel)} · Sayı ${escapeHtml(String(issueNumber))}</span>
           <span class="vs-gazette-masthead__motto">${escapeHtml(brand.motto)}</span>
         </div>
       </header>
@@ -310,16 +362,16 @@ function renderGazetteSheet(items, meta) {
         </div>
         <div class="vs-gazette-lead__visual" style="background-image:url('${leadImg}')" role="img" aria-label=""></div>
       </section>
-      <div class="vs-gazette-columns">
-        ${rest.map((item) => renderGazetteStory(item)).join('')}
+      <div class="vs-gazette-columns vs-gazette-columns--spread">
+        ${rest.map((item, idx) => renderGazetteStory(item, idx)).join('')}
       </div>
       <aside class="vs-gazette-sidebar">
-        <h3>Taşra Telgrafı</h3>
+        <h3>Lağım Köşesi</h3>
         <p>${escapeHtml(sidebarSnippet(page))}</p>
       </aside>
       <footer class="vs-gazette-footer">
-        <span>Valiant Shade Basın Bürosu</span>
-        <span>Baskı Sayfası ${page} / ${meta?.last_page || 1}</span>
+        <span>${escapeHtml(brand.press)}</span>
+        <span>Yaprak ${page} / ${meta?.last_page || 1}</span>
       </footer>
     </article>
   `;
@@ -473,7 +525,8 @@ function syncFilterPanelVisibility() {
 function renderPagination(meta) {
   state.lastFeedMeta = meta;
   if (isGazetteLayout()) {
-    els.pageSheet.textContent = `Baskı Sayfası ${meta.current_page} / ${meta.last_page}`;
+    const cal = inWorldCalendar();
+    els.pageSheet.textContent = `${cal.issueLabel} — yaprak ${meta.current_page} / ${meta.last_page}`;
   } else {
     els.pageSheet.textContent = `Gazete Sayfası ${meta.current_page} / ${meta.last_page}`;
   }
@@ -887,6 +940,8 @@ document.addEventListener('DOMContentLoaded', () => {
   els.nextPageLabel = qs('newsNextPageLabel');
 
   initNewsTypePicker(els.rumorTypePicker, els.rumorNewsType);
+  state.gazetteIllustrations = readJsonDataset('gazetteIllustrations', {});
+  state.gazetteIllustrationVariants = readJsonDataset('gazetteVariants', []);
   try {
     const savedLayout = localStorage.getItem('vs.gazette.layoutMode');
     if (savedLayout === 'gazette' || savedLayout === 'web') {

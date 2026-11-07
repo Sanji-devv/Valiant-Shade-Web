@@ -1,6 +1,11 @@
 @php
     $mainSiteUrl = rtrim((string) config('app.url'), '/');
-    $gazetteLogo = asset('static/valiant-shade/assets/img/branding/valiant-shade-logo-small.png');
+    $gb = $gazetteBrand ?? [];
+    $gazetteTitle = $gb['title'] ?? 'Lağımdan Sesler';
+    $gazetteMotto = $gb['motto'] ?? '';
+    $gazetteTagline = $gb['tagline'] ?? '';
+    $gazetteCrest = $gb['crest'] ?? asset('static/valiant-shade/assets/img/gazette/lagimdan-sesler-crest.jpg');
+    $gazetteIssue = $gb['issue'] ?? [];
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -8,7 +13,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Valiant Shade Gazetesi — {{ config('app.name', 'Valiant Shade') }}</title>
+    <title>{{ $gazetteTitle }} — {{ config('app.name', 'Valiant Shade') }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=IM+Fell+English:ital@0;1&family=Newsreader:ital,opsz,wght@0,12..72,400;0,12..72,600;0,12..72,700;1,12..72,400&display=swap" rel="stylesheet">
@@ -16,14 +21,23 @@
 </head>
 <body
     class="vs-newspaper-page"
-    data-gazette-logo="{{ $gazetteLogo }}"
-    data-gazette-name="Valiant Shade Gazetesi"
-    data-gazette-motto="Krallıkların Gölgesinde Doğrulanmış Haber — Lonca Söylentileri Dahil"
+    data-gazette-logo="{{ $gazetteCrest }}"
+    data-gazette-name="{{ $gazetteTitle }}"
+    data-gazette-motto="{{ $gazetteMotto }}"
+    data-gazette-press="{{ $gb['press_name'] ?? 'Lağımdan Sesler Basın Bürosu' }}"
+    data-gazette-illustrations='@json($gb["illustrations"] ?? [])'
+    data-gazette-variants='@json($gb["variants"] ?? [])'
+    data-gazette-issue-date="{{ $gazetteIssue['date_line'] ?? 'Leos ayının 1. günü, Vonyas (Pazar) — 631' }}"
+    data-gazette-issue-number="{{ $gazetteIssue['number'] ?? 1 }}"
+    data-gazette-issue-label="{{ $gazetteIssue['label'] ?? 'İlk sayı' }}"
+    data-gazette-issue-month="{{ $gazetteIssue['month'] ?? 'Leos' }}"
+    data-gazette-issue-day="{{ $gazetteIssue['day'] ?? 1 }}"
+    data-gazette-issue-year="{{ $gazetteIssue['year'] ?? 631 }}"
 >
     <header class="vs-newspaper-header">
         <div class="vs-newspaper-header__brand">
-            <h1>Valiant Shade Gazetesi</h1>
-            <p class="vs-newspaper-header__tagline">Kraliyet ve lonca haberleri, söylentiler ve yerel duyurular — giriş yapmadan okuyun.</p>
+            <h1>{{ $gazetteTitle }}</h1>
+            <p class="vs-newspaper-header__tagline">{{ $gazetteTagline }}</p>
         </div>
         <nav class="vs-newspaper-nav" aria-label="Gazete menüsü">
             <a href="{{ $mainSiteUrl }}" class="vs-newspaper-nav__item" aria-label="Ana Sayfa">
