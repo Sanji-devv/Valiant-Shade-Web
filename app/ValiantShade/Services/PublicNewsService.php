@@ -5,6 +5,7 @@ namespace App\ValiantShade\Services;
 use App\Models\News;
 use App\ValiantShade\Http\Controllers\NewsController;
 use App\ValiantShade\Support\NewsTypeResolver;
+use App\ValiantShade\Support\WorldCalendar;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
@@ -99,6 +100,13 @@ class PublicNewsService
 
         $imageAsset = $item->image_asset ?? asset('static/valiant-shade/assets/img/news/guild_dragon_quest.jpg');
 
+        $createdAt = null;
+        if (isset($item->created_at) && $item->created_at instanceof \DateTimeInterface) {
+            $createdAt = $item->created_at;
+        }
+        $worldDate = WorldCalendar::formatNewsStamp($createdAt);
+        $worldParts = WorldCalendar::fromDateTime($createdAt);
+
         return [
             'id' => (int) $item->id,
             'title' => (string) $item->title,
@@ -111,6 +119,8 @@ class PublicNewsService
             'tag_icon' => $item->tag_icon ?? null,
             'date_text' => $item->date_text ?? null,
             'published_date' => $item->published_date ?? $item->date_text ?? null,
+            'world_date_text' => $worldDate ?? $item->date_text ?? null,
+            'world_date' => $worldParts,
             'read_time' => $item->read_time ?? '3 dk okuma',
             'description' => (string) ($item->description ?? ''),
             'full_story' => $item->full_story ?? null,

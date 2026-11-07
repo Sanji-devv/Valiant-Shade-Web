@@ -37,6 +37,13 @@ function qs(id) {
   return document.getElementById(id);
 }
 
+function displayDateText(item) {
+  if (!item) {
+    return '';
+  }
+  return item.world_date_text || item.date_text || '';
+}
+
 function escapeHtml(text) {
   return String(text)
     .replace(/&/g, '&amp;')
@@ -104,7 +111,7 @@ function renderSlider(featured) {
     const typeLabel = escapeHtml(item.news_type_label || item.category || '');
     const title = escapeHtml(item.title || '');
     const desc = escapeHtml(item.description || '');
-    const dateText = escapeHtml(item.date_text || '');
+    const dateText = escapeHtml(displayDateText(item));
     slide.innerHTML = `
       <div class="vs-news-slide__overlay"></div>
       <div class="vs-news-slide__content">
@@ -298,7 +305,7 @@ function renderGazetteStory(item, index = 0) {
   const type = escapeHtml(item.news_type_label || item.category || '');
   const body = paragraphsToHtml(articlePlainText(item), index === 0 ? 10 : 7);
   const author = escapeHtml(item.author || 'Lağım Muhabiri');
-  const meta = [inWorldDateShort(), item.location_badge].filter(Boolean).map(escapeHtml).join(' · ');
+  const meta = [item.world_date_text || inWorldDateShort(), item.location_badge].filter(Boolean).map(escapeHtml).join(' · ');
   const wide = index === 0 ? ' vs-gazette-story--wide' : '';
   const thumb = img
     ? `<div class="vs-gazette-story__thumb" style="background-image:url('${img}')" role="img" aria-label=""></div>`
@@ -463,7 +470,7 @@ function renderGrid(items) {
         <article class="vs-news-list__item" data-open-id="${item.id}">
           <span class="vs-news-list__type">${escapeHtml(item.news_type_label || item.category || '')}</span>
           <h3 class="vs-news-list__title">${escapeHtml(item.title || '')}</h3>
-          <span class="vs-news-list__meta">${escapeHtml(item.date_text || '')}</span>
+          <span class="vs-news-list__meta">${escapeHtml(displayDateText(item))}</span>
         </article>
       `,
       )
@@ -480,7 +487,7 @@ function renderGrid(items) {
           <span class="vs-badge">${escapeHtml(item.news_type_label || item.category || '')}</span>
           <h3 class="vs-news-card__title">${escapeHtml(item.title || '')}</h3>
           <p class="vs-news-card__desc">${escapeHtml(item.description || '')}</p>
-          <small style="color:#94a3b8">${escapeHtml(item.date_text || '')}${item.location_badge ? ' • ' + escapeHtml(item.location_badge) : ''}</small>
+          <small style="color:#94a3b8">${escapeHtml(displayDateText(item))}${item.location_badge ? ' • ' + escapeHtml(item.location_badge) : ''}</small>
         </div>
       </article>
     `,
@@ -610,7 +617,7 @@ async function openArticle(id) {
     els.modalBadges.innerHTML = renderModalBadges(item);
   }
   if (els.modalDate) {
-    const when = item.published_date || item.date_text || '';
+    const when = item.world_date_text || item.published_date || item.date_text || '';
     els.modalDate.textContent = when;
     els.modalDate.hidden = !when;
   }

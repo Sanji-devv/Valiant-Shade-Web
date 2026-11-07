@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\News;
 use App\ValiantShade\Services\PublicNewsService;
+use App\ValiantShade\Support\WorldCalendar;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -107,7 +108,7 @@ class PublicNewsController extends Controller
             'category_icon' => $typeConfig['category_icon'],
             'tag' => 'Söylenti Gönderisi',
             'tag_icon' => 'icon-base ti tabler-message-2-share',
-            'date_text' => now()->locale(app()->getLocale())->translatedFormat('d M Y, H:i'),
+            'date_text' => WorldCalendar::formatNewsStamp(now()) ?? now()->locale(app()->getLocale())->translatedFormat('d M Y, H:i'),
             'description' => $data['description'],
             'image_url' => 'static/valiant-shade/assets/img/news/guild_tavern_whispers.jpg',
             'location_badge' => $data['location_badge'] ?? null,

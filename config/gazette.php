@@ -30,9 +30,7 @@ return [
         'label' => 'İlk sayı',
         'year' => 631,
         'month' => 'Leos',
-        'month_terrestrial' => 'Kasım',
         'weekday' => 'Vonyas',
-        'weekday_terrestrial' => 'Pazar',
         'day' => 1,
     ],
 

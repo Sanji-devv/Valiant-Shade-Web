@@ -33,6 +33,7 @@
     data-gazette-issue-month="{{ $gazetteIssue['month'] ?? 'Leos' }}"
     data-gazette-issue-day="{{ $gazetteIssue['day'] ?? 1 }}"
     data-gazette-issue-year="{{ $gazetteIssue['year'] ?? 631 }}"
+    data-gazette-calendar='@json($gb["calendar"] ?? [])'
 >
     <header class="vs-newspaper-header">
         <div class="vs-newspaper-header__brand">

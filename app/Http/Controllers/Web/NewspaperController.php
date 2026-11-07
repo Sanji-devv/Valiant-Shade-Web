@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\ValiantShade\Support\WorldCalendar;
 use Illuminate\View\View;
 
 class NewspaperController extends Controller
@@ -25,24 +26,22 @@ class NewspaperController extends Controller
                 'crest' => asset((string) config('gazette.crest')),
                 'illustrations' => $mapAssets(config('gazette.illustrations', [])),
                 'variants' => $mapAssets(config('gazette.illustration_variants', [])),
-                'issue' => [
-                    'number' => (int) ($issue['number'] ?? 1),
-                    'label' => (string) ($issue['label'] ?? 'İlk sayı'),
-                    'year' => (int) ($issue['year'] ?? 631),
-                    'month' => (string) ($issue['month'] ?? 'Leos'),
-                    'month_terrestrial' => (string) ($issue['month_terrestrial'] ?? 'Kasım'),
-                    'weekday' => (string) ($issue['weekday'] ?? 'Vonyas'),
-                    'weekday_terrestrial' => (string) ($issue['weekday_terrestrial'] ?? 'Pazar'),
-                    'day' => (int) ($issue['day'] ?? 1),
-                    'date_line' => sprintf(
-                        '%s ayının %d. günü, %s (%s) — %d',
-                        (string) ($issue['month'] ?? 'Leos'),
-                        (int) ($issue['day'] ?? 1),
-                        (string) ($issue['weekday'] ?? 'Vonyas'),
-                        (string) ($issue['weekday_terrestrial'] ?? 'Pazar'),
-                        (int) ($issue['year'] ?? 631),
-                    ),
-                ],
+                'issue' => array_merge(
+                    [
+                        'number' => (int) ($issue['number'] ?? 1),
+                        'label' => (string) ($issue['label'] ?? 'İlk sayı'),
+                        'year' => (int) ($issue['year'] ?? 631),
+                        'month' => (string) ($issue['month'] ?? 'Leos'),
+                        'weekday' => (string) ($issue['weekday'] ?? 'Vonyas'),
+                        'day' => (int) ($issue['day'] ?? 1),
+                    ],
+                    [
+                        'date_line' => WorldCalendar::formatIssueLine($issue),
+                        'month_terrestrial' => WorldCalendar::terrestrialMonthByInWorld((string) ($issue['month'] ?? 'Leos')),
+                        'weekday_terrestrial' => WorldCalendar::terrestrialWeekdayByInWorld((string) ($issue['weekday'] ?? 'Vonyas')),
+                    ],
+                ),
+                'calendar' => WorldCalendar::frontendPayload(),
             ],
         ]);
     }

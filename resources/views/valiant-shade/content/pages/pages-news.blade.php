@@ -727,7 +727,7 @@
           </div>
           <div class="col-md-6">
             <label class="form-label text-white small fw-medium" for="newsEditDateText">{{ __('Date label') }}</label>
-            <input type="text" class="form-control" id="newsEditDateText" name="date_text" maxlength="100" placeholder="{{ __('Today, 04:30') }}">
+            <input type="text" class="form-control" id="newsEditDateText" name="date_text" maxlength="100" placeholder="Leos 1, 631 — Vonyas">
           </div>
           <div class="col-12">
             <label class="form-label text-white small fw-medium" for="newsEditDescription">{{ __('Summary / description') }}</label>
