@@ -10,10 +10,6 @@ class NewspaperController extends Controller
 {
     public function show(): View
     {
-        $mapAssets = static fn (array $paths): array => collect($paths)
-            ->map(static fn (string $path): string => asset($path))
-            ->all();
-
         $issue = config('gazette.issue', []);
 
         return view('web.newspaper', [
@@ -24,8 +20,6 @@ class NewspaperController extends Controller
                 'tagline' => (string) config('gazette.tagline'),
                 'press_name' => (string) config('gazette.press_name'),
                 'crest' => asset((string) config('gazette.crest')),
-                'illustrations' => $mapAssets(config('gazette.illustrations', [])),
-                'variants' => $mapAssets(config('gazette.illustration_variants', [])),
                 'issue' => array_merge(
                     [
                         'number' => (int) ($issue['number'] ?? 1),

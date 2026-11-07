@@ -1272,16 +1272,230 @@ body.vs-layout-gazette .vs-gazette-stage {
 .vs-gazette-sheet {
   position: relative;
   padding: 1.35rem 1.5rem 1.5rem;
-  background:
-    radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.5), transparent 45%),
-    radial-gradient(circle at 85% 90%, rgba(139, 90, 43, 0.08), transparent 40%),
-    linear-gradient(180deg, #faf3e4 0%, #f0e2c8 100%);
-  border: 3px double var(--gz-rule, #2a1f14);
+  background-color: #f2e4c8;
+  background-image:
+    radial-gradient(circle at 12% 18%, rgba(255, 252, 240, 0.65), transparent 42%),
+    radial-gradient(circle at 88% 82%, rgba(120, 78, 36, 0.07), transparent 38%),
+    repeating-linear-gradient(
+      -12deg,
+      transparent,
+      transparent 18px,
+      rgba(42, 31, 20, 0.025) 18px,
+      rgba(42, 31, 20, 0.025) 19px
+    ),
+    linear-gradient(180deg, #faf3e4 0%, #e9d4ad 100%);
+  border: 4px double var(--gz-rule, #2a1f14);
   box-shadow:
     0 2px 0 rgba(42, 31, 20, 0.15),
     0 18px 48px rgba(28, 18, 8, 0.22),
-    inset 0 0 80px rgba(139, 90, 43, 0.06);
+    inset 0 0 100px rgba(139, 90, 43, 0.08);
   color: var(--gz-ink, #1c1208);
+}
+
+.vs-gazette-sheet::before {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  border: 1px solid rgba(42, 31, 20, 0.12);
+  pointer-events: none;
+}
+
+.vs-gazette-rule--heavy {
+  height: 6px;
+  opacity: 0.75;
+  margin-top: 0.35rem;
+}
+
+.vs-gazette-running-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-family: Cinzel, Georgia, serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding-bottom: 0.35rem;
+  border-bottom: 2px solid rgba(42, 31, 20, 0.35);
+}
+
+.vs-gazette-running-head__rule {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(42, 31, 20, 0.35), transparent);
+}
+
+.vs-gazette-layout {
+  display: grid;
+  grid-template-columns: 1fr minmax(9.5rem, 11rem);
+  gap: 1rem 1.1rem;
+  align-items: start;
+}
+
+.vs-gazette-articles {
+  min-width: 0;
+}
+
+.vs-gazette-article {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2.35rem 1fr;
+  gap: 0.65rem 0.75rem;
+  padding: 0.65rem 0 0.85rem;
+}
+
+.vs-gazette-article__rumuz {
+  grid-row: 1 / span 6;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 0.35rem;
+}
+
+.vs-gazette-rumuz {
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--gz-accent, #6b3a12);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  border-left: 2px solid rgba(107, 58, 18, 0.35);
+  padding-left: 0.35rem;
+  line-height: 1.1;
+}
+
+.vs-gazette-article__main {
+  min-width: 0;
+}
+
+.vs-gazette-article__kicker {
+  margin: 0 0 0.25rem;
+  font-family: Cinzel, Georgia, serif;
+  font-size: 0.66rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gz-accent, #6b3a12);
+}
+
+.vs-gazette-article__title {
+  margin: 0 0 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: Cinzel, Georgia, serif;
+  font-weight: 700;
+  font-size: 1.02rem;
+  line-height: 1.25;
+  text-align: center;
+  justify-content: center;
+  border-top: 1px solid rgba(42, 31, 20, 0.28);
+  border-bottom: 1px solid rgba(42, 31, 20, 0.28);
+  padding: 0.35rem 0.25rem;
+}
+
+.vs-gazette-article--lead .vs-gazette-article__title {
+  font-size: clamp(1.2rem, 2.8vw, 1.55rem);
+  padding: 0.45rem 0.35rem;
+}
+
+.vs-gazette-article__title-text {
+  flex: 1;
+}
+
+.vs-gazette-article__orn {
+  font-size: 0.75rem;
+  color: var(--gz-accent, #6b3a12);
+  opacity: 0.85;
+}
+
+.vs-gazette-article__deck {
+  margin: 0 0 0.45rem;
+  font-family: 'Newsreader', Georgia, serif;
+  font-size: 0.98rem;
+  font-weight: 600;
+  font-style: italic;
+  line-height: 1.45;
+  color: var(--gz-ink-muted, #4a3d2e);
+  text-align: center;
+}
+
+.vs-gazette-article__place {
+  margin: 0 0 0.45rem;
+  text-align: center;
+  font-family: Cinzel, Georgia, serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gz-ink-muted, #4a3d2e);
+}
+
+.vs-gazette-article__body {
+  font-family: 'Newsreader', Georgia, serif;
+  font-size: 0.92rem;
+  line-height: 1.58;
+  column-count: 2;
+  column-gap: 1.1rem;
+  text-align: justify;
+  hyphens: auto;
+}
+
+.vs-gazette-article--lead .vs-gazette-article__body {
+  column-count: 3;
+  font-size: 0.94rem;
+}
+
+.vs-gazette-article__body p {
+  margin: 0 0 0.55rem;
+  orphans: 3;
+  widows: 3;
+}
+
+.vs-gazette-article__body p:first-child::first-letter {
+  float: left;
+  font-family: Cinzel, Georgia, serif;
+  font-size: 2.35rem;
+  line-height: 0.88;
+  font-weight: 700;
+  margin: 0.06rem 0.4rem 0 0;
+  color: var(--gz-accent, #6b3a12);
+}
+
+.vs-gazette-article-rule {
+  height: 1px;
+  margin: 0.15rem 0 0.55rem 2.85rem;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(42, 31, 20, 0.5),
+    rgba(42, 31, 20, 0.5) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+
+.vs-gazette-figure {
+  float: right;
+  width: min(38%, 200px);
+  margin: 0 0 0.45rem 0.65rem;
+  border: 2px solid rgba(42, 31, 20, 0.4);
+  padding: 0.25rem;
+  background: rgba(255, 250, 240, 0.65);
+}
+
+.vs-gazette-figure__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: sepia(0.2) contrast(1.05);
+}
+
+.vs-gazette-figure__cap {
+  margin: 0.25rem 0 0;
+  font-size: 0.68rem;
+  text-align: center;
+  font-style: italic;
+  color: var(--gz-ink-muted, #4a3d2e);
 }
 
 .vs-gazette-masthead {
@@ -1629,6 +1843,19 @@ body.vs-layout-gazette .vs-page-hint {
 }
 
 @media (max-width: 768px) {
+  .vs-gazette-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .vs-gazette-article__body,
+  .vs-gazette-article--lead .vs-gazette-article__body {
+    column-count: 1;
+  }
+
+  .vs-gazette-article-rule {
+    margin-left: 2.35rem;
+  }
+
   .vs-gazette-lead {
     grid-template-columns: 1fr;
   }

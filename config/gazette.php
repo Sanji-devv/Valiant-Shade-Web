@@ -35,25 +35,23 @@ return [
     ],
 
     /*
-    | Woodcut illüstrasyonlar — gazete / PDF görünümünde haber türüne göre.
+    | Varsayılan haber görselleri — gazetede basılmaz; yalnızca özel yüklenen görseller çıkar.
     */
-    'illustrations' => [
-        'royal_news' => 'static/valiant-shade/assets/img/gazette/lagim_royal_hall.jpg',
-        'guild_news' => 'static/valiant-shade/assets/img/gazette/lagim_treasury.jpg',
-        'royal_rumor' => 'static/valiant-shade/assets/img/gazette/lagim_royal_hall.jpg',
-        'guild_rumor' => 'static/valiant-shade/assets/img/gazette/lagim_whispers.jpg',
-        'environment_rumor' => 'static/valiant-shade/assets/img/gazette/lagim_forest_rumor.jpg',
-        'local_news' => 'static/valiant-shade/assets/img/gazette/lagim_local_market.jpg',
-        'default' => 'static/valiant-shade/assets/img/gazette/lagim_whispers.jpg',
-    ],
-
-    'illustration_variants' => [
-        'static/valiant-shade/assets/img/gazette/lagim_whispers.jpg',
-        'static/valiant-shade/assets/img/gazette/lagim_harbor_dragon.jpg',
-        'static/valiant-shade/assets/img/gazette/lagim_academy.jpg',
-        'static/valiant-shade/assets/img/gazette/lagim_treasury.jpg',
-        'static/valiant-shade/assets/img/gazette/lagim_forest_rumor.jpg',
-        'static/valiant-shade/assets/img/gazette/lagim_local_market.jpg',
-        'static/valiant-shade/assets/img/gazette/lagim_royal_hall.jpg',
+    'default_news_images' => [
+        'static/valiant-shade/assets/img/news/guild_arena_tournament.jpg',
+        'static/valiant-shade/assets/img/news/guild_arcane_academy.jpg',
+        'static/valiant-shade/assets/img/news/guild_celestial_sanctuary.jpg',
+        'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg',
+        'static/valiant-shade/assets/img/news/guild_dungeon_crypt.jpg',
+        'static/valiant-shade/assets/img/news/guild_fallen_memorial.jpg',
+        'static/valiant-shade/assets/img/news/guild_forge_armory.jpg',
+        'static/valiant-shade/assets/img/news/guild_hall_council.jpg',
+        'static/valiant-shade/assets/img/news/guild_heroes_funeral.jpg',
+        'static/valiant-shade/assets/img/news/guild_mystic_forest.jpg',
+        'static/valiant-shade/assets/img/news/guild_port_expedition.jpg',
+        'static/valiant-shade/assets/img/news/guild_shadow_conspiracy.jpg',
+        'static/valiant-shade/assets/img/news/guild_shadow_realm.jpg',
+        'static/valiant-shade/assets/img/news/guild_tavern_whispers.jpg',
+        'static/valiant-shade/assets/img/news/guild_treasury_vault.jpg',
     ],
 ];

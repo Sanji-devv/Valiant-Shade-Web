@@ -25,8 +25,6 @@
     data-gazette-name="{{ $gazetteTitle }}"
     data-gazette-motto="{{ $gazetteMotto }}"
     data-gazette-press="{{ $gb['press_name'] ?? 'Lağımdan Sesler Basın Bürosu' }}"
-    data-gazette-illustrations='@json($gb["illustrations"] ?? [])'
-    data-gazette-variants='@json($gb["variants"] ?? [])'
     data-gazette-issue-date="{{ $gazetteIssue['date_line'] ?? 'Leos ayının 1. günü, Vonyas (Pazar) — 631' }}"
     data-gazette-issue-number="{{ $gazetteIssue['number'] ?? 1 }}"
     data-gazette-issue-label="{{ $gazetteIssue['label'] ?? 'İlk sayı' }}"

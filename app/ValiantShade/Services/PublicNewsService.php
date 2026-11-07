@@ -127,6 +127,7 @@ class PublicNewsService
             'testimony' => $item->testimony ?? null,
             'image_url' => $item->image_url ?? null,
             'image_asset' => $imageAsset,
+            'has_custom_gazette_image' => $this->hasCustomGazetteImage($item),
             'stats' => $item->stats ?? [],
             'button_text' => $item->button_text ?? null,
             'button_url' => $item->button_url ?? null,
@@ -245,5 +246,42 @@ class PublicNewsService
             ])->values()->all(),
             'feed' => $this->paginate($page, $perPage, $newsType, $search),
         ];
+    }
+
+    protected function hasCustomGazetteImage(mixed $item): bool
+    {
+        $path = $this->normalizedImagePath($item->image_url ?? null);
+        if ($path === null || $path === '') {
+            return false;
+        }
+
+        $defaults = collect(config('gazette.default_news_images', []))
+            ->map(fn (string $p) => ltrim(str_replace('\\', '/', $p), '/'))
+            ->all();
+
+        if (in_array($path, $defaults, true)) {
+            return false;
+        }
+
+        $basename = basename($path);
+
+        return ! in_array($basename, array_map('basename', $defaults), true);
+    }
+
+    protected function normalizedImagePath(?string $url): ?string
+    {
+        if ($url === null || trim($url) === '') {
+            return null;
+        }
+
+        $url = str_replace('\\', '/', trim($url));
+
+        if (str_starts_with($url, 'http://') || str_starts_with($url, 'https://') || str_starts_with($url, '//')) {
+            $parsed = parse_url($url, PHP_URL_PATH);
+
+            return $parsed ? ltrim($parsed, '/') : null;
+        }
+
+        return ltrim($url, '/');
     }
 }

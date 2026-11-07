@@ -1,4 +1,4 @@
-const GAZETTE_ITEMS_PER_SHEET = 3;
+const GAZETTE_ITEMS_PER_SHEET = 4;
 const WEB_ITEMS_PER_PAGE = 9;
 
 const state = {
@@ -15,23 +15,9 @@ const state = {
   filterTypeCounts: {},
   lastFeedItems: [],
   lastFeedMeta: null,
-  gazetteIllustrations: {},
-  gazetteIllustrationVariants: [],
 };
 
 const els = {};
-
-function readJsonDataset(camelKey, fallback) {
-  try {
-    const raw = document.body.dataset[camelKey];
-    if (!raw) {
-      return fallback;
-    }
-    return JSON.parse(raw);
-  } catch {
-    return fallback;
-  }
-}
 
 function qs(id) {
   return document.getElementById(id);
@@ -192,20 +178,6 @@ function gazetteBranding() {
   };
 }
 
-function gazetteIllustration(item, slotIndex = 0) {
-  const type = item.news_type || 'default';
-  const mapped = state.gazetteIllustrations[type] || state.gazetteIllustrations.default;
-  if (mapped) {
-    return mapped;
-  }
-  const variants = state.gazetteIllustrationVariants;
-  if (variants.length) {
-    const id = Number(item.id) || 0;
-    return variants[(id + slotIndex) % variants.length];
-  }
-  return item.image_asset || '';
-}
-
 function truncateText(text, maxLen) {
   const normalized = String(text || '').trim();
   if (normalized.length <= maxLen) {
@@ -299,27 +271,92 @@ async function enrichGazetteItems(items) {
   );
 }
 
-function renderGazetteStory(item, index = 0) {
-  const img = escapeHtml(gazetteIllustration(item, index + 2));
+function formatRumuz(author) {
+  const raw = String(author || '').trim();
+  if (!raw || /anonim|gizli/i.test(raw)) {
+    return '◆';
+  }
+  const parts = raw.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return parts.map((p) => p.charAt(0).toUpperCase()).join('');
+  }
+  return raw.length > 10 ? raw.slice(0, 9) + '…' : raw;
+}
+
+function renderGazetteFigure(item) {
+  if (!item?.has_custom_gazette_image || !item.image_asset) {
+    return '';
+  }
+  const src = escapeHtml(item.image_asset);
+  const cap = item.location_badge ? escapeHtml(item.location_badge) : '';
+  return `
+    <figure class="vs-gazette-figure">
+      <img class="vs-gazette-figure__img" src="${src}" alt="" loading="lazy" decoding="async">
+      ${cap ? `<figcaption class="vs-gazette-figure__cap">${cap}</figcaption>` : ''}
+    </figure>
+  `;
+}
+
+function renderGazetteArticle(item, { lead = false } = {}) {
   const title = escapeHtml(item.title || '');
   const type = escapeHtml(item.news_type_label || item.category || '');
-  const body = paragraphsToHtml(articlePlainText(item), index === 0 ? 10 : 7);
-  const author = escapeHtml(item.author || 'Lağım Muhabiri');
-  const meta = [item.world_date_text || inWorldDateShort(), item.location_badge].filter(Boolean).map(escapeHtml).join(' · ');
-  const wide = index === 0 ? ' vs-gazette-story--wide' : '';
-  const thumb = img
-    ? `<div class="vs-gazette-story__thumb" style="background-image:url('${img}')" role="img" aria-label=""></div>`
-    : '';
+  const body = paragraphsToHtml(articlePlainText(item), lead ? 16 : 9);
+  const paras = splitParagraphs(articlePlainText(item));
+  const deck = paras[0] ? escapeHtml(truncateText(paras[0], lead ? 240 : 160)) : '';
+  const loc = item.location_badge ? escapeHtml(item.location_badge) : '';
+  const rumuz = escapeHtml(formatRumuz(item.author));
+  const authorTitle = escapeHtml(item.author || 'Anonim');
+  const leadClass = lead ? ' vs-gazette-article--lead' : '';
+
   return `
-    <article class="vs-gazette-story${wide}">
-      ${thumb}
-      <div class="vs-gazette-story__inner">
-        <div class="vs-gazette-story__type">${type}</div>
-        <h3 class="vs-gazette-story__title">${title}</h3>
-        <div class="vs-gazette-story__body">${body}</div>
-        <div class="vs-gazette-byline">${author}${meta ? ` · ${meta}` : ''}</div>
+    <article class="vs-gazette-article${leadClass}">
+      <div class="vs-gazette-article__rumuz" title="${authorTitle}">
+        <span class="vs-gazette-rumuz" aria-label="Rumuz: ${authorTitle}">${rumuz}</span>
+      </div>
+      <div class="vs-gazette-article__main">
+        ${renderGazetteFigure(item)}
+        <p class="vs-gazette-article__kicker">${type}</p>
+        <h2 class="vs-gazette-article__title">
+          <span class="vs-gazette-article__orn" aria-hidden="true">❧</span>
+          <span class="vs-gazette-article__title-text">${title}</span>
+          <span class="vs-gazette-article__orn" aria-hidden="true">❧</span>
+        </h2>
+        ${deck ? `<p class="vs-gazette-article__deck">${deck}</p>` : ''}
+        ${loc ? `<p class="vs-gazette-article__place">${loc}</p>` : ''}
+        <div class="vs-gazette-article__body">${body}</div>
       </div>
     </article>
+  `;
+}
+
+function renderGazetteMasthead(brand, issueMeta, isFirstPage) {
+  const { dateStr, issueNumber, issueLabel } = issueMeta;
+  if (!isFirstPage) {
+    return `
+      <header class="vs-gazette-running-head">
+        <span class="vs-gazette-running-head__title">${escapeHtml(brand.name)}</span>
+        <span class="vs-gazette-running-head__rule" aria-hidden="true"></span>
+        <span class="vs-gazette-running-head__sheet">Yaprak ${issueMeta.page}</span>
+      </header>
+    `;
+  }
+
+  return `
+    <header class="vs-gazette-masthead">
+      <div class="vs-gazette-masthead__ornament">☙ &nbsp; ${escapeHtml(brand.name)} &nbsp; ❧</div>
+      <div class="vs-gazette-masthead__row">
+        ${brand.logo ? `<img class="vs-gazette-masthead__crest" src="${escapeHtml(brand.logo)}" width="72" height="72" alt="">` : ''}
+        <div class="vs-gazette-masthead__titles">
+          <h2 class="vs-gazette-masthead__title">${escapeHtml(brand.name)}</h2>
+          <p class="vs-gazette-masthead__subtitle">Haftalık dedikodu yaprakları — tek mühür, tek tarih</p>
+        </div>
+      </div>
+      <div class="vs-gazette-masthead__meta">
+        <span class="vs-gazette-masthead__date">${escapeHtml(dateStr)}</span>
+        <span class="vs-gazette-masthead__issue">${escapeHtml(issueLabel)} · Sayı ${escapeHtml(String(issueNumber))}</span>
+        <span class="vs-gazette-masthead__motto">${escapeHtml(brand.motto)}</span>
+      </div>
+    </header>
   `;
 }
 
@@ -329,53 +366,31 @@ function renderGazetteSheet(items, meta) {
   }
 
   const brand = gazetteBranding();
-  const { page, dateStr, issueNumber, issueLabel } = gazetteIssueLabel(meta);
-  const lead = items[0];
-  const rest = items.slice(1);
-  const leadText = articlePlainText(lead);
-  const leadParas = splitParagraphs(leadText);
-  const deck = leadParas[0] ? truncateText(leadParas[0], 200) : truncateText(leadText, 200);
-  const leadBody = paragraphsToHtml(leadText, 14);
-  const leadImg = escapeHtml(gazetteIllustration(lead, 0));
-  const leadLoc = lead.location_badge ? escapeHtml(lead.location_badge) : '';
-  const leadAuthor = escapeHtml(lead.author || 'Lağım Muhabiri');
-  const leadDate = escapeHtml(dateStr);
+  const issueMeta = gazetteIssueLabel(meta);
+  const { page } = issueMeta;
+  const isFirstPage = page === 1;
+
+  const articles = items
+    .map((item, index) => {
+      const block = renderGazetteArticle(item, { lead: isFirstPage && index === 0 });
+      const rule = index < items.length - 1 ? '<div class="vs-gazette-article-rule" aria-hidden="true"></div>' : '';
+      return block + rule;
+    })
+    .join('');
 
   const sheet = `
-    <article class="vs-gazette-sheet" id="gazettePrintSheet">
-      <header class="vs-gazette-masthead">
-        <div class="vs-gazette-masthead__ornament">☙ &nbsp; Lağımdan Sesler &nbsp; ❧</div>
-        <div class="vs-gazette-masthead__row">
-          ${brand.logo ? `<img class="vs-gazette-masthead__crest" src="${escapeHtml(brand.logo)}" width="72" height="72" alt="">` : ''}
-          <div class="vs-gazette-masthead__titles">
-            <h2 class="vs-gazette-masthead__title">${escapeHtml(brand.name)}</h2>
-            <p class="vs-gazette-masthead__subtitle">Valiant Shade resmî dedikodu bülteni</p>
-          </div>
+    <article class="vs-gazette-sheet${isFirstPage ? '' : ' vs-gazette-sheet--continued'}" id="gazettePrintSheet">
+      ${renderGazetteMasthead(brand, issueMeta, isFirstPage)}
+      <div class="vs-gazette-rule vs-gazette-rule--heavy" aria-hidden="true"></div>
+      <div class="vs-gazette-layout">
+        <div class="vs-gazette-articles">
+          ${articles}
         </div>
-        <div class="vs-gazette-masthead__meta">
-          <span class="vs-gazette-masthead__date">${leadDate}</span>
-          <span class="vs-gazette-masthead__issue">${escapeHtml(issueLabel)} · Sayı ${escapeHtml(String(issueNumber))}</span>
-          <span class="vs-gazette-masthead__motto">${escapeHtml(brand.motto)}</span>
-        </div>
-      </header>
-      <div class="vs-gazette-rule" aria-hidden="true"></div>
-      <p class="vs-gazette-kicker">${escapeHtml(lead.news_type_label || lead.category || 'Manşet')}</p>
-      <section class="vs-gazette-lead">
-        <div>
-          <h2 class="vs-gazette-lead__headline">${escapeHtml(lead.title || '')}</h2>
-          <p class="vs-gazette-lead__deck">${escapeHtml(deck)}</p>
-          <div class="vs-gazette-body">${leadBody || `<p>${escapeHtml(leadText)}</p>`}</div>
-          <div class="vs-gazette-byline">${leadAuthor}${leadLoc ? ` · ${leadLoc}` : ''}</div>
-        </div>
-        <div class="vs-gazette-lead__visual" style="background-image:url('${leadImg}')" role="img" aria-label=""></div>
-      </section>
-      <div class="vs-gazette-columns vs-gazette-columns--spread">
-        ${rest.map((item, idx) => renderGazetteStory(item, idx)).join('')}
+        <aside class="vs-gazette-sidebar">
+          <h3>Lağım Köşesi</h3>
+          <p>${escapeHtml(sidebarSnippet(page))}</p>
+        </aside>
       </div>
-      <aside class="vs-gazette-sidebar">
-        <h3>Lağım Köşesi</h3>
-        <p>${escapeHtml(sidebarSnippet(page))}</p>
-      </aside>
       <footer class="vs-gazette-footer">
         <span>${escapeHtml(brand.press)}</span>
         <span>Yaprak ${page} / ${meta?.last_page || 1}</span>
@@ -947,8 +962,6 @@ document.addEventListener('DOMContentLoaded', () => {
   els.nextPageLabel = qs('newsNextPageLabel');
 
   initNewsTypePicker(els.rumorTypePicker, els.rumorNewsType);
-  state.gazetteIllustrations = readJsonDataset('gazetteIllustrations', {});
-  state.gazetteIllustrationVariants = readJsonDataset('gazetteVariants', []);
   try {
     const savedLayout = localStorage.getItem('vs.gazette.layoutMode');
     if (savedLayout === 'gazette' || savedLayout === 'web') {
