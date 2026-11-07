@@ -1,5 +1,6 @@
 @php
     $mainSiteUrl = rtrim((string) config('app.url'), '/');
+    $gazetteLogo = asset('static/valiant-shade/assets/img/branding/valiant-shade-logo-small.png');
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -8,9 +9,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Valiant Shade Gazetesi — {{ config('app.name', 'Valiant Shade') }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=IM+Fell+English:ital@0;1&family=Newsreader:ital,opsz,wght@0,12..72,400;0,12..72,600;0,12..72,700;1,12..72,400&display=swap" rel="stylesheet">
     @vite(['resources/css/valiant-shade/newspaper.css', 'resources/js/valiant-shade/newspaper.js'], 'static/valiant-shade/build')
 </head>
-<body class="vs-newspaper-page">
+<body
+    class="vs-newspaper-page"
+    data-gazette-logo="{{ $gazetteLogo }}"
+    data-gazette-name="Valiant Shade Gazetesi"
+    data-gazette-motto="Krallıkların Gölgesinde Doğrulanmış Haber — Lonca Söylentileri Dahil"
+>
     <header class="vs-newspaper-header">
         <div class="vs-newspaper-header__brand">
             <h1>Valiant Shade Gazetesi</h1>
@@ -62,6 +71,14 @@
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
                     <span id="toggleViewModeLabel">Liste</span>
                 </button>
+                <button type="button" class="vs-toolbar__btn vs-toolbar__btn--always" id="toggleGazetteLayoutBtn" aria-pressed="false" title="Klasik gazete sayfası — PDF için uygun">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M8 4v16M16 4v16M4 8h16M4 16h16"/></svg>
+                    <span id="toggleGazetteLayoutLabel">Gazete görünümü</span>
+                </button>
+                <button type="button" class="vs-toolbar__btn vs-toolbar__btn--always vs-toolbar__btn--print" id="printGazetteBtn" hidden title="Bu sayfayı PDF olarak kaydet veya yazdır">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+                    <span>PDF / Yazdır</span>
+                </button>
                 <input type="search" class="vs-search" id="newsSearchInput" placeholder="Haber, söylenti veya kahraman ara…" aria-label="Haber ara">
             </div>
             <div class="vs-filter-panel" id="newsFilterPanel" hidden>
@@ -70,6 +87,8 @@
         </section>
 
         <section class="vs-news-feed vs-news-grid" id="newsGrid" aria-live="polite"></section>
+
+        <section class="vs-gazette-stage" id="gazetteStage" hidden aria-label="Gazete baskı sayfası"></section>
 
         <nav class="vs-pagination" aria-label="Gazete sayfaları">
             <button type="button" class="vs-page-nav-btn" id="newsPrevPage">

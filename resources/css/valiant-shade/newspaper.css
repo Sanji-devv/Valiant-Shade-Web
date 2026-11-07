@@ -1078,3 +1078,469 @@ body.vs-newspaper-page {
   color: var(--np-muted);
   padding: 2rem 0;
 }
+
+/* —— Araç çubuğu: gazete / yazdır (tüm ekranlar) —— */
+.vs-toolbar__btn--always {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--np-border);
+  background: rgba(15, 23, 42, 0.55);
+  color: var(--np-text);
+  border-radius: 999px;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.78rem;
+  font-family: inherit;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.vs-toolbar__btn--always[aria-pressed='true'] {
+  border-color: rgba(201, 162, 39, 0.75);
+  background: rgba(201, 162, 39, 0.14);
+  color: #fde68a;
+}
+
+.vs-toolbar__btn--print {
+  border-color: rgba(34, 197, 94, 0.45);
+  background: rgba(34, 197, 94, 0.1);
+  color: #bbf7d0;
+}
+
+.vs-toolbar__btn--print:hover {
+  border-color: rgba(34, 197, 94, 0.75);
+  background: rgba(34, 197, 94, 0.18);
+}
+
+@media (max-width: 767px) {
+  .vs-toolbar__btn--always span:not(:first-child) {
+    display: none;
+  }
+
+  .vs-toolbar__btn--always {
+    padding: 0.4rem 0.55rem;
+  }
+
+  #toggleGazetteLayoutLabel {
+    display: none;
+  }
+
+  .vs-toolbar__btn--print span {
+    display: none;
+  }
+}
+
+/* —— Klasik gazete (FRP / parşömen) görünümü —— */
+body.vs-layout-gazette {
+  --gz-paper: #f3e6cc;
+  --gz-paper-deep: #e8d5b0;
+  --gz-ink: #1c1208;
+  --gz-ink-muted: #4a3d2e;
+  --gz-rule: #2a1f14;
+  --gz-accent: #6b3a12;
+  background:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(201, 162, 39, 0.18), transparent 55%),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(42, 31, 20, 0.03) 3px,
+      rgba(42, 31, 20, 0.03) 4px
+    ),
+    linear-gradient(165deg, var(--gz-paper) 0%, var(--gz-paper-deep) 100%);
+  color: var(--gz-ink);
+}
+
+body.vs-layout-gazette .vs-newspaper-header {
+  background: rgba(243, 230, 204, 0.92);
+  border-bottom: 2px double var(--gz-rule);
+  color: var(--gz-ink);
+}
+
+body.vs-layout-gazette .vs-newspaper-header__tagline {
+  color: var(--gz-ink-muted);
+}
+
+body.vs-layout-gazette .vs-newspaper-nav__item {
+  border-color: rgba(42, 31, 20, 0.25);
+  background: rgba(255, 255, 255, 0.35);
+  color: var(--gz-ink);
+}
+
+body.vs-layout-gazette .vs-newspaper-nav__item--primary {
+  background: linear-gradient(135deg, #5c3d1e, #8b5a2b);
+  color: #fff8eb;
+}
+
+body.vs-layout-gazette .vs-toolbar {
+  background: rgba(255, 250, 240, 0.65);
+  border-color: rgba(42, 31, 20, 0.2);
+}
+
+body.vs-layout-gazette .vs-filter-btn,
+body.vs-layout-gazette .vs-search,
+body.vs-layout-gazette .vs-toolbar__btn,
+body.vs-layout-gazette .vs-toolbar__btn--always {
+  border-color: rgba(42, 31, 20, 0.22);
+  background: rgba(255, 255, 255, 0.45);
+  color: var(--gz-ink);
+}
+
+body.vs-layout-gazette .vs-filter-btn.is-active {
+  background: rgba(107, 58, 18, 0.12);
+  border-color: rgba(107, 58, 18, 0.55);
+}
+
+body.vs-layout-gazette .vs-page-sheet {
+  border-color: rgba(107, 58, 18, 0.45);
+  background: rgba(107, 58, 18, 0.08);
+  color: var(--gz-accent);
+}
+
+body.vs-layout-gazette .vs-news-slider,
+body.vs-layout-gazette .vs-news-feed {
+  display: none !important;
+}
+
+body.vs-layout-gazette #toggleViewModeBtn {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .vs-toolbar__actions {
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    justify-content: flex-end;
+  }
+}
+
+body.vs-layout-gazette .vs-gazette-stage {
+  display: block;
+}
+
+.vs-gazette-stage {
+  display: none;
+  margin: 0 auto 2rem;
+  max-width: 920px;
+}
+
+.vs-gazette-sheet {
+  position: relative;
+  padding: 1.35rem 1.5rem 1.5rem;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.5), transparent 45%),
+    radial-gradient(circle at 85% 90%, rgba(139, 90, 43, 0.08), transparent 40%),
+    linear-gradient(180deg, #faf3e4 0%, #f0e2c8 100%);
+  border: 3px double var(--gz-rule, #2a1f14);
+  box-shadow:
+    0 2px 0 rgba(42, 31, 20, 0.15),
+    0 18px 48px rgba(28, 18, 8, 0.22),
+    inset 0 0 80px rgba(139, 90, 43, 0.06);
+  color: var(--gz-ink, #1c1208);
+}
+
+.vs-gazette-masthead {
+  text-align: center;
+  padding-bottom: 0.65rem;
+}
+
+.vs-gazette-masthead__ornament {
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.35em;
+  color: var(--gz-accent, #6b3a12);
+  opacity: 0.85;
+}
+
+.vs-gazette-masthead__row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 0.35rem 0;
+}
+
+.vs-gazette-masthead__crest {
+  width: 2.75rem;
+  height: 2.75rem;
+  object-fit: contain;
+  filter: sepia(0.35) contrast(1.05);
+}
+
+.vs-gazette-masthead__title {
+  margin: 0;
+  font-family: Cinzel, Georgia, serif;
+  font-weight: 800;
+  font-size: clamp(1.65rem, 4vw, 2.35rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.1;
+  color: var(--gz-ink, #1c1208);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.vs-gazette-masthead__meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35rem 1.25rem;
+  font-family: 'Newsreader', Georgia, serif;
+  font-size: 0.78rem;
+  color: var(--gz-ink-muted, #4a3d2e);
+  border-top: 1px solid rgba(42, 31, 20, 0.2);
+  border-bottom: 1px solid rgba(42, 31, 20, 0.2);
+  padding: 0.45rem 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.vs-gazette-masthead__motto {
+  font-style: italic;
+  flex: 1 1 100%;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--gz-accent, #6b3a12);
+}
+
+.vs-gazette-rule {
+  height: 4px;
+  margin: 0.75rem 0 1rem;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--gz-rule, #2a1f14),
+    var(--gz-rule, #2a1f14) 2px,
+    transparent 2px,
+    transparent 6px
+  );
+  opacity: 0.55;
+}
+
+.vs-gazette-kicker {
+  font-family: Cinzel, Georgia, serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gz-accent, #6b3a12);
+  margin: 0 0 0.35rem;
+}
+
+.vs-gazette-lead {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 1rem 1.25rem;
+  margin-bottom: 1.1rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(42, 31, 20, 0.35);
+}
+
+.vs-gazette-lead__visual {
+  min-height: 220px;
+  background-size: cover;
+  background-position: center;
+  border: 2px solid rgba(42, 31, 20, 0.45);
+  box-shadow: inset 0 0 0 4px rgba(255, 248, 235, 0.5);
+  filter: sepia(0.25) contrast(1.08) saturate(0.92);
+}
+
+.vs-gazette-lead__headline {
+  margin: 0 0 0.5rem;
+  font-family: Cinzel, Georgia, serif;
+  font-weight: 700;
+  font-size: clamp(1.25rem, 2.8vw, 1.75rem);
+  line-height: 1.2;
+}
+
+.vs-gazette-lead__deck {
+  margin: 0 0 0.65rem;
+  font-family: 'Newsreader', Georgia, serif;
+  font-size: 1.02rem;
+  font-weight: 600;
+  font-style: italic;
+  line-height: 1.45;
+  color: var(--gz-ink-muted, #4a3d2e);
+}
+
+.vs-gazette-body {
+  font-family: 'Newsreader', Georgia, serif;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  column-count: 2;
+  column-gap: 1.25rem;
+  text-align: justify;
+  hyphens: auto;
+}
+
+.vs-gazette-body p {
+  margin: 0 0 0.65rem;
+  orphans: 3;
+  widows: 3;
+}
+
+.vs-gazette-body p:first-child::first-letter {
+  float: left;
+  font-family: Cinzel, Georgia, serif;
+  font-size: 2.75rem;
+  line-height: 0.85;
+  font-weight: 700;
+  margin: 0.08rem 0.45rem 0 0;
+  color: var(--gz-accent, #6b3a12);
+}
+
+.vs-gazette-byline {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gz-ink-muted, #4a3d2e);
+  margin-top: 0.5rem;
+}
+
+.vs-gazette-columns {
+  column-count: 3;
+  column-gap: 1.1rem;
+  column-rule: 1px solid rgba(42, 31, 20, 0.22);
+}
+
+.vs-gazette-story {
+  break-inside: avoid;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px dotted rgba(42, 31, 20, 0.28);
+}
+
+.vs-gazette-story:last-child {
+  border-bottom: 0;
+}
+
+.vs-gazette-story__thumb {
+  width: 100%;
+  height: 88px;
+  margin-bottom: 0.45rem;
+  background-size: cover;
+  background-position: center;
+  border: 1px solid rgba(42, 31, 20, 0.35);
+  filter: sepia(0.3) contrast(1.05);
+}
+
+.vs-gazette-story__type {
+  font-family: Cinzel, Georgia, serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gz-accent, #6b3a12);
+}
+
+.vs-gazette-story__title {
+  margin: 0.2rem 0 0.35rem;
+  font-family: Cinzel, Georgia, serif;
+  font-weight: 700;
+  font-size: 0.92rem;
+  line-height: 1.25;
+}
+
+.vs-gazette-story__excerpt {
+  margin: 0;
+  font-family: 'Newsreader', Georgia, serif;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--gz-ink-muted, #4a3d2e);
+}
+
+.vs-gazette-sidebar {
+  margin-top: 1rem;
+  padding: 0.65rem 0.75rem;
+  border: 2px groove rgba(42, 31, 20, 0.35);
+  background: rgba(255, 252, 245, 0.55);
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.vs-gazette-sidebar h3 {
+  margin: 0 0 0.35rem;
+  font-family: Cinzel, Georgia, serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.vs-gazette-footer {
+  margin-top: 1.15rem;
+  padding-top: 0.55rem;
+  border-top: 2px double rgba(42, 31, 20, 0.4);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: Cinzel, Georgia, serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gz-ink-muted, #4a3d2e);
+}
+
+@media (max-width: 768px) {
+  .vs-gazette-lead {
+    grid-template-columns: 1fr;
+  }
+
+  .vs-gazette-lead__visual {
+    min-height: 180px;
+    order: -1;
+  }
+
+  .vs-gazette-body {
+    column-count: 1;
+  }
+
+  .vs-gazette-columns {
+    column-count: 1;
+    column-rule: none;
+  }
+
+  .vs-gazette-sheet {
+    padding: 1rem;
+  }
+}
+
+/* —— Yazdır / PDF —— */
+@media print {
+  body.vs-newspaper-page {
+    background: #fff !important;
+  }
+
+  .vs-newspaper-header,
+  .vs-toolbar,
+  .vs-pagination,
+  .vs-news-slider,
+  .vs-news-feed,
+  .vs-modal-backdrop,
+  .vs-toast {
+    display: none !important;
+  }
+
+  body.vs-layout-gazette .vs-gazette-stage {
+    display: block !important;
+  }
+
+  .vs-gazette-stage {
+    max-width: none;
+    margin: 0;
+  }
+
+  .vs-gazette-sheet {
+    box-shadow: none;
+    border: 1px solid #333;
+    page-break-after: always;
+    break-after: page;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .vs-gazette-lead__visual,
+  .vs-gazette-story__thumb {
+    filter: sepia(0.15) contrast(1.05);
+  }
+}
+
+@page {
+  size: A4 portrait;
+  margin: 10mm;
+}
