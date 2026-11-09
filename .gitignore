@@ -43,3 +43,5 @@ start-db.bat
 stop-db.bat
 /PostgreSQL
 run-dev.sh
+/storage/backups/*.dump
+/storage/backups/.pgpass.local

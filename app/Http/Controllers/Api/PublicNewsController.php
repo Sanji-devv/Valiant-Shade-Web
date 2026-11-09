@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\News;
+use App\ValiantShade\Services\GazetteIssueService;
 use App\ValiantShade\Services\PublicNewsService;
 use App\ValiantShade\Support\WorldCalendar;
 use Illuminate\Http\JsonResponse;
@@ -15,12 +16,11 @@ class PublicNewsController extends Controller
 {
     public function __construct(
         private PublicNewsService $news,
+        private GazetteIssueService $gazetteIssues,
     ) {}
 
     public function bootstrap(Request $request): JsonResponse
     {
-        $page = max(1, (int) $request->query('page', 1));
-        $perPage = min(24, max(3, (int) $request->query('per_page', 9)));
         $newsType = $request->query('type');
         $search = $request->query('q');
 
@@ -28,11 +28,37 @@ class PublicNewsController extends Controller
             $newsType = null;
         }
 
+        if ($request->boolean('gazette_layout')) {
+            $sheet = max(1, (int) $request->query('sheet', $request->query('page', 1)));
+            $issueId = $request->query('issue_id') ? (int) $request->query('issue_id') : null;
+
+            $payload = $this->gazetteIssues->gazetteBootstrap($sheet, $issueId, $newsType, $search);
+
+            return $this->cachedJson([
+                'success' => true,
+                ...$payload,
+            ]);
+        }
+
+        $page = max(1, (int) $request->query('page', 1));
+        $perPage = min(24, max(3, (int) $request->query('per_page', 9)));
+
         $payload = $this->news->bootstrap($page, $perPage, $newsType, $search);
 
         return $this->cachedJson([
             'success' => true,
             ...$payload,
+        ]);
+    }
+
+    public function gazetteIssues(): JsonResponse
+    {
+        $current = $this->gazetteIssues->ensureDefaultIssue();
+
+        return $this->cachedJson([
+            'success' => true,
+            'current_issue_id' => $current->id,
+            'data' => $this->gazetteIssues->archiveList(),
         ]);
     }
 

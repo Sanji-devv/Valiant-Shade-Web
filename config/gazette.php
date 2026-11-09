@@ -34,9 +34,58 @@ return [
         'day' => 1,
     ],
 
+    'schedule' => 'Her Vonyas yeni sayı basılır — arşivden geçmiş yapraklara dönebilirsiniz.',
+
+    'inner_articles_per_sheet' => 3,
+
+    'corner_slots' => [
+        [
+            'key' => 'han_sozu',
+            'title' => 'Han Sözü',
+            'rumuz' => null,
+            'body' => null,
+        ],
+        [
+            'key' => 'simyaci',
+            'title' => 'Simyacının Defteri',
+            'rumuz' => null,
+            'body' => null,
+        ],
+        [
+            'key' => 'bahisci',
+            'title' => 'Bahis Köşesi',
+            'rumuz' => null,
+            'body' => null,
+        ],
+        [
+            'key' => 'kahin',
+            'title' => 'Kahinin Fısıltısı',
+            'rumuz' => null,
+            'body' => null,
+        ],
+    ],
+
     /*
     | Varsayılan haber görselleri — gazetede basılmaz; yalnızca özel yüklenen görseller çıkar.
     */
+    /*
+    | Başlık parçası => özel woodcut (gazetede yalnızca bunlar basılır).
+    */
+    'title_image_map' => [
+        'Caspian' => 'static/valiant-shade/assets/img/gazette/news/caspian_tavern.jpg',
+        'Yusari' => 'static/valiant-shade/assets/img/gazette/news/yusari_gods.jpg',
+        'şövalye' => 'static/valiant-shade/assets/img/gazette/news/knight_economy.jpg',
+        'şovalye' => 'static/valiant-shade/assets/img/gazette/news/knight_economy.jpg',
+        'Mirang' => 'static/valiant-shade/assets/img/gazette/news/mirang_war.jpg',
+        'Quinia' => 'static/valiant-shade/assets/img/gazette/news/mirang_war.jpg',
+        'Temran' => 'static/valiant-shade/assets/img/gazette/news/tavern_gossip.jpg',
+        'Bailiff' => 'static/valiant-shade/assets/img/gazette/news/guild_council.jpg',
+        'Doran' => 'static/valiant-shade/assets/img/gazette/news/guild_council.jpg',
+        'Söylenti' => 'static/valiant-shade/assets/img/gazette/news/tavern_gossip.jpg',
+        'Lonca' => 'static/valiant-shade/assets/img/gazette/news/guild_council.jpg',
+        'lonca' => 'static/valiant-shade/assets/img/gazette/news/guild_council.jpg',
+    ],
+
     'default_news_images' => [
         'static/valiant-shade/assets/img/news/guild_arena_tournament.jpg',
         'static/valiant-shade/assets/img/news/guild_arcane_academy.jpg',

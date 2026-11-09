@@ -2,6 +2,9 @@
 
 namespace App\ValiantShade\Support;
 
+use App\ValiantShade\Enums\InWorldMonth;
+use App\ValiantShade\Enums\InWorldWeekday;
+use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Arr;
 
@@ -16,6 +19,10 @@ class WorldCalendar
 
     public static function inWorldWeekday(int $dayOfWeek): ?string
     {
+        if ($dayOfWeek >= 0 && $dayOfWeek <= 6) {
+            return InWorldWeekday::fromGregorian($dayOfWeek)->value;
+        }
+
         return Arr::get(config('valiant_shade_calendar.weekdays'), "{$dayOfWeek}.in_world");
     }
 
@@ -26,6 +33,10 @@ class WorldCalendar
 
     public static function inWorldMonth(int $gregorianMonth): ?string
     {
+        if ($gregorianMonth >= 1 && $gregorianMonth <= 12) {
+            return InWorldMonth::fromGregorian($gregorianMonth)->value;
+        }
+
         return Arr::get(config('valiant_shade_calendar.months'), "{$gregorianMonth}.in_world");
     }
 
@@ -63,15 +74,12 @@ class WorldCalendar
     {
         $month = (string) ($issue['month'] ?? '');
         $weekday = (string) ($issue['weekday'] ?? '');
-        $monthTerrestrial = $issue['month_terrestrial'] ?? self::terrestrialMonthByInWorld($month) ?? '';
-        $weekdayTerrestrial = $issue['weekday_terrestrial'] ?? self::terrestrialWeekdayByInWorld($weekday) ?? '';
 
         return sprintf(
-            '%s ayının %d. günü, %s (%s) — %d',
+            '%s ayının %d. günü, %s — %d',
             $month,
             (int) ($issue['day'] ?? 1),
             $weekday,
-            $weekdayTerrestrial,
             (int) ($issue['year'] ?? self::defaultDisplayYear()),
         );
     }
@@ -84,6 +92,20 @@ class WorldCalendar
         }
 
         return $base;
+    }
+
+    public static function formatGazetteIssueArchiveLabel(
+        int $issueNumber,
+        string $inWorldMonth,
+        int $day,
+        int $year,
+        string $inWorldWeekday,
+        bool $unpublishedPast = false,
+    ): string {
+        $date = self::formatShort($inWorldMonth, $day, $year, $inWorldWeekday);
+        $line = "Sayı {$issueNumber} · {$date}";
+
+        return $unpublishedPast ? "{$line} · basılmadı" : $line;
     }
 
     public static function defaultDisplayYear(): int
@@ -112,6 +134,24 @@ class WorldCalendar
             'weekday_terrestrial' => self::terrestrialWeekday((int) $at->dayOfWeek),
             'year' => self::gregorianToWorldYear((int) $at->year),
         ];
+    }
+
+    /**
+     * O haftanın Vonyas (Pazar) günü — sayı tarihi.
+     */
+    public static function anchorSunday(CarbonInterface $at): CarbonInterface
+    {
+        $day = $at->copy()->startOfDay();
+
+        return $day->isSunday() ? $day : $day->previous('Sunday');
+    }
+
+    /**
+     * @return array{month: string, day: int, weekday: string, year: int, month_terrestrial: ?string, weekday_terrestrial: ?string}|null
+     */
+    public static function issuePartsFromGregorian(CarbonInterface $sunday): ?array
+    {
+        return self::fromDateTime($sunday);
     }
 
     public static function formatNewsStamp(?CarbonInterface $at): ?string

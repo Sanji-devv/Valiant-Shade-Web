@@ -17,6 +17,7 @@ class News extends BaseModel
         'title',
         'category',
         'news_type',
+        'gazette_issue_id',
         'status',
         'badge_color',
         'category_icon',
@@ -54,8 +55,9 @@ class News extends BaseModel
 
     protected static function booted(): void
     {
-        static::saved(function (): void {
+        static::saved(function (News $news): void {
             app(PublicNewsService::class)->bumpCacheVersion();
+            app(\App\ValiantShade\Services\GazetteIssueService::class)->attachNewsToCurrentIssue($news);
         });
 
         static::deleted(function (): void {

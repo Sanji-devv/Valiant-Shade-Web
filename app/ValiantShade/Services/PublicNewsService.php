@@ -204,6 +204,48 @@ class PublicNewsService
     /**
      * @param  Collection<int, News|object>  $items
      */
+    public function typeCountsForCollection(Collection $items): array
+    {
+        return $this->typeCounts($items);
+    }
+
+  /**
+     * @return Collection<int, News|object>
+     */
+    public function publishedForIssue(int $issueId, ?string $newsType = null, ?string $search = null): Collection
+    {
+        $dbNews = News::query()
+            ->where('gazette_issue_id', $issueId)
+            ->where('status', 'published')
+            ->where('is_active', true)
+            ->orderByDesc('is_breaking')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get();
+
+        $items = $this->sortNewestFirst($dbNews);
+
+        if ($newsType) {
+            $items = $items->filter(function ($item) use ($newsType) {
+                $resolved = $item->news_type ?? NewsTypeResolver::fromCategory((string) ($item->category ?? ''));
+
+                return $resolved === $newsType;
+            })->values();
+        }
+
+        if ($search) {
+            $needle = mb_strtolower(trim($search));
+            $items = $items->filter(function ($item) use ($needle) {
+                return str_contains(mb_strtolower($item->title ?? ''), $needle)
+                    || str_contains(mb_strtolower($item->description ?? ''), $needle)
+                    || str_contains(mb_strtolower($item->location_badge ?? ''), $needle)
+                    || str_contains(mb_strtolower($item->author ?? ''), $needle);
+            })->values();
+        }
+
+        return $items;
+    }
+
     protected function typeCounts(Collection $items): array
     {
         $counts = [];

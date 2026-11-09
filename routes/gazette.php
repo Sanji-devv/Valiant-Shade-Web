@@ -20,6 +20,7 @@ Route::redirect('/newspaper', '/', 301);
 Route::prefix('api')->group(function () {
     Route::prefix('public/news')->group(function () {
         Route::get('/bootstrap', [PublicNewsController::class, 'bootstrap']);
+        Route::get('/gazette-issues', [PublicNewsController::class, 'gazetteIssues']);
         Route::get('/featured', [PublicNewsController::class, 'featured']);
         Route::get('/', [PublicNewsController::class, 'index']);
         Route::get('/{id}', [PublicNewsController::class, 'show'])->whereNumber('id');
