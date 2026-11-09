@@ -497,9 +497,14 @@ function renderGazetteFigure(item) {
   }
   const src = escapeHtml(item.image_asset);
   const cap = item.location_badge ? escapeHtml(item.location_badge) : '';
+  const openId = item.id != null ? escapeHtml(String(item.id)) : '';
+  const altTitle = escapeHtml(item.title || 'Haberi oku');
   return `
     <figure class="vs-gazette-figure">
-      <img class="vs-gazette-figure__img" src="${src}" alt="" loading="lazy" decoding="async">
+      <button type="button" class="vs-gazette-figure__zoom" data-open-id="${openId}" aria-label="${altTitle} — büyüt ve oku">
+        <img class="vs-gazette-figure__img" src="${src}" alt="" loading="lazy" decoding="async">
+        <span class="vs-gazette-figure__hint" aria-hidden="true">Büyüt</span>
+      </button>
       ${cap ? `<figcaption class="vs-gazette-figure__cap">${cap}</figcaption>` : ''}
     </figure>
   `;
@@ -851,7 +856,9 @@ function renderStoryHtml(storyText) {
     .join('');
 }
 
-async function openArticle(id) {
+async function openArticle(id, options = {}) {
+  const gazetteReader =
+    typeof options.gazetteReader === 'boolean' ? options.gazetteReader : isGazetteLayout();
   const response = await fetch(`/api/public/news/${id}`, {
     headers: { Accept: 'application/json' },
     cache: 'no-store',
@@ -907,11 +914,28 @@ async function openArticle(id) {
     els.modalQuote.hidden = true;
     els.modalQuote.textContent = '';
   }
+  if (els.detailModal) {
+    els.detailModal.classList.toggle('vs-modal-backdrop--gazette-read', gazetteReader);
+    els.detailModal.classList.toggle('vs-modal-backdrop--web-read', !gazetteReader);
+  }
+  if (els.modalHero) {
+    els.modalHero.classList.toggle('vs-modal__hero--gazette-photo', gazetteReader && Boolean(heroUrl));
+    els.modalHero.hidden = !heroUrl;
+  }
+  document.body.classList.add('vs-article-modal-open');
   els.detailModal.classList.add('is-open');
 }
 
 function closeModal() {
   els.detailModal.classList.remove('is-open');
+  if (els.detailModal) {
+    els.detailModal.classList.remove('vs-modal-backdrop--gazette-read', 'vs-modal-backdrop--web-read');
+  }
+  if (els.modalHero) {
+    els.modalHero.classList.remove('vs-modal__hero--gazette-photo');
+    els.modalHero.hidden = false;
+  }
+  document.body.classList.remove('vs-article-modal-open');
 }
 
 function showToast(message) {
@@ -1059,23 +1083,35 @@ function applyRumorSlotUI(slot = { kind: 'general' }) {
     }
   }
   if (els.rumorRumuzWrap) {
-    const showRumuz = Boolean(cfg.show_rumuz) || kind === 'corner';
-    els.rumorRumuzWrap.hidden = !showRumuz;
+    els.rumorRumuzWrap.hidden = kind !== 'corner';
+  }
+  if (els.rumorRumuzInput && kind !== 'corner') {
+    els.rumorRumuzInput.value = '';
   }
   selectNewsTypeInPicker(els.rumorTypePicker, els.rumorNewsType, cfg.default_news_type);
 }
 
 function openRumorModal(slot = { kind: 'general' }) {
   applyRumorSlotUI(slot);
+  const gazetteChrome = isGazetteLayout();
   if (els.rumorModal) {
+    els.rumorModal.classList.toggle('vs-modal-backdrop--gazette-form', gazetteChrome);
     els.rumorModal.classList.add('is-open');
   }
+  if (els.rumorModalPanel) {
+    els.rumorModalPanel.classList.toggle('vs-modal--rumor-gazette--active', gazetteChrome);
+  }
+  document.body.classList.add('vs-rumor-modal-open');
 }
 
 function closeRumorModal() {
   if (els.rumorModal) {
-    els.rumorModal.classList.remove('is-open');
+    els.rumorModal.classList.remove('is-open', 'vs-modal-backdrop--gazette-form');
   }
+  if (els.rumorModalPanel) {
+    els.rumorModalPanel.classList.remove('vs-modal--rumor-gazette--active');
+  }
+  document.body.classList.remove('vs-rumor-modal-open');
   if (els.rumorForm) {
     els.rumorForm.reset();
   }
@@ -1246,13 +1282,21 @@ function bindEvents() {
   });
 
   document.body.addEventListener('click', (event) => {
-    if (isGazetteLayout()) {
+    const openBtn = event.target.closest('[data-open-id]');
+    if (!openBtn) {
       return;
     }
-    const openBtn = event.target.closest('[data-open-id]');
-    if (openBtn) {
-      openArticle(openBtn.dataset.openId).catch(console.error);
+    const inGazette = isGazetteLayout();
+    if (inGazette) {
+      if (!els.gazetteStage?.contains(openBtn)) {
+        return;
+      }
+      if (event.target.closest('.vs-gazette-slot--fill')) {
+        return;
+      }
     }
+    event.preventDefault();
+    openArticle(openBtn.dataset.openId, { gazetteReader: inGazette }).catch(console.error);
   });
 
   document.addEventListener('keydown', (event) => {
@@ -1355,6 +1399,7 @@ document.addEventListener('DOMContentLoaded', () => {
   els.modalClose = qs('newsModalClose');
   els.openRumorBtn = qs('openRumorModal');
   els.rumorModal = qs('rumorModal');
+  els.rumorModalPanel = qs('rumorModalPanel');
   els.rumorClose = qs('rumorModalClose');
   els.rumorForm = qs('rumorForm');
   els.rumorSubmit = qs('rumorSubmit');
@@ -1375,6 +1420,7 @@ document.addEventListener('DOMContentLoaded', () => {
   els.rumorBodyLabel = qs('rumorBodyLabel');
   els.rumorBodyInput = qs('rumorBodyInput');
   els.rumorRumuzWrap = qs('rumorRumuzWrap');
+  els.rumorRumuzInput = qs('rumorRumuzInput');
   els.gazetteStage = qs('gazetteStage');
   els.newsSliderSection = document.querySelector('.vs-news-slider');
   els.toggleGazetteLayoutBtn = qs('toggleGazetteLayoutBtn');

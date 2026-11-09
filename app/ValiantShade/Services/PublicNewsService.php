@@ -75,6 +75,38 @@ class PublicNewsService
             ->values();
     }
 
+    /**
+     * @param  Collection<int, News>  $items
+     * @return Collection<int, News>
+     */
+    protected function sortForGazetteIssue(Collection $items): Collection
+    {
+        return $items
+            ->sort(function (News $a, News $b) {
+                $rankCompare = $this->gazetteLayoutRank($a) <=> $this->gazetteLayoutRank($b);
+                if ($rankCompare !== 0) {
+                    return $rankCompare;
+                }
+
+                return $this->recencyTimestamp($b) <=> $this->recencyTimestamp($a);
+            })
+            ->values();
+    }
+
+    protected function gazetteLayoutRank(News $item): int
+    {
+        $stats = is_array($item->stats) ? $item->stats : [];
+        if (isset($stats['gazette_rank'])) {
+            return (int) $stats['gazette_rank'];
+        }
+
+        if ($item->is_breaking) {
+            return 0;
+        }
+
+        return 500;
+    }
+
     protected function recencyTimestamp(mixed $item): int
     {
         if (isset($item->created_at) && $item->created_at) {
@@ -211,12 +243,11 @@ class PublicNewsService
             ->where('gazette_issue_id', $issueId)
             ->where('status', 'published')
             ->where('is_active', true)
-            ->orderByDesc('is_breaking')
             ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->get();
 
-        $items = $this->sortNewestFirst($dbNews);
+        $items = $this->sortForGazetteIssue($dbNews);
 
         if ($newsType) {
             $items = $items->filter(function ($item) use ($newsType) {

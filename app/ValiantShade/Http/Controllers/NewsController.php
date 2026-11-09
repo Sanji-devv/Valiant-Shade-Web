@@ -4,6 +4,7 @@ namespace App\ValiantShade\Http\Controllers;
 
 use App\Models\News;
 use App\ValiantShade\Http\Controllers\Controller;
+use App\ValiantShade\Services\GazetteIssueService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -1084,6 +1085,9 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
             'is_active' => true,
             'date_text' => $news->date_text ?: now()->locale(app()->getLocale())->translatedFormat('d M Y, H:i'),
         ]);
+
+        $news->refresh();
+        app(GazetteIssueService::class)->applySubmissionPlacement($news);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json(['success' => true, 'message' => __('News published.'), 'news' => $news]);

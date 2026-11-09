@@ -310,6 +310,93 @@ class GazetteIssueService
         return $payload;
     }
 
+    /**
+     * Onaylanan okuyucu gönderisini gazete yerine (manşet, özet, köşe) oturtur.
+     */
+    public function applySubmissionPlacement(News $news): void
+    {
+        $stats = is_array($news->stats) ? $news->stats : [];
+        $submission = is_array($stats['submission'] ?? null) ? $stats['submission'] : null;
+        if (! $submission) {
+            return;
+        }
+
+        $kind = (string) ($submission['gazette_slot_kind'] ?? '');
+        $issueId = (int) ($submission['gazette_issue_id'] ?? $news->gazette_issue_id ?? 0);
+
+        if ($issueId > 0 && ! $news->gazette_issue_id) {
+            $news->gazette_issue_id = $issueId;
+        }
+
+        if ($kind === 'lead' && $issueId > 0) {
+            News::query()
+                ->where('gazette_issue_id', $issueId)
+                ->where('id', '!=', $news->id)
+                ->where('status', 'published')
+                ->update(['is_breaking' => false]);
+            $news->is_breaking = true;
+        }
+
+        $rank = match ($kind) {
+            'lead' => 0,
+            'brief' => 1 + max(0, (int) ($submission['gazette_slot_key'] ?? 0)),
+            default => null,
+        };
+
+        if ($rank !== null) {
+            $stats['gazette_rank'] = $rank;
+            $news->stats = $stats;
+        }
+
+        if ($kind === 'corner' && $issueId > 0) {
+            $this->fillCornerSlotFromNews($issueId, $submission, $news);
+        }
+
+        $news->saveQuietly();
+        $this->publicNews->invalidatePublicFeed();
+    }
+
+    protected function fillCornerSlotFromNews(int $issueId, array $submission, News $news): void
+    {
+        if (! Schema::hasTable('gazette_issues')) {
+            return;
+        }
+
+        $issue = GazetteIssue::query()->find($issueId);
+        if (! $issue) {
+            return;
+        }
+
+        $key = (string) ($submission['gazette_slot_key'] ?? '');
+        if ($key === '') {
+            return;
+        }
+
+        $slots = $issue->cornerSlots();
+        $updated = false;
+        foreach ($slots as &$slot) {
+            if (($slot['key'] ?? '') !== $key) {
+                continue;
+            }
+            $body = trim((string) ($news->full_story ?: $news->description));
+            $slot['body'] = mb_strlen($body) > 600 ? mb_substr($body, 0, 597).'…' : $body;
+            $rumuz = trim((string) ($submission['rumuz'] ?? ''));
+            if ($rumuz !== '') {
+                $slot['rumuz'] = $rumuz;
+            } elseif (! empty($news->author)) {
+                $slot['rumuz'] = $news->author;
+            }
+            $updated = true;
+            break;
+        }
+        unset($slot);
+
+        if ($updated) {
+            $issue->corner_columns = ['slots' => $slots];
+            $issue->save();
+        }
+    }
+
     public function attachNewsToCurrentIssue(News $news): void
     {
         if ($news->gazette_issue_id) {

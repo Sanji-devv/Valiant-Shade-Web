@@ -279,6 +279,12 @@
           <div>
             <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
               <span class="badge bg-label-warning">{{ $pending->news_type ? (config('news.types.'.$pending->news_type.'.label') ?? $pending->category) : $pending->category }}</span>
+              @php($submissionBadge = \App\ValiantShade\Support\NewsStats::submissionBadge($pending->stats))
+              @if($submissionBadge)
+              <span class="badge bg-label-info">{{ $submissionBadge }}</span>
+              @elseif($pending->tag && str_contains($pending->tag, 'Gönderisi'))
+              <span class="badge bg-label-secondary">{{ $pending->tag }}</span>
+              @endif
               <span class="text-body-secondary small">{{ $pending->date_text }}</span>
             </div>
             <h6 class="mb-1 text-white">{{ $pending->title }}</h6>
@@ -345,9 +351,10 @@
         </p>
 
         <!-- Stats on Hero -->
-        @if(!empty($featuredNews->stats))
+        @php($featuredStatPills = \App\ValiantShade\Support\NewsStats::pills($featuredNews->stats))
+        @if(!empty($featuredStatPills))
         <div class="row g-2 mb-4 d-none d-md-flex" style="max-width: 720px;">
-          @foreach($featuredNews->stats as $st)
+          @foreach($featuredStatPills as $st)
           <div class="col-sm-3 col-6">
             <div class="p-2 rounded" style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.12); backdrop-filter: blur(6px);">
               <div class="{{ $st['color'] ?? 'text-warning' }} fw-bold fs-6">{{ $st['value'] }}</div>
@@ -563,9 +570,10 @@
             </p>
 
             <!-- Micro Stats Preview -->
-            @if(!empty($item->stats) && is_array($item->stats))
+            @php($cardStatPills = \App\ValiantShade\Support\NewsStats::pills($item->stats ?? null))
+            @if(!empty($cardStatPills))
             <div class="row g-2 mb-3">
-              @foreach(array_slice($item->stats, 0, 2) as $st)
+              @foreach(array_slice($cardStatPills, 0, 2) as $st)
               <div class="col-6">
                 <div class="news-stat-pill">
                   <div class="{{ $st['color'] ?? 'text-warning' }} fw-bold" style="font-size: 0.85rem;">{{ $st['value'] }}</div>
@@ -989,8 +997,11 @@
 
     // Stats Grid
     const statsGrid = document.getElementById('modalStatsGrid');
-    if (item.stats && item.stats.length > 0) {
-      statsGrid.innerHTML = item.stats.map(st => `
+    const statPills = Array.isArray(item.stats)
+      ? item.stats.filter(st => st && typeof st === 'object' && 'value' in st && 'label' in st)
+      : [];
+    if (statPills.length > 0) {
+      statsGrid.innerHTML = statPills.map(st => `
         <div class="col-sm-3 col-6">
           <div class="p-3 rounded" style="background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255,255,255,0.08);">
             <div class="${st.color || 'text-warning'} fw-bold fs-5">${st.value}</div>

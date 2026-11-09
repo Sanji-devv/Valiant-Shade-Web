@@ -127,13 +127,13 @@
         <p class="vs-page-hint" id="newsPageHint" hidden>Sayfayı çevirmek için alttaki düğmeleri veya klavyede ← → tuşlarını kullanın.</p>
     </main>
 
-    <div class="vs-modal-backdrop" id="newsDetailModal" role="dialog" aria-modal="true" aria-labelledby="newsModalTitle">
-        <article class="vs-modal">
+    <div class="vs-modal-backdrop vs-modal-backdrop--article" id="newsDetailModal" role="dialog" aria-modal="true" aria-labelledby="newsModalTitle">
+        <article class="vs-modal vs-modal--article" id="newsDetailModalPanel">
             <button type="button" class="vs-modal__close" id="newsModalClose" aria-label="Kapat">×</button>
             <div class="vs-modal__hero" id="newsModalHero">
                 <div class="vs-modal__hero-overlay"></div>
             </div>
-            <div class="vs-modal__body">
+            <div class="vs-modal__body vs-modal__body--article">
                 <div class="vs-modal__head">
                     <div class="vs-modal__badges" id="newsModalBadges"></div>
                     <time class="vs-modal__date" id="newsModalDate"></time>
@@ -161,10 +161,10 @@
         </article>
     </div>
 
-    <div class="vs-modal-backdrop" id="rumorModal" role="dialog" aria-modal="true" aria-labelledby="rumorModalTitle">
-        <section class="vs-modal" style="width:min(560px,100%)">
-            <button type="button" class="vs-modal__close" id="rumorModalClose" aria-label="Kapat">×</button>
-            <div class="vs-modal__body">
+    <div class="vs-modal-backdrop vs-modal-backdrop--rumor" id="rumorModal" role="dialog" aria-modal="true" aria-labelledby="rumorModalTitle">
+        <section class="vs-modal vs-modal--rumor-gazette" id="rumorModalPanel">
+            <button type="button" class="vs-modal__close vs-modal__close--gazette" id="rumorModalClose" aria-label="Kapat">×</button>
+            <div class="vs-modal__body vs-modal__body--rumor">
                 <h2 id="rumorModalTitle">Söylenti gönder</h2>
                 <p id="rumorModalIntro" class="vs-rumor-modal__intro">Editör onayından sonra gazetede yayınlanır. Kayıt gerekmez.</p>
                 <div id="rumorModalSlotBanner" class="vs-rumor-slot-banner" hidden>
@@ -212,7 +212,9 @@
                         <span id="rumorBodyLabel">Söylenti / ihbar metni</span>
                         <textarea name="description" id="rumorBodyInput" rows="5" required minlength="30" maxlength="5000" placeholder="Gördüklerinizi veya duyduklarınızı yazın…"></textarea>
                     </label>
-                    <button type="submit" class="primary" id="rumorSubmit" style="justify-self:start;border:0;border-radius:10px;padding:.65rem 1rem">Gönder</button>
+                    <div class="vs-rumor-form__actions">
+                        <button type="submit" class="vs-rumor-submit" id="rumorSubmit">Gönder</button>
+                    </div>
                 </form>
             </div>
         </section>
