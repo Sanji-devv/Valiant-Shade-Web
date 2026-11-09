@@ -139,7 +139,6 @@ class PublicNewsController extends Controller
 
         $submissionTags = [
             'lead' => 'Manşet Gönderisi',
-            'brief' => 'Kapak Özeti Gönderisi',
             'corner' => 'Köşe Yazısı Gönderisi',
         ];
         $tag = $submissionTags[$slotKind] ?? 'Söylenti Gönderisi';
@@ -147,7 +146,6 @@ class PublicNewsController extends Controller
         $slotLabel = isset($data['gazette_slot_label']) ? trim((string) $data['gazette_slot_label']) : '';
         $authorRoles = [
             'lead' => $slotLabel !== '' ? "Manşet — {$slotLabel}" : 'Okuyucu — manşet',
-            'brief' => $slotLabel !== '' ? "Kapak özeti — {$slotLabel}" : 'Okuyucu — kapak özeti',
             'corner' => $slotLabel !== ''
                 ? "Köşe — {$slotLabel}".($rumuz !== '' ? " ({$rumuz})" : '')
                 : 'Köşe yazarı'.($rumuz !== '' ? " ({$rumuz})" : ''),

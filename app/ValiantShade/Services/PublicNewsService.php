@@ -4,6 +4,7 @@ namespace App\ValiantShade\Services;
 
 use App\Models\News;
 use App\ValiantShade\Http\Controllers\NewsController;
+use App\ValiantShade\Support\GazetteTypography;
 use App\ValiantShade\Support\NewsTypeResolver;
 use App\ValiantShade\Support\WorldCalendar;
 use Illuminate\Support\Collection;
@@ -141,26 +142,26 @@ class PublicNewsService
 
         return [
             'id' => (int) $item->id,
-            'title' => (string) $item->title,
-            'category' => (string) ($item->category ?? $typeConfig['label']),
+            'title' => GazetteTypography::scrub((string) $item->title) ?? '',
+            'category' => GazetteTypography::scrub((string) ($item->category ?? $typeConfig['label'])) ?? '',
             'news_type' => $newsType,
             'news_type_label' => $typeConfig['label'],
             'badge_color' => $item->badge_color ?? $typeConfig['badge_color'],
-            'date_text' => $item->date_text ?? null,
-            'published_date' => $item->published_date ?? $item->date_text ?? null,
-            'world_date_text' => $worldDate ?? $item->date_text ?? null,
+            'date_text' => GazetteTypography::scrub($item->date_text ?? null),
+            'published_date' => GazetteTypography::scrub($item->published_date ?? $item->date_text ?? null),
+            'world_date_text' => GazetteTypography::scrub($worldDate ?? $item->date_text ?? null),
             'world_date' => $worldParts,
-            'read_time' => $item->read_time ?? '3 dk okuma',
-            'description' => (string) ($item->description ?? ''),
-            'full_story' => $item->full_story ?? null,
-            'testimony' => $item->testimony ?? null,
+            'read_time' => GazetteTypography::scrub($item->read_time ?? '3 dk okuma') ?? '3 dk okuma',
+            'description' => GazetteTypography::scrub((string) ($item->description ?? '')) ?? '',
+            'full_story' => GazetteTypography::scrub($item->full_story ?? null),
+            'testimony' => GazetteTypography::scrub($item->testimony ?? null),
             'image_url' => $item->image_url ?? null,
             'image_asset' => $imageAsset,
             'has_custom_gazette_image' => $this->hasCustomGazetteImage($item),
             'stats' => $item->stats ?? [],
             'location_badge' => $this->sanitizePublicLocationBadge($item->location_badge ?? null),
-            'author' => $item->author ?? 'Gazete Muhabiri',
-            'author_role' => $item->author_role ?? 'Valiant Shade Basın Bürosu',
+            'author' => GazetteTypography::scrub($item->author ?? 'Gazete Muhabiri') ?? 'Gazete Muhabiri',
+            'author_role' => GazetteTypography::scrub($item->author_role ?? 'Valiant Shade Basın Bürosu') ?? 'Valiant Shade Basın Bürosu',
             'is_breaking' => (bool) ($item->is_breaking ?? false),
             'views_count' => (int) ($item->views_count ?? 0),
             'order' => (int) ($item->order ?? 0),
@@ -344,7 +345,7 @@ class PublicNewsService
             return null;
         }
 
-        return $badge;
+        return GazetteTypography::scrub($badge);
     }
 
     protected function normalizedImagePath(?string $url): ?string

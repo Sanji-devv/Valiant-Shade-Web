@@ -279,7 +279,9 @@
           <div>
             <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
               <span class="badge bg-label-warning">{{ $pending->news_type ? (config('news.types.'.$pending->news_type.'.label') ?? $pending->category) : $pending->category }}</span>
-              @php($submissionBadge = \App\ValiantShade\Support\NewsStats::submissionBadge($pending->stats))
+              @php
+                $submissionBadge = \App\ValiantShade\Support\NewsStats::submissionBadge($pending->stats);
+              @endphp
               @if($submissionBadge)
               <span class="badge bg-label-info">{{ $submissionBadge }}</span>
               @elseif($pending->tag && str_contains($pending->tag, 'Gönderisi'))
@@ -351,7 +353,9 @@
         </p>
 
         <!-- Stats on Hero -->
-        @php($featuredStatPills = \App\ValiantShade\Support\NewsStats::pills($featuredNews->stats))
+        @php
+          $featuredStatPills = \App\ValiantShade\Support\NewsStats::pills($featuredNews->stats);
+        @endphp
         @if(!empty($featuredStatPills))
         <div class="row g-2 mb-4 d-none d-md-flex" style="max-width: 720px;">
           @foreach($featuredStatPills as $st)
@@ -570,7 +574,9 @@
             </p>
 
             <!-- Micro Stats Preview -->
-            @php($cardStatPills = \App\ValiantShade\Support\NewsStats::pills($item->stats ?? null))
+            @php
+              $cardStatPills = \App\ValiantShade\Support\NewsStats::pills($item->stats ?? null);
+            @endphp
             @if(!empty($cardStatPills))
             <div class="row g-2 mb-3">
               @foreach(array_slice($cardStatPills, 0, 2) as $st)

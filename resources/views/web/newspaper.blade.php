@@ -13,7 +13,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $gazetteTitle }} — {{ config('app.name', 'Valiant Shade') }}</title>
+    <title>{{ $gazetteTitle }} · {{ config('app.name', 'Valiant Shade') }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=IM+Fell+English:ital@0;1&family=Newsreader:ital,opsz,wght@0,12..72,400;0,12..72,600;0,12..72,700;1,12..72,400&display=swap" rel="stylesheet">
@@ -25,7 +25,7 @@
     data-gazette-name="{{ $gazetteTitle }}"
     data-gazette-motto="{{ $gazetteMotto }}"
     data-gazette-press="{{ $gb['press_name'] ?? 'Lağımdan Sesler Basın Bürosu' }}"
-    data-gazette-issue-date="{{ $gazetteIssue['date_line'] ?? 'Leos ayının 1. günü, Vonyas — 631' }}"
+    data-gazette-issue-date="{{ $gazetteIssue['date_line'] ?? 'Leos ayının 1. günü, Vonyas · 631' }}"
     data-gazette-issue-number="{{ $gazetteIssue['number'] ?? 1 }}"
     data-gazette-issue-label="{{ $gazetteIssue['label'] ?? 'İlk sayı' }}"
     data-gazette-issue-month="{{ $gazetteIssue['month'] ?? 'Leos' }}"
@@ -45,7 +45,7 @@
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">Ana Sayfa</span>
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">Ana Sayfa</span>
             </a>
-            <span class="vs-newspaper-nav__item vs-newspaper-nav__soon" tabindex="0" aria-disabled="true" aria-label="Lonca Arazisi — {{ __('Coming soon') }}">
+            <span class="vs-newspaper-nav__item vs-newspaper-nav__soon" tabindex="0" aria-disabled="true" aria-label="Lonca Arazisi · {{ __('Coming soon') }}">
                 <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3 4 9v12h6v-7h4v7h6V9l-8-6z"/></svg>
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">Lonca Arazisi</span>
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">Lonca</span>
@@ -98,7 +98,7 @@
                         <span class="vs-gazette-archive-wrap__label">Sayı</span>
                         <select class="vs-gazette-archive" id="gazetteArchiveSelect" aria-label="Gazete sayısı arşivi"></select>
                     </label>
-                    <button type="button" class="vs-layout-toggle" id="toggleGazetteLayoutBtn" aria-pressed="false" title="Basılı gazete sayfası — sayfa sayfa gezin">
+                    <button type="button" class="vs-layout-toggle" id="toggleGazetteLayoutBtn" aria-pressed="false" title="Basılı gazete sayfası. Sayfa sayfa gezin.">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M8 4v16M16 4v16M4 8h16M4 16h16"/></svg>
                         <span id="toggleGazetteLayoutLabel">Gazete görünümü</span>
                     </button>
@@ -111,7 +111,17 @@
 
         <section class="vs-news-feed vs-news-grid" id="newsGrid" aria-live="polite"></section>
 
-        <section class="vs-gazette-stage" id="gazetteStage" hidden aria-label="Gazete baskı sayfası"></section>
+        <div class="vs-gazette-flip" id="gazetteFlip" hidden>
+            <button type="button" class="vs-gazette-flip__arrow vs-gazette-flip__arrow--prev" id="gazetteFlipPrev" aria-label="Önceki yaprak" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <div class="vs-gazette-flip__sheet">
+                <section class="vs-gazette-stage" id="gazetteStage" aria-label="Gazete baskı sayfası"></section>
+            </div>
+            <button type="button" class="vs-gazette-flip__arrow vs-gazette-flip__arrow--next" id="gazetteFlipNext" aria-label="Sonraki yaprak">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+        </div>
 
         <nav class="vs-pagination" id="newsPagination" aria-label="Gazete sayfaları">
             <button type="button" class="vs-page-nav-btn" id="newsPrevPage">
@@ -124,7 +134,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
             </button>
         </nav>
-        <p class="vs-page-hint" id="newsPageHint" hidden>Sayfayı çevirmek için alttaki düğmeleri veya klavyede ← → tuşlarını kullanın.</p>
+        <p class="vs-page-hint" id="newsPageHint" hidden>Yaprak çevirmek için yan okları, alttaki düğmeleri veya klavyede ← → tuşlarını kullanın.</p>
     </main>
 
     <div class="vs-modal-backdrop vs-modal-backdrop--article" id="newsDetailModal" role="dialog" aria-modal="true" aria-labelledby="newsModalTitle">
@@ -167,21 +177,24 @@
             <div class="vs-modal__body vs-modal__body--rumor">
                 <h2 id="rumorModalTitle">Söylenti gönder</h2>
                 <p id="rumorModalIntro" class="vs-rumor-modal__intro">Editör onayından sonra gazetede yayınlanır. Kayıt gerekmez.</p>
-                <div id="rumorModalSlotBanner" class="vs-rumor-slot-banner" hidden>
-                    <span class="vs-rumor-slot-banner__eyebrow" id="rumorModalSlotEyebrow">Gazete yeri</span>
-                    <strong class="vs-rumor-slot-banner__label" id="rumorModalSlotLabel">—</strong>
-                    <span class="vs-rumor-slot-banner__issue" id="rumorModalSlotIssue"></span>
+                <div class="vs-rumor-placement" id="rumorPlacementWrap">
+                    <span class="vs-rumor-placement__label">Gazetede yeri</span>
+                    <div class="vs-rumor-placement__kinds" id="rumorPlacementKinds" role="radiogroup" aria-label="Gönderi yeri"></div>
+                    <div class="vs-rumor-corner-pick" id="rumorCornerPicker" hidden>
+                        <span class="vs-rumor-corner-pick__label">Hangi köşe?</span>
+                        <div class="vs-rumor-corner-pick__grid" id="rumorCornerPickerGrid"></div>
+                    </div>
                 </div>
-                <form id="rumorForm" class="vs-form-grid">
+                <form id="rumorForm" class="vs-form-grid vs-form-grid--rumor">
                     <input type="hidden" name="gazette_slot_kind" id="rumorGazetteSlotKind" value="">
                     <input type="hidden" name="gazette_slot_key" id="rumorGazetteSlotKey" value="">
                     <input type="hidden" name="gazette_slot_label" id="rumorGazetteSlotLabelHidden" value="">
                     <input type="hidden" name="gazette_issue_id" id="rumorGazetteIssueId" value="">
-                    <label>
+                    <label class="vs-rumor-form__span">
                         <span id="rumorTitleLabel">Başlık</span>
                         <input type="text" name="title" id="rumorTitleInput" required minlength="8" maxlength="255" placeholder="Örn. Kızıl Han'da gizli buluşma…">
                     </label>
-                    <div class="vs-form-field">
+                    <div class="vs-form-field vs-rumor-form__span">
                         <span class="vs-form-field__label">Tür</span>
                         @include('web.partials.news-type-picker', [
                             'variant' => 'public',
@@ -190,29 +203,29 @@
                             'inputName' => 'news_type',
                         ])
                     </div>
-                    <label>
+                    <label class="vs-rumor-form__half">
                         Konum (isteğe bağlı)
                         <input type="text" name="location_badge" maxlength="150" placeholder="Örn. Isonburg - Alt Şehir">
                     </label>
-                    <label id="rumorRumuzWrap" hidden>
+                    <label id="rumorRumuzWrap" class="vs-rumor-form__span" hidden>
                         Rumuz (köşe imzası)
-                        <input type="text" name="rumuz" id="rumorRumuzInput" maxlength="80" placeholder="Basılacak rumuz — örn. G.T.">
+                        <input type="text" name="rumuz" id="rumorRumuzInput" maxlength="80" placeholder="Basılacak rumuz, örn. G.T.">
                     </label>
-                    <label id="rumorAuthorWrap">
+                    <label id="rumorAuthorWrap" class="vs-rumor-form__half">
                         Muhabir adı (isteğe bağlı)
                         <input type="text" name="author" id="rumorAuthorInput" maxlength="120" placeholder="Anonim kalabilirsiniz">
                     </label>
-                    <label>
+                    <label class="vs-rumor-form__span">
                         <span style="display:flex;gap:.5rem;align-items:center">
                             <input type="checkbox" name="anonymous" checked>
                             Kimliğimi gizli tut
                         </span>
                     </label>
-                    <label>
+                    <label class="vs-rumor-form__span">
                         <span id="rumorBodyLabel">Söylenti / ihbar metni</span>
-                        <textarea name="description" id="rumorBodyInput" rows="5" required minlength="30" maxlength="5000" placeholder="Gördüklerinizi veya duyduklarınızı yazın…"></textarea>
+                        <textarea name="description" id="rumorBodyInput" rows="6" required minlength="30" maxlength="5000" placeholder="Gördüklerinizi veya duyduklarınızı yazın…"></textarea>
                     </label>
-                    <div class="vs-rumor-form__actions">
+                    <div class="vs-rumor-form__actions vs-rumor-form__span">
                         <button type="submit" class="vs-rumor-submit" id="rumorSubmit">Gönder</button>
                     </div>
                 </form>

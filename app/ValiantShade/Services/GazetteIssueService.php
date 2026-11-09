@@ -4,8 +4,11 @@ namespace App\ValiantShade\Services;
 
 use App\Models\GazetteIssue;
 use App\Models\News;
+use App\ValiantShade\Support\GazetteNewsImage;
+use App\ValiantShade\Support\GazetteTypography;
 use App\ValiantShade\Support\WorldCalendar;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 
 class GazetteIssueService
@@ -51,11 +54,11 @@ class GazetteIssueService
                 'day' => $parts['day'],
                 'published_on' => $cursor->toDateString(),
                 'is_current' => $cursor->equalTo($currentSunday),
-                'corner_columns' => $issue->corner_columns ?? ['slots' => config('gazette.corner_slots', [])],
+                'corner_columns' => $issue->corner_columns ?? $this->defaultCornerColumns(),
                 'editorial_note' => $issue->editorial_note ?? (string) config('gazette.schedule', ''),
             ]);
             if (! $issue->exists) {
-                $issue->corner_columns = ['slots' => config('gazette.corner_slots', [])];
+                $issue->corner_columns = $this->defaultCornerColumns();
             }
             $issue->save();
 
@@ -145,7 +148,7 @@ class GazetteIssueService
             'day' => (int) $parts['day'],
             'published_on' => $sunday->toDateString(),
             'is_current' => true,
-            'corner_columns' => ['slots' => config('gazette.corner_slots', [])],
+            'corner_columns' => $this->defaultCornerColumns(),
             'editorial_note' => (string) config('gazette.schedule', ''),
         ]);
     }
@@ -199,7 +202,11 @@ class GazetteIssueService
         $this->assignNewsToIssueWeeks();
 
         $allNews = $this->publicNews->publishedForIssue($issue->id, $newsType, $search);
-        $totalArticles = $allNews->count();
+        $issue = $this->ensureCoverLayoutMigrated($issue, $allNews);
+        $this->sanitizeCoverLayout($issue, $allNews);
+        $coverPayload = $this->resolveCoverArticles($issue, $allNews);
+        $innerNews = $coverPayload['inner'];
+        $totalArticles = $innerNews->count();
         $innerPerSheet = max(2, (int) config('gazette.inner_articles_per_sheet', 3));
         $innerSheets = $totalArticles > 0 ? (int) ceil($totalArticles / $innerPerSheet) : 1;
         $lastSheet = 1 + $innerSheets;
@@ -207,17 +214,17 @@ class GazetteIssueService
         $sheet = min(max(1, $sheet), max(1, $lastSheet));
 
         if ($sheet === 1) {
-            $feedData = $allNews->map(fn ($item) => $this->publicNews->transformItem($item))->values()->all();
+            $feedData = [];
             $sliceMeta = [
                 'current_page' => 1,
                 'last_page' => $lastSheet,
-                'per_page' => $totalArticles,
+                'per_page' => 0,
                 'total' => $totalArticles,
                 'sheet_kind' => 'cover',
             ];
         } else {
             $innerIndex = $sheet - 2;
-            $slice = $allNews->slice($innerIndex * $innerPerSheet, $innerPerSheet)->values();
+            $slice = $innerNews->slice($innerIndex * $innerPerSheet, $innerPerSheet)->values();
             $feedData = $slice->map(fn ($item) => $this->publicNews->transformItem($item))->values()->all();
             $sliceMeta = [
                 'current_page' => $sheet,
@@ -231,11 +238,20 @@ class GazetteIssueService
         $issuePayload = $this->transformIssue($issue->loadCount([
             'news as article_count' => fn ($q) => $q->where('status', 'published')->where('is_active', true),
         ]), true);
+        $issuePayload['cover_lead'] = $coverPayload['lead']
+            ? $this->publicNews->transformItem($coverPayload['lead'])
+            : null;
+        $issuePayload['cover_briefs'] = collect($coverPayload['briefs'])
+            ->map(fn ($item) => $item ? $this->publicNews->transformItem($item) : null)
+            ->values()
+            ->all();
 
         return [
             'issue' => $issuePayload,
             'archive' => $this->archiveList(),
-            'featured' => array_slice($feedData, 0, 1),
+            'featured' => $coverPayload['lead']
+                ? [$this->publicNews->transformItem($coverPayload['lead'])]
+                : array_slice($feedData, 0, 1),
             'types' => collect(config('news.types', []))->map(fn ($cfg, $key) => [
                 'key' => $key,
                 'label' => $cfg['label'],
@@ -244,7 +260,7 @@ class GazetteIssueService
             'feed' => [
                 'data' => $feedData,
                 'meta' => $sliceMeta,
-                'all_article_ids' => $allNews->pluck('id')->values()->all(),
+                'all_article_ids' => $innerNews->pluck('id')->values()->all(),
                 'type_counts' => $this->publicNews->typeCountsForCollection($allNews),
             ],
         ];
@@ -304,10 +320,19 @@ class GazetteIssueService
         ];
 
         if ($withCorners) {
-            $payload['corner_slots'] = $issue->cornerSlots();
+            $payload['corner_slots'] = $issue->enrichedCornerSlots();
+            $payload['corner_fill_summary'] = [
+                'total' => count($payload['corner_slots']),
+                'filled' => collect($payload['corner_slots'])->where('is_filled', true)->count(),
+                'empty_keys' => collect($payload['corner_slots'])
+                    ->filter(fn (array $s) => empty($s['is_filled']))
+                    ->pluck('key')
+                    ->values()
+                    ->all(),
+            ];
         }
 
-        return $payload;
+        return GazetteTypography::scrubIssuePayload($payload);
     }
 
     /**
@@ -316,11 +341,7 @@ class GazetteIssueService
     public function applySubmissionPlacement(News $news): void
     {
         $stats = is_array($news->stats) ? $news->stats : [];
-        $submission = is_array($stats['submission'] ?? null) ? $stats['submission'] : null;
-        if (! $submission) {
-            return;
-        }
-
+        $submission = is_array($stats['submission'] ?? null) ? $stats['submission'] : [];
         $kind = (string) ($submission['gazette_slot_kind'] ?? '');
         $issueId = (int) ($submission['gazette_issue_id'] ?? $news->gazette_issue_id ?? 0);
 
@@ -328,32 +349,81 @@ class GazetteIssueService
             $news->gazette_issue_id = $issueId;
         }
 
+        if ($issueId <= 0) {
+            $this->attachNewsToCurrentIssue($news);
+            $issueId = (int) ($news->gazette_issue_id ?? 0);
+        }
+
         if ($kind === 'lead' && $issueId > 0) {
-            News::query()
-                ->where('gazette_issue_id', $issueId)
-                ->where('id', '!=', $news->id)
-                ->where('status', 'published')
-                ->update(['is_breaking' => false]);
-            $news->is_breaking = true;
-        }
-
-        $rank = match ($kind) {
-            'lead' => 0,
-            'brief' => 1 + max(0, (int) ($submission['gazette_slot_key'] ?? 0)),
-            default => null,
-        };
-
-        if ($rank !== null) {
-            $stats['gazette_rank'] = $rank;
-            $news->stats = $stats;
-        }
-
-        if ($kind === 'corner' && $issueId > 0) {
+            $this->assignCoverNewsSlot($issueId, 'lead', $submission, $news);
+        } elseif ($kind === 'corner' && $issueId > 0) {
             $this->fillCornerSlotFromNews($issueId, $submission, $news);
+            $stats['gazette_placement'] = 'cover_corner';
+            $stats['gazette_corner_key'] = $submission['gazette_slot_key'] ?? null;
+            $news->stats = $stats;
+            $news->is_active = false;
+            $news->is_breaking = false;
+            $this->purgeNewsFromCoverLayout($issueId, (int) $news->id);
+        } elseif ($issueId > 0) {
+            $this->assignCoverBriefAuto($issueId, $news);
         }
+
+        GazetteNewsImage::applyToNews($news, false);
 
         $news->saveQuietly();
         $this->publicNews->invalidatePublicFeed();
+    }
+
+    /**
+     * Onaylı haberi kapaktaki ilk boş özet sütununa yerleştirir (manuel kapak özeti yok).
+     */
+    protected function assignCoverBriefAuto(int $issueId, News $news): void
+    {
+        if ($this->isCornerColumnNews($news)) {
+            return;
+        }
+
+        if (! Schema::hasTable('gazette_issues')) {
+            return;
+        }
+
+        $issue = GazetteIssue::query()->find($issueId);
+        if (! $issue) {
+            return;
+        }
+
+        $layout = $issue->coverLayout();
+        $newsId = (int) $news->id;
+
+        if ((int) ($layout['lead_news_id'] ?? 0) === $newsId) {
+            return;
+        }
+
+        foreach ($layout['brief_news_ids'] as $id) {
+            if ((int) $id === $newsId) {
+                return;
+            }
+        }
+
+        $slotIndex = null;
+        foreach ($layout['brief_news_ids'] as $index => $id) {
+            if ($id === null || $id === '') {
+                $slotIndex = $index;
+                break;
+            }
+        }
+
+        if ($slotIndex === null) {
+            return;
+        }
+
+        $layout['brief_news_ids'][$slotIndex] = $newsId;
+        $issue->setCoverLayout($layout);
+        $issue->save();
+
+        $stats = is_array($news->stats) ? $news->stats : [];
+        $stats['gazette_placement'] = 'cover_brief';
+        $news->stats = $stats;
     }
 
     protected function fillCornerSlotFromNews(int $issueId, array $submission, News $news): void
@@ -379,12 +449,17 @@ class GazetteIssueService
                 continue;
             }
             $body = trim((string) ($news->full_story ?: $news->description));
-            $slot['body'] = mb_strlen($body) > 600 ? mb_substr($body, 0, 597).'…' : $body;
+            $slot['body'] = $body;
+            $slot['teaser'] = mb_strlen($body) > 160 ? mb_substr($body, 0, 157).'…' : ($body !== '' ? $body : null);
             $rumuz = trim((string) ($submission['rumuz'] ?? ''));
             if ($rumuz !== '') {
                 $slot['rumuz'] = $rumuz;
             } elseif (! empty($news->author)) {
                 $slot['rumuz'] = $news->author;
+            }
+            $slot['news_id'] = $news->id;
+            if (! empty($news->title)) {
+                $slot['title'] = $slot['title'] ?? $news->title;
             }
             $updated = true;
             break;
@@ -392,9 +467,251 @@ class GazetteIssueService
         unset($slot);
 
         if ($updated) {
-            $issue->corner_columns = ['slots' => $slots];
+            $cols = is_array($issue->corner_columns) ? $issue->corner_columns : $this->defaultCornerColumns();
+            $cols['slots'] = $slots;
+            if (! isset($cols['cover'])) {
+                $cols['cover'] = $issue->coverLayout();
+            }
+            $issue->corner_columns = $cols;
             $issue->save();
         }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function defaultCornerColumns(): array
+    {
+        return [
+            'slots' => config('gazette.corner_slots', []),
+            'cover' => [
+                'lead_news_id' => null,
+                'brief_news_ids' => [null, null, null, null, null],
+            ],
+        ];
+    }
+
+    /**
+     * @param  Collection<int, News>  $allNews
+     */
+    protected function ensureCoverLayoutMigrated(GazetteIssue $issue, Collection $allNews): GazetteIssue
+    {
+        $layout = $issue->coverLayout();
+        if ($layout['lead_news_id']) {
+            return $issue;
+        }
+
+        $lead = $allNews->first(function (News $n) {
+            if ($this->isCornerColumnNews($n)) {
+                return false;
+            }
+            $stats = is_array($n->stats) ? $n->stats : [];
+
+            return ($stats['gazette_rank'] ?? null) === 0 || $n->is_breaking;
+        });
+
+        if (! $lead) {
+            return $issue;
+        }
+
+        $layout['lead_news_id'] = $lead->id;
+        for ($i = 0; $i < 5; $i++) {
+            $brief = $allNews->first(function (News $n) use ($i) {
+                if ($this->isCornerColumnNews($n)) {
+                    return false;
+                }
+                $stats = is_array($n->stats) ? $n->stats : [];
+
+                return ($stats['gazette_rank'] ?? null) === $i + 1;
+            });
+            $layout['brief_news_ids'][$i] = $brief?->id;
+        }
+
+        $issue->setCoverLayout($layout);
+        $issue->saveQuietly();
+
+        return $issue->fresh() ?? $issue;
+    }
+
+    /**
+     * @param  Collection<int, News>  $allNews
+     * @return array{lead: ?News, briefs: array<int, ?News>, inner: Collection<int, News>}
+     */
+    protected function resolveCoverArticles(GazetteIssue $issue, Collection $allNews): array
+    {
+        $layout = $issue->coverLayout();
+        $lead = $layout['lead_news_id']
+            ? $allNews->firstWhere('id', $layout['lead_news_id'])
+            : null;
+        if ($lead && $this->isCornerColumnNews($lead)) {
+            $lead = null;
+        }
+
+        $briefs = [];
+        foreach ($layout['brief_news_ids'] as $id) {
+            $item = $id ? $allNews->firstWhere('id', (int) $id) : null;
+            if ($item && $this->isCornerColumnNews($item)) {
+                $item = null;
+            }
+            $briefs[] = $item;
+        }
+
+        $pinnedIds = collect([$layout['lead_news_id']])
+            ->merge($layout['brief_news_ids'])
+            ->merge($this->cornerPinnedNewsIds($issue))
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->all();
+
+        $inner = $allNews
+            ->filter(function (News $n) use ($pinnedIds) {
+                if ($this->isCornerColumnNews($n)) {
+                    return false;
+                }
+
+                return ! in_array((int) $n->id, $pinnedIds, true);
+            })
+            ->values();
+
+        return [
+            'lead' => $lead instanceof News ? $lead : null,
+            'briefs' => $briefs,
+            'inner' => $inner,
+        ];
+    }
+
+    /**
+     * @param  Collection<int, News>  $allNews
+     */
+    protected function sanitizeCoverLayout(GazetteIssue $issue, Collection $allNews): void
+    {
+        $layout = $issue->coverLayout();
+        $dirty = false;
+
+        if ($layout['lead_news_id']) {
+            $lead = $allNews->firstWhere('id', $layout['lead_news_id']);
+            if (! $lead || $this->isCornerColumnNews($lead)) {
+                $layout['lead_news_id'] = null;
+                $dirty = true;
+            }
+        }
+
+        foreach ($layout['brief_news_ids'] as $index => $id) {
+            if (! $id) {
+                continue;
+            }
+            $item = $allNews->firstWhere('id', (int) $id);
+            if (! $item || $this->isCornerColumnNews($item)) {
+                $layout['brief_news_ids'][$index] = null;
+                $dirty = true;
+            }
+        }
+
+        if ($dirty) {
+            $issue->setCoverLayout($layout);
+            $issue->saveQuietly();
+        }
+
+        foreach ($allNews as $item) {
+            if (! $this->isCornerColumnNews($item) || ! $item->is_active) {
+                continue;
+            }
+            $item->forceFill([
+                'is_active' => false,
+                'is_breaking' => false,
+            ])->saveQuietly();
+        }
+    }
+
+    protected function purgeNewsFromCoverLayout(int $issueId, int $newsId): void
+    {
+        $issue = GazetteIssue::query()->find($issueId);
+        if (! $issue) {
+            return;
+        }
+
+        $layout = $issue->coverLayout();
+        $dirty = false;
+
+        if ((int) ($layout['lead_news_id'] ?? 0) === $newsId) {
+            $layout['lead_news_id'] = null;
+            $dirty = true;
+        }
+
+        foreach ($layout['brief_news_ids'] as $index => $id) {
+            if ((int) $id === $newsId) {
+                $layout['brief_news_ids'][$index] = null;
+                $dirty = true;
+            }
+        }
+
+        if ($dirty) {
+            $issue->setCoverLayout($layout);
+            $issue->saveQuietly();
+        }
+    }
+
+  /**
+     * @return array<int, int>
+     */
+    protected function cornerPinnedNewsIds(GazetteIssue $issue): array
+    {
+        return collect($issue->cornerSlots())
+            ->pluck('news_id')
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->all();
+    }
+
+    protected function isCornerColumnNews(News $news): bool
+    {
+        $stats = is_array($news->stats) ? $news->stats : [];
+        $submission = is_array($stats['submission'] ?? null) ? $stats['submission'] : null;
+
+        if (($submission['gazette_slot_kind'] ?? null) === 'corner') {
+            return true;
+        }
+
+        if (($stats['gazette_placement'] ?? null) === 'cover_corner') {
+            return true;
+        }
+
+        $tag = (string) ($news->tag ?? '');
+
+        return str_contains($tag, 'Köşe Yazısı');
+    }
+
+    protected function assignCoverNewsSlot(int $issueId, string $kind, array $submission, News $news): void
+    {
+        if ($this->isCornerColumnNews($news)) {
+            return;
+        }
+
+        if (! Schema::hasTable('gazette_issues')) {
+            return;
+        }
+
+        $issue = GazetteIssue::query()->find($issueId);
+        if (! $issue) {
+            return;
+        }
+
+        $layout = $issue->coverLayout();
+        if ($kind === 'lead') {
+            $layout['lead_news_id'] = $news->id;
+        } elseif ($kind === 'brief') {
+            $idx = max(0, min(4, (int) ($submission['gazette_slot_key'] ?? 0)));
+            $layout['brief_news_ids'][$idx] = $news->id;
+        }
+
+        $issue->setCoverLayout($layout);
+        $issue->save();
+
+        $stats = is_array($news->stats) ? $news->stats : [];
+        $stats['gazette_placement'] = $kind === 'lead' ? 'cover_lead' : 'cover_brief';
+        $news->stats = $stats;
+        $news->is_breaking = $kind === 'lead';
     }
 
     public function attachNewsToCurrentIssue(News $news): void

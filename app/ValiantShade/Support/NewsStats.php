@@ -63,7 +63,7 @@ final class NewsStats
 
         $kindLabels = [
             'lead' => 'Manşet',
-            'brief' => 'Kapak özeti',
+            'brief' => 'Kapak',
             'corner' => 'Köşe yazısı',
         ];
 

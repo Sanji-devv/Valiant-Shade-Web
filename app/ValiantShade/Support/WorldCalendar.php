@@ -76,7 +76,7 @@ class WorldCalendar
         $weekday = (string) ($issue['weekday'] ?? '');
 
         return sprintf(
-            '%s ayının %d. günü, %s — %d',
+            '%s ayının %d. günü, %s · %d',
             $month,
             (int) ($issue['day'] ?? 1),
             $weekday,
@@ -88,7 +88,7 @@ class WorldCalendar
     {
         $base = sprintf('%s %d, %d', $inWorldMonth, $day, $year);
         if ($inWorldWeekday) {
-            return "{$base} — {$inWorldWeekday}";
+            return "{$base} · {$inWorldWeekday}";
         }
 
         return $base;

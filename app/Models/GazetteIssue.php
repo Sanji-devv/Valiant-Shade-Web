@@ -54,4 +54,88 @@ class GazetteIssue extends Model
 
         return is_array($slots) ? $slots : [];
     }
+
+    /**
+     * Şablondaki dört köşe + DB birleşimi; teaser ve dolu/boş bayrakları.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function enrichedCornerSlots(): array
+    {
+        $defaults = config('gazette.corner_slots', []);
+        $stored = collect($this->cornerSlots())->keyBy('key');
+
+        return collect($defaults)
+            ->map(function (array $def) use ($stored) {
+                $merged = array_merge($def, $stored->get($def['key'] ?? '', []) ?? []);
+                $body = trim((string) ($merged['body'] ?? ''));
+                $teaser = trim((string) ($merged['teaser'] ?? ''));
+                if ($teaser === '' && $body !== '') {
+                    $teaser = mb_strlen($body) > 160 ? mb_substr($body, 0, 157).'…' : $body;
+                }
+
+                return [
+                    'key' => (string) ($merged['key'] ?? $def['key'] ?? ''),
+                    'title' => (string) ($merged['title'] ?? $def['title'] ?? 'Köşe'),
+                    'rumuz' => isset($merged['rumuz']) && $merged['rumuz'] !== ''
+                        ? (string) $merged['rumuz']
+                        : null,
+                    'body' => $body !== '' ? $body : null,
+                    'teaser' => $teaser !== '' ? $teaser : null,
+                    'news_id' => isset($merged['news_id']) ? (int) $merged['news_id'] : null,
+                    'is_filled' => $body !== '',
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array{lead_news_id: ?int, brief_news_ids: array<int, ?int>}
+     */
+    public function coverLayout(): array
+    {
+        $cols = is_array($this->corner_columns) ? $this->corner_columns : [];
+        $cover = is_array($cols['cover'] ?? null) ? $cols['cover'] : [];
+        $briefs = $cover['brief_news_ids'] ?? [];
+        if (! is_array($briefs)) {
+            $briefs = [];
+        }
+        $briefs = array_pad(
+            array_map(static fn ($id) => $id !== null && $id !== '' ? (int) $id : null, array_slice($briefs, 0, 5)),
+            5,
+            null,
+        );
+
+        return [
+            'lead_news_id' => isset($cover['lead_news_id']) && $cover['lead_news_id'] !== ''
+                ? (int) $cover['lead_news_id']
+                : null,
+            'brief_news_ids' => $briefs,
+        ];
+    }
+
+    /**
+     * @param  array{lead_news_id?: ?int, brief_news_ids?: array<int, ?int>}  $layout
+     */
+    public function setCoverLayout(array $layout): void
+    {
+        $cols = is_array($this->corner_columns) ? $this->corner_columns : [];
+        if (! isset($cols['slots']) || ! is_array($cols['slots'])) {
+            $cols['slots'] = config('gazette.corner_slots', []);
+        }
+        $briefs = $layout['brief_news_ids'] ?? $this->coverLayout()['brief_news_ids'];
+        $briefs = array_pad(
+            array_map(static fn ($id) => $id !== null && $id !== '' ? (int) $id : null, array_slice($briefs, 0, 5)),
+            5,
+            null,
+        );
+        $cols['cover'] = [
+            'lead_news_id' => isset($layout['lead_news_id']) && $layout['lead_news_id'] !== ''
+                ? (int) $layout['lead_news_id']
+                : null,
+            'brief_news_ids' => $briefs,
+        ];
+        $this->corner_columns = $cols;
+    }
 }

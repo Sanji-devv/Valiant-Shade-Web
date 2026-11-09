@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\News;
+use App\ValiantShade\Support\GazetteNewsImage;
+use App\ValiantShade\Services\PublicNewsService;
 use Illuminate\Console\Command;
 
 class SyncGazetteNewsImages extends Command
@@ -34,13 +36,22 @@ class SyncGazetteNewsImages extends Command
 
         $this->line('Eşleme sayısı: '.count($map));
 
+        $publicNews = app(PublicNewsService::class);
         $updated = 0;
-        foreach ($map as $needle => $path) {
-            $count = News::query()
-                ->where('status', 'published')
-                ->whereRaw('title ilike ?', ['%'.$needle.'%'])
-                ->update(['image_url' => $path]);
-            $updated += $count;
+        News::query()
+            ->where('status', 'published')
+            ->orderBy('id')
+            ->chunkById(100, function ($rows) use (&$updated, $publicNews) {
+                foreach ($rows as $news) {
+                    if (GazetteNewsImage::applyToNews($news, true)) {
+                        $news->saveQuietly();
+                        $updated++;
+                    }
+                }
+            });
+
+        if ($updated > 0) {
+            $publicNews->invalidatePublicFeed();
         }
 
         $this->info("Güncellenen haber: {$updated}");

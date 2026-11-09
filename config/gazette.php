@@ -17,8 +17,8 @@ return [
     'domain' => env('GAZETTE_DOMAIN') ?: "{$subdomain}.{$appHost}",
 
     'title' => 'Lağımdan Sesler',
-    'motto' => 'Dedikodu burada doğrulanır — ya da en azından mürekkeple basılır.',
-    'tagline' => 'Kraliyet ve lonca dedikoduları, han fısıltıları ve taşra ihbarları — giriş yapmadan okuyun.',
+    'motto' => 'Dedikodu burada doğrulanır; yoksa da en azından mürekkeple basılır.',
+    'tagline' => 'Kraliyet ve lonca dedikoduları, han fısıltıları ve taşra ihbarları. Giriş yapmadan okuyun.',
     'press_name' => 'Lağımdan Sesler Basın Bürosu',
     'crest' => 'static/valiant-shade/assets/img/gazette/lagimdan-sesler-crest.jpg',
 
@@ -34,7 +34,7 @@ return [
         'day' => 1,
     ],
 
-    'schedule' => 'Her Vonyas yeni sayı basılır — arşivden geçmiş yapraklara dönebilirsiniz.',
+    'schedule' => 'Her Vonyas yeni sayı basılır. Arşivden geçmiş yapraklara dönebilirsiniz.',
 
     /*
     | Gazete görselleri yalnızca woodcut / mürekkep — AI filigranı veya “üretim” etiketi yok.
@@ -48,23 +48,15 @@ return [
             'modal_intro' => 'Onaydan sonra bu sayının kapak manşetinde yer alır.',
             'title_placeholder' => 'Manşet başlığı…',
             'body_label' => 'Manşet metni',
-            'body_placeholder' => 'Haftanın ana haberini yazın — giriş ve özet paragrafı…',
+            'body_placeholder' => 'Haftanın ana haberini yazın. Giriş ve özet paragrafı…',
             'default_news_type' => 'guild_news',
-        ],
-        'brief' => [
-            'modal_title' => 'Kapak özeti gönder',
-            'modal_intro' => 'Onaydan sonra kapaktaki özet sütunlarından birinde görünür.',
-            'title_placeholder' => 'Özet başlığı…',
-            'body_label' => 'Özet metni',
-            'body_placeholder' => 'Kısa özet — birkaç cümle…',
-            'default_news_type' => 'guild_rumor',
         ],
         'corner' => [
             'modal_title' => 'Köşe yazısı gönder',
             'modal_intro' => 'Onaydan sonra seçtiğiniz köşe sütununda, rumuzunuzla basılır.',
             'title_placeholder' => 'Köşe başlığı (isteğe bağlı)…',
             'body_label' => 'Köşe metni',
-            'body_placeholder' => 'Kısa köşe yazısı — sesinizi koruyun, abartmayın…',
+            'body_placeholder' => 'Kısa köşe yazısı. Sesinizi koruyun, abartmayın…',
             'default_news_type' => 'guild_rumor',
             'show_rumuz' => true,
         ],
