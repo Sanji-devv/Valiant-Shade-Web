@@ -833,9 +833,6 @@ function renderModalBadges(item) {
   if (typeLabel) {
     parts.push(`<span class="vs-modal__badge vs-modal__badge--type">${escapeHtml(typeLabel)}</span>`);
   }
-  if (item.tag) {
-    parts.push(`<span class="vs-modal__badge">${escapeHtml(item.tag)}</span>`);
-  }
   return parts.join('');
 }
 

@@ -36,6 +36,12 @@ return [
 
     'schedule' => 'Her Vonyas yeni sayı basılır — arşivden geçmiş yapraklara dönebilirsiniz.',
 
+    /*
+    | Gazete görselleri yalnızca woodcut / mürekkep — AI filigranı veya “üretim” etiketi yok.
+    | public API etiket ve parıltı ikonlarını göstermez.
+    */
+    'public_strip_content_tags' => true,
+
     'inner_articles_per_sheet' => 3,
 
     'corner_slots' => [

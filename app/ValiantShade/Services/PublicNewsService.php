@@ -114,9 +114,6 @@ class PublicNewsService
             'news_type' => $newsType,
             'news_type_label' => $typeConfig['label'],
             'badge_color' => $item->badge_color ?? $typeConfig['badge_color'],
-            'category_icon' => $item->category_icon ?? $typeConfig['category_icon'],
-            'tag' => $item->tag ?? null,
-            'tag_icon' => $item->tag_icon ?? null,
             'date_text' => $item->date_text ?? null,
             'published_date' => $item->published_date ?? $item->date_text ?? null,
             'world_date_text' => $worldDate ?? $item->date_text ?? null,
@@ -129,11 +126,7 @@ class PublicNewsService
             'image_asset' => $imageAsset,
             'has_custom_gazette_image' => $this->hasCustomGazetteImage($item),
             'stats' => $item->stats ?? [],
-            'button_text' => $item->button_text ?? null,
-            'button_url' => $item->button_url ?? null,
-            'button_color' => $item->button_color ?? 'primary',
-            'button_icon' => $item->button_icon ?? null,
-            'location_badge' => $item->location_badge ?? null,
+            'location_badge' => $this->sanitizePublicLocationBadge($item->location_badge ?? null),
             'author' => $item->author ?? 'Gazete Muhabiri',
             'author_role' => $item->author_role ?? 'Valiant Shade Basın Bürosu',
             'is_breaking' => (bool) ($item->is_breaking ?? false),
@@ -308,6 +301,19 @@ class PublicNewsService
         $basename = basename($path);
 
         return ! in_array($basename, array_map('basename', $defaults), true);
+    }
+
+    protected function sanitizePublicLocationBadge(?string $badge): ?string
+    {
+        if ($badge === null || trim($badge) === '') {
+            return null;
+        }
+
+        if (preg_match('/\b(ai|yapay\s*zeka|generated|üretim|chatgpt|gemini|midjourney)\b/ui', $badge)) {
+            return null;
+        }
+
+        return $badge;
     }
 
     protected function normalizedImagePath(?string $url): ?string
