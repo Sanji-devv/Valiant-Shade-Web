@@ -1047,6 +1047,7 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
         $this->authorizeNewsManagement('delete');
 
         $news = News::findOrFail($id);
+        app(GazetteIssueService::class)->releaseNewsFromGazette($news);
         $news->delete();
 
         if ($request->wantsJson() || $request->ajax()) {
@@ -1108,6 +1109,7 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
     public function reject(int $id, Request $request): RedirectResponse|JsonResponse
     {
         $news = News::findOrFail($id);
+        app(GazetteIssueService::class)->releaseNewsFromGazette($news);
         $news->update([
             'status' => 'rejected',
             'is_active' => false,

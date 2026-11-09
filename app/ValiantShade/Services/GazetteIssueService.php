@@ -210,6 +210,7 @@ class GazetteIssueService
         $allNews = $this->publicNews->publishedForIssue($issue->id, $newsType, $search);
         $issue = $this->ensureCoverLayoutMigrated($issue, $allNews);
         $this->sanitizeCoverLayout($issue, $allNews);
+        $this->sanitizeCornerSlots($issue);
         if (! $issue->isLocked()) {
             $issue = $this->syncCoverLayoutFromPublishedNews($issue, $allNews);
         }
@@ -963,6 +964,107 @@ class GazetteIssueService
                 'is_breaking' => false,
             ])->saveQuietly();
         }
+    }
+
+    /**
+     * Admin haber silince / geri çekince kapak ve köşe yerleşiminden düşür.
+     */
+    public function releaseNewsFromGazette(News $news): void
+    {
+        $newsId = (int) $news->id;
+        $issueId = (int) ($news->gazette_issue_id ?? 0);
+        if ($newsId <= 0 || $issueId <= 0) {
+            return;
+        }
+
+        if ($this->issueIsLocked($issueId)) {
+            return;
+        }
+
+        $this->purgeNewsFromCoverLayout($issueId, $newsId);
+
+        $issue = GazetteIssue::query()->find($issueId);
+        if ($issue) {
+            $this->clearCornerSlotsReferencingNews($issue, $newsId);
+        }
+
+        $this->publicNews->invalidatePublicFeed();
+    }
+
+    public function sanitizeCornerSlots(GazetteIssue $issue): void
+    {
+        if ($issue->isLocked()) {
+            return;
+        }
+
+        $slots = $this->writableCornerSlots($issue);
+        $dirty = false;
+        foreach ($slots as &$slot) {
+            $newsId = (int) ($slot['news_id'] ?? 0);
+            $body = trim((string) ($slot['body'] ?? ''));
+            if ($newsId <= 0 && $body === '') {
+                continue;
+            }
+
+            $stillPublished = $newsId > 0 && News::query()
+                ->where('id', $newsId)
+                ->where('status', 'published')
+                ->exists();
+
+            if (! $stillPublished) {
+                $this->resetCornerSlot($slot);
+                $dirty = true;
+            }
+        }
+        unset($slot);
+
+        if ($dirty) {
+            $cols = is_array($issue->corner_columns) ? $issue->corner_columns : $this->defaultCornerColumns();
+            $cols['slots'] = $slots;
+            if (! isset($cols['cover'])) {
+                $cols['cover'] = $issue->coverLayout();
+            }
+            $issue->corner_columns = $cols;
+            $issue->saveQuietly();
+            $this->publicNews->invalidatePublicFeed();
+        }
+    }
+
+    protected function clearCornerSlotsReferencingNews(GazetteIssue $issue, int $newsId): void
+    {
+        $slots = $this->writableCornerSlots($issue);
+        $dirty = false;
+        foreach ($slots as &$slot) {
+            if ((int) ($slot['news_id'] ?? 0) !== $newsId) {
+                continue;
+            }
+            $this->resetCornerSlot($slot);
+            $dirty = true;
+        }
+        unset($slot);
+
+        if (! $dirty) {
+            return;
+        }
+
+        $cols = is_array($issue->corner_columns) ? $issue->corner_columns : $this->defaultCornerColumns();
+        $cols['slots'] = $slots;
+        if (! isset($cols['cover'])) {
+            $cols['cover'] = $issue->coverLayout();
+        }
+        $issue->corner_columns = $cols;
+        $issue->saveQuietly();
+    }
+
+    /**
+     * @param  array<string, mixed>  $slot
+     */
+    protected function resetCornerSlot(array &$slot): void
+    {
+        $slot['body'] = null;
+        $slot['teaser'] = null;
+        $slot['rumuz'] = null;
+        unset($slot['news_id'], $slot['anonymous']);
     }
 
     protected function purgeNewsFromCoverLayout(int $issueId, int $newsId): void
