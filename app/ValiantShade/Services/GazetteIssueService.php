@@ -486,14 +486,30 @@ class GazetteIssueService
 
         if ($kind === 'lead' && $issueId > 0) {
             $this->assignCoverNewsSlot($issueId, 'lead', $submission, $news);
-        } elseif ($kind === 'corner' && $issueId > 0 && ! $this->issueIsLocked($issueId)) {
-            $this->fillCornerSlotFromNews($issueId, $submission, $news);
-            $stats['gazette_placement'] = 'cover_corner';
-            $stats['gazette_corner_key'] = $submission['gazette_slot_key'] ?? null;
-            $news->stats = $stats;
-            $news->is_active = false;
-            $news->is_breaking = false;
-            $this->purgeNewsFromCoverLayout($issueId, (int) $news->id);
+        } elseif ($issueId > 0 && ! $this->issueIsLocked($issueId) && $this->looksLikeCornerSubmission($news, $submission)) {
+            $issue = GazetteIssue::query()->find($issueId);
+            if ($issue) {
+                $submission['gazette_slot_kind'] = 'corner';
+                $submission['gazette_slot_key'] = $this->resolveCornerSlotKey($issue, $submission, $news);
+                $this->fillCornerSlotFromNews($issueId, $submission, $news);
+                $mergedSubmission = array_merge($submission, array_filter([
+                    'gazette_slot_kind' => 'corner',
+                    'gazette_slot_key' => $submission['gazette_slot_key'],
+                    'gazette_slot_label' => $submission['gazette_slot_label'] ?? null,
+                    'gazette_issue_id' => $submission['gazette_issue_id'] ?? $issueId,
+                    'rumuz' => $submission['rumuz'] ?? null,
+                ], static fn ($v) => $v !== null && $v !== ''));
+                if (! empty($submission['anonymous'])) {
+                    $mergedSubmission['anonymous'] = true;
+                }
+                $stats['submission'] = $mergedSubmission;
+                $stats['gazette_placement'] = 'cover_corner';
+                $stats['gazette_corner_key'] = $submission['gazette_slot_key'];
+                $news->stats = $stats;
+                $news->is_active = false;
+                $news->is_breaking = false;
+                $this->purgeNewsFromCoverLayout($issueId, (int) $news->id);
+            }
         } elseif ($issueId > 0) {
             $this->assignCoverBriefAuto($issueId, $news);
         }
@@ -569,10 +585,13 @@ class GazetteIssueService
 
         $key = (string) ($submission['gazette_slot_key'] ?? '');
         if ($key === '') {
+            $key = $this->resolveCornerSlotKey($issue, $submission, $news);
+        }
+        if ($key === '') {
             return;
         }
 
-        $slots = $issue->cornerSlots();
+        $slots = $this->writableCornerSlots($issue);
         $updated = false;
         foreach ($slots as &$slot) {
             if (($slot['key'] ?? '') !== $key) {
@@ -581,11 +600,21 @@ class GazetteIssueService
             $body = trim((string) ($news->full_story ?: $news->description));
             $slot['body'] = $body;
             $slot['teaser'] = mb_strlen($body) > 160 ? mb_substr($body, 0, 157).'…' : ($body !== '' ? $body : null);
-            $rumuz = trim((string) ($submission['rumuz'] ?? ''));
-            if ($rumuz !== '') {
-                $slot['rumuz'] = $rumuz;
-            } elseif (! empty($news->author)) {
-                $slot['rumuz'] = $news->author;
+            $anonymous = ! empty($submission['anonymous'])
+                || preg_match('/anonim\s*gözcü/i', (string) ($news->author ?? '')) === 1;
+            if ($anonymous) {
+                $slot['rumuz'] = null;
+                $slot['anonymous'] = true;
+            } else {
+                unset($slot['anonymous']);
+                $rumuz = trim((string) ($submission['rumuz'] ?? ''));
+                if ($rumuz !== '') {
+                    $slot['rumuz'] = $rumuz;
+                } elseif (! empty($news->author) && ! preg_match('/anonim|gizli/i', (string) $news->author)) {
+                    $slot['rumuz'] = $news->author;
+                } else {
+                    $slot['rumuz'] = null;
+                }
             }
             $slot['news_id'] = $news->id;
             if (! empty($news->title)) {
@@ -605,6 +634,136 @@ class GazetteIssueService
             $issue->corner_columns = $cols;
             $issue->save();
         }
+    }
+
+    /**
+     * Config köşe tanımları ile sayıdaki kayıtlı köşeleri birleştirir (boş corner_columns için).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected function writableCornerSlots(GazetteIssue $issue): array
+    {
+        $defaults = config('gazette.corner_slots', []);
+        $stored = collect($issue->cornerSlots())->keyBy(fn (array $s) => (string) ($s['key'] ?? ''));
+
+        return collect($defaults)
+            ->map(function (array $def) use ($stored) {
+                $key = (string) ($def['key'] ?? '');
+
+                return array_merge($def, $stored->get($key, []) ?? []);
+            })
+            ->values()
+            ->all();
+    }
+
+    protected function looksLikeCornerSubmission(News $news, array $submission): bool
+    {
+        if (($submission['gazette_slot_kind'] ?? null) === 'corner') {
+            return true;
+        }
+
+        if (! empty($submission['gazette_slot_key']) || ! empty($submission['gazette_slot_label'])) {
+            return true;
+        }
+
+        $tag = (string) ($news->tag ?? '');
+        if (str_contains($tag, 'Köşe Yazısı')) {
+            return true;
+        }
+
+        $role = (string) ($news->author_role ?? '');
+
+        return str_starts_with($role, 'Köşe —') || str_starts_with($role, 'Köşe ');
+    }
+
+    protected function resolveCornerSlotKey(GazetteIssue $issue, array $submission, ?News $news = null): string
+    {
+        $key = trim((string) ($submission['gazette_slot_key'] ?? ''));
+        if ($key !== '') {
+            return $key;
+        }
+
+        $label = trim((string) ($submission['gazette_slot_label'] ?? ''));
+        if ($label !== '') {
+            foreach (config('gazette.corner_slots', []) as $def) {
+                if ((string) ($def['title'] ?? '') === $label) {
+                    return (string) ($def['key'] ?? '');
+                }
+            }
+        }
+
+        $role = (string) ($news?->author_role ?? '');
+        if (preg_match('/^Köşe —\s*(.+?)(?:\s*\(|$)/u', $role, $m)) {
+            $fromRole = trim($m[1]);
+            foreach (config('gazette.corner_slots', []) as $def) {
+                if ((string) ($def['title'] ?? '') === $fromRole) {
+                    return (string) ($def['key'] ?? '');
+                }
+            }
+        }
+
+        foreach ($issue->enrichedCornerSlots() as $slot) {
+            if (empty($slot['is_filled'])) {
+                return (string) ($slot['key'] ?? '');
+            }
+        }
+
+        return (string) (config('gazette.corner_slots.0.key') ?? 'han_sozu');
+    }
+
+    /**
+     * Onaylanmış köşe gönderilerini kapak köşe sütunlarına yeniden yazar.
+     */
+    public function repairCornerPlacements(): int
+    {
+        if (! Schema::hasTable('gazette_issues') || ! Schema::hasColumn('news', 'gazette_issue_id')) {
+            return 0;
+        }
+
+        $fixed = 0;
+        News::query()
+            ->where('status', 'published')
+            ->orderBy('id')
+            ->each(function (News $news) use (&$fixed) {
+                $stats = is_array($news->stats) ? $news->stats : [];
+                $submission = is_array($stats['submission'] ?? null) ? $stats['submission'] : [];
+                if (! $this->looksLikeCornerSubmission($news, $submission)) {
+                    return;
+                }
+
+                $issueId = (int) ($news->gazette_issue_id ?? $submission['gazette_issue_id'] ?? 0);
+                if ($issueId <= 0 || $this->issueIsLocked($issueId)) {
+                    return;
+                }
+
+                $issue = GazetteIssue::query()->find($issueId);
+                if (! $issue) {
+                    return;
+                }
+
+                $key = (string) ($submission['gazette_slot_key'] ?? '');
+                if ($key === '') {
+                    $key = $this->resolveCornerSlotKey($issue, $submission, $news);
+                }
+
+                $slot = collect($issue->enrichedCornerSlots())->firstWhere('key', $key);
+                if (
+                    ($stats['gazette_placement'] ?? '') === 'cover_corner'
+                    && (int) ($slot['news_id'] ?? 0) === (int) $news->id
+                    && trim((string) ($slot['body'] ?? '')) !== ''
+                ) {
+                    return;
+                }
+
+                $this->applySubmissionPlacement($news);
+                $fixed++;
+            });
+
+        if ($fixed > 0) {
+            $this->publicNews->invalidatePublicFeed();
+        }
+
+        return $fixed;
     }
 
     /**

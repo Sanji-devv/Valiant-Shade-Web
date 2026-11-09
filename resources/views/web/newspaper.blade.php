@@ -229,8 +229,8 @@
                             <input type="text" name="author" id="rumorAuthorInput" maxlength="120" placeholder="Anonim kalabilirsiniz">
                         </label>
                         <div class="vs-rumor-form__meta-cell vs-rumor-form__meta-cell--check">
-                            <input type="checkbox" name="anonymous" id="rumorAnonymousInput" class="vs-rumor-form__check-input" checked tabindex="-1" aria-hidden="true">
-                            <button type="button" class="vs-rumor-anon-toggle is-active" id="rumorAnonymousToggle" aria-pressed="true">
+                            <input type="checkbox" name="anonymous" id="rumorAnonymousInput" class="vs-rumor-form__check-input" tabindex="-1" aria-hidden="true">
+                            <button type="button" class="vs-rumor-anon-toggle" id="rumorAnonymousToggle" aria-pressed="false">
                                 Kimliğimi gizli tut
                             </button>
                         </div>

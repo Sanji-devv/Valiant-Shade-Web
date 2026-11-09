@@ -95,6 +95,7 @@ class GazetteIssue extends Model
                     'teaser' => $teaser !== '' ? $teaser : null,
                     'news_id' => isset($merged['news_id']) ? (int) $merged['news_id'] : null,
                     'is_filled' => $body !== '',
+                    'anonymous' => (bool) ($merged['anonymous'] ?? false),
                 ];
             })
             ->values()

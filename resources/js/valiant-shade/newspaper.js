@@ -485,10 +485,12 @@ function renderCornerSlot(slot, slotIndex = 0) {
     `;
   }
 
+  const byline = rumuz || (slot.anonymous ? 'Anonim Gözcü' : '');
+
   return `
     <div class="vs-gazette-corner vs-gazette-corner--teaser">
       <span class="vs-gazette-corner__title">${title}</span>
-      ${rumuz ? `<span class="vs-gazette-corner__rumuz">${rumuz}</span>` : ''}
+      ${byline ? `<span class="vs-gazette-corner__rumuz">${escapeHtml(byline)}</span>` : ''}
       <p class="vs-gazette-corner__teaser">${escapeHtml(teaser)}</p>
       <button type="button" class="vs-gazette-corner__jump" data-goto-page="${innerPage}">Devamı ${innerPage} sayfada</button>
     </div>
@@ -536,7 +538,7 @@ function renderInnerCornerRail(slot) {
   return `
     <aside class="vs-gazette-corner-rail" aria-label="${title}">
       <h3 class="vs-gazette-corner-rail__title">${title}</h3>
-      ${rumuz ? `<p class="vs-gazette-corner-rail__rumuz">${rumuz}</p>` : ''}
+      ${rumuz || slot.anonymous ? `<p class="vs-gazette-corner-rail__rumuz">${escapeHtml(rumuz || (slot.anonymous ? 'Anonim Gözcü' : ''))}</p>` : ''}
       <div class="vs-gazette-corner-rail__body">${paras}</div>
     </aside>
   `;
@@ -709,7 +711,7 @@ async function enrichGazetteItems(items) {
 function formatRumuz(author) {
   const raw = String(author || '').trim();
   if (!raw || /anonim|gizli/i.test(raw)) {
-    return '◆';
+    return 'Anonim Gözcü';
   }
   const parts = raw.split(/\s+/).filter(Boolean);
   if (parts.length >= 2) {

@@ -149,9 +149,10 @@ class PublicNewsController extends Controller
         $slotKind = $data['gazette_slot_kind'] ?? null;
         $rumuz = isset($data['rumuz']) ? trim((string) $data['rumuz']) : '';
 
-        $author = ! empty($data['anonymous']) ? 'Anonim Gözcü' : ($data['author'] ?? 'Sokak Muhabiri');
-        if ($slotKind === 'corner' && $rumuz !== '') {
-            $author = ! empty($data['anonymous']) ? $rumuz : ($data['author'] ?? $rumuz);
+        $anonymous = ! empty($data['anonymous']);
+        $author = $anonymous ? 'Anonim Gözcü' : ($data['author'] ?? 'Sokak Muhabiri');
+        if ($slotKind === 'corner' && ! $anonymous && $rumuz !== '') {
+            $author = trim((string) ($data['author'] ?? '')) !== '' ? trim((string) $data['author']) : $rumuz;
         }
 
         $submissionTags = [
@@ -164,19 +165,23 @@ class PublicNewsController extends Controller
         $authorRoles = [
             'lead' => $slotLabel !== '' ? "Manşet — {$slotLabel}" : 'Okuyucu — manşet',
             'corner' => $slotLabel !== ''
-                ? "Köşe — {$slotLabel}".($rumuz !== '' ? " ({$rumuz})" : '')
-                : 'Köşe yazarı'.($rumuz !== '' ? " ({$rumuz})" : ''),
+                ? "Köşe — {$slotLabel}".(! $anonymous && $rumuz !== '' ? " ({$rumuz})" : '')
+                : 'Köşe yazarı'.(! $anonymous && $rumuz !== '' ? " ({$rumuz})" : ''),
         ];
         $authorRole = $authorRoles[$slotKind] ?? 'Halktan Gelen İhbar';
 
+        $submission = array_filter([
+            'gazette_slot_kind' => $slotKind,
+            'gazette_slot_key' => $data['gazette_slot_key'] ?? null,
+            'gazette_slot_label' => $slotLabel !== '' ? $slotLabel : null,
+            'gazette_issue_id' => $targetIssue->id,
+            'rumuz' => ! $anonymous && $rumuz !== '' ? $rumuz : null,
+        ], static fn ($value) => $value !== null && $value !== '');
+        if ($anonymous) {
+            $submission['anonymous'] = true;
+        }
         $stats = [
-            'submission' => array_filter([
-                'gazette_slot_kind' => $slotKind,
-                'gazette_slot_key' => $data['gazette_slot_key'] ?? null,
-                'gazette_slot_label' => $slotLabel !== '' ? $slotLabel : null,
-                'gazette_issue_id' => $targetIssue->id,
-                'rumuz' => $rumuz !== '' ? $rumuz : null,
-            ], static fn ($value) => $value !== null && $value !== ''),
+            'submission' => $submission,
         ];
 
         $news = News::create([
