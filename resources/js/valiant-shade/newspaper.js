@@ -26,6 +26,8 @@ const state = {
   suppressUrlSync: false,
   articleBootstrapInFlight: false,
   openArticleId: null,
+  coverMastIndex: 0,
+  coverMastTimer: null,
 };
 
 const els = {};
@@ -486,14 +488,16 @@ function renderCornerSlot(slot, slotIndex = 0) {
   }
 
   const byline = rumuz || (slot.anonymous ? 'Anonim Gözcü' : '');
+  const newsId = slot.news_id != null ? escapeHtml(String(slot.news_id)) : '';
+  const openAttrs = newsId ? ` data-open-id="${newsId}"` : ` data-corner-key="${key}"`;
 
   return `
-    <div class="vs-gazette-corner vs-gazette-corner--teaser">
+    <button type="button" class="vs-gazette-corner vs-gazette-corner--teaser vs-gazette-corner--open"${openAttrs}>
       <span class="vs-gazette-corner__title">${title}</span>
       ${byline ? `<span class="vs-gazette-corner__rumuz">${escapeHtml(byline)}</span>` : ''}
       <p class="vs-gazette-corner__teaser">${escapeHtml(teaser)}</p>
-      <button type="button" class="vs-gazette-corner__jump" data-goto-page="${innerPage}">Devamı ${innerPage} sayfada</button>
-    </div>
+      <span class="vs-gazette-corner__jump">Oku · ${innerPage}. yaprakta da var</span>
+    </button>
   `;
 }
 
@@ -503,7 +507,10 @@ function cornerSlotForInnerPage(page) {
     return null;
   }
   const innerIndex = Math.max(0, Number(page) - 2);
-  return slots[innerIndex % slots.length];
+  if (innerIndex >= slots.length) {
+    return null;
+  }
+  return slots[innerIndex];
 }
 
 function renderInnerCornerRail(slot) {
@@ -535,11 +542,15 @@ function renderInnerCornerRail(slot) {
     .map((p) => `<p class="vs-gazette-corner-rail__p">${escapeHtml(p)}</p>`)
     .join('');
 
+  const newsId = slot.news_id != null ? escapeHtml(String(slot.news_id)) : '';
+  const openAttrs = newsId ? ` data-open-id="${newsId}"` : ` data-corner-key="${key}"`;
+
   return `
-    <aside class="vs-gazette-corner-rail" aria-label="${title}">
+    <aside class="vs-gazette-corner-rail vs-gazette-corner-rail--open" aria-label="${title}"${openAttrs} role="button" tabindex="0">
       <h3 class="vs-gazette-corner-rail__title">${title}</h3>
       ${rumuz || slot.anonymous ? `<p class="vs-gazette-corner-rail__rumuz">${escapeHtml(rumuz || (slot.anonymous ? 'Anonim Gözcü' : ''))}</p>` : ''}
       <div class="vs-gazette-corner-rail__body">${paras}</div>
+      <span class="vs-gazette-corner-rail__hint-open">Tam metin için tıklayın</span>
     </aside>
   `;
 }
@@ -583,8 +594,9 @@ function renderCoverSummary(item) {
   const type = escapeHtml(item.news_type_label || item.category || '');
   const excerpt = escapeHtml(truncateText(item.description || '', 140));
   const sheet = innerSheetForArticleId(item.id);
+  const openId = item.id != null ? escapeHtml(String(item.id)) : '';
   return `
-    <article class="vs-gazette-brief">
+    <article class="vs-gazette-brief vs-gazette-brief--open" data-open-id="${openId}">
       <span class="vs-gazette-brief__kicker">${type}</span>
       <h3 class="vs-gazette-brief__title">${title}</h3>
       <p class="vs-gazette-brief__excerpt">${excerpt}</p>
@@ -593,10 +605,125 @@ function renderCoverSummary(item) {
   `;
 }
 
+function renderCoverMastSlide(item) {
+  if (!item) {
+    return '';
+  }
+  const title = escapeHtml(item.title || '');
+  const leadType = escapeHtml(item.news_type_label || item.category || 'Manşet');
+  const leadParas = splitParagraphs(articlePlainText(item));
+  const deck = leadParas[0] ? escapeHtml(truncateText(leadParas[0], 220)) : '';
+  const openId = item.id != null ? escapeHtml(String(item.id)) : '';
+  return `
+    <div class="vs-gazette-mast__slide" data-open-id="${openId}">
+      <p class="vs-gazette-article__kicker">${leadType}</p>
+      <h2 class="vs-gazette-cover__headline">
+        <span class="vs-gazette-article__orn" aria-hidden="true">❧</span>
+        ${title}
+        <span class="vs-gazette-article__orn" aria-hidden="true">❧</span>
+      </h2>
+      <p class="vs-gazette-cover__deck">${deck}</p>
+    </div>
+  `;
+}
+
+function renderCoverMastheadCarousel(issue) {
+  const mastheads = Array.isArray(issue.cover_mastheads) ? issue.cover_mastheads.filter(Boolean) : [];
+  const fallback = issue.cover_lead ? [issue.cover_lead] : [];
+  const slides = mastheads.length ? mastheads : fallback;
+  if (!slides.length) {
+    if (!issueAllowsSubmissions()) {
+      return `
+        <div class="vs-gazette-cover__lead vs-gazette-brief--empty vs-gazette-brief--archive" aria-hidden="true">
+          <span class="vs-gazette-brief__kicker">Manşet</span>
+          <span class="vs-gazette-brief__title">Manşet yok</span>
+          <span class="vs-gazette-brief__excerpt">Bu sayı arşivlendi; boş manşet alanı doldurulamaz.</span>
+        </div>`;
+    }
+    return `
+      <button type="button" class="vs-gazette-cover__lead vs-gazette-brief--empty vs-gazette-slot--fill" data-slot-kind="lead" data-brief-slot="lead">
+        <span class="vs-gazette-brief__kicker">Manşet</span>
+        <span class="vs-gazette-brief__title">Burayı doldur</span>
+        <span class="vs-gazette-brief__excerpt">Haftanın ana haberini gönder. Editör onayından sonra kapakta yer alır.</span>
+      </button>`;
+  }
+  const slidesHtml = slides.map((item) => renderCoverMastSlide(item)).join('');
+  const dots = slides
+    .map((_, i) => `<button type="button" class="vs-gazette-mast__dot${i === 0 ? ' is-active' : ''}" data-mast-goto="${i}" aria-label="Manşet ${i + 1}"></button>`)
+    .join('');
+  return `
+    <div class="vs-gazette-mast" data-mast-count="${slides.length}">
+      <div class="vs-gazette-mast__glow" aria-hidden="true"></div>
+      <div class="vs-gazette-mast__viewport">
+        <div class="vs-gazette-mast__track">${slidesHtml}</div>
+      </div>
+      <div class="vs-gazette-mast__controls">
+        <button type="button" class="vs-gazette-mast__arrow vs-gazette-mast__arrow--prev" data-mast-prev aria-label="Önceki manşet">‹</button>
+        <div class="vs-gazette-mast__dots">${dots}</div>
+        <button type="button" class="vs-gazette-mast__arrow vs-gazette-mast__arrow--next" data-mast-next aria-label="Sonraki manşet">›</button>
+      </div>
+    </div>`;
+}
+
+function setCoverMastIndex(index) {
+  const root = els.gazetteStage?.querySelector('.vs-gazette-mast');
+  if (!root) {
+    return;
+  }
+  const count = Number(root.dataset.mastCount) || 1;
+  const next = ((Number(index) % count) + count) % count;
+  state.coverMastIndex = next;
+  const track = root.querySelector('.vs-gazette-mast__track');
+  if (track) {
+    track.style.setProperty('--mast-index', String(next));
+  }
+  root.querySelectorAll('.vs-gazette-mast__dot').forEach((dot, i) => {
+    dot.classList.toggle('is-active', i === next);
+  });
+}
+
+function initCoverMastSlider() {
+  if (state.coverMastTimer) {
+    clearInterval(state.coverMastTimer);
+    state.coverMastTimer = null;
+  }
+  const root = els.gazetteStage?.querySelector('.vs-gazette-mast');
+  if (!root) {
+    return;
+  }
+  const count = Number(root.dataset.mastCount) || 1;
+  if (count <= 1) {
+    return;
+  }
+  state.coverMastIndex = 0;
+  setCoverMastIndex(0);
+  root.querySelector('[data-mast-prev]')?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    setCoverMastIndex(state.coverMastIndex - 1);
+  });
+  root.querySelector('[data-mast-next]')?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    setCoverMastIndex(state.coverMastIndex + 1);
+  });
+  root.querySelectorAll('[data-mast-goto]').forEach((btn) => {
+    btn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      setCoverMastIndex(Number(btn.dataset.mastGoto));
+    });
+  });
+  state.coverMastTimer = setInterval(() => {
+    if (!document.body.contains(root) || !isGazetteLayout()) {
+      return;
+    }
+    setCoverMastIndex(state.coverMastIndex + 1);
+  }, 6500);
+}
+
 function renderGazetteCoverPage(_items, brand, issueMeta) {
   const issue = state.currentIssue || {};
-  const lead = issue.cover_lead || null;
-  const briefItems = Array.isArray(issue.cover_briefs) ? issue.cover_briefs : [];
+  const briefItems = Array.isArray(issue.cover_briefs)
+    ? [...issue.cover_briefs].filter(Boolean).sort((a, b) => (Number(b.id) || 0) - (Number(a.id) || 0))
+    : [];
   const slots = issue.corner_slots || [];
   const summaries = [];
   for (let i = 0; i < GAZETTE_SUMMARY_SLOTS; i++) {
@@ -608,36 +735,7 @@ function renderGazetteCoverPage(_items, brand, issueMeta) {
     summaries.join('') ||
     '<p class="vs-gazette-cover__summaries-empty">Onaylanan haberlerin özeti kapak gündeminde görünür.</p>';
 
-  const leadBlock = lead
-    ? (() => {
-        const leadTitle = escapeHtml(lead.title || '');
-        const leadType = escapeHtml(lead.news_type_label || lead.category || 'Manşet');
-        const leadParas = splitParagraphs(articlePlainText(lead));
-        const deck = leadParas[0] ? escapeHtml(truncateText(leadParas[0], 220)) : '';
-        return `
-        <div class="vs-gazette-cover__lead">
-          <p class="vs-gazette-article__kicker">${leadType}</p>
-          <h2 class="vs-gazette-cover__headline">
-            <span class="vs-gazette-article__orn" aria-hidden="true">❧</span>
-            ${leadTitle}
-            <span class="vs-gazette-article__orn" aria-hidden="true">❧</span>
-          </h2>
-          <p class="vs-gazette-cover__deck">${deck}</p>
-        </div>`;
-      })()
-    : issueAllowsSubmissions()
-      ? `
-        <button type="button" class="vs-gazette-cover__lead vs-gazette-brief--empty vs-gazette-slot--fill" data-slot-kind="lead" data-brief-slot="lead">
-          <span class="vs-gazette-brief__kicker">Manşet</span>
-          <span class="vs-gazette-brief__title">Burayı doldur</span>
-          <span class="vs-gazette-brief__excerpt">Haftanın ana haberini gönder. Editör onayından sonra kapakta yer alır.</span>
-        </button>`
-      : `
-        <div class="vs-gazette-cover__lead vs-gazette-brief--empty vs-gazette-brief--archive" aria-hidden="true">
-          <span class="vs-gazette-brief__kicker">Manşet</span>
-          <span class="vs-gazette-brief__title">Manşet yok</span>
-          <span class="vs-gazette-brief__excerpt">Bu sayı arşivlendi; boş manşet alanı doldurulamaz.</span>
-        </div>`;
+  const mastBlock = renderCoverMastheadCarousel(issue);
 
   const corners = slots.length
     ? slots.map((s, i) => renderCornerSlot(s, i)).join('')
@@ -646,7 +744,7 @@ function renderGazetteCoverPage(_items, brand, issueMeta) {
   return `
     <div class="vs-gazette-cover">
       <section class="vs-gazette-cover__mast">
-        ${leadBlock}
+        ${mastBlock}
       </section>
       <div class="vs-gazette-cover__grid">
         <div class="vs-gazette-cover__summaries">
@@ -749,9 +847,10 @@ function renderGazetteArticle(item, { lead = false } = {}) {
   const rumuz = escapeHtml(formatRumuz(item.author));
   const authorTitle = escapeHtml(item.author || 'Anonim');
   const leadClass = lead ? ' vs-gazette-article--lead' : '';
+  const openId = item.id != null ? escapeHtml(String(item.id)) : '';
 
   return `
-    <article class="vs-gazette-article${leadClass}">
+    <article class="vs-gazette-article vs-gazette-article--open${leadClass}" data-open-id="${openId}">
       <div class="vs-gazette-article__rumuz" title="${authorTitle}">
         <span class="vs-gazette-rumuz" aria-label="Rumuz: ${authorTitle}">${rumuz}</span>
       </div>
@@ -784,7 +883,6 @@ function renderGazetteInnerPage(items, brand, issueMeta) {
 
   return `
     <div class="vs-gazette-inner">
-      <p class="vs-gazette-inner__label">İç sayfa · tam metin</p>
       <div class="vs-gazette-inner-layout">
         <div class="vs-gazette-articles">${articles || '<p class="vs-gazette-inner__empty">Bu yaprakta haber metni yok.</p>'}</div>
         ${cornerRail}
@@ -795,19 +893,20 @@ function renderGazetteInnerPage(items, brand, issueMeta) {
 
 function renderGazetteMasthead(brand, issueMeta, isFirstPage) {
   const { dateStr, issueNumber, issueLabel } = issueMeta;
+  const pageNum = escapeHtml(String(issueMeta.page));
   if (!isFirstPage) {
     return `
       <header class="vs-gazette-running-head">
-        <span class="vs-gazette-running-head__title">${escapeHtml(brand.name)}</span>
-        <span class="vs-gazette-running-head__rule" aria-hidden="true"></span>
-        <span class="vs-gazette-running-head__sheet">Yaprak ${issueMeta.page}</span>
+        <button type="button" class="vs-gazette-home-link vs-gazette-running-head__title" data-gazette-home>${escapeHtml(brand.name)}</button>
+        <span class="vs-gazette-page-num vs-gazette-page-num--top">${pageNum}</span>
       </header>
     `;
   }
 
   return `
     <header class="vs-gazette-masthead">
-      <div class="vs-gazette-masthead__ornament">☙ &nbsp; ${escapeHtml(brand.name)} &nbsp; ❧</div>
+      <span class="vs-gazette-page-num vs-gazette-page-num--top">${pageNum}</span>
+      <div class="vs-gazette-masthead__ornament">☙ &nbsp; <button type="button" class="vs-gazette-home-link" data-gazette-home>${escapeHtml(brand.name)}</button> &nbsp; ❧</div>
       <div class="vs-gazette-masthead__row">
         ${brand.logo ? `<img class="vs-gazette-masthead__crest" src="${escapeHtml(brand.logo)}" width="72" height="72" alt="">` : ''}
         <div class="vs-gazette-masthead__titles">
@@ -854,8 +953,7 @@ function renderGazetteSheet(items, meta) {
       ${body}
       ${footerSidebar}
       <footer class="vs-gazette-footer">
-        <span>${escapeHtml(brand.press)}</span>
-        <span>${isCover ? 'Kapak' : 'İç sayfa'} · Yaprak ${page} / ${meta?.last_page || 1}</span>
+        <span class="vs-gazette-page-num vs-gazette-page-num--bottom">${page}</span>
       </footer>
     </article>
   `;
@@ -883,6 +981,7 @@ function renderGazette(items, meta) {
       { once: true },
     );
   }
+  initCoverMastSlider();
   if (isMobileGazetteLayout()) {
     return;
   }
@@ -1032,6 +1131,46 @@ function syncPageNavButtons(meta) {
   }
 }
 
+function goGazetteHome() {
+  closeModal();
+  state.pendingArticleId = null;
+  state.openArticleId = null;
+  state.page = 1;
+  state.type = 'all';
+  state.search = '';
+  if (els.searchInput) {
+    els.searchInput.value = '';
+  }
+  document.querySelectorAll('.vs-type-picker__btn.is-selected').forEach((btn) => {
+    btn.classList.remove('is-selected');
+  });
+  const allBtn = document.querySelector('.vs-type-picker__btn[data-type="all"]');
+  if (allBtn) {
+    allBtn.classList.add('is-selected');
+  }
+  state.pageTurnDir = 'back';
+  applyLayoutMode();
+  const url = new URL(window.location.pathname, window.location.origin);
+  if (state.layoutMode === 'gazette') {
+    url.searchParams.set('gorunum', 'gazette');
+    const issue = state.currentIssue || {};
+    if (issue.issue_number) {
+      url.searchParams.set('sayi', String(issue.issue_number));
+    }
+    url.searchParams.set('yaprak', '1');
+  } else {
+    url.searchParams.set('gorunum', 'web');
+    url.searchParams.set('sayfa', '1');
+  }
+  state.suppressUrlSync = true;
+  window.history.replaceState(null, '', `${url.pathname}${url.search}`);
+  loadFeed()
+    .catch(console.error)
+    .finally(() => {
+      state.suppressUrlSync = false;
+    });
+}
+
 function goToFeedPage(targetPage, turnDir = 'fwd') {
   const last = state.lastFeedMeta?.last_page;
   const page = Math.max(1, Number(targetPage) || 1);
@@ -1178,6 +1317,53 @@ function renderStoryHtml(storyText) {
     .join('');
 }
 
+function openCornerReader(slotKey) {
+  const slots = state.currentIssue?.corner_slots || [];
+  const slot = slots.find((row) => String(row.key) === String(slotKey));
+  if (!slot || !String(slot.body || '').trim()) {
+    return;
+  }
+  const rumuz = slot.rumuz || (slot.anonymous ? 'Anonim Gözcü' : 'Köşe Yazarı');
+  if (els.modalHero) {
+    els.modalHero.style.backgroundImage = '';
+    els.modalHero.hidden = true;
+  }
+  if (els.modalBadges) {
+    els.modalBadges.innerHTML = '';
+  }
+  if (els.detailModalPanel) {
+    els.detailModalPanel.classList.remove('vs-modal--article-split');
+  }
+  els.modalTitle.textContent = slot.title || 'Köşe yazısı';
+  if (els.modalDate) {
+    els.modalDate.hidden = true;
+  }
+  if (els.modalAuthor) {
+    els.modalAuthor.textContent = rumuz;
+  }
+  if (els.modalAuthorRole) {
+    els.modalAuthorRole.hidden = true;
+  }
+  if (els.modalLocation) {
+    els.modalLocation.hidden = true;
+  }
+  if (els.modalReadTime) {
+    els.modalReadTime.hidden = true;
+  }
+  els.modalStory.innerHTML = renderStoryHtml(slot.body || '');
+  if (els.modalQuote) {
+    els.modalQuote.hidden = true;
+  }
+  if (els.detailModal) {
+    els.detailModal.classList.add('vs-modal-backdrop--gazette-read');
+    els.detailModal.classList.remove('vs-modal-backdrop--web-read');
+  }
+  document.body.classList.add('vs-article-modal-open');
+  els.detailModal.classList.add('is-open');
+  state.openArticleId = null;
+  syncBrowserUrl();
+}
+
 async function openArticle(id, options = {}) {
   const gazetteReader =
     typeof options.gazetteReader === 'boolean' ? options.gazetteReader : isGazetteLayout();
@@ -1240,9 +1426,24 @@ async function openArticle(id, options = {}) {
     els.detailModal.classList.toggle('vs-modal-backdrop--gazette-read', gazetteReader);
     els.detailModal.classList.toggle('vs-modal-backdrop--web-read', !gazetteReader);
   }
+  if (els.detailModalPanel) {
+    els.detailModalPanel.classList.toggle('vs-modal--article-split', gazetteReader && Boolean(heroUrl));
+  }
   if (els.modalHero) {
     els.modalHero.classList.toggle('vs-modal__hero--gazette-photo', gazetteReader && Boolean(heroUrl));
     els.modalHero.hidden = !heroUrl;
+  }
+  if (els.modalDate) {
+    els.modalDate.hidden = false;
+  }
+  if (els.modalAuthorRole) {
+    els.modalAuthorRole.hidden = !els.modalAuthorRole.textContent;
+  }
+  if (els.modalLocation) {
+    els.modalLocation.hidden = !els.modalLocation.textContent;
+  }
+  if (els.modalReadTime) {
+    els.modalReadTime.hidden = false;
   }
   document.body.classList.add('vs-article-modal-open');
   els.detailModal.classList.add('is-open');
@@ -1260,6 +1461,9 @@ function closeModal() {
   if (els.modalHero) {
     els.modalHero.classList.remove('vs-modal__hero--gazette-photo');
     els.modalHero.hidden = false;
+  }
+  if (els.detailModalPanel) {
+    els.detailModalPanel.classList.remove('vs-modal--article-split');
   }
   document.body.classList.remove('vs-article-modal-open');
   state.openArticleId = null;
@@ -1816,6 +2020,7 @@ function bindEvents() {
       const gotoBtn = event.target.closest('[data-goto-page]');
       if (gotoBtn && isGazetteLayout()) {
         event.preventDefault();
+        event.stopPropagation();
         const target = Number(gotoBtn.dataset.gotoPage);
         if (Number.isFinite(target) && target >= 1) {
           const dir = target < state.page ? 'back' : 'fwd';
@@ -1894,6 +2099,21 @@ function bindEvents() {
   }
 
   document.body.addEventListener('click', (event) => {
+    const homeBtn = event.target.closest('[data-gazette-home]');
+    if (homeBtn) {
+      event.preventDefault();
+      goGazetteHome();
+      return;
+    }
+    const cornerBtn = event.target.closest('[data-corner-key]');
+    if (cornerBtn && !cornerBtn.dataset.openId) {
+      const inGazette = isGazetteLayout();
+      if (!inGazette || els.gazetteStage?.contains(cornerBtn)) {
+        event.preventDefault();
+        openCornerReader(cornerBtn.dataset.cornerKey);
+      }
+      return;
+    }
     const openBtn = event.target.closest('[data-open-id]');
     if (!openBtn) {
       return;
@@ -1906,9 +2126,24 @@ function bindEvents() {
       if (event.target.closest('.vs-gazette-slot--fill')) {
         return;
       }
+      if (event.target.closest('[data-goto-page]')) {
+        return;
+      }
     }
     event.preventDefault();
     openArticle(openBtn.dataset.openId, { gazetteReader: inGazette }).catch(console.error);
+  });
+
+  document.body.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return;
+    }
+    const cornerRail = event.target.closest('.vs-gazette-corner-rail--open[data-corner-key]');
+    if (!cornerRail) {
+      return;
+    }
+    event.preventDefault();
+    openCornerReader(cornerRail.dataset.cornerKey);
   });
 
   document.addEventListener('keydown', (event) => {
@@ -2067,6 +2302,7 @@ document.addEventListener('DOMContentLoaded', () => {
   els.nextPage = qs('newsNextPage');
   els.pageSheet = qs('newsPageSheet');
   els.detailModal = qs('newsDetailModal');
+  els.detailModalPanel = qs('newsDetailModalPanel');
   els.modalHero = qs('newsModalHero');
   els.modalTitle = qs('newsModalTitle');
   els.modalBadges = qs('newsModalBadges');

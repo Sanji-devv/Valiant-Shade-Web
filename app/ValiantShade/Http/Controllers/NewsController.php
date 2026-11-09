@@ -5,6 +5,7 @@ namespace App\ValiantShade\Http\Controllers;
 use App\Models\News;
 use App\ValiantShade\Http\Controllers\Controller;
 use App\ValiantShade\Services\GazetteIssueService;
+use App\ValiantShade\Support\GazetteNewsImage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -912,7 +913,10 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
             'stats.*.color' => 'nullable|string|max:50',
         ]);
 
-        $imageUrl = $validated['image_url'] ?? ($validated['image_preset'] ?? 'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg');
+        $autoImage = ! $request->hasFile('custom_image')
+            && (empty($request->image_preset) || $request->image_preset === '__gazette_auto__');
+        $imageUrl = $validated['image_url']
+            ?? ($autoImage ? 'static/valiant-shade/assets/img/news/guild_tavern_whispers.jpg' : ($validated['image_preset'] ?? 'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg'));
         if ($request->hasFile('custom_image')) {
             $file = $request->file('custom_image');
             $filename = 'news_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
@@ -944,6 +948,11 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
             'is_active' => $request->has('is_active') ? (bool) $request->is_active : true,
             'status' => 'published',
         ]);
+
+        if ($autoImage) {
+            GazetteNewsImage::assignFromContent($news);
+            $news->saveQuietly();
+        }
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([

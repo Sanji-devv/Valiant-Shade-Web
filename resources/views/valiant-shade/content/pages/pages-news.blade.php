@@ -754,14 +754,19 @@
           <div class="col-md-6">
             <label class="form-label text-white small fw-medium" for="newsEditImagePreset">{{ __('Cover image') }}</label>
             <select class="form-select" id="newsEditImagePreset" name="image_preset">
-              @foreach([
-                'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg',
-                'static/valiant-shade/assets/img/news/guild_tavern_whispers.jpg',
-                'static/valiant-shade/assets/img/news/guild_heroes_funeral.jpg',
-                'static/valiant-shade/assets/img/news/guild_shadow_realm.jpg',
-                'static/valiant-shade/assets/img/news/guild_treasury_vault.jpg',
-              ] as $preset)
-              <option value="{{ $preset }}">{{ basename($preset, '.jpg') }}</option>
+              @php
+                $gazetteImagePresets = [];
+                foreach (\App\ValiantShade\Support\GazetteImageLibrary::catalog() as $entry) {
+                    $path = (string) ($entry['path'] ?? '');
+                    if ($path === '' || isset($gazetteImagePresets[$path])) {
+                        continue;
+                    }
+                    $gazetteImagePresets[$path] = (string) ($entry['label'] ?? basename($path, '.jpg'));
+                }
+              @endphp
+              <option value="__gazette_auto__" selected>Başlık ve özetten otomatik</option>
+              @foreach ($gazetteImagePresets as $preset => $presetLabel)
+              <option value="{{ $preset }}">{{ $presetLabel }}</option>
               @endforeach
             </select>
           </div>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\News;
+use App\ValiantShade\Support\GazetteNewsImage;
 use App\ValiantShade\Services\GazetteIssueService;
 use App\ValiantShade\Services\PublicNewsService;
 use App\ValiantShade\Support\WorldCalendar;
@@ -204,6 +205,9 @@ class PublicNewsController extends Controller
             'is_active' => false,
             'order' => (int) News::max('order') + 1,
         ]);
+
+        GazetteNewsImage::assignFromContent($news);
+        $news->saveQuietly();
 
         return response()->json([
             'success' => true,

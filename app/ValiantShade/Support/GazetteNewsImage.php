@@ -9,9 +9,21 @@ final class GazetteNewsImage
     /**
      * Başlığa göre woodcut / gazete görseli atar. Zaten özel görsel varsa dokunmaz.
      */
+    public static function assignFromContent(News $news, bool $customUpload = false): bool
+    {
+        if ($customUpload) {
+            return false;
+        }
+
+        return self::applyToNews($news, true);
+    }
+
     public static function applyToNews(News $news, bool $force = false): bool
     {
-        $path = self::resolvePathForTitle((string) ($news->title ?? ''));
+        $path = GazetteImageLibrary::resolveForText(
+            (string) ($news->title ?? ''),
+            trim((string) ($news->description ?? '').' '.(string) ($news->full_story ?? '')),
+        );
         if ($path === null) {
             return false;
         }

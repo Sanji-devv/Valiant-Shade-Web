@@ -219,7 +219,9 @@ class GazetteIssueService
         $totalArticles = $innerNews->count();
         $innerPerSheet = max(2, (int) config('gazette.inner_articles_per_sheet', 3));
         $innerSheets = $totalArticles > 0 ? (int) ceil($totalArticles / $innerPerSheet) : 1;
-        $lastSheet = 1 + $innerSheets;
+        $cornerSlotCount = count(config('gazette.corner_slots', []));
+        $maxCornerSheet = $cornerSlotCount > 0 ? ($cornerSlotCount + 1) : 1;
+        $lastSheet = max(1 + $innerSheets, $maxCornerSheet);
         $paginationIds = $innerNews->pluck('id')->values()->all();
 
         $sheet = min(max(1, $sheet), max(1, $lastSheet));
@@ -256,6 +258,21 @@ class GazetteIssueService
             : null;
         $issuePayload['cover_briefs'] = collect($coverPayload['briefs'])
             ->map(fn ($item) => $item ? $this->publicNews->transformItem($item) : null)
+            ->values()
+            ->all();
+        $issuePayload['cover_mastheads'] = collect([$coverPayload['lead']])
+            ->merge($coverPayload['briefs'])
+            ->filter()
+            ->unique(fn ($item) => (int) $item->id)
+            ->sortByDesc(function ($item) {
+                if ($item->created_at instanceof \DateTimeInterface) {
+                    return $item->created_at->getTimestamp();
+                }
+
+                return (int) ($item->id ?? 0);
+            })
+            ->take(6)
+            ->map(fn ($item) => $this->publicNews->transformItem($item))
             ->values()
             ->all();
 

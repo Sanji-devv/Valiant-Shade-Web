@@ -37,7 +37,7 @@
 >
     <header class="vs-newspaper-header">
         <div class="vs-newspaper-header__brand">
-            <h1>{{ $gazetteTitle }}</h1>
+            <h1><button type="button" class="vs-gazette-home-link" data-gazette-home aria-label="Kapak sayfasına dön">{{ $gazetteTitle }}</button></h1>
             <p class="vs-newspaper-header__tagline">{{ $gazetteTagline }}</p>
         </div>
         <nav class="vs-newspaper-nav" aria-label="Gazete menüsü">
