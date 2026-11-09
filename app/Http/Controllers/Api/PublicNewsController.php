@@ -129,6 +129,23 @@ class PublicNewsController extends Controller
         $data = $validator->validated();
         $typeConfig = config('news.types.'.$data['news_type']);
 
+        $requestedIssueId = isset($data['gazette_issue_id']) ? (int) $data['gazette_issue_id'] : null;
+        $targetIssue = $this->gazetteIssues->currentEditableIssue();
+
+        if ($requestedIssueId && (int) $requestedIssueId !== (int) $targetIssue->id) {
+            if ($this->gazetteIssues->issueIsLocked($requestedIssueId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bu gazete sayısı yayımlandı; yeni gönderi yalnızca açık sayıya yapılabilir.',
+                ], 422);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gönderiler yalnızca düzenlenmekte olan güncel sayıya alınır.',
+            ], 422);
+        }
+
         $slotKind = $data['gazette_slot_kind'] ?? null;
         $rumuz = isset($data['rumuz']) ? trim((string) $data['rumuz']) : '';
 
@@ -157,7 +174,7 @@ class PublicNewsController extends Controller
                 'gazette_slot_kind' => $slotKind,
                 'gazette_slot_key' => $data['gazette_slot_key'] ?? null,
                 'gazette_slot_label' => $slotLabel !== '' ? $slotLabel : null,
-                'gazette_issue_id' => $data['gazette_issue_id'] ?? null,
+                'gazette_issue_id' => $targetIssue->id,
                 'rumuz' => $rumuz !== '' ? $rumuz : null,
             ], static fn ($value) => $value !== null && $value !== ''),
         ];
@@ -166,7 +183,7 @@ class PublicNewsController extends Controller
             'title' => $data['title'],
             'category' => $typeConfig['label'],
             'news_type' => $data['news_type'],
-            'gazette_issue_id' => $data['gazette_issue_id'] ?? null,
+            'gazette_issue_id' => $targetIssue->id,
             'badge_color' => $typeConfig['badge_color'],
             'category_icon' => $typeConfig['category_icon'],
             'tag' => $tag,

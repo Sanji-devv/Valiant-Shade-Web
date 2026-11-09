@@ -165,6 +165,7 @@ class PublicNewsService
             'is_breaking' => (bool) ($item->is_breaking ?? false),
             'views_count' => (int) ($item->views_count ?? 0),
             'order' => (int) ($item->order ?? 0),
+            'gazette_issue_id' => isset($item->gazette_issue_id) ? (int) $item->gazette_issue_id : null,
         ];
     }
 

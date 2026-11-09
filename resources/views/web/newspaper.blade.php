@@ -33,6 +33,7 @@
     data-gazette-issue-year="{{ $gazetteIssue['year'] ?? 631 }}"
     data-gazette-calendar='@json($gb["calendar"] ?? [])'
     data-gazette-submission-slots='@json(config("gazette.submission_slots", []))'
+    data-gazette-corner-slots='@json(config("gazette.corner_slots", []))'
 >
     <header class="vs-newspaper-header">
         <div class="vs-newspaper-header__brand">
@@ -98,14 +99,18 @@
                         <span class="vs-gazette-archive-wrap__label">Sayı</span>
                         <select class="vs-gazette-archive" id="gazetteArchiveSelect" aria-label="Gazete sayısı arşivi"></select>
                     </label>
-                    <button type="button" class="vs-layout-toggle" id="toggleGazetteLayoutBtn" aria-pressed="false" title="Basılı gazete sayfası. Sayfa sayfa gezin.">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M8 4v16M16 4v16M4 8h16M4 16h16"/></svg>
-                        <span id="toggleGazetteLayoutLabel">Gazete görünümü</span>
-                    </button>
                 </div>
             </div>
-            <div class="vs-filter-panel" id="newsFilterPanel" hidden>
-                <div class="vs-filter-group" id="newsFilterGroup"></div>
+            <div class="vs-toolbar__filters-row">
+                <div class="vs-filter-strip">
+                    <div class="vs-filter-panel" id="newsFilterPanel" hidden>
+                        <div class="vs-filter-group" id="newsFilterGroup"></div>
+                    </div>
+                    <button type="button" class="vs-layout-toggle vs-layout-toggle--icon" id="toggleGazetteLayoutBtn" aria-pressed="false" title="Basılı gazete sayfası. Sayfa sayfa gezin." aria-label="Gazete görünümü">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M8 4v16M16 4v16M4 8h16M4 16h16"/></svg>
+                        <span id="toggleGazetteLayoutLabel" hidden>Gazete görünümü</span>
+                    </button>
+                </div>
             </div>
         </section>
 
@@ -139,7 +144,10 @@
 
     <div class="vs-modal-backdrop vs-modal-backdrop--article" id="newsDetailModal" role="dialog" aria-modal="true" aria-labelledby="newsModalTitle">
         <article class="vs-modal vs-modal--article" id="newsDetailModalPanel">
-            <button type="button" class="vs-modal__close" id="newsModalClose" aria-label="Kapat">×</button>
+            <div class="vs-modal__chrome">
+                <button type="button" class="vs-modal__share" id="newsModalShare" title="Bu haberin bağlantısını kopyala">Bağlantıyı kopyala</button>
+                <button type="button" class="vs-modal__close" id="newsModalClose" aria-label="Kapat">×</button>
+            </div>
             <div class="vs-modal__hero" id="newsModalHero">
                 <div class="vs-modal__hero-overlay"></div>
             </div>
@@ -175,8 +183,16 @@
         <section class="vs-modal vs-modal--rumor-gazette" id="rumorModalPanel">
             <button type="button" class="vs-modal__close vs-modal__close--gazette" id="rumorModalClose" aria-label="Kapat">×</button>
             <div class="vs-modal__body vs-modal__body--rumor">
-                <h2 id="rumorModalTitle">Söylenti gönder</h2>
-                <p id="rumorModalIntro" class="vs-rumor-modal__intro">Editör onayından sonra gazetede yayınlanır. Kayıt gerekmez.</p>
+                <header class="vs-rumor-modal__head">
+                    <div class="vs-rumor-modal__title-row">
+                        <h2 id="rumorModalTitle">Söylenti gönder</h2>
+                        <div class="vs-rumor-issue-pick" id="rumorIssuePickWrap">
+                            <span class="vs-rumor-issue-pick__label" id="rumorIssuePickLabel">Sayı</span>
+                            <select class="vs-rumor-issue-pick__select" id="rumorIssueSelect" aria-labelledby="rumorModalTitle rumorIssuePickLabel"></select>
+                        </div>
+                    </div>
+                    <p id="rumorModalIntro" class="vs-rumor-modal__intro">Editör onayından sonra gazetede yayınlanır. Kayıt gerekmez.</p>
+                </header>
                 <div class="vs-rumor-placement" id="rumorPlacementWrap">
                     <span class="vs-rumor-placement__label">Gazetede yeri</span>
                     <div class="vs-rumor-placement__kinds" id="rumorPlacementKinds" role="radiogroup" aria-label="Gönderi yeri"></div>
@@ -190,10 +206,6 @@
                     <input type="hidden" name="gazette_slot_key" id="rumorGazetteSlotKey" value="">
                     <input type="hidden" name="gazette_slot_label" id="rumorGazetteSlotLabelHidden" value="">
                     <input type="hidden" name="gazette_issue_id" id="rumorGazetteIssueId" value="">
-                    <label class="vs-rumor-form__span">
-                        <span id="rumorTitleLabel">Başlık</span>
-                        <input type="text" name="title" id="rumorTitleInput" required minlength="8" maxlength="255" placeholder="Örn. Kızıl Han'da gizli buluşma…">
-                    </label>
                     <div class="vs-form-field vs-rumor-form__span">
                         <span class="vs-form-field__label">Tür</span>
                         @include('web.partials.news-type-picker', [
@@ -203,23 +215,29 @@
                             'inputName' => 'news_type',
                         ])
                     </div>
-                    <label class="vs-rumor-form__half">
-                        Konum (isteğe bağlı)
-                        <input type="text" name="location_badge" maxlength="150" placeholder="Örn. Isonburg - Alt Şehir">
-                    </label>
-                    <label id="rumorRumuzWrap" class="vs-rumor-form__span" hidden>
-                        Rumuz (köşe imzası)
-                        <input type="text" name="rumuz" id="rumorRumuzInput" maxlength="80" placeholder="Basılacak rumuz, örn. G.T.">
-                    </label>
-                    <label id="rumorAuthorWrap" class="vs-rumor-form__half">
-                        Muhabir adı (isteğe bağlı)
-                        <input type="text" name="author" id="rumorAuthorInput" maxlength="120" placeholder="Anonim kalabilirsiniz">
-                    </label>
+                    <div class="vs-rumor-form__meta-grid vs-rumor-form__meta-grid--three vs-rumor-form__span" id="rumorMetaGrid">
+                        <label class="vs-rumor-form__meta-cell">
+                            Konum (isteğe bağlı)
+                            <input type="text" name="location_badge" maxlength="150" placeholder="Örn. Isonburg - Alt Şehir">
+                        </label>
+                        <label id="rumorRumuzWrap" class="vs-rumor-form__meta-cell" hidden>
+                            Rumuz (köşe imzası)
+                            <input type="text" name="rumuz" id="rumorRumuzInput" maxlength="80" placeholder="Basılacak rumuz, örn. G.T.">
+                        </label>
+                        <label id="rumorAuthorWrap" class="vs-rumor-form__meta-cell">
+                            Muhabir adı (isteğe bağlı)
+                            <input type="text" name="author" id="rumorAuthorInput" maxlength="120" placeholder="Anonim kalabilirsiniz">
+                        </label>
+                        <div class="vs-rumor-form__meta-cell vs-rumor-form__meta-cell--check">
+                            <input type="checkbox" name="anonymous" id="rumorAnonymousInput" class="vs-rumor-form__check-input" checked tabindex="-1" aria-hidden="true">
+                            <button type="button" class="vs-rumor-anon-toggle is-active" id="rumorAnonymousToggle" aria-pressed="true">
+                                Kimliğimi gizli tut
+                            </button>
+                        </div>
+                    </div>
                     <label class="vs-rumor-form__span">
-                        <span style="display:flex;gap:.5rem;align-items:center">
-                            <input type="checkbox" name="anonymous" checked>
-                            Kimliğimi gizli tut
-                        </span>
+                        <span id="rumorTitleLabel">Başlık</span>
+                        <input type="text" name="title" id="rumorTitleInput" required minlength="8" maxlength="255" placeholder="Örn. Kızıl Han'da gizli buluşma…">
                     </label>
                     <label class="vs-rumor-form__span">
                         <span id="rumorBodyLabel">Söylenti / ihbar metni</span>

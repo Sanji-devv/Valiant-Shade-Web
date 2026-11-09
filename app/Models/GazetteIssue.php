@@ -17,6 +17,9 @@ class GazetteIssue extends Model
         'day',
         'published_on',
         'is_current',
+        'is_locked',
+        'locked_at',
+        'archive_snapshot',
         'corner_columns',
         'editorial_note',
     ];
@@ -26,9 +29,17 @@ class GazetteIssue extends Model
         'year' => 'integer',
         'day' => 'integer',
         'is_current' => 'boolean',
+        'is_locked' => 'boolean',
+        'locked_at' => 'datetime',
+        'archive_snapshot' => 'array',
         'corner_columns' => 'array',
         'published_on' => 'date',
     ];
+
+    public function isLocked(): bool
+    {
+        return (bool) $this->is_locked;
+    }
 
     public function news(): HasMany
     {

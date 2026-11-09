@@ -1063,6 +1063,9 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
     public function toggleActive(int $id, Request $request): RedirectResponse|JsonResponse
     {
         $news = News::findOrFail($id);
+        if ($blocked = $this->blockedIfGazetteIssueLocked($news, $request)) {
+            return $blocked;
+        }
         $news->is_active = !$news->is_active;
         $news->save();
 
@@ -1080,6 +1083,9 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
     public function approve(int $id, Request $request): RedirectResponse|JsonResponse
     {
         $news = News::findOrFail($id);
+        if ($blocked = $this->blockedIfGazetteIssueLocked($news, $request)) {
+            return $blocked;
+        }
         $news->update([
             'status' => 'published',
             'is_active' => true,
@@ -1133,5 +1139,27 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
 
         $redirectRoute = str_contains($request->path(), 'guild-news') ? 'valiant-shade.pages-guild-news' : 'valiant-shade.pages-news';
         return redirect()->route($redirectRoute)->with('success', __('Default bulletins restored.'));
+    }
+
+    protected function blockedIfGazetteIssueLocked(News $news, Request $request): RedirectResponse|JsonResponse|null
+    {
+        $issueId = (int) ($news->gazette_issue_id ?? 0);
+        if ($issueId <= 0) {
+            return null;
+        }
+
+        if (! app(GazetteIssueService::class)->issueIsLocked($issueId)) {
+            return null;
+        }
+
+        $message = 'Bu gazete sayısı kilitli; haber durumu değiştirilemez.';
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => false, 'message' => $message], 422);
+        }
+
+        $redirectRoute = str_contains($request->path(), 'guild-news') ? 'valiant-shade.pages-guild-news' : 'valiant-shade.pages-news';
+
+        return redirect()->route($redirectRoute)->with('error', $message);
     }
 }

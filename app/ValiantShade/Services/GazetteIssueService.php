@@ -70,6 +70,8 @@ class GazetteIssueService
             ->where('is_current', true)
             ->whereDate('published_on', '!=', $currentSunday->toDateString())
             ->update(['is_current' => false]);
+
+        $this->lockPastIssues($currentSunday);
     }
 
     protected function firstIssueSunday(): Carbon
@@ -100,7 +102,11 @@ class GazetteIssueService
             }])
             ->orderByDesc('issue_number')
             ->get()
-            ->map(fn (GazetteIssue $issue) => $this->transformIssue($issue))
+            ->map(function (GazetteIssue $issue) {
+                $withCorners = (bool) $issue->is_current && ! $issue->isLocked();
+
+                return $this->transformIssue($issue, $withCorners);
+            })
             ->values()
             ->all();
     }
@@ -204,13 +210,16 @@ class GazetteIssueService
         $allNews = $this->publicNews->publishedForIssue($issue->id, $newsType, $search);
         $issue = $this->ensureCoverLayoutMigrated($issue, $allNews);
         $this->sanitizeCoverLayout($issue, $allNews);
-        $issue = $this->syncCoverLayoutFromPublishedNews($issue, $allNews);
+        if (! $issue->isLocked()) {
+            $issue = $this->syncCoverLayoutFromPublishedNews($issue, $allNews);
+        }
         $coverPayload = $this->resolveCoverArticles($issue, $allNews);
         $innerNews = $coverPayload['inner'];
         $totalArticles = $innerNews->count();
         $innerPerSheet = max(2, (int) config('gazette.inner_articles_per_sheet', 3));
         $innerSheets = $totalArticles > 0 ? (int) ceil($totalArticles / $innerPerSheet) : 1;
         $lastSheet = 1 + $innerSheets;
+        $paginationIds = $innerNews->pluck('id')->values()->all();
 
         $sheet = min(max(1, $sheet), max(1, $lastSheet));
 
@@ -222,6 +231,7 @@ class GazetteIssueService
                 'per_page' => 0,
                 'total' => $totalArticles,
                 'sheet_kind' => 'cover',
+                'inner_per_page' => $innerPerSheet,
             ];
         } else {
             $innerIndex = $sheet - 2;
@@ -233,6 +243,7 @@ class GazetteIssueService
                 'per_page' => $innerPerSheet,
                 'total' => $totalArticles,
                 'sheet_kind' => 'inner',
+                'inner_per_page' => $innerPerSheet,
             ];
         }
 
@@ -261,7 +272,7 @@ class GazetteIssueService
             'feed' => [
                 'data' => $feedData,
                 'meta' => $sliceMeta,
-                'all_article_ids' => $innerNews->pluck('id')->values()->all(),
+                'all_article_ids' => $paginationIds,
                 'type_counts' => $this->publicNews->typeCountsForCollection($allNews),
             ],
         ];
@@ -287,6 +298,9 @@ class GazetteIssueService
 
         $touched = 0;
         GazetteIssue::query()->orderBy('issue_number')->each(function (GazetteIssue $issue) use (&$touched) {
+            if ($issue->isLocked()) {
+                return;
+            }
             $allNews = $this->publicNews->publishedForIssue($issue->id);
             if ($allNews->isEmpty()) {
                 return;
@@ -320,7 +334,8 @@ class GazetteIssueService
 
         $isPublished = $articleCount > 0;
         $isCurrent = (bool) $issue->is_current;
-        $isSelectable = $isPublished || $isCurrent;
+        $isLocked = (bool) $issue->is_locked;
+        $isSelectable = $isPublished || $isCurrent || $isLocked;
 
         $dateShort = WorldCalendar::formatShort(
             $issue->month,
@@ -348,6 +363,8 @@ class GazetteIssueService
                 unpublishedPast: ! $isPublished && ! $isCurrent,
             ),
             'is_current' => $isCurrent,
+            'is_locked' => $isLocked,
+            'is_editable' => $isCurrent && ! $isLocked,
             'is_published' => $isPublished,
             'is_selectable' => $isSelectable,
             'article_count' => $articleCount,
@@ -374,8 +391,85 @@ class GazetteIssueService
     /**
      * Onaylanan okuyucu gönderisini gazete yerine (manşet, özet, köşe) oturtur.
      */
+    public function issueIsLocked(?int $issueId): bool
+    {
+        if (! $issueId || ! Schema::hasTable('gazette_issues')) {
+            return false;
+        }
+
+        return (bool) GazetteIssue::query()->where('id', $issueId)->value('is_locked');
+    }
+
+    public function currentEditableIssue(): GazetteIssue
+    {
+        $this->syncWeeklyIssues();
+
+        return GazetteIssue::query()
+            ->where('is_current', true)
+            ->where('is_locked', false)
+            ->orderByDesc('issue_number')
+            ->first()
+            ?? $this->ensureDefaultIssue();
+    }
+
+    protected function lockPastIssues(Carbon $currentSunday): void
+    {
+        if (! Schema::hasTable('gazette_issues')) {
+            return;
+        }
+
+        GazetteIssue::query()
+            ->where('is_locked', false)
+            ->whereNotNull('published_on')
+            ->whereDate('published_on', '<', $currentSunday->toDateString())
+            ->orderBy('issue_number')
+            ->each(fn (GazetteIssue $issue) => $this->lockIssue($issue));
+    }
+
+    protected function lockIssue(GazetteIssue $issue): void
+    {
+        if ($issue->isLocked()) {
+            return;
+        }
+
+        $allNews = $this->publicNews->publishedForIssue($issue->id);
+
+        $issue->forceFill([
+            'is_locked' => true,
+            'locked_at' => now(),
+            'archive_snapshot' => $this->buildArchiveSnapshot($issue, $allNews),
+        ])->saveQuietly();
+    }
+
+    /**
+     * @param  Collection<int, News>  $allNews
+     * @return array<string, mixed>
+     */
+    protected function buildArchiveSnapshot(GazetteIssue $issue, Collection $allNews): array
+    {
+        $cover = $this->resolveCoverArticles($issue, $allNews);
+
+        return [
+            'issue_number' => $issue->issue_number,
+            'published_on' => $issue->published_on?->toDateString(),
+            'cover_layout' => $issue->coverLayout(),
+            'corner_columns' => $issue->corner_columns,
+            'article_ids' => $allNews->pluck('id')->values()->all(),
+            'cover_lead_id' => $cover['lead']?->id,
+            'cover_brief_ids' => collect($cover['briefs'])->filter()->map(fn ($n) => $n->id)->values()->all(),
+            'articles' => $allNews
+                ->map(fn (News $n) => $this->publicNews->transformItem($n))
+                ->values()
+                ->all(),
+        ];
+    }
+
     public function applySubmissionPlacement(News $news): void
     {
+        if ($this->issueIsLocked((int) ($news->gazette_issue_id ?? 0))) {
+            return;
+        }
+
         $stats = is_array($news->stats) ? $news->stats : [];
         $submission = is_array($stats['submission'] ?? null) ? $stats['submission'] : [];
         $kind = (string) ($submission['gazette_slot_kind'] ?? '');
@@ -392,7 +486,7 @@ class GazetteIssueService
 
         if ($kind === 'lead' && $issueId > 0) {
             $this->assignCoverNewsSlot($issueId, 'lead', $submission, $news);
-        } elseif ($kind === 'corner' && $issueId > 0) {
+        } elseif ($kind === 'corner' && $issueId > 0 && ! $this->issueIsLocked($issueId)) {
             $this->fillCornerSlotFromNews($issueId, $submission, $news);
             $stats['gazette_placement'] = 'cover_corner';
             $stats['gazette_corner_key'] = $submission['gazette_slot_key'] ?? null;
@@ -415,7 +509,7 @@ class GazetteIssueService
      */
     protected function assignCoverBriefAuto(int $issueId, News $news): void
     {
-        if ($this->isCornerColumnNews($news)) {
+        if ($this->issueIsLocked($issueId) || $this->isCornerColumnNews($news)) {
             return;
         }
 
@@ -469,7 +563,7 @@ class GazetteIssueService
         }
 
         $issue = GazetteIssue::query()->find($issueId);
-        if (! $issue) {
+        if (! $issue || $issue->isLocked()) {
             return;
         }
 
@@ -535,6 +629,10 @@ class GazetteIssueService
      */
     protected function syncCoverLayoutFromPublishedNews(GazetteIssue $issue, Collection $allNews): GazetteIssue
     {
+        if ($issue->isLocked()) {
+            return $issue;
+        }
+
         $eligible = $allNews
             ->filter(fn (News $n) => ! $this->isCornerColumnNews($n))
             ->values();
@@ -650,22 +748,8 @@ class GazetteIssueService
             $briefs[] = $item;
         }
 
-        $pinnedIds = collect([$layout['lead_news_id']])
-            ->merge($layout['brief_news_ids'])
-            ->merge($this->cornerPinnedNewsIds($issue))
-            ->filter()
-            ->map(fn ($id) => (int) $id)
-            ->unique()
-            ->all();
-
         $inner = $allNews
-            ->filter(function (News $n) use ($pinnedIds) {
-                if ($this->isCornerColumnNews($n)) {
-                    return false;
-                }
-
-                return ! in_array((int) $n->id, $pinnedIds, true);
-            })
+            ->filter(fn (News $n) => ! $this->isCornerColumnNews($n))
             ->values();
 
         return [
@@ -680,6 +764,10 @@ class GazetteIssueService
      */
     protected function sanitizeCoverLayout(GazetteIssue $issue, Collection $allNews): void
     {
+        if ($issue->isLocked()) {
+            return;
+        }
+
         $layout = $issue->coverLayout();
         $dirty = false;
 
@@ -778,7 +866,7 @@ class GazetteIssueService
 
     protected function assignCoverNewsSlot(int $issueId, string $kind, array $submission, News $news): void
     {
-        if ($this->isCornerColumnNews($news)) {
+        if ($this->issueIsLocked($issueId) || $this->isCornerColumnNews($news)) {
             return;
         }
 
@@ -824,8 +912,14 @@ class GazetteIssueService
 
         $this->syncWeeklyIssues();
         $anchor = WorldCalendar::anchorSunday(Carbon::parse($news->created_at));
-        $issue = GazetteIssue::query()->whereDate('published_on', $anchor->toDateString())->first()
-            ?? $this->ensureDefaultIssue();
+        $issue = GazetteIssue::query()
+            ->whereDate('published_on', $anchor->toDateString())
+            ->where('is_locked', false)
+            ->first();
+
+        if (! $issue || $issue->isLocked()) {
+            $issue = $this->currentEditableIssue();
+        }
 
         $news->forceFill(['gazette_issue_id' => $issue->id])->saveQuietly();
     }

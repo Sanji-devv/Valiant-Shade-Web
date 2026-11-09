@@ -7,6 +7,7 @@ const state = {
   search: '',
   perPage: WEB_ITEMS_PER_PAGE,
   issueId: null,
+  pendingIssueNumber: null,
   issueArchive: [],
   currentIssue: null,
   sliderIndex: 0,
@@ -19,6 +20,12 @@ const state = {
   lastFeedItems: [],
   lastFeedMeta: null,
   pageTurnDir: 'fwd',
+  gazetteArticleIds: [],
+  gazetteInnerPerPage: 3,
+  pendingArticleId: null,
+  suppressUrlSync: false,
+  articleBootstrapInFlight: false,
+  openArticleId: null,
 };
 
 const els = {};
@@ -121,6 +128,108 @@ function apiUrl(path, params = {}) {
     }
   });
   return url.toString();
+}
+
+function issueAllowsSubmissions() {
+  const issue = state.currentIssue;
+  if (!issue) {
+    return true;
+  }
+  return !issue.is_locked;
+}
+
+function resolvePendingIssueNumber() {
+  if (!state.pendingIssueNumber) {
+    return false;
+  }
+  const target = Number(state.pendingIssueNumber);
+  const row = (state.issueArchive || []).find((issue) => Number(issue.issue_number) === target);
+  state.pendingIssueNumber = null;
+  if (!row?.id) {
+    return false;
+  }
+  if (Number(state.issueId) !== Number(row.id)) {
+    state.issueId = row.id;
+    return true;
+  }
+  return false;
+}
+
+function readUrlIntoState() {
+  const params = new URLSearchParams(window.location.search);
+  const gorunum = params.get('gorunum');
+  if (gorunum === 'web' || gorunum === 'gazette') {
+    state.layoutMode = gorunum === 'gazette' ? 'gazette' : 'web';
+  } else if (params.has('yaprak') || params.has('sayi') || params.has('haber')) {
+    state.layoutMode = 'gazette';
+  }
+
+  const yaprak = Number.parseInt(params.get('yaprak') || '', 10);
+  if (Number.isFinite(yaprak) && yaprak >= 1) {
+    state.page = yaprak;
+  }
+  const sayfa = Number.parseInt(params.get('sayfa') || '', 10);
+  if (!params.has('yaprak') && Number.isFinite(sayfa) && sayfa >= 1) {
+    state.page = sayfa;
+  }
+
+  const sayi = Number.parseInt(params.get('sayi') || '', 10);
+  if (Number.isFinite(sayi) && sayi >= 1) {
+    state.pendingIssueNumber = sayi;
+  }
+
+  const haber = Number.parseInt(params.get('haber') || '', 10);
+  if (Number.isFinite(haber) && haber > 0) {
+    state.pendingArticleId = haber;
+    state.layoutMode = 'gazette';
+  }
+
+  const tur = params.get('tur');
+  if (tur) {
+    state.type = tur;
+  }
+  const q = params.get('q') || '';
+  if (q) {
+    state.search = q.trim();
+  }
+}
+
+function buildShareUrl({ articleId = null, includeArticle = false } = {}) {
+  const url = new URL(window.location.pathname, window.location.origin);
+  const layout = state.layoutMode;
+  if (layout === 'gazette') {
+    url.searchParams.set('gorunum', 'gazette');
+    const issue = state.currentIssue || {};
+    const issueNum = issue.issue_number ?? inWorldCalendar().issueNumber;
+    url.searchParams.set('sayi', String(issueNum));
+    url.searchParams.set('yaprak', String(state.page));
+  } else {
+    url.searchParams.set('gorunum', 'web');
+    url.searchParams.set('sayfa', String(state.page));
+  }
+  if (state.type && state.type !== 'all') {
+    url.searchParams.set('tur', state.type);
+  }
+  if (state.search) {
+    url.searchParams.set('q', state.search);
+  }
+  const id = articleId ?? (includeArticle ? state.openArticleId : null);
+  if (id) {
+    url.searchParams.set('haber', String(id));
+  }
+  return url;
+}
+
+function syncBrowserUrl(options = {}) {
+  if (state.suppressUrlSync) {
+    return;
+  }
+  const next = buildShareUrl(options);
+  const nextHref = `${next.pathname}${next.search}`;
+  const currentHref = `${window.location.pathname}${window.location.search}`;
+  if (nextHref !== currentHref) {
+    window.history.replaceState(null, '', nextHref);
+  }
 }
 
 async function fetchIssueArchive() {
@@ -358,6 +467,15 @@ function renderCornerSlot(slot, slotIndex = 0) {
   const innerPage = cornerSlotFirstInnerPage(slotIndex);
 
   if (!filled) {
+    if (!issueAllowsSubmissions()) {
+      return `
+        <div class="vs-gazette-corner vs-gazette-corner--empty vs-gazette-corner--archive">
+          <span class="vs-gazette-corner__title">${title}</span>
+          <span class="vs-gazette-corner__rumuz vs-gazette-corner__rumuz--empty">${rumuz || 'rumuz yok'}</span>
+          <span class="vs-gazette-corner__fill">Bu köşe boş kaldı.</span>
+        </div>
+      `;
+    }
     return `
       <button type="button" class="vs-gazette-corner vs-gazette-corner--empty vs-gazette-slot--fill" data-slot-kind="corner" data-corner-key="${key}">
         <span class="vs-gazette-corner__title">${title}</span>
@@ -397,13 +515,16 @@ function renderInnerCornerRail(slot) {
   const filled = Boolean(slot.is_filled) || Boolean(body);
 
   if (!filled) {
+    const fillAction = issueAllowsSubmissions()
+      ? `<button type="button" class="vs-gazette-corner-rail__fill vs-gazette-slot--fill" data-slot-kind="corner" data-corner-key="${key}">
+          Burayı doldur
+        </button>`
+      : '';
     return `
       <aside class="vs-gazette-corner-rail vs-gazette-corner-rail--empty" aria-label="${title}">
         <h3 class="vs-gazette-corner-rail__title">${title}</h3>
         <p class="vs-gazette-corner-rail__hint">Bu köşe henüz yazılmadı.</p>
-        <button type="button" class="vs-gazette-corner-rail__fill vs-gazette-slot--fill" data-slot-kind="corner" data-corner-key="${key}">
-          Burayı doldur
-        </button>
+        ${fillAction}
       </aside>
     `;
   }
@@ -421,7 +542,32 @@ function renderInnerCornerRail(slot) {
   `;
 }
 
-function renderCoverSummary(item, index) {
+function innerSheetForArticleId(newsId) {
+  const ids = state.gazetteArticleIds?.length
+    ? state.gazetteArticleIds
+    : state.lastFeedMeta?.all_article_ids || [];
+  const perPage = state.gazetteInnerPerPage || state.lastFeedMeta?.inner_per_page || 3;
+  const idx = ids.findIndex((id) => Number(id) === Number(newsId));
+  if (idx < 0) {
+    return 2;
+  }
+  return 2 + Math.floor(idx / perPage);
+}
+
+function sheetForArticleId(newsId) {
+  const id = Number(newsId);
+  const issue = state.currentIssue || {};
+  if (Number(issue.cover_lead?.id) === id) {
+    return 1;
+  }
+  const briefs = Array.isArray(issue.cover_briefs) ? issue.cover_briefs : [];
+  if (briefs.some((brief) => brief && Number(brief.id) === id)) {
+    return 1;
+  }
+  return innerSheetForArticleId(newsId);
+}
+
+function renderCoverSummary(item) {
   if (!item) {
     return `
       <div class="vs-gazette-brief vs-gazette-brief--empty" aria-hidden="true">
@@ -434,12 +580,13 @@ function renderCoverSummary(item, index) {
   const title = escapeHtml(item.title || '');
   const type = escapeHtml(item.news_type_label || item.category || '');
   const excerpt = escapeHtml(truncateText(item.description || '', 140));
+  const sheet = innerSheetForArticleId(item.id);
   return `
     <article class="vs-gazette-brief">
       <span class="vs-gazette-brief__kicker">${type}</span>
       <h3 class="vs-gazette-brief__title">${title}</h3>
       <p class="vs-gazette-brief__excerpt">${excerpt}</p>
-      <span class="vs-gazette-brief__jump">İç sayfa ${Math.floor(index / 3) + 2} »</span>
+      <button type="button" class="vs-gazette-brief__jump" data-goto-page="${sheet}">Devamı ${sheet}. yaprakta</button>
     </article>
   `;
 }
@@ -452,7 +599,7 @@ function renderGazetteCoverPage(_items, brand, issueMeta) {
   const summaries = [];
   for (let i = 0; i < GAZETTE_SUMMARY_SLOTS; i++) {
     if (briefItems[i]) {
-      summaries.push(renderCoverSummary(briefItems[i], i));
+      summaries.push(renderCoverSummary(briefItems[i]));
     }
   }
   const summariesHtml =
@@ -476,12 +623,19 @@ function renderGazetteCoverPage(_items, brand, issueMeta) {
           <p class="vs-gazette-cover__deck">${deck}</p>
         </div>`;
       })()
-    : `
+    : issueAllowsSubmissions()
+      ? `
         <button type="button" class="vs-gazette-cover__lead vs-gazette-brief--empty vs-gazette-slot--fill" data-slot-kind="lead" data-brief-slot="lead">
           <span class="vs-gazette-brief__kicker">Manşet</span>
           <span class="vs-gazette-brief__title">Burayı doldur</span>
           <span class="vs-gazette-brief__excerpt">Haftanın ana haberini gönder. Editör onayından sonra kapakta yer alır.</span>
-        </button>`;
+        </button>`
+      : `
+        <div class="vs-gazette-cover__lead vs-gazette-brief--empty vs-gazette-brief--archive" aria-hidden="true">
+          <span class="vs-gazette-brief__kicker">Manşet</span>
+          <span class="vs-gazette-brief__title">Manşet yok</span>
+          <span class="vs-gazette-brief__excerpt">Bu sayı arşivlendi; boş manşet alanı doldurulamaz.</span>
+        </div>`;
 
   const corners = slots.length
     ? slots.map((s, i) => renderCornerSlot(s, i)).join('')
@@ -752,6 +906,9 @@ function applyLayoutMode() {
 
   if (els.toggleGazetteLayoutBtn) {
     els.toggleGazetteLayoutBtn.setAttribute('aria-pressed', gazette ? 'true' : 'false');
+    const layoutLabel = gazette ? 'Web görünümü' : 'Gazete görünümü';
+    els.toggleGazetteLayoutBtn.setAttribute('aria-label', layoutLabel);
+    els.toggleGazetteLayoutBtn.setAttribute('title', gazette ? 'Web kart listesine geç' : 'Basılı gazete sayfası. Sayfa sayfa gezin.');
   }
   if (els.toggleGazetteLayoutLabel) {
     els.toggleGazetteLayoutLabel.textContent = gazette ? 'Web görünümü' : 'Gazete görünümü';
@@ -887,6 +1044,43 @@ function goToFeedPage(targetPage, turnDir = 'fwd') {
   loadFeed().catch(console.error);
 }
 
+async function bootstrapPendingArticle() {
+  const articleId = state.pendingArticleId;
+  if (!articleId || state.articleBootstrapInFlight) {
+    return;
+  }
+  state.pendingArticleId = null;
+  state.articleBootstrapInFlight = true;
+  try {
+    const response = await fetch(`/api/public/news/${articleId}`, {
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      return;
+    }
+    const payload = await response.json();
+    const item = payload.news;
+    const issueId = item?.gazette_issue_id;
+    if (issueId && Number(state.issueId) !== Number(issueId)) {
+      state.issueId = issueId;
+      state.layoutMode = 'gazette';
+      applyLayoutMode();
+      await loadFeed();
+    }
+    const targetSheet = sheetForArticleId(articleId);
+    if (Number.isFinite(targetSheet) && targetSheet >= 1 && targetSheet !== state.page) {
+      state.page = targetSheet;
+      await loadFeed();
+    }
+    await openArticle(articleId, { gazetteReader: isGazetteLayout() });
+  } catch (error) {
+    console.warn(error);
+  } finally {
+    state.articleBootstrapInFlight = false;
+  }
+}
+
 function renderPagination(meta) {
   state.lastFeedMeta = meta;
   if (isGazetteLayout()) {
@@ -913,6 +1107,10 @@ async function loadFeed() {
         console.warn(archiveError);
       }
     }
+    const issueSwitched = resolvePendingIssueNumber();
+    if (issueSwitched && !state.pendingArticleId) {
+      state.page = Math.max(1, state.page);
+    }
   } else {
     els.newsGrid.innerHTML = '<div class="vs-loading">Haberler yükleniyor…</div>';
   }
@@ -923,6 +1121,8 @@ async function loadFeed() {
   if (isGazetteLayout()) {
     state.currentIssue = payload.issue || state.currentIssue;
     state.issueArchive = payload.archive || state.issueArchive;
+    state.gazetteArticleIds = payload.feed?.all_article_ids || [];
+    state.gazetteInnerPerPage = payload.feed?.meta?.inner_per_page || 3;
     renderIssueArchiveSelect();
   const isInner = payload.feed?.meta?.sheet_kind === 'inner';
     if (isInner) {
@@ -944,6 +1144,12 @@ async function loadFeed() {
     }
   }
   renderPagination(payload.feed.meta);
+  if (!state.suppressUrlSync) {
+    syncBrowserUrl(state.openArticleId ? { articleId: state.openArticleId } : {});
+  }
+  if (state.pendingArticleId && !state.articleBootstrapInFlight) {
+    await bootstrapPendingArticle();
+  }
 }
 
 function renderModalBadges(item) {
@@ -1038,6 +1244,10 @@ async function openArticle(id, options = {}) {
   }
   document.body.classList.add('vs-article-modal-open');
   els.detailModal.classList.add('is-open');
+  state.openArticleId = Number(id) || null;
+  if (!options.skipUrlSync) {
+    syncBrowserUrl({ articleId: id });
+  }
 }
 
 function closeModal() {
@@ -1050,12 +1260,37 @@ function closeModal() {
     els.modalHero.hidden = false;
   }
   document.body.classList.remove('vs-article-modal-open');
+  state.openArticleId = null;
+  syncBrowserUrl();
 }
 
 function showToast(message) {
   els.toast.textContent = message;
   els.toast.classList.add('is-visible');
   setTimeout(() => els.toast.classList.remove('is-visible'), 4200);
+}
+
+async function copyArticleShareLink(articleId) {
+  const id = articleId || state.openArticleId;
+  if (!id) {
+    return;
+  }
+  const url = buildShareUrl({ articleId: id }).href;
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(url);
+    } else {
+      const input = document.createElement('input');
+      input.value = url;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      input.remove();
+    }
+    showToast('Haber bağlantısı kopyalandı.');
+  } catch {
+    showToast('Bağlantı kopyalanamadı; adres çubuğundaki URL’yi kullanın.');
+  }
 }
 
 async function submitRumor(formData) {
@@ -1134,29 +1369,136 @@ function renderRumorPlacementKinds(selectedKind, { locked = false } = {}) {
   }).join('');
 }
 
+function defaultCornerSlotsFromDom() {
+  try {
+    const raw = document.body.dataset.gazetteCornerSlots;
+    const defs = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(defs)) {
+      return [];
+    }
+    return defs.map((s) => ({
+      key: s.key || 'corner',
+      title: s.title || s.key || 'Köşe',
+      is_filled: false,
+    }));
+  } catch (e) {
+    return [];
+  }
+}
+
+function submissionTargetIssueId() {
+  const fromSelect = Number(els.rumorIssueSelect?.value || '');
+  if (Number.isFinite(fromSelect) && fromSelect > 0) {
+    return fromSelect;
+  }
+  const fromHidden = Number(els.rumorGazetteIssueId?.value || '');
+  if (Number.isFinite(fromHidden) && fromHidden > 0) {
+    return fromHidden;
+  }
+  return activeIssueMeta().id;
+}
+
+function submissionTargetIssue() {
+  const id = submissionTargetIssueId();
+  if (!id) {
+    return state.currentIssue;
+  }
+  const archiveRow = (state.issueArchive || []).find((row) => Number(row.id) === Number(id));
+  if (archiveRow) {
+    return archiveRow;
+  }
+  if (Number(state.currentIssue?.id) === Number(id)) {
+    return state.currentIssue;
+  }
+  return archiveRow || state.currentIssue;
+}
+
+function rumorIssueSelectOptionText(issue) {
+  const base = issueArchiveOptionText(issue);
+  if (issue.is_editable) {
+    return `${base} · Açık sayı`;
+  }
+  if (issue.is_locked || issue.is_published) {
+    return `${base} · Yayımlandı`;
+  }
+  if (!issue.is_current) {
+    return `${base} · Yayımlandı`;
+  }
+  return base;
+}
+
+function defaultRumorSubmissionIssueId() {
+  const editable = (state.issueArchive || []).find((row) => row.is_editable);
+  if (editable?.id) {
+    return Number(editable.id);
+  }
+  const current = (state.issueArchive || []).find((row) => row.is_current && !row.is_locked);
+  if (current?.id) {
+    return Number(current.id);
+  }
+  return activeIssueMeta().id;
+}
+
+function renderRumorIssueSelect(selectedId = null) {
+  if (!els.rumorIssueSelect) {
+    return;
+  }
+  const issues = [...(state.issueArchive || [])].sort(
+    (a, b) => Number(b.issue_number) - Number(a.issue_number),
+  );
+  if (!issues.length) {
+    els.rumorIssueSelect.innerHTML = '<option value="">Sayı yükleniyor…</option>';
+    els.rumorIssueSelect.disabled = true;
+    return;
+  }
+  const targetId = selectedId || defaultRumorSubmissionIssueId();
+  els.rumorIssueSelect.disabled = false;
+  els.rumorIssueSelect.innerHTML = issues
+    .map((issue) => {
+      const editable = Boolean(issue.is_editable);
+      const selected = Number(targetId) === Number(issue.id);
+      return `<option value="${issue.id}"${selected ? ' selected' : ''}${editable ? '' : ' disabled'}>${escapeHtml(rumorIssueSelectOptionText(issue))}</option>`;
+    })
+    .join('');
+  const applied = Number(els.rumorIssueSelect.value) || targetId;
+  if (els.rumorGazetteIssueId) {
+    els.rumorGazetteIssueId.value = applied ? String(applied) : '';
+  }
+}
+
+function getRumorCornerSlots() {
+  const issue = submissionTargetIssue();
+  const live = issue?.corner_slots;
+  if (Array.isArray(live) && live.length) {
+    return live;
+  }
+  if (Number(state.currentIssue?.id) === Number(issue?.id) && Array.isArray(state.currentIssue?.corner_slots)) {
+    return state.currentIssue.corner_slots;
+  }
+  return defaultCornerSlotsFromDom();
+}
+
 function renderRumorCornerPicker(selectedKey) {
   if (!els.rumorCornerPicker || !els.rumorCornerPickerGrid) {
     return;
   }
-  const slots = state.currentIssue?.corner_slots || [];
-  if (!slots.length) {
-    els.rumorCornerPicker.hidden = true;
-    return;
-  }
+  const slots = getRumorCornerSlots();
   els.rumorCornerPicker.hidden = false;
   els.rumorCornerPickerGrid.innerHTML = slots
     .map((s) => {
       const key = escapeHtml(s.key || '');
       const title = escapeHtml(s.title || s.key || 'Köşe');
       const selected = s.key === selectedKey;
-      const stateLabel = s.is_filled ? 'dolu' : 'boş';
-      return `<button type="button" class="vs-rumor-corner-pick__btn${selected ? ' is-selected' : ''}" data-corner-key="${key}" aria-pressed="${selected ? 'true' : 'false'}"><span class="vs-rumor-corner-pick__title">${title}</span><span class="vs-rumor-corner-pick__state">${stateLabel}</span></button>`;
+      const filled = Boolean(s.is_filled);
+      const stateLabel = filled ? 'Dolu' : 'Boş';
+      const fillClass = filled ? 'vs-rumor-corner-pick__btn--filled' : 'vs-rumor-corner-pick__btn--empty';
+      return `<button type="button" class="vs-rumor-corner-pick__btn ${fillClass}${selected ? ' is-selected' : ''}" data-corner-key="${key}" aria-pressed="${selected ? 'true' : 'false'}"><span class="vs-rumor-corner-pick__title">${title}</span><span class="vs-rumor-corner-pick__state">${stateLabel}</span></button>`;
     })
     .join('');
 }
 
 function setRumorCornerSelection(key) {
-  const slots = state.currentIssue?.corner_slots || [];
+  const slots = getRumorCornerSlots();
   const slot = slots.find((s) => s.key === key);
   const label = slot?.title || key;
   if (els.rumorGazetteSlotKey) {
@@ -1172,14 +1514,14 @@ function applyRumorPlacementKind(nextKind, slotPatch = {}) {
   const kind = nextKind || 'general';
   const slot = {
     kind,
-    key: slotPatch.key ?? (kind === 'corner' ? state.currentIssue?.corner_slots?.[0]?.key : ''),
+    key: slotPatch.key ?? (kind === 'corner' ? getRumorCornerSlots()[0]?.key : ''),
     label: slotPatch.label ?? '',
   };
   if (kind === 'lead') {
     slot.key = 'lead';
     slot.label = 'Manşet';
   } else if (kind === 'corner') {
-    const corner = (state.currentIssue?.corner_slots || []).find((s) => s.key === slot.key);
+    const corner = getRumorCornerSlots().find((s) => s.key === slot.key);
     slot.label = corner?.title || slot.label || 'Köşe yazısı';
   } else if (kind === 'general') {
     slot.key = '';
@@ -1189,10 +1531,15 @@ function applyRumorPlacementKind(nextKind, slotPatch = {}) {
 }
 
 function activeIssueMeta() {
-  const id = state.issueId || state.currentIssue?.id;
-  const issue =
-    (state.issueArchive || []).find((row) => Number(row.id) === Number(id)) || state.currentIssue;
-  return { id: id || null, issue };
+  const viewingId = state.issueId || state.currentIssue?.id;
+  const viewingIssue =
+    (state.issueArchive || []).find((row) => Number(row.id) === Number(viewingId)) || state.currentIssue;
+  const editable =
+    (state.issueArchive || []).find((row) => row.is_current && row.is_editable !== false) ||
+    (state.issueArchive || []).find((row) => row.is_current) ||
+    viewingIssue;
+  const id = editable?.id || viewingId || null;
+  return { id, issue: editable || viewingIssue, viewingIssue };
 }
 
 function resolveGazetteSlotFromEl(fillEl) {
@@ -1221,7 +1568,7 @@ function applyRumorSlotUI(slot = { kind: 'general' }, options = {}) {
   const kind = slot?.kind || 'general';
   const configs = getSubmissionSlotConfig();
   const cfg = configs[kind] || configs.general || {};
-  const { id: issueId } = activeIssueMeta();
+  const issueId = defaultRumorSubmissionIssueId();
   const slotLocked = Boolean(options.placementLocked);
   const gazetteChrome = rumorModalUsesGazetteChrome();
 
@@ -1273,7 +1620,12 @@ function applyRumorSlotUI(slot = { kind: 'general' }, options = {}) {
   if (els.rumorGazetteSlotLabelHidden) {
     els.rumorGazetteSlotLabelHidden.value = slot?.label || '';
   }
-  if (els.rumorGazetteIssueId) {
+  if (els.rumorIssuePickWrap) {
+    els.rumorIssuePickWrap.hidden = !gazetteChrome;
+  }
+  if (gazetteChrome) {
+    renderRumorIssueSelect(submissionTargetIssueId() || issueId);
+  } else if (els.rumorGazetteIssueId) {
     els.rumorGazetteIssueId.value = issueId ? String(issueId) : '';
   }
   if (els.rumorRumuzWrap) {
@@ -1281,11 +1633,19 @@ function applyRumorSlotUI(slot = { kind: 'general' }, options = {}) {
     els.rumorRumuzWrap.hidden = !showRumuz;
     els.rumorRumuzWrap.classList.toggle('vs-rumor-field--hidden', !showRumuz);
   }
+  if (els.rumorMetaGrid) {
+    els.rumorMetaGrid.classList.toggle('vs-rumor-form__meta-grid--four', kind === 'corner');
+    els.rumorMetaGrid.classList.toggle('vs-rumor-form__meta-grid--three', kind !== 'corner');
+  }
   if (els.rumorRumuzInput && kind !== 'corner') {
     els.rumorRumuzInput.value = '';
   }
   if (kind === 'corner') {
-    renderRumorCornerPicker(slot.key || state.currentIssue?.corner_slots?.[0]?.key);
+    const cornerKey = slot.key || getRumorCornerSlots()[0]?.key;
+    if (!els.rumorGazetteSlotKey?.value && cornerKey) {
+      els.rumorGazetteSlotKey.value = cornerKey;
+    }
+    renderRumorCornerPicker(cornerKey);
   } else if (els.rumorCornerPicker) {
     els.rumorCornerPicker.hidden = true;
   }
@@ -1295,8 +1655,23 @@ function applyRumorSlotUI(slot = { kind: 'general' }, options = {}) {
   selectNewsTypeInPicker(els.rumorTypePicker, els.rumorNewsType, cfg.default_news_type);
 }
 
-function openRumorModal(slot = { kind: 'general' }, options = {}) {
+function syncRumorAnonymousToggle() {
+  const on = Boolean(els.rumorAnonymousInput?.checked);
+  if (els.rumorAnonymousToggle) {
+    els.rumorAnonymousToggle.classList.toggle('is-active', on);
+    els.rumorAnonymousToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+}
+
+async function openRumorModal(slot = { kind: 'general' }, options = {}) {
   const fromSlot = Boolean(options.fromSlot);
+  if (!state.issueArchive.length) {
+    try {
+      await fetchIssueArchive();
+    } catch (archiveError) {
+      console.warn(archiveError);
+    }
+  }
   applyRumorSlotUI(slot, { placementLocked: fromSlot && slot.kind !== 'general' });
   if (els.rumorModal) {
     els.rumorModal.classList.add('is-open');
@@ -1327,6 +1702,7 @@ function closeRumorModal() {
   }
   resetNewsTypePicker(els.rumorTypePicker, els.rumorNewsType);
   applyRumorSlotUI({ kind: 'general' });
+  syncRumorAnonymousToggle();
 }
 
 function initNewsTypePicker(groupEl, inputEl) {
@@ -1446,7 +1822,7 @@ function bindEvents() {
         return;
       }
       const fill = event.target.closest('.vs-gazette-slot--fill');
-      if (!fill || !isGazetteLayout()) {
+      if (!fill || !isGazetteLayout() || !issueAllowsSubmissions()) {
         return;
       }
       event.preventDefault();
@@ -1550,7 +1926,26 @@ function bindEvents() {
     }
   });
 
+  window.addEventListener('popstate', () => {
+    state.suppressUrlSync = true;
+    readUrlIntoState();
+    if (els.searchInput && state.search !== els.searchInput.value.trim()) {
+      els.searchInput.value = state.search;
+    }
+    applyLayoutMode();
+    loadFeed()
+      .catch(console.error)
+      .finally(() => {
+        state.suppressUrlSync = false;
+      });
+  });
+
   els.modalClose.addEventListener('click', closeModal);
+  if (els.modalShare) {
+    els.modalShare.addEventListener('click', () => {
+      copyArticleShareLink(state.openArticleId).catch(console.error);
+    });
+  }
   els.detailModal.addEventListener('click', (event) => {
     if (event.target === els.detailModal) {
       closeModal();
@@ -1582,6 +1977,27 @@ function bindEvents() {
         return;
       }
       applyRumorPlacementKind(nextKind);
+    });
+  }
+
+  if (els.rumorAnonymousToggle && els.rumorAnonymousInput) {
+    els.rumorAnonymousToggle.addEventListener('click', () => {
+      els.rumorAnonymousInput.checked = !els.rumorAnonymousInput.checked;
+      syncRumorAnonymousToggle();
+    });
+    syncRumorAnonymousToggle();
+  }
+
+  if (els.rumorIssueSelect) {
+    els.rumorIssueSelect.addEventListener('change', () => {
+      const value = Number(els.rumorIssueSelect.value);
+      if (els.rumorGazetteIssueId) {
+        els.rumorGazetteIssueId.value = Number.isFinite(value) && value > 0 ? String(value) : '';
+      }
+      const kind = els.rumorGazetteSlotKind?.value || 'general';
+      if (kind === 'corner') {
+        renderRumorCornerPicker(els.rumorGazetteSlotKey?.value || getRumorCornerSlots()[0]?.key);
+      }
     });
   }
 
@@ -1660,6 +2076,7 @@ document.addEventListener('DOMContentLoaded', () => {
   els.modalStory = qs('newsModalStory');
   els.modalQuote = qs('newsModalQuote');
   els.modalClose = qs('newsModalClose');
+  els.modalShare = qs('newsModalShare');
   els.openRumorBtn = qs('openRumorModal');
   els.rumorModal = qs('rumorModal');
   els.rumorModalPanel = qs('rumorModalPanel');
@@ -1675,15 +2092,20 @@ document.addEventListener('DOMContentLoaded', () => {
   els.rumorGazetteSlotKey = qs('rumorGazetteSlotKey');
   els.rumorGazetteSlotLabelHidden = qs('rumorGazetteSlotLabelHidden');
   els.rumorGazetteIssueId = qs('rumorGazetteIssueId');
+  els.rumorIssueSelect = qs('rumorIssueSelect');
+  els.rumorIssuePickWrap = qs('rumorIssuePickWrap');
   els.rumorTitleInput = qs('rumorTitleInput');
   els.rumorBodyLabel = qs('rumorBodyLabel');
   els.rumorBodyInput = qs('rumorBodyInput');
   els.rumorRumuzWrap = qs('rumorRumuzWrap');
+  els.rumorMetaGrid = qs('rumorMetaGrid');
   els.rumorRumuzInput = qs('rumorRumuzInput');
   els.rumorPlacementWrap = qs('rumorPlacementWrap');
   els.rumorPlacementKinds = qs('rumorPlacementKinds');
   els.rumorCornerPicker = qs('rumorCornerPicker');
   els.rumorCornerPickerGrid = qs('rumorCornerPickerGrid');
+  els.rumorAnonymousInput = qs('rumorAnonymousInput');
+  els.rumorAnonymousToggle = qs('rumorAnonymousToggle');
   els.gazetteFlip = qs('gazetteFlip');
   els.gazetteFlipPrev = qs('gazetteFlipPrev');
   els.gazetteFlipNext = qs('gazetteFlipNext');
@@ -1700,9 +2122,18 @@ document.addEventListener('DOMContentLoaded', () => {
   els.gazetteArchiveWrap = qs('gazetteArchiveWrap');
 
   initNewsTypePicker(els.rumorTypePicker, els.rumorNewsType);
+  readUrlIntoState();
+  if (els.searchInput && state.search) {
+    els.searchInput.value = state.search;
+  }
+  const urlHasGazetteHints =
+    new URLSearchParams(window.location.search).has('gorunum') ||
+    new URLSearchParams(window.location.search).has('yaprak') ||
+    new URLSearchParams(window.location.search).has('sayi') ||
+    new URLSearchParams(window.location.search).has('haber');
   try {
     const savedLayout = localStorage.getItem('vs.gazette.layoutMode');
-    if (savedLayout === 'gazette' || savedLayout === 'web') {
+    if (!urlHasGazetteHints && (savedLayout === 'gazette' || savedLayout === 'web')) {
       state.layoutMode = savedLayout;
     }
     if (isMobileGazetteLayout()) {
