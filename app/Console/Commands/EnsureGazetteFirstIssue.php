@@ -16,8 +16,9 @@ class EnsureGazetteFirstIssue extends Command
         $issues->syncWeeklyIssues();
         $issue = $issues->ensureDefaultIssue();
         $count = $issues->assignNewsToIssueWeeks();
+        $layouts = $issues->refreshAllCoverLayouts();
 
-        $this->info("Sayı {$issue->issue_number} ({$issue->label}) — {$count} haber bağlandı.");
+        $this->info("Sayı {$issue->issue_number} ({$issue->label}) — {$count} haber bağlandı, {$layouts} sayıda kapak düzeni güncellendi.");
 
         return self::SUCCESS;
     }

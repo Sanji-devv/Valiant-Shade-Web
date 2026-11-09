@@ -204,6 +204,7 @@ class GazetteIssueService
         $allNews = $this->publicNews->publishedForIssue($issue->id, $newsType, $search);
         $issue = $this->ensureCoverLayoutMigrated($issue, $allNews);
         $this->sanitizeCoverLayout($issue, $allNews);
+        $issue = $this->syncCoverLayoutFromPublishedNews($issue, $allNews);
         $coverPayload = $this->resolveCoverArticles($issue, $allNews);
         $innerNews = $coverPayload['inner'];
         $totalArticles = $innerNews->count();
@@ -270,6 +271,41 @@ class GazetteIssueService
     public function assignNewsToIssueWeeks(): int
     {
         return $this->assignOrphanPublishedNews();
+    }
+
+    /**
+     * Tüm sayılarda kapak manşet / gündem sütunlarını yayınlı haberlerle hizalar.
+     */
+    public function refreshAllCoverLayouts(): int
+    {
+        if (! Schema::hasTable('gazette_issues')) {
+            return 0;
+        }
+
+        $this->syncWeeklyIssues();
+        $this->assignNewsToIssueWeeks();
+
+        $touched = 0;
+        GazetteIssue::query()->orderBy('issue_number')->each(function (GazetteIssue $issue) use (&$touched) {
+            $allNews = $this->publicNews->publishedForIssue($issue->id);
+            if ($allNews->isEmpty()) {
+                return;
+            }
+            $before = $issue->coverLayout();
+            $afterIssue = $this->syncCoverLayoutFromPublishedNews($issue, $allNews);
+            $after = $afterIssue->coverLayout();
+            $sameLead = (int) ($before['lead_news_id'] ?? 0) === (int) ($after['lead_news_id'] ?? 0);
+            $sameBriefs = json_encode($before['brief_news_ids'] ?? []) === json_encode($after['brief_news_ids'] ?? []);
+            if (! $sameLead || ! $sameBriefs) {
+                $touched++;
+            }
+        });
+
+        if ($touched > 0) {
+            $this->publicNews->invalidatePublicFeed();
+        }
+
+        return $touched;
     }
 
     /**
@@ -494,6 +530,64 @@ class GazetteIssueService
     /**
      * @param  Collection<int, News>  $allNews
      */
+    /**
+     * Kapakta boş kalan manşet / gündem sütunlarını bu sayının yayınlı haberleriyle doldurur.
+     */
+    protected function syncCoverLayoutFromPublishedNews(GazetteIssue $issue, Collection $allNews): GazetteIssue
+    {
+        $eligible = $allNews
+            ->filter(fn (News $n) => ! $this->isCornerColumnNews($n))
+            ->values();
+
+        if ($eligible->isEmpty()) {
+            return $issue;
+        }
+
+        $layout = $issue->coverLayout();
+        $dirty = false;
+
+        if (! $layout['lead_news_id']) {
+            $lead = $eligible->first(fn (News $n) => $n->is_breaking) ?? $eligible->first();
+            if ($lead instanceof News) {
+                $layout['lead_news_id'] = $lead->id;
+                $dirty = true;
+            }
+        }
+
+        $pinned = collect([$layout['lead_news_id'] ?? null])
+            ->merge($layout['brief_news_ids'] ?? [])
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->all();
+
+        $pool = $eligible
+            ->filter(fn (News $n) => ! in_array((int) $n->id, $pinned, true))
+            ->values();
+
+        foreach ($layout['brief_news_ids'] as $index => $id) {
+            if ($id !== null && $id !== '') {
+                continue;
+            }
+            $next = $pool->shift();
+            if (! $next instanceof News) {
+                break;
+            }
+            $layout['brief_news_ids'][$index] = $next->id;
+            $pinned[] = (int) $next->id;
+            $dirty = true;
+        }
+
+        if (! $dirty) {
+            return $issue;
+        }
+
+        $issue->setCoverLayout($layout);
+        $issue->saveQuietly();
+
+        return $issue->fresh() ?? $issue;
+    }
+
     protected function ensureCoverLayoutMigrated(GazetteIssue $issue, Collection $allNews): GazetteIssue
     {
         $layout = $issue->coverLayout();
