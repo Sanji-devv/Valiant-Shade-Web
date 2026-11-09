@@ -111,6 +111,11 @@ class PublicNewsController extends Controller
             'location_badge' => 'nullable|string|max:150',
             'author' => 'nullable|string|max:120',
             'anonymous' => 'nullable|boolean',
+            'rumuz' => 'nullable|string|max:80',
+            'gazette_slot_kind' => 'nullable|string|in:lead,brief,corner',
+            'gazette_slot_key' => 'nullable|string|max:64',
+            'gazette_slot_label' => 'nullable|string|max:150',
+            'gazette_issue_id' => 'nullable|integer|exists:gazette_issues,id',
         ]);
 
         if ($validator->fails()) {
@@ -124,22 +129,57 @@ class PublicNewsController extends Controller
         $data = $validator->validated();
         $typeConfig = config('news.types.'.$data['news_type']);
 
+        $slotKind = $data['gazette_slot_kind'] ?? null;
+        $rumuz = isset($data['rumuz']) ? trim((string) $data['rumuz']) : '';
+
         $author = ! empty($data['anonymous']) ? 'Anonim Gözcü' : ($data['author'] ?? 'Sokak Muhabiri');
+        if ($slotKind === 'corner' && $rumuz !== '') {
+            $author = ! empty($data['anonymous']) ? $rumuz : ($data['author'] ?? $rumuz);
+        }
+
+        $submissionTags = [
+            'lead' => 'Manşet Gönderisi',
+            'brief' => 'Kapak Özeti Gönderisi',
+            'corner' => 'Köşe Yazısı Gönderisi',
+        ];
+        $tag = $submissionTags[$slotKind] ?? 'Söylenti Gönderisi';
+
+        $slotLabel = isset($data['gazette_slot_label']) ? trim((string) $data['gazette_slot_label']) : '';
+        $authorRoles = [
+            'lead' => $slotLabel !== '' ? "Manşet — {$slotLabel}" : 'Okuyucu — manşet',
+            'brief' => $slotLabel !== '' ? "Kapak özeti — {$slotLabel}" : 'Okuyucu — kapak özeti',
+            'corner' => $slotLabel !== ''
+                ? "Köşe — {$slotLabel}".($rumuz !== '' ? " ({$rumuz})" : '')
+                : 'Köşe yazarı'.($rumuz !== '' ? " ({$rumuz})" : ''),
+        ];
+        $authorRole = $authorRoles[$slotKind] ?? 'Halktan Gelen İhbar';
+
+        $stats = [
+            'submission' => array_filter([
+                'gazette_slot_kind' => $slotKind,
+                'gazette_slot_key' => $data['gazette_slot_key'] ?? null,
+                'gazette_slot_label' => $slotLabel !== '' ? $slotLabel : null,
+                'gazette_issue_id' => $data['gazette_issue_id'] ?? null,
+                'rumuz' => $rumuz !== '' ? $rumuz : null,
+            ], static fn ($value) => $value !== null && $value !== ''),
+        ];
 
         $news = News::create([
             'title' => $data['title'],
             'category' => $typeConfig['label'],
             'news_type' => $data['news_type'],
+            'gazette_issue_id' => $data['gazette_issue_id'] ?? null,
             'badge_color' => $typeConfig['badge_color'],
             'category_icon' => $typeConfig['category_icon'],
-            'tag' => 'Söylenti Gönderisi',
+            'tag' => $tag,
             'tag_icon' => 'icon-base ti tabler-message-2-share',
             'date_text' => WorldCalendar::formatNewsStamp(now()) ?? now()->locale(app()->getLocale())->translatedFormat('d M Y, H:i'),
             'description' => $data['description'],
             'image_url' => 'static/valiant-shade/assets/img/news/guild_tavern_whispers.jpg',
             'location_badge' => $data['location_badge'] ?? null,
             'author' => $author,
-            'author_role' => 'Halktan Gelen İhbar',
+            'author_role' => $authorRole,
+            'stats' => $stats,
             'status' => 'pending',
             'is_active' => false,
             'order' => (int) News::max('order') + 1,

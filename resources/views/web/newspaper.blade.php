@@ -32,6 +32,7 @@
     data-gazette-issue-day="{{ $gazetteIssue['day'] ?? 1 }}"
     data-gazette-issue-year="{{ $gazetteIssue['year'] ?? 631 }}"
     data-gazette-calendar='@json($gb["calendar"] ?? [])'
+    data-gazette-submission-slots='@json(config("gazette.submission_slots", []))'
 >
     <header class="vs-newspaper-header">
         <div class="vs-newspaper-header__brand">
@@ -164,12 +165,21 @@
         <section class="vs-modal" style="width:min(560px,100%)">
             <button type="button" class="vs-modal__close" id="rumorModalClose" aria-label="Kapat">×</button>
             <div class="vs-modal__body">
-                <h2 id="rumorModalTitle">Söylenti Gönder</h2>
-                <p style="color:#94a3b8;font-size:.9rem">Editör onayından sonra gazetede yayınlanır. Kayıt gerekmez.</p>
+                <h2 id="rumorModalTitle">Söylenti gönder</h2>
+                <p id="rumorModalIntro" class="vs-rumor-modal__intro">Editör onayından sonra gazetede yayınlanır. Kayıt gerekmez.</p>
+                <div id="rumorModalSlotBanner" class="vs-rumor-slot-banner" hidden>
+                    <span class="vs-rumor-slot-banner__eyebrow" id="rumorModalSlotEyebrow">Gazete yeri</span>
+                    <strong class="vs-rumor-slot-banner__label" id="rumorModalSlotLabel">—</strong>
+                    <span class="vs-rumor-slot-banner__issue" id="rumorModalSlotIssue"></span>
+                </div>
                 <form id="rumorForm" class="vs-form-grid">
+                    <input type="hidden" name="gazette_slot_kind" id="rumorGazetteSlotKind" value="">
+                    <input type="hidden" name="gazette_slot_key" id="rumorGazetteSlotKey" value="">
+                    <input type="hidden" name="gazette_slot_label" id="rumorGazetteSlotLabelHidden" value="">
+                    <input type="hidden" name="gazette_issue_id" id="rumorGazetteIssueId" value="">
                     <label>
-                        Başlık
-                        <input type="text" name="title" required minlength="8" maxlength="255" placeholder="Örn. Kızıl Han'da gizli buluşma…">
+                        <span id="rumorTitleLabel">Başlık</span>
+                        <input type="text" name="title" id="rumorTitleInput" required minlength="8" maxlength="255" placeholder="Örn. Kızıl Han'da gizli buluşma…">
                     </label>
                     <div class="vs-form-field">
                         <span class="vs-form-field__label">Tür</span>
@@ -184,9 +194,13 @@
                         Konum (isteğe bağlı)
                         <input type="text" name="location_badge" maxlength="150" placeholder="Örn. Isonburg - Alt Şehir">
                     </label>
-                    <label>
+                    <label id="rumorRumuzWrap" hidden>
+                        Rumuz (köşe imzası)
+                        <input type="text" name="rumuz" id="rumorRumuzInput" maxlength="80" placeholder="Basılacak rumuz — örn. G.T.">
+                    </label>
+                    <label id="rumorAuthorWrap">
                         Muhabir adı (isteğe bağlı)
-                        <input type="text" name="author" maxlength="120" placeholder="Anonim kalabilirsiniz">
+                        <input type="text" name="author" id="rumorAuthorInput" maxlength="120" placeholder="Anonim kalabilirsiniz">
                     </label>
                     <label>
                         <span style="display:flex;gap:.5rem;align-items:center">
@@ -195,8 +209,8 @@
                         </span>
                     </label>
                     <label>
-                        Söylenti / ihbar metni
-                        <textarea name="description" rows="5" required minlength="30" maxlength="5000" placeholder="Gördüklerinizi veya duyduklarınızı yazın…"></textarea>
+                        <span id="rumorBodyLabel">Söylenti / ihbar metni</span>
+                        <textarea name="description" id="rumorBodyInput" rows="5" required minlength="30" maxlength="5000" placeholder="Gördüklerinizi veya duyduklarınızı yazın…"></textarea>
                     </label>
                     <button type="submit" class="primary" id="rumorSubmit" style="justify-self:start;border:0;border-radius:10px;padding:.65rem 1rem">Gönder</button>
                 </form>
