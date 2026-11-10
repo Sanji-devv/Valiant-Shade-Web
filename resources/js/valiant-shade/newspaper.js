@@ -1108,18 +1108,36 @@ function triggerBlobDownload(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(objectUrl), 3000);
 }
 
-function setDownloadBusy(isBusy, message = '') {
-  if (els.downloadGazettePdfBtn) {
-    els.downloadGazettePdfBtn.disabled = isBusy;
-    els.downloadGazettePdfBtn.setAttribute('aria-busy', isBusy ? 'true' : 'false');
-  }
-  if (els.downloadGazettePngBtn) {
-    els.downloadGazettePngBtn.disabled = isBusy;
-    els.downloadGazettePngBtn.setAttribute('aria-busy', isBusy ? 'true' : 'false');
-  }
+function setDownloadModalBusy(isBusy, message = '') {
+  if (els.downloadGazettePdfOption) els.downloadGazettePdfOption.disabled = isBusy;
+  if (els.downloadGazettePngOption) els.downloadGazettePngOption.disabled = isBusy;
+  if (els.downloadGazettePrintOption) els.downloadGazettePrintOption.disabled = isBusy;
+
   if (els.downloadGazetteStatus) {
     els.downloadGazetteStatus.hidden = !isBusy;
-    els.downloadGazetteStatus.textContent = message;
+  }
+  if (els.downloadGazetteStatusMsg && message) {
+    els.downloadGazetteStatusMsg.textContent = message;
+  }
+}
+
+function openDownloadDialog() {
+  if (!els.downloadGazetteDialog) return;
+  setDownloadModalBusy(false);
+  if (!isGazetteLayout()) {
+    state.layoutMode = 'gazette';
+    applyLayoutMode();
+    writeStateIntoUrl();
+    fetchNewsFeed();
+  }
+  if (typeof els.downloadGazetteDialog.showModal === 'function') {
+    els.downloadGazetteDialog.showModal();
+  }
+}
+
+function closeDownloadDialog() {
+  if (els.downloadGazetteDialog && typeof els.downloadGazetteDialog.close === 'function') {
+    els.downloadGazetteDialog.close();
   }
 }
 
@@ -1135,7 +1153,7 @@ async function downloadGazettePagePdf() {
   const pageNumber = state.lastFeedMeta?.current_page || state.page || 1;
   const filename = `lagimdan-sesler-sayi-${issueNumber}-yaprak-${pageNumber}.pdf`;
 
-  setDownloadBusy(true, msgs.preparingPdf);
+  setDownloadModalBusy(true, msgs.preparingPdf);
 
   try {
     const canvas = await captureGazetteSheetCanvas(sheet);
@@ -1151,12 +1169,13 @@ async function downloadGazettePagePdf() {
     const pdfBlob = createPdfBlobFromJpeg(jpegUint8, canvas.width, canvas.height);
 
     triggerBlobDownload(pdfBlob, filename);
+    closeDownloadDialog();
     showToast(msgs.pdfSuccess);
   } catch (error) {
     console.error('Gazette PDF download failed:', error);
     showToast(msgs.downloadError);
   } finally {
-    setDownloadBusy(false);
+    setDownloadModalBusy(false);
   }
 }
 
@@ -1172,7 +1191,7 @@ async function downloadGazettePagePng() {
   const pageNumber = state.lastFeedMeta?.current_page || state.page || 1;
   const filename = `lagimdan-sesler-sayi-${issueNumber}-yaprak-${pageNumber}.png`;
 
-  setDownloadBusy(true, msgs.preparingPng);
+  setDownloadModalBusy(true, msgs.preparingPng);
 
   try {
     const canvas = await captureGazetteSheetCanvas(sheet);
@@ -1184,13 +1203,27 @@ async function downloadGazettePagePng() {
     });
 
     triggerBlobDownload(blob, filename);
+    closeDownloadDialog();
     showToast(msgs.pngSuccess);
   } catch (error) {
     console.error('Gazette PNG download failed:', error);
     showToast(msgs.downloadError);
   } finally {
-    setDownloadBusy(false);
+    setDownloadModalBusy(false);
   }
+}
+
+function printGazettePage() {
+  closeDownloadDialog();
+  document.body.classList.add('vs-printing');
+  window.addEventListener(
+    'afterprint',
+    () => {
+      document.body.classList.remove('vs-printing');
+    },
+    { once: true }
+  );
+  window.print();
 }
 
 function applyLayoutMode() {
@@ -1217,11 +1250,14 @@ function applyLayoutMode() {
   if (els.toggleGazetteLayoutLabel) {
     els.toggleGazetteLayoutLabel.textContent = gazette ? 'Web görünümü' : 'Gazete görünümü';
   }
-  if (els.downloadGazettePdfBtn) {
-    els.downloadGazettePdfBtn.hidden = !gazette;
+  if (els.downloadGazetteBtn) {
+    els.downloadGazetteBtn.hidden = !gazette;
   }
-  if (els.downloadGazettePngBtn) {
-    els.downloadGazettePngBtn.hidden = !gazette;
+  if (els.gazetteToolbarDownloadBtn) {
+    els.gazetteToolbarDownloadBtn.hidden = !gazette;
+  }
+  if (els.gazettePaginationDownloadBtn) {
+    els.gazettePaginationDownloadBtn.hidden = !gazette;
   }
   if (els.pagination) {
     els.pagination.classList.toggle('vs-pagination--gazette', gazette);
@@ -2250,12 +2286,42 @@ function bindEvents() {
     });
   }
 
-  if (els.downloadGazettePdfBtn) {
-    els.downloadGazettePdfBtn.addEventListener('click', downloadGazettePagePdf);
+  const downloadTriggers = [
+    els.downloadGazetteBtn,
+    els.gazetteToolbarDownloadBtn,
+    els.gazettePaginationDownloadBtn,
+  ].filter(Boolean);
+
+  downloadTriggers.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      openDownloadDialog();
+    });
+  });
+
+  if (els.downloadGazettePdfOption) {
+    els.downloadGazettePdfOption.addEventListener('click', () => {
+      downloadGazettePagePdf();
+    });
   }
 
-  if (els.downloadGazettePngBtn) {
-    els.downloadGazettePngBtn.addEventListener('click', downloadGazettePagePng);
+  if (els.downloadGazettePngOption) {
+    els.downloadGazettePngOption.addEventListener('click', () => {
+      downloadGazettePagePng();
+    });
+  }
+
+  if (els.downloadGazettePrintOption) {
+    els.downloadGazettePrintOption.addEventListener('click', () => {
+      printGazettePage();
+    });
+  }
+
+  if (els.downloadGazetteDialog) {
+    els.downloadGazetteDialog.addEventListener('click', (e) => {
+      if (e.target === els.downloadGazetteDialog) {
+        closeDownloadDialog();
+      }
+    });
   }
 
   let mediaFitTimer;
@@ -2553,9 +2619,16 @@ document.addEventListener('DOMContentLoaded', () => {
   els.newsSliderSection = document.querySelector('.vs-news-slider');
   els.toggleGazetteLayoutBtn = qs('toggleGazetteLayoutBtn');
   els.toggleGazetteLayoutLabel = qs('toggleGazetteLayoutLabel');
-  els.downloadGazettePdfBtn = qs('downloadGazettePdfBtn');
-  els.downloadGazettePngBtn = qs('downloadGazettePngBtn');
+  els.downloadGazetteBtn = qs('downloadGazetteBtn');
+  els.gazetteToolbarDownloadBtn = qs('gazetteToolbarDownloadBtn');
+  els.gazettePaginationDownloadBtn = qs('gazettePaginationDownloadBtn');
+  els.downloadGazetteDialog = qs('downloadGazetteDialog');
+  els.downloadGazettePdfOption = qs('downloadGazettePdfOption');
+  els.downloadGazettePngOption = qs('downloadGazettePngOption');
+  els.downloadGazettePrintOption = qs('downloadGazettePrintOption');
   els.downloadGazetteStatus = qs('downloadGazetteStatus');
+  els.downloadGazetteStatusMsg = qs('downloadGazetteStatusMsg');
+  els.downloadGazetteOptions = qs('downloadGazetteOptions');
   els.pagination = qs('newsPagination');
   els.pageHint = qs('newsPageHint');
   els.prevPageLabel = qs('newsPrevPageLabel');

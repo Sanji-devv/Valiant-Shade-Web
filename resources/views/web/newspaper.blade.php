@@ -58,15 +58,10 @@
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">{{ __('Guild') }}</span>
                 <span class="vs-newspaper-nav__tooltip" role="tooltip">{{ __('Coming soon') }}</span>
             </span>
-            <button type="button" class="vs-newspaper-nav__item vs-newspaper-nav__item--download vs-newspaper-nav__item--download-pdf" id="downloadGazettePdfBtn" aria-label="{{ __('Download as PDF') }}">
+            <button type="button" class="vs-newspaper-nav__item vs-newspaper-nav__item--print" id="downloadGazetteBtn" aria-label="{{ __('Gazette download options') }}">
                 <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
-                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">{{ __('Download as PDF') }}</span>
-                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">PDF</span>
-            </button>
-            <button type="button" class="vs-newspaper-nav__item vs-newspaper-nav__item--download vs-newspaper-nav__item--download-png" id="downloadGazettePngBtn" aria-label="{{ __('Download as PNG') }}">
-                <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
-                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">{{ __('Download as PNG') }}</span>
-                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">PNG</span>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">{{ __('Download') }}</span>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">{{ __('Download') }}</span>
             </button>
             <button type="button" class="vs-newspaper-nav__item vs-newspaper-nav__item--primary" id="openRumorModal" aria-label="{{ __('Submit Rumor') }}">
                 <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8z"/></svg>
@@ -76,7 +71,47 @@
         </nav>
     </header>
 
-    <span class="vs-download-status" id="downloadGazetteStatus" role="status" aria-live="polite" hidden></span>
+    <dialog class="vs-download-dialog" id="downloadGazetteDialog" aria-labelledby="downloadGazetteTitle">
+        <form method="dialog">
+            <button type="submit" class="vs-download-dialog__close" aria-label="{{ __('Close') }}">×</button>
+        </form>
+        <div class="vs-download-dialog__header">
+            <h2 id="downloadGazetteTitle">{{ __('Download Gazette') }}</h2>
+            <p>{{ __('Download the currently active gazette sheet in your preferred format.') }}</p>
+        </div>
+        <div class="vs-download-dialog__options" id="downloadGazetteOptions">
+            <button type="button" class="vs-download-dialog__option vs-download-dialog__option--pdf" id="downloadGazettePdfOption">
+                <div class="vs-download-dialog__option-badge">PDF</div>
+                <div class="vs-download-dialog__option-content">
+                    <strong>{{ __('Download as PDF') }}</strong>
+                    <span>{{ __('High-resolution document ready for printing (.pdf)') }}</span>
+                </div>
+                <svg class="vs-download-dialog__option-arrow" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+            <button type="button" class="vs-download-dialog__option vs-download-dialog__option--png" id="downloadGazettePngOption">
+                <div class="vs-download-dialog__option-badge">PNG</div>
+                <div class="vs-download-dialog__option-content">
+                    <strong>{{ __('Download as PNG') }}</strong>
+                    <span>{{ __('Crystal clear digital image (.png)') }}</span>
+                </div>
+                <svg class="vs-download-dialog__option-arrow" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+            <button type="button" class="vs-download-dialog__option vs-download-dialog__option--print" id="downloadGazettePrintOption">
+                <div class="vs-download-dialog__option-badge">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                </div>
+                <div class="vs-download-dialog__option-content">
+                    <strong>{{ __('Print Directly') }}</strong>
+                    <span>{{ __('Open browser print dialog for physical printing') }}</span>
+                </div>
+                <svg class="vs-download-dialog__option-arrow" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+        </div>
+        <div class="vs-download-dialog__status" id="downloadGazetteStatus" hidden aria-live="polite">
+            <div class="vs-download-dialog__spinner"></div>
+            <span id="downloadGazetteStatusMsg">{{ __('Generating document, please wait...') }}</span>
+        </div>
+    </dialog>
 
     <main class="vs-newspaper-main">
         <section class="vs-news-slider" aria-label="{{ __('Headline news') }}">
@@ -112,6 +147,10 @@
                         <span class="vs-gazette-archive-wrap__label">{{ __('Issue') }}</span>
                         <select class="vs-gazette-archive" id="gazetteArchiveSelect" aria-label="{{ __('Gazette issue archive') }}"></select>
                     </label>
+                    <button type="button" class="vs-toolbar__btn vs-toolbar__btn--download" id="gazetteToolbarDownloadBtn" aria-label="{{ __('Download Gazette') }}" title="{{ __('Download current page as PDF or PNG') }}" hidden>
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+                        <span>{{ __('Download') }}</span>
+                    </button>
                 </div>
             </div>
             <div class="vs-toolbar__filters-row">
@@ -147,6 +186,10 @@
                 <span id="newsPrevPageLabel">{{ __('Previous Page') }}</span>
             </button>
             <span class="vs-page-sheet" id="newsPageSheet">{{ __('Gazette Page 1 / 1') }}</span>
+            <button type="button" class="vs-page-nav-btn vs-page-nav-btn--download" id="gazettePaginationDownloadBtn" title="{{ __('Download current page') }}" aria-label="{{ __('Download current page as PDF or PNG') }}">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+                <span>{{ __('Download') }}</span>
+            </button>
             <button type="button" class="vs-page-nav-btn" id="newsNextPage">
                 <span id="newsNextPageLabel">{{ __('Next Page') }}</span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
