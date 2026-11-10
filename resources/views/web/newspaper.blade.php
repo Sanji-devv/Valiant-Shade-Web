@@ -57,6 +57,11 @@
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">PDF İndir</span>
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">PDF</span>
             </button>
+            <button type="button" class="vs-newspaper-nav__item vs-newspaper-nav__item--print" id="downloadGazettePngBtn" hidden aria-label="Açık gazete yaprağını PNG olarak indir">
+                <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">PNG İndir</span>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">PNG</span>
+            </button>
             <button type="button" class="vs-newspaper-nav__item vs-newspaper-nav__item--primary" id="openRumorModal" aria-label="Söylenti Gönder">
                 <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8z"/></svg>
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">Söylenti Gönder</span>
