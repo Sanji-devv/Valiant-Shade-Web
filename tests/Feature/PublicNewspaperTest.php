@@ -71,8 +71,8 @@ class PublicNewspaperTest extends TestCase
 
         $response = $this->getJson('/api/public/news/bootstrap');
         $response->assertOk()
-            ->assertJsonPath('success', true);
-        $this->assertStringContainsString('no-cache', (string) $response->headers->get('Cache-Control'));
+            ->assertJsonPath('success', true)
+            ->assertHeader('Cache-Control', 'private, no-cache, must-revalidate');
 
         $titles = collect($response->json('feed.data'))->pluck('title')->all();
         $this->assertContains('Yayında Olan Haber Başlığı Uzun Metin', $titles);

@@ -992,238 +992,89 @@ function renderGazette(items, meta) {
   });
 }
 
-function getI18nMessages() {
-  const d = document.body?.dataset || {};
-  return {
-    pngSuccess: d.msgPngSuccess || 'Gazette sheet downloaded as PNG.',
-    pdfSuccess: d.msgPdfSuccess || 'Gazette sheet downloaded as PDF.',
-    downloadError: d.msgDownloadError || 'Download failed. Please try again.',
-    preparingPdf: d.msgPreparingPdf || 'Generating PDF document...',
-    preparingPng: d.msgPreparingPng || 'Generating high-resolution PNG...',
-    noSheet: d.msgNoSheet || 'No gazette sheet available to download.',
-  };
-}
-
-function createPdfBlobFromJpeg(jpegUint8Array, widthPx, heightPx) {
-  const aspect = heightPx / widthPx;
-  const pageW = 595.28;
-  const pageH = Number((pageW * aspect).toFixed(2));
-
-  const encoder = new TextEncoder();
-  const header = encoder.encode('%PDF-1.4\n');
-
-  let pos = header.length;
-  const offsets = [];
-
-  const obj1 = encoder.encode('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
-  offsets[1] = pos;
-  pos += obj1.length;
-
-  const obj2 = encoder.encode('2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n');
-  offsets[2] = pos;
-  pos += obj2.length;
-
-  const obj3 = encoder.encode(
-    `3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW} ${pageH}] /Contents 4 0 R /Resources << /XObject << /Im1 5 0 R >> >> >>\nendobj\n`
-  );
-  offsets[3] = pos;
-  pos += obj3.length;
-
-  const stream = `q ${pageW} 0 0 ${pageH} 0 0 cm /Im1 Do Q`;
-  const streamBytes = encoder.encode(stream);
-  const obj4 = encoder.encode(`4 0 obj\n<< /Length ${streamBytes.length} >>\nstream\n${stream}\nendstream\nendobj\n`);
-  offsets[4] = pos;
-  pos += obj4.length;
-
-  const obj5Prefix = encoder.encode(
-    `5 0 obj\n<< /Type /XObject /Subtype /Image /Width ${widthPx} /Height ${heightPx} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpegUint8Array.length} >>\nstream\n`
-  );
-  offsets[5] = pos;
-  pos += obj5Prefix.length;
-  pos += jpegUint8Array.length;
-
-  const obj5Suffix = encoder.encode('\nendstream\nendobj\n');
-  pos += obj5Suffix.length;
-
-  const xrefOffset = pos;
-  let xref = 'xref\n0 6\n0000000000 65535 f \n';
-  for (let i = 1; i <= 5; i++) {
-    xref += String(offsets[i]).padStart(10, '0') + ' 00000 n \n';
-  }
-  xref += `trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
-  const trailerBytes = encoder.encode(xref);
-
-  return new Blob(
-    [header, obj1, obj2, obj3, obj4, obj5Prefix, jpegUint8Array, obj5Suffix, trailerBytes],
-    { type: 'application/pdf' }
-  );
-}
-
-async function captureGazetteSheetCanvas(sheet) {
-  await Promise.race([
-    document.fonts ? document.fonts.ready : Promise.resolve(),
-    new Promise((r) => setTimeout(r, 1200)),
-  ]);
-
-  const images = Array.from(sheet.querySelectorAll('img'));
-  await Promise.all(
-    images.map((image) => {
-      return new Promise((resolve) => {
-        if (image.complete && image.naturalWidth > 0) {
-          return resolve();
-        }
-        const done = () => resolve();
-        image.addEventListener('load', done, { once: true });
-        image.addEventListener('error', done, { once: true });
-        setTimeout(done, 1500);
-      });
-    })
-  );
-
-  return await html2canvas(sheet, {
-    backgroundColor: '#f2e4c8',
-    scale: 2,
-    useCORS: true,
-    allowTaint: false,
-    logging: false,
-    onclone: (clonedDocument) => {
-      const clonedSheet = clonedDocument.querySelector('#gazettePrintSheet');
-      if (clonedSheet) {
-        clonedSheet.classList.remove('is-turning', 'is-turning--back');
-        clonedSheet.style.transform = 'none';
-        clonedSheet.style.animation = 'none';
-      }
-    },
-  });
-}
-
-function triggerBlobDownload(blob, filename) {
-  const objectUrl = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = objectUrl;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  setTimeout(() => URL.revokeObjectURL(objectUrl), 3000);
-}
-
-function setDownloadModalBusy(isBusy, message = '') {
-  if (els.downloadGazettePdfOption) els.downloadGazettePdfOption.disabled = isBusy;
-  if (els.downloadGazettePngOption) els.downloadGazettePngOption.disabled = isBusy;
-  if (els.downloadGazettePrintOption) els.downloadGazettePrintOption.disabled = isBusy;
-
-  if (els.downloadGazetteStatus) {
-    els.downloadGazetteStatus.hidden = !isBusy;
-  }
-  if (els.downloadGazetteStatusMsg && message) {
-    els.downloadGazetteStatusMsg.textContent = message;
-  }
-}
-
-function openDownloadDialog() {
-  if (!els.downloadGazetteDialog) return;
-  setDownloadModalBusy(false);
-  if (!isGazetteLayout()) {
-    state.layoutMode = 'gazette';
-    applyLayoutMode();
-    writeStateIntoUrl();
-    fetchNewsFeed();
-  }
-  if (typeof els.downloadGazetteDialog.showModal === 'function') {
-    els.downloadGazetteDialog.showModal();
-  }
-}
-
-function closeDownloadDialog() {
-  if (els.downloadGazetteDialog && typeof els.downloadGazetteDialog.close === 'function') {
-    els.downloadGazetteDialog.close();
-  }
-}
-
-async function downloadGazettePagePdf() {
-  const sheet = els.gazetteStage?.querySelector('.vs-gazette-sheet');
-  const msgs = getI18nMessages();
-  if (!sheet) {
-    showToast(msgs.noSheet);
-    return;
-  }
-
-  const issueNumber = state.currentIssue?.issue_number || inWorldCalendar().issueNumber;
-  const pageNumber = state.lastFeedMeta?.current_page || state.page || 1;
-  const filename = `lagimdan-sesler-sayi-${issueNumber}-yaprak-${pageNumber}.pdf`;
-
-  setDownloadModalBusy(true, msgs.preparingPdf);
-
-  try {
-    const canvas = await captureGazetteSheetCanvas(sheet);
-    const jpegBlob = await new Promise((resolve, reject) => {
-      canvas.toBlob((result) => {
-        if (result) resolve(result);
-        else reject(new Error('Canvas toBlob JPEG failed'));
-      }, 'image/jpeg', 0.95);
-    });
-
-    const arrayBuffer = await jpegBlob.arrayBuffer();
-    const jpegUint8 = new Uint8Array(arrayBuffer);
-    const pdfBlob = createPdfBlobFromJpeg(jpegUint8, canvas.width, canvas.height);
-
-    triggerBlobDownload(pdfBlob, filename);
-    closeDownloadDialog();
-    showToast(msgs.pdfSuccess);
-  } catch (error) {
-    console.error('Gazette PDF download failed:', error);
-    showToast(msgs.downloadError);
-  } finally {
-    setDownloadModalBusy(false);
-  }
-}
-
 async function downloadGazettePagePng() {
   const sheet = els.gazetteStage?.querySelector('.vs-gazette-sheet');
-  const msgs = getI18nMessages();
   if (!sheet) {
-    showToast(msgs.noSheet);
+    showToast('İndirilecek gazete yaprağı yüklenemedi.');
     return;
   }
 
   const issueNumber = state.currentIssue?.issue_number || inWorldCalendar().issueNumber;
   const pageNumber = state.lastFeedMeta?.current_page || state.page || 1;
-  const filename = `lagimdan-sesler-sayi-${issueNumber}-yaprak-${pageNumber}.png`;
-
-  setDownloadModalBusy(true, msgs.preparingPng);
+  const button = els.downloadGazettePngOption;
+  if (button) {
+    button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+  }
 
   try {
-    const canvas = await captureGazetteSheetCanvas(sheet);
+    await document.fonts.ready;
+    const images = Array.from(sheet.querySelectorAll('img'));
+    await Promise.all(images.map((image) => {
+      image.loading = 'eager';
+      return new Promise((resolve, reject) => {
+        const fail = () => reject(new Error(`Gazete görseli yüklenemedi: ${image.currentSrc || image.src}`));
+        const loaded = async () => {
+          if (!image.naturalWidth) {
+            fail();
+            return;
+          }
+          try {
+            await image.decode();
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
+        };
+
+        if (image.complete) {
+          loaded();
+          return;
+        }
+
+        image.addEventListener('load', loaded, { once: true });
+        image.addEventListener('error', fail, { once: true });
+        if (image.complete) {
+          image.removeEventListener('load', loaded);
+          image.removeEventListener('error', fail);
+          loaded();
+        }
+      });
+    }));
+
+    const canvas = await html2canvas(sheet, {
+      backgroundColor: null,
+      scale: 2,
+      useCORS: true,
+      onclone: (clonedDocument) => {
+        clonedDocument.querySelector('#gazettePrintSheet')?.classList.remove('is-turning', 'is-turning--back');
+      },
+    });
     const blob = await new Promise((resolve, reject) => {
       canvas.toBlob((result) => {
-        if (result) resolve(result);
-        else reject(new Error('Canvas toBlob PNG failed'));
+        if (result) {
+          resolve(result);
+        } else {
+          reject(new Error('PNG dosyası oluşturulamadı.'));
+        }
       }, 'image/png');
     });
 
-    triggerBlobDownload(blob, filename);
-    closeDownloadDialog();
-    showToast(msgs.pngSuccess);
+    const link = document.createElement('a');
+    const objectUrl = URL.createObjectURL(blob);
+    link.href = objectUrl;
+    link.download = `lagimdan-sesler-sayi-${issueNumber}-yaprak-${pageNumber}.png`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
   } catch (error) {
-    console.error('Gazette PNG download failed:', error);
-    showToast(msgs.downloadError);
+    console.error('Gazete yaprağı PNG olarak indirilemedi.', error);
+    showToast('PNG indirilemedi. Lütfen tekrar deneyin.');
   } finally {
-    setDownloadModalBusy(false);
+    if (button) {
+      button.disabled = false;
+      button.removeAttribute('aria-busy');
+    }
   }
-}
-
-function printGazettePage() {
-  closeDownloadDialog();
-  document.body.classList.add('vs-printing');
-  window.addEventListener(
-    'afterprint',
-    () => {
-      document.body.classList.remove('vs-printing');
-    },
-    { once: true }
-  );
-  window.print();
 }
 
 function applyLayoutMode() {
@@ -1252,12 +1103,6 @@ function applyLayoutMode() {
   }
   if (els.downloadGazetteBtn) {
     els.downloadGazetteBtn.hidden = !gazette;
-  }
-  if (els.gazetteToolbarDownloadBtn) {
-    els.gazetteToolbarDownloadBtn.hidden = !gazette;
-  }
-  if (els.gazettePaginationDownloadBtn) {
-    els.gazettePaginationDownloadBtn.hidden = !gazette;
   }
   if (els.pagination) {
     els.pagination.classList.toggle('vs-pagination--gazette', gazette);
@@ -2286,41 +2131,29 @@ function bindEvents() {
     });
   }
 
-  const downloadTriggers = [
-    els.downloadGazetteBtn,
-    els.gazetteToolbarDownloadBtn,
-    els.gazettePaginationDownloadBtn,
-  ].filter(Boolean);
-
-  downloadTriggers.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      openDownloadDialog();
-    });
-  });
-
-  if (els.downloadGazettePdfOption) {
-    els.downloadGazettePdfOption.addEventListener('click', () => {
-      downloadGazettePagePdf();
-    });
-  }
-
-  if (els.downloadGazettePngOption) {
-    els.downloadGazettePngOption.addEventListener('click', () => {
-      downloadGazettePagePng();
-    });
-  }
-
-  if (els.downloadGazettePrintOption) {
-    els.downloadGazettePrintOption.addEventListener('click', () => {
-      printGazettePage();
-    });
-  }
-
-  if (els.downloadGazetteDialog) {
-    els.downloadGazetteDialog.addEventListener('click', (e) => {
-      if (e.target === els.downloadGazetteDialog) {
-        closeDownloadDialog();
+  if (els.downloadGazetteBtn && els.downloadGazetteDialog) {
+    els.downloadGazetteBtn.addEventListener('click', () => {
+      if (isGazetteLayout()) {
+        els.downloadGazetteDialog.showModal();
       }
+    });
+  }
+
+  if (els.downloadGazettePdfOption && els.downloadGazetteDialog) {
+    els.downloadGazettePdfOption.addEventListener('click', () => {
+      els.downloadGazetteDialog.close();
+      document.body.classList.add('vs-printing');
+      window.addEventListener('afterprint', () => {
+        document.body.classList.remove('vs-printing');
+      }, { once: true });
+      window.print();
+    });
+  }
+
+  if (els.downloadGazettePngOption && els.downloadGazetteDialog) {
+    els.downloadGazettePngOption.addEventListener('click', () => {
+      els.downloadGazetteDialog.close();
+      downloadGazettePagePng();
     });
   }
 
@@ -2620,15 +2453,9 @@ document.addEventListener('DOMContentLoaded', () => {
   els.toggleGazetteLayoutBtn = qs('toggleGazetteLayoutBtn');
   els.toggleGazetteLayoutLabel = qs('toggleGazetteLayoutLabel');
   els.downloadGazetteBtn = qs('downloadGazetteBtn');
-  els.gazetteToolbarDownloadBtn = qs('gazetteToolbarDownloadBtn');
-  els.gazettePaginationDownloadBtn = qs('gazettePaginationDownloadBtn');
   els.downloadGazetteDialog = qs('downloadGazetteDialog');
   els.downloadGazettePdfOption = qs('downloadGazettePdfOption');
   els.downloadGazettePngOption = qs('downloadGazettePngOption');
-  els.downloadGazettePrintOption = qs('downloadGazettePrintOption');
-  els.downloadGazetteStatus = qs('downloadGazetteStatus');
-  els.downloadGazetteStatusMsg = qs('downloadGazetteStatusMsg');
-  els.downloadGazetteOptions = qs('downloadGazetteOptions');
   els.pagination = qs('newsPagination');
   els.pageHint = qs('newsPageHint');
   els.prevPageLabel = qs('newsPrevPageLabel');
