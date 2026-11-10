@@ -21,9 +21,10 @@ class PublicNewspaperTest extends TestCase
             ->get('http://'.$host.'/')
             ->assertOk()
             ->assertSee('Lağımdan Sesler')
-            ->assertSee('id="downloadGazetteBtn"', false)
-            ->assertSee('id="downloadGazettePdfOption"', false)
-            ->assertSee('id="downloadGazettePngOption"', false)
+            ->assertSee('id="downloadGazettePdfBtn"', false)
+            ->assertSee('id="downloadGazettePngBtn"', false)
+            ->assertDontSee('id="downloadGazetteBtn"', false)
+            ->assertDontSee('id="downloadGazetteDialog"', false)
             ->assertSee('href="'.$mainSiteUrl.'"', false);
     }
 
@@ -35,10 +36,10 @@ class PublicNewspaperTest extends TestCase
             ->get('http://'.$host.'/?gorunum=gazette&sayi=2&yaprak=1')
             ->assertOk()
             ->assertSee('class="vs-newspaper-page vs-layout-gazette"', false)
-            ->assertSee('id="downloadGazetteBtn"', false)
-            ->assertDontSee('id="downloadGazetteBtn" hidden', false)
-            ->assertSee('id="downloadGazettePdfOption"', false)
-            ->assertSee('id="downloadGazettePngOption"', false);
+            ->assertSee('id="downloadGazettePdfBtn"', false)
+            ->assertSee('id="downloadGazettePngBtn"', false)
+            ->assertDontSee('id="downloadGazetteBtn"', false)
+            ->assertDontSee('id="downloadGazetteDialog"', false);
     }
 
     public function test_main_domain_newspaper_path_redirects_to_gazette_subdomain(): void
