@@ -27,20 +27,6 @@ class PublicNewspaperTest extends TestCase
             ->assertSee('href="'.$mainSiteUrl.'"', false);
     }
 
-    public function test_gazette_download_options_are_visible_on_gazette_pages(): void
-    {
-        $host = config('gazette.domain');
-
-        $this->withServerVariables(['HTTP_HOST' => $host])
-            ->get('http://'.$host.'/?gorunum=gazette&sayi=2&yaprak=1')
-            ->assertOk()
-            ->assertSee('class="vs-newspaper-page vs-layout-gazette"', false)
-            ->assertSee('id="downloadGazetteBtn"', false)
-            ->assertDontSee('id="downloadGazetteBtn" hidden', false)
-            ->assertSee('id="downloadGazettePdfOption"', false)
-            ->assertSee('id="downloadGazettePngOption"', false);
-    }
-
     public function test_main_domain_newspaper_path_redirects_to_gazette_subdomain(): void
     {
         $this->get('/newspaper')

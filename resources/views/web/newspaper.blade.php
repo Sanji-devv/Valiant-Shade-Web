@@ -20,7 +20,7 @@
     @vite(['resources/css/valiant-shade/newspaper.css', 'resources/js/valiant-shade/newspaper.js'], 'static/valiant-shade/build')
 </head>
 <body
-    class="vs-newspaper-page{{ request()->query('gorunum') === 'gazette' ? ' vs-layout-gazette' : '' }}"
+    class="vs-newspaper-page"
     data-gazette-logo="{{ $gazetteCrest }}"
     data-gazette-name="{{ $gazetteTitle }}"
     data-gazette-motto="{{ $gazetteMotto }}"
@@ -52,7 +52,7 @@
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">Lonca</span>
                 <span class="vs-newspaper-nav__tooltip" role="tooltip">{{ __('Coming soon') }}</span>
             </span>
-            <button type="button" class="vs-newspaper-nav__item vs-newspaper-nav__item--print" id="downloadGazetteBtn" aria-label="Gazete indirme seçenekleri">
+            <button type="button" class="vs-newspaper-nav__item vs-newspaper-nav__item--print" id="downloadGazetteBtn" hidden aria-label="Gazete indirme seçenekleri">
                 <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">İndir</span>
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">İndir</span>
