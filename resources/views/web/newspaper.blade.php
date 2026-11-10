@@ -52,15 +52,10 @@
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">Lonca</span>
                 <span class="vs-newspaper-nav__tooltip" role="tooltip">{{ __('Coming soon') }}</span>
             </span>
-            <button type="button" class="vs-newspaper-nav__item vs-newspaper-nav__item--print" id="printGazetteBtn" hidden aria-label="PDF İndir">
-                <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
-                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">PDF İndir</span>
-                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">PDF</span>
-            </button>
-            <button type="button" class="vs-newspaper-nav__item vs-newspaper-nav__item--print" id="downloadGazettePngBtn" hidden aria-label="Açık gazete yaprağını PNG olarak indir">
-                <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
-                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">PNG İndir</span>
-                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">PNG</span>
+            <button type="button" class="vs-newspaper-nav__item vs-newspaper-nav__item--print" id="downloadGazetteBtn" hidden aria-label="Gazete indirme seçenekleri">
+                <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">İndir</span>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">İndir</span>
             </button>
             <button type="button" class="vs-newspaper-nav__item vs-newspaper-nav__item--primary" id="openRumorModal" aria-label="Söylenti Gönder">
                 <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8z"/></svg>
@@ -69,6 +64,24 @@
             </button>
         </nav>
     </header>
+
+    <dialog class="vs-download-dialog" id="downloadGazetteDialog" aria-labelledby="downloadGazetteTitle">
+        <form method="dialog">
+            <button type="submit" class="vs-download-dialog__close" aria-label="Kapat">×</button>
+        </form>
+        <h2 id="downloadGazetteTitle">Nasıl indirmek istersiniz?</h2>
+        <p>Açık gazete yaprağını seçtiğiniz biçimde indirin.</p>
+        <div class="vs-download-dialog__options">
+            <button type="button" class="vs-download-dialog__option" id="downloadGazettePdfOption">
+                <strong>PDF</strong>
+                <span>Yazdırma penceresinden PDF olarak kaydet</span>
+            </button>
+            <button type="button" class="vs-download-dialog__option" id="downloadGazettePngOption">
+                <strong>PNG</strong>
+                <span>Açık yaprağı ayrı bir görsel olarak indir</span>
+            </button>
+        </div>
+    </dialog>
 
     <main class="vs-newspaper-main">
         <section class="vs-news-slider" aria-label="Manşet haberleri">

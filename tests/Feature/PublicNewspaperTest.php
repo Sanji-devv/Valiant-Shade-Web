@@ -21,6 +21,9 @@ class PublicNewspaperTest extends TestCase
             ->get('http://'.$host.'/')
             ->assertOk()
             ->assertSee('Lağımdan Sesler')
+            ->assertSee('id="downloadGazetteBtn"', false)
+            ->assertSee('id="downloadGazettePdfOption"', false)
+            ->assertSee('id="downloadGazettePngOption"', false)
             ->assertSee('href="'.$mainSiteUrl.'"', false);
     }
 

@@ -1001,7 +1001,7 @@ async function downloadGazettePagePng() {
 
   const issueNumber = state.currentIssue?.issue_number || inWorldCalendar().issueNumber;
   const pageNumber = state.lastFeedMeta?.current_page || state.page || 1;
-  const button = els.downloadGazettePngBtn;
+  const button = els.downloadGazettePngOption;
   if (button) {
     button.disabled = true;
     button.setAttribute('aria-busy', 'true');
@@ -1086,11 +1086,8 @@ function applyLayoutMode() {
   if (els.toggleGazetteLayoutLabel) {
     els.toggleGazetteLayoutLabel.textContent = gazette ? 'Web görünümü' : 'Gazete görünümü';
   }
-  if (els.printGazetteBtn) {
-    els.printGazetteBtn.hidden = !gazette;
-  }
-  if (els.downloadGazettePngBtn) {
-    els.downloadGazettePngBtn.hidden = !gazette;
+  if (els.downloadGazetteBtn) {
+    els.downloadGazetteBtn.hidden = !gazette;
   }
   if (els.pagination) {
     els.pagination.classList.toggle('vs-pagination--gazette', gazette);
@@ -2119,20 +2116,30 @@ function bindEvents() {
     });
   }
 
-  if (els.printGazetteBtn) {
-    els.printGazetteBtn.addEventListener('click', () => {
-      if (!isGazetteLayout()) {
-        return;
+  if (els.downloadGazetteBtn && els.downloadGazetteDialog) {
+    els.downloadGazetteBtn.addEventListener('click', () => {
+      if (isGazetteLayout()) {
+        els.downloadGazetteDialog.showModal();
       }
+    });
+  }
+
+  if (els.downloadGazettePdfOption && els.downloadGazetteDialog) {
+    els.downloadGazettePdfOption.addEventListener('click', () => {
+      els.downloadGazetteDialog.close();
       document.body.classList.add('vs-printing');
-      const cleanup = () => document.body.classList.remove('vs-printing');
-      window.addEventListener('afterprint', cleanup, { once: true });
+      window.addEventListener('afterprint', () => {
+        document.body.classList.remove('vs-printing');
+      }, { once: true });
       window.print();
     });
   }
 
-  if (els.downloadGazettePngBtn) {
-    els.downloadGazettePngBtn.addEventListener('click', downloadGazettePagePng);
+  if (els.downloadGazettePngOption && els.downloadGazetteDialog) {
+    els.downloadGazettePngOption.addEventListener('click', () => {
+      els.downloadGazetteDialog.close();
+      downloadGazettePagePng();
+    });
   }
 
   let mediaFitTimer;
@@ -2430,8 +2437,10 @@ document.addEventListener('DOMContentLoaded', () => {
   els.newsSliderSection = document.querySelector('.vs-news-slider');
   els.toggleGazetteLayoutBtn = qs('toggleGazetteLayoutBtn');
   els.toggleGazetteLayoutLabel = qs('toggleGazetteLayoutLabel');
-  els.printGazetteBtn = qs('printGazetteBtn');
-  els.downloadGazettePngBtn = qs('downloadGazettePngBtn');
+  els.downloadGazetteBtn = qs('downloadGazetteBtn');
+  els.downloadGazetteDialog = qs('downloadGazetteDialog');
+  els.downloadGazettePdfOption = qs('downloadGazettePdfOption');
+  els.downloadGazettePngOption = qs('downloadGazettePngOption');
   els.pagination = qs('newsPagination');
   els.pageHint = qs('newsPageHint');
   els.prevPageLabel = qs('newsPrevPageLabel');
