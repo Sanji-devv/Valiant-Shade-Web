@@ -1011,19 +1011,34 @@ async function downloadGazettePagePng() {
     await document.fonts.ready;
     const images = Array.from(sheet.querySelectorAll('img'));
     await Promise.all(images.map((image) => {
-      if (image.complete) {
-        if (!image.naturalWidth) {
-          throw new Error(`Gazete görseli yüklenemedi: ${image.currentSrc || image.src}`);
-        }
-        return Promise.resolve();
-      }
-
       image.loading = 'eager';
       return new Promise((resolve, reject) => {
-        image.addEventListener('load', resolve, { once: true });
-        image.addEventListener('error', () => {
-          reject(new Error(`Gazete görseli yüklenemedi: ${image.currentSrc || image.src}`));
-        }, { once: true });
+        const fail = () => reject(new Error(`Gazete görseli yüklenemedi: ${image.currentSrc || image.src}`));
+        const loaded = async () => {
+          if (!image.naturalWidth) {
+            fail();
+            return;
+          }
+          try {
+            await image.decode();
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
+        };
+
+        if (image.complete) {
+          loaded();
+          return;
+        }
+
+        image.addEventListener('load', loaded, { once: true });
+        image.addEventListener('error', fail, { once: true });
+        if (image.complete) {
+          image.removeEventListener('load', loaded);
+          image.removeEventListener('error', fail);
+          loaded();
+        }
       });
     }));
 
