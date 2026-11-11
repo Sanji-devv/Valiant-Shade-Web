@@ -26,6 +26,21 @@ class PublicNewspaperTest extends TestCase
             ->assertSee('property="og:description"', false);
     }
 
+    public function test_gazette_page_shows_separate_pdf_and_png_download_buttons(): void
+    {
+        $host = config('gazette.domain');
+
+        $this->withServerVariables(['HTTP_HOST' => $host])
+            ->get('http://'.$host.'/?gorunum=gazette&sayi=2&yaprak=1')
+            ->assertOk()
+            ->assertSee('class="vs-newspaper-page vs-layout-gazette"', false)
+            ->assertSee('id="printGazetteBtn"', false)
+            ->assertDontSee('id="printGazetteBtn" hidden', false)
+            ->assertSee('id="downloadGazettePngBtn"', false)
+            ->assertDontSee('id="downloadGazettePngBtn" hidden', false)
+            ->assertSee('id="openHotExtraModal"', false);
+    }
+
     public function test_whatsapp_preview_meta_for_shared_article_link(): void
     {
         $host = config('gazette.domain');
@@ -48,6 +63,20 @@ class PublicNewspaperTest extends TestCase
             ->assertSee('WhatsApp bağlantı önizlemesinde bu özet metni', false)
             ->assertSee('guild_dragon_quest.jpg', false)
             ->assertSee('name="twitter:card"', false);
+    }
+
+    public function test_gazette_pages_show_separate_pdf_and_png_download_buttons(): void
+    {
+        $host = config('gazette.domain');
+
+        $this->withServerVariables(['HTTP_HOST' => $host])
+            ->get('http://'.$host.'/?gorunum=gazette&sayi=2&yaprak=1')
+            ->assertOk()
+            ->assertSee('class="vs-newspaper-page vs-layout-gazette"', false)
+            ->assertSee('id="printGazetteBtn"', false)
+            ->assertDontSee('id="printGazetteBtn" hidden', false)
+            ->assertSee('id="downloadGazettePngBtn"', false)
+            ->assertDontSee('id="downloadGazettePngBtn" hidden', false);
     }
 
     public function test_main_domain_newspaper_path_redirects_to_gazette_subdomain(): void

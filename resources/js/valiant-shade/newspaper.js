@@ -1,3 +1,5 @@
+import html2canvas from 'html2canvas';
+
 const WEB_ITEMS_PER_PAGE = 9;
 const GAZETTE_SUMMARY_SLOTS = 5;
 
@@ -1033,6 +1035,90 @@ function renderGazette(items, meta) {
   });
 }
 
+async function downloadGazettePagePng() {
+  const sheet = els.gazetteStage?.querySelector('.vs-gazette-sheet');
+  if (!sheet) {
+    showToast('İndirilecek gazete yaprağı yüklenemedi.');
+    return;
+  }
+
+  const button = els.downloadGazettePngBtn;
+  if (button) {
+    button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+  }
+
+  try {
+    await document.fonts.ready;
+    await Promise.all(Array.from(sheet.querySelectorAll('img')).map((image) => {
+      image.loading = 'eager';
+      return new Promise((resolve, reject) => {
+        const fail = () => reject(new Error(`Gazete görseli yüklenemedi: ${image.currentSrc || image.src}`));
+        const loaded = async () => {
+          if (!image.naturalWidth) {
+            fail();
+            return;
+          }
+          try {
+            await image.decode();
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
+        };
+
+        if (image.complete) {
+          loaded();
+          return;
+        }
+
+        image.addEventListener('load', loaded, { once: true });
+        image.addEventListener('error', fail, { once: true });
+        if (image.complete) {
+          image.removeEventListener('load', loaded);
+          image.removeEventListener('error', fail);
+          loaded();
+        }
+      });
+    }));
+
+    const canvas = await html2canvas(sheet, {
+      backgroundColor: null,
+      scale: 2,
+      useCORS: true,
+      onclone: (clonedDocument) => {
+        clonedDocument.querySelector('#gazettePrintSheet')?.classList.remove('is-turning', 'is-turning--back');
+      },
+    });
+    const blob = await new Promise((resolve, reject) => {
+      canvas.toBlob((result) => {
+        if (result) {
+          resolve(result);
+        } else {
+          reject(new Error('PNG dosyası oluşturulamadı.'));
+        }
+      }, 'image/png');
+    });
+
+    const issueNumber = state.currentIssue?.issue_number || inWorldCalendar().issueNumber;
+    const pageNumber = state.lastFeedMeta?.current_page || state.page || 1;
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = `lagimdan-sesler-sayi-${issueNumber}-yaprak-${pageNumber}.png`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  } catch (error) {
+    console.error('Gazete yaprağı PNG olarak indirilemedi.', error);
+    showToast('PNG indirilemedi. Lütfen tekrar deneyin.');
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.removeAttribute('aria-busy');
+    }
+  }
+}
+
 function applyLayoutMode() {
   const gazette = isGazetteLayout();
   document.body.classList.toggle('vs-layout-gazette', gazette);
@@ -1059,6 +1145,9 @@ function applyLayoutMode() {
   }
   if (els.printGazetteBtn) {
     els.printGazetteBtn.hidden = !gazette;
+  }
+  if (els.downloadGazettePngBtn) {
+    els.downloadGazettePngBtn.hidden = !gazette;
   }
   if (els.pagination) {
     els.pagination.classList.toggle('vs-pagination--gazette', gazette);
@@ -2210,6 +2299,10 @@ function bindEvents() {
     });
   }
 
+  if (els.downloadGazettePngBtn) {
+    els.downloadGazettePngBtn.addEventListener('click', downloadGazettePagePng);
+  }
+
   let mediaFitTimer;
   window.addEventListener('resize', () => {
     syncFilterPanelVisibility();
@@ -2575,6 +2668,7 @@ document.addEventListener('DOMContentLoaded', () => {
   els.toggleGazetteLayoutBtn = qs('toggleGazetteLayoutBtn');
   els.toggleGazetteLayoutLabel = qs('toggleGazetteLayoutLabel');
   els.printGazetteBtn = qs('printGazetteBtn');
+  els.downloadGazettePngBtn = qs('downloadGazettePngBtn');
   els.pagination = qs('newsPagination');
   els.pageHint = qs('newsPageHint');
   els.prevPageLabel = qs('newsPrevPageLabel');
