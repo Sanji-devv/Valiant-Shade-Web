@@ -194,6 +194,10 @@ function readUrlIntoState() {
   if (q) {
     state.search = q.trim();
   }
+
+  if (params.get('flash') === '1') {
+    state.pendingFlashModal = true;
+  }
 }
 
 function buildShareUrl({ articleId = null, includeArticle = false } = {}) {
@@ -421,13 +425,15 @@ function gazetteIssueLabel(meta) {
   const page = meta?.current_page || state.page || 1;
   const cal = inWorldCalendar();
   const issue = state.currentIssue || {};
+  const displayNum = issue.display_issue_number || issue.issue_number || cal.issueNumber;
   return {
     page,
     dateStr: issue.date_line || cal.dateLine,
-    issueNumber: issue.issue_number || cal.issueNumber,
+    issueNumber: displayNum,
     issueLabel: issue.label || cal.issueLabel,
     schedule: issue.schedule || '',
-    sheetKind: meta?.sheet_kind || (page === 1 ? 'cover' : 'inner'),
+    sheetKind: meta?.sheet_kind || (issue.is_extra ? 'extra' : page === 1 ? 'cover' : 'inner'),
+    isExtra: Boolean(issue.is_extra),
   };
 }
 
@@ -719,6 +725,40 @@ function initCoverMastSlider() {
   }, 6500);
 }
 
+function renderGazetteExtraPage(item, brand, issueMeta) {
+  if (!item) {
+    return '<p class="vs-gazette-extra__empty">Bu ek sayıda henüz metin yok.</p>';
+  }
+  const title = escapeHtml(item.title || '');
+  const type = escapeHtml(item.news_type_label || item.category || '');
+  const loc = item.location_badge ? escapeHtml(item.location_badge) : '';
+  const body = paragraphsToHtml(articlePlainText(item), 48);
+  const img =
+    item.image_asset
+      ? `<figure class="vs-gazette-extra__figure">
+          <img class="vs-gazette-extra__img" src="${escapeHtml(item.image_asset)}" alt="" loading="eager" decoding="async">
+          ${loc ? `<figcaption class="vs-gazette-extra__cap">${loc}</figcaption>` : ''}
+        </figure>`
+      : '';
+  const openId = item.id != null ? escapeHtml(String(item.id)) : '';
+  const ticker = 'Yazıyor · Yazıyor · Yazıyor · Yazıyor · Yazıyor · Yazıyor';
+
+  return `
+    <div class="vs-gazette-extra" data-open-id="${openId}">
+      <div class="vs-gazette-extra__banner" aria-hidden="true">${escapeHtml(ticker)}</div>
+      <p class="vs-gazette-extra__kicker">${type} · Sıcak haber ek sayısı</p>
+      <h1 class="vs-gazette-extra__title">${title}</h1>
+      ${loc && !img ? `<p class="vs-gazette-extra__place">${loc}</p>` : ''}
+      ${img}
+      <div class="vs-gazette-extra__body vs-gazette-extra__body--columns">${body}</div>
+      <footer class="vs-gazette-extra__foot">
+        <span class="vs-gazette-extra__stamp">${escapeHtml(brand.press || 'Lağımdan Sesler Basın Bürosu')}</span>
+        <span class="vs-gazette-extra__note">Tek yaprak · sokaklara fırlatıldı</span>
+      </footer>
+    </div>
+  `;
+}
+
 function renderGazetteCoverPage(_items, brand, issueMeta) {
   const issue = state.currentIssue || {};
   const briefItems = Array.isArray(issue.cover_briefs)
@@ -911,7 +951,7 @@ function renderGazetteMasthead(brand, issueMeta, isFirstPage) {
         ${brand.logo ? `<img class="vs-gazette-masthead__crest" src="${escapeHtml(brand.logo)}" width="72" height="72" alt="">` : ''}
         <div class="vs-gazette-masthead__titles">
           <h2 class="vs-gazette-masthead__title">${escapeHtml(brand.name)}</h2>
-          <p class="vs-gazette-masthead__subtitle">${escapeHtml(issueMeta.schedule || 'Her Vonyas yeni sayı basılır.')}</p>
+          <p class="vs-gazette-masthead__subtitle">${escapeHtml(issueMeta.isExtra ? 'Fırlatma ek sayısı · sıcak haber' : issueMeta.schedule || 'Her Vonyas yeni sayı basılır.')}</p>
         </div>
       </div>
       <div class="vs-gazette-masthead__meta">
@@ -927,18 +967,21 @@ function renderGazetteSheet(items, meta) {
   const brand = gazetteBranding();
   const issueMeta = gazetteIssueLabel(meta);
   const { page, sheetKind } = issueMeta;
-  const isCover = sheetKind === 'cover';
-  const body = isCover
-    ? renderGazetteCoverPage(items, brand, issueMeta)
-    : renderGazetteInnerPage(items, brand, issueMeta);
+  const isExtra = sheetKind === 'extra';
+  const isCover = !isExtra && sheetKind === 'cover';
+  const body = isExtra
+    ? renderGazetteExtraPage(items[0] || state.currentIssue?.cover_lead, brand, issueMeta)
+    : isCover
+      ? renderGazetteCoverPage(items, brand, issueMeta)
+      : renderGazetteInnerPage(items, brand, issueMeta);
 
   const cornerSlots = state.currentIssue?.corner_slots || [];
-  const innerAllowed = isCover || items.length > 0 || cornerSlots.length > 0;
+  const innerAllowed = isExtra || isCover || items.length > 0 || cornerSlots.length > 0;
   if (!innerAllowed) {
     return '<div class="vs-loading">Bu iç sayfada metin yok.</div>';
   }
 
-  const footerSidebar = isCover
+  const footerSidebar = isCover && !isExtra
     ? `
       <aside class="vs-gazette-sidebar vs-gazette-sidebar--cover">
         <h3>Lağım Köşesi</h3>
@@ -947,8 +990,8 @@ function renderGazetteSheet(items, meta) {
     : '';
 
   const sheet = `
-    <article class="vs-gazette-sheet${isCover ? ' vs-gazette-sheet--cover' : ' vs-gazette-sheet--inner'}" id="gazettePrintSheet">
-      ${renderGazetteMasthead(brand, issueMeta, isCover)}
+    <article class="vs-gazette-sheet${isExtra ? ' vs-gazette-sheet--extra' : isCover ? ' vs-gazette-sheet--cover' : ' vs-gazette-sheet--inner'}" id="gazettePrintSheet">
+      ${renderGazetteMasthead(brand, issueMeta, isCover || isExtra)}
       <div class="vs-gazette-rule vs-gazette-rule--heavy" aria-hidden="true"></div>
       ${body}
       ${footerSidebar}
@@ -1226,8 +1269,9 @@ function renderPagination(meta) {
   state.lastFeedMeta = meta;
   if (isGazetteLayout()) {
     const issue = state.currentIssue || {};
-    const num = issue.issue_number || inWorldCalendar().issueNumber;
-    const kind = meta.sheet_kind === 'cover' ? 'Kapak' : 'İç sayfa';
+    const num = issue.display_issue_number || issue.issue_number || inWorldCalendar().issueNumber;
+    const kind =
+      meta.sheet_kind === 'extra' ? 'Sıcak haber' : meta.sheet_kind === 'cover' ? 'Kapak' : 'İç sayfa';
     const date = issue.date_short ? ` · ${issue.date_short}` : '';
     els.pageSheet.textContent = gazetteScrub(`Sayı ${num}${date} · ${kind} · yaprak ${meta.current_page} / ${meta.last_page}`);
   } else {
@@ -1265,8 +1309,9 @@ async function loadFeed() {
     state.gazetteArticleIds = payload.feed?.all_article_ids || [];
     state.gazetteInnerPerPage = payload.feed?.meta?.inner_per_page || 3;
     renderIssueArchiveSelect();
-  const isInner = payload.feed?.meta?.sheet_kind === 'inner';
-    if (isInner) {
+  const sheetKind = payload.feed?.meta?.sheet_kind;
+    const needsFullText = sheetKind === 'inner' || sheetKind === 'extra';
+    if (needsFullText) {
       state.lastFeedItems = await enrichGazetteItems(state.lastFeedItems);
     }
     renderGazette(state.lastFeedItems, payload.feed.meta);
@@ -1496,6 +1541,115 @@ async function copyArticleShareLink(articleId) {
     showToast('Haber bağlantısı kopyalandı.');
   } catch {
     showToast('Bağlantı kopyalanamadı; adres çubuğundaki URL’yi kullanın.');
+  }
+}
+
+async function submitHotExtra(formData) {
+  const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+  const response = await fetch('/api/public/news/flash-submissions', {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'X-CSRF-TOKEN': token || '',
+    },
+    body: formData,
+  });
+  const payload = await response.json();
+  if (!response.ok || !payload.success) {
+    throw new Error(payload.message || 'Ek sayı basılamadı.');
+  }
+  return payload;
+}
+
+function openHotExtraModal() {
+  if (!els.hotExtraModal) {
+    return;
+  }
+  els.hotExtraModal.classList.add('is-open');
+  document.body.classList.add('vs-rumor-modal-open');
+  resetNewsTypePicker(els.hotExtraTypePicker, els.hotExtraNewsType);
+  els.hotExtraTitleInput?.focus();
+}
+
+function closeHotExtraModal() {
+  if (!els.hotExtraModal) {
+    return;
+  }
+  els.hotExtraModal.classList.remove('is-open');
+  document.body.classList.remove('vs-rumor-modal-open');
+  els.hotExtraForm?.reset();
+  resetNewsTypePicker(els.hotExtraTypePicker, els.hotExtraNewsType);
+  if (els.flashAnonymousInput) {
+    els.flashAnonymousInput.checked = false;
+    syncFlashAnonymousToggle();
+  }
+  revokeFlashImageObjectUrl();
+  updateFlashImagePreview();
+}
+
+function syncFlashAnonymousToggle() {
+  const on = Boolean(els.flashAnonymousInput?.checked);
+  if (els.flashAnonymousToggle) {
+    els.flashAnonymousToggle.classList.toggle('is-active', on);
+    els.flashAnonymousToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+}
+
+let flashImageObjectUrl = null;
+
+function revokeFlashImageObjectUrl() {
+  if (flashImageObjectUrl) {
+    URL.revokeObjectURL(flashImageObjectUrl);
+    flashImageObjectUrl = null;
+  }
+}
+
+function flashPresetAssetUrl(path) {
+  const clean = String(path || '').replace(/^\//, '');
+  if (!clean || clean === '__gazette_auto__') {
+    return '';
+  }
+  return `/${clean}`;
+}
+
+function updateFlashImagePreview() {
+  if (!els.flashImagePreviewWrap || !els.flashImagePreview) {
+    return;
+  }
+
+  const fileInput = els.flashCustomImageInput;
+  const file = fileInput?.files?.[0];
+  const preset = els.hotExtraImagePreset?.value || '__gazette_auto__';
+
+  revokeFlashImageObjectUrl();
+
+  if (file && file.type.startsWith('image/')) {
+    flashImageObjectUrl = URL.createObjectURL(file);
+    els.flashImagePreview.src = flashImageObjectUrl;
+    els.flashImagePreviewWrap.hidden = false;
+    if (els.flashImagePreviewHint) {
+      els.flashImagePreviewHint.textContent = 'Yüklediğiniz dosya';
+      els.flashImagePreviewHint.hidden = false;
+    }
+    return;
+  }
+
+  if (preset && preset !== '__gazette_auto__') {
+    els.flashImagePreview.src = flashPresetAssetUrl(preset);
+    els.flashImagePreviewWrap.hidden = false;
+    if (els.flashImagePreviewHint) {
+      const label = els.hotExtraImagePreset?.selectedOptions?.[0]?.textContent?.trim() || '';
+      els.flashImagePreviewHint.textContent = label || 'Seçilen woodcut';
+      els.flashImagePreviewHint.hidden = !label;
+    }
+    return;
+  }
+
+  els.flashImagePreview.removeAttribute('src');
+  els.flashImagePreviewWrap.hidden = true;
+  if (els.flashImagePreviewHint) {
+    els.flashImagePreviewHint.textContent = '';
+    els.flashImagePreviewHint.hidden = true;
   }
 }
 
@@ -2189,6 +2343,60 @@ function bindEvents() {
     }
   });
 
+  if (els.openHotExtraBtn) {
+    els.openHotExtraBtn.addEventListener('click', () => openHotExtraModal());
+  }
+  if (els.hotExtraClose) {
+    els.hotExtraClose.addEventListener('click', closeHotExtraModal);
+  }
+  if (els.hotExtraModal) {
+    els.hotExtraModal.addEventListener('click', (event) => {
+      if (event.target === els.hotExtraModal) {
+        closeHotExtraModal();
+      }
+    });
+  }
+  if (els.flashAnonymousToggle && els.flashAnonymousInput) {
+    els.flashAnonymousToggle.addEventListener('click', () => {
+      els.flashAnonymousInput.checked = !els.flashAnonymousInput.checked;
+      syncFlashAnonymousToggle();
+    });
+    syncFlashAnonymousToggle();
+  }
+
+  if (els.hotExtraImagePreset) {
+    els.hotExtraImagePreset.addEventListener('change', () => {
+      if (els.flashCustomImageInput) {
+        els.flashCustomImageInput.value = '';
+      }
+      updateFlashImagePreview();
+    });
+  }
+  if (els.flashCustomImageInput) {
+    els.flashCustomImageInput.addEventListener('change', updateFlashImagePreview);
+  }
+
+  if (els.hotExtraForm) {
+    els.hotExtraForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (els.hotExtraSubmit) {
+        els.hotExtraSubmit.disabled = true;
+      }
+      try {
+        const formData = new FormData(els.hotExtraForm);
+        const payload = await submitHotExtra(formData);
+        closeHotExtraModal();
+        showToast(payload.message || 'Flash haber editöre gönderildi.');
+      } catch (error) {
+        showToast(error.message || 'Ek sayı basılamadı.');
+      } finally {
+        if (els.hotExtraSubmit) {
+          els.hotExtraSubmit.disabled = false;
+        }
+      }
+    });
+  }
+
   if (els.openRumorBtn) {
     els.openRumorBtn.addEventListener('click', () => openRumorModal({ kind: 'general' }));
   }
@@ -2315,6 +2523,21 @@ document.addEventListener('DOMContentLoaded', () => {
   els.modalQuote = qs('newsModalQuote');
   els.modalClose = qs('newsModalClose');
   els.modalShare = qs('newsModalShare');
+  els.openHotExtraBtn = qs('openHotExtraModal');
+  els.hotExtraModal = qs('hotExtraModal');
+  els.hotExtraClose = qs('hotExtraModalClose');
+  els.hotExtraForm = qs('hotExtraForm');
+  els.hotExtraSubmit = qs('hotExtraSubmit');
+  els.hotExtraTypePicker = qs('hotExtraTypePicker');
+  els.hotExtraNewsType = qs('hotExtraNewsType');
+  els.hotExtraTitleInput = qs('hotExtraTitleInput');
+  els.flashAnonymousInput = qs('flashAnonymousInput');
+  els.flashAnonymousToggle = qs('flashAnonymousToggle');
+  els.hotExtraImagePreset = qs('hotExtraImagePreset');
+  els.flashCustomImageInput = qs('flashCustomImageInput');
+  els.flashImagePreviewWrap = qs('flashImagePreviewWrap');
+  els.flashImagePreview = qs('flashImagePreview');
+  els.flashImagePreviewHint = qs('flashImagePreviewHint');
   els.openRumorBtn = qs('openRumorModal');
   els.rumorModal = qs('rumorModal');
   els.rumorModalPanel = qs('rumorModalPanel');
@@ -2360,6 +2583,9 @@ document.addEventListener('DOMContentLoaded', () => {
   els.gazetteArchiveWrap = qs('gazetteArchiveWrap');
 
   initNewsTypePicker(els.rumorTypePicker, els.rumorNewsType);
+  if (els.hotExtraTypePicker && els.hotExtraNewsType) {
+    initNewsTypePicker(els.hotExtraTypePicker, els.hotExtraNewsType);
+  }
   readUrlIntoState();
   if (els.searchInput && state.search) {
     els.searchInput.value = state.search;
@@ -2388,6 +2614,10 @@ document.addEventListener('DOMContentLoaded', () => {
   applyLayoutMode();
   syncFilterPanelVisibility();
   bindEvents();
+  if (state.pendingFlashModal) {
+    state.pendingFlashModal = false;
+    openHotExtraModal();
+  }
   loadFeed().catch((error) => {
     els.newsGrid.innerHTML = `<div class="vs-loading">${error.message}</div>`;
   });

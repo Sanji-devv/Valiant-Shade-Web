@@ -21,7 +21,33 @@ class PublicNewspaperTest extends TestCase
             ->get('http://'.$host.'/')
             ->assertOk()
             ->assertSee('Lağımdan Sesler')
-            ->assertSee('href="'.$mainSiteUrl.'"', false);
+            ->assertSee('href="'.$mainSiteUrl.'"', false)
+            ->assertSee('property="og:image"', false)
+            ->assertSee('property="og:description"', false);
+    }
+
+    public function test_whatsapp_preview_meta_for_shared_article_link(): void
+    {
+        $host = config('gazette.domain');
+
+        $news = News::create([
+            'title' => 'Paylaşım önizlemesi için test haber başlığı uzun',
+            'category' => 'Yerel Haberler',
+            'news_type' => 'local_news',
+            'status' => 'published',
+            'description' => 'WhatsApp bağlantı önizlemesinde bu özet metni ve woodcut görsel görünmelidir.',
+            'image_url' => 'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg',
+            'is_active' => true,
+        ]);
+
+        $this->withServerVariables(['HTTP_HOST' => $host])
+            ->get('http://'.$host.'/?haber='.$news->id)
+            ->assertOk()
+            ->assertSee('property="og:title"', false)
+            ->assertSee('Paylaşım önizlemesi için test haber başlığı uzun', false)
+            ->assertSee('WhatsApp bağlantı önizlemesinde bu özet metni', false)
+            ->assertSee('guild_dragon_quest.jpg', false)
+            ->assertSee('name="twitter:card"', false);
     }
 
     public function test_main_domain_newspaper_path_redirects_to_gazette_subdomain(): void
@@ -105,6 +131,39 @@ class PublicNewspaperTest extends TestCase
         $response = $this->getJson('/api/public/news/bootstrap');
         $titles = collect($response->json('feed.data'))->pluck('title')->all();
         $this->assertContains('Onay Sonrası Görünür Haber Başlığı', $titles);
+    }
+
+    public function test_flash_submission_creates_extra_issue_after_approval(): void
+    {
+        $user = \App\Models\User::factory()->create(['role' => 'ADMIN']);
+
+        $response = $this->post('/api/public/news/flash-submissions', [
+            'title' => 'Liman iskelesi alevlere teslim oldu haber başlığı',
+            'news_type' => 'local_news',
+            'description' => str_repeat(
+                'Bu metin tek sayfalık flash haber ek sayısıdır ve gazete yapraklarında sütunlar halinde akar. ',
+                8,
+            ),
+            'location_badge' => 'Isonburg limanı',
+        ]);
+
+        $response->assertCreated()->assertJsonPath('success', true);
+
+        $pendingId = (int) $response->json('submission_id');
+
+        $this->actingAs($user)->post(route('valiant-shade.pages-news.approve', $pendingId));
+
+        $this->assertDatabaseHas('gazette_issues', [
+            'issue_kind' => 'extra',
+            'extra_sequence' => 1,
+        ]);
+
+        $issueId = (int) \App\Models\GazetteIssue::query()->where('issue_kind', 'extra')->value('id');
+
+        $bootstrap = $this->getJson('/api/public/news/bootstrap?gazette_layout=1&issue_id='.$issueId);
+        $bootstrap->assertOk()
+            ->assertJsonPath('feed.meta.sheet_kind', 'extra')
+            ->assertJsonPath('feed.meta.last_page', 1);
     }
 
     public function test_cache_version_bumps_after_news_change(): void

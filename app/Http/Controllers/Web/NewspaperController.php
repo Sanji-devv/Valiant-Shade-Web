@@ -3,16 +3,29 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\ValiantShade\Support\GazetteImageLibrary;
+use App\ValiantShade\Support\GazetteShareMeta;
 use App\ValiantShade\Support\WorldCalendar;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class NewspaperController extends Controller
 {
-    public function show(): View
+    public function show(Request $request): View
     {
         $issue = config('gazette.issue', []);
+        $gazetteImagePresets = [];
+        foreach (GazetteImageLibrary::catalog() as $entry) {
+            $path = ltrim((string) ($entry['path'] ?? ''), '/');
+            if ($path === '' || isset($gazetteImagePresets[$path])) {
+                continue;
+            }
+            $gazetteImagePresets[$path] = (string) ($entry['label'] ?? basename($path, '.jpg'));
+        }
 
         return view('web.newspaper', [
+            'shareMeta' => GazetteShareMeta::forRequest($request),
+            'gazetteImagePresets' => $gazetteImagePresets,
             'newsTypes' => config('news.types', []),
             'gazetteBrand' => [
                 'title' => (string) config('gazette.title'),

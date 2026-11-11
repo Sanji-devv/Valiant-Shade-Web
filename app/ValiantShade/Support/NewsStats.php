@@ -65,6 +65,8 @@ final class NewsStats
             'lead' => 'Manşet',
             'brief' => 'Kapak',
             'corner' => 'Köşe yazısı',
+            'flash' => 'Flash haber (ek sayı)',
+            'extra' => 'Flash haber (ek sayı)',
         ];
 
         $kindLabel = $kindLabels[$kind] ?? null;

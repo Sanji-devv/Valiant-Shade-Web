@@ -95,15 +95,19 @@ class WorldCalendar
     }
 
     public static function formatGazetteIssueArchiveLabel(
-        int $issueNumber,
+        int|string $issueNumber,
         string $inWorldMonth,
         int $day,
         int $year,
         string $inWorldWeekday,
         bool $unpublishedPast = false,
+        bool $isExtra = false,
     ): string {
         $date = self::formatShort($inWorldMonth, $day, $year, $inWorldWeekday);
         $line = "Sayı {$issueNumber} · {$date}";
+        if ($isExtra) {
+            $line .= ' · sıcak haber';
+        }
 
         return $unpublishedPast ? "{$line} · basılmadı" : $line;
     }

@@ -6,6 +6,14 @@
     $gazetteTagline = $gb['tagline'] ?? '';
     $gazetteCrest = $gb['crest'] ?? asset('static/valiant-shade/assets/img/gazette/lagimdan-sesler-crest.jpg');
     $gazetteIssue = $gb['issue'] ?? [];
+    $share = $shareMeta ?? [
+        'title' => $gazetteTitle,
+        'description' => $gazetteTagline,
+        'image' => \App\ValiantShade\Support\GazetteShareMeta::absolutePublicUrl((string) config('gazette.crest')),
+        'url' => \App\ValiantShade\Support\GazetteShareMeta::siteRoot().'/',
+        'type' => 'website',
+        'image_alt' => $gazetteTitle,
+    ];
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -13,7 +21,22 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $gazetteTitle }} · {{ config('app.name', 'Valiant Shade') }}</title>
+    <title>{{ $share['title'] }}</title>
+    <meta name="description" content="{{ $share['description'] }}">
+    <link rel="canonical" href="{{ $share['url'] }}">
+    <meta property="og:site_name" content="{{ $gazetteTitle }}">
+    <meta property="og:locale" content="tr_TR">
+    <meta property="og:title" content="{{ $share['title'] }}">
+    <meta property="og:description" content="{{ $share['description'] }}">
+    <meta property="og:url" content="{{ $share['url'] }}">
+    <meta property="og:type" content="{{ $share['type'] }}">
+    <meta property="og:image" content="{{ $share['image'] }}">
+    <meta property="og:image:secure_url" content="{{ $share['image'] }}">
+    <meta property="og:image:alt" content="{{ $share['image_alt'] }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $share['title'] }}">
+    <meta name="twitter:description" content="{{ $share['description'] }}">
+    <meta name="twitter:image" content="{{ $share['image'] }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=IM+Fell+English:ital@0;1&family=Newsreader:ital,opsz,wght@0,12..72,400;0,12..72,600;0,12..72,700;1,12..72,400&display=swap" rel="stylesheet">
@@ -56,6 +79,18 @@
                 <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">PDF İndir</span>
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">PDF</span>
+            </button>
+            <button
+                type="button"
+                class="vs-newspaper-nav__item vs-newspaper-nav__item--hot vs-newspaper-nav__item--icon-only"
+                id="openHotExtraModal"
+                aria-label="Flash haber gönder"
+                title="Flash haber gönder"
+            >
+                <svg class="vs-newspaper-nav__icon vs-newspaper-nav__icon--flame" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 22c4.5 0 8-3.25 8-7.5 0-2.65-1.6-4.9-3.85-6.15C15.4 6.9 13.35 3.5 12 2c-1.35 1.5-3.4 4.9-4.15 6.35C5.6 9.6 4 11.85 4 14.5 4 18.75 7.5 22 12 22z"/>
+                    <path d="M12 22c-1.8 0-3.25-1.35-3.25-3.25S10.2 15.5 12 15.5s3.25 1.35 3.25 3.25S13.8 22 12 22z"/>
+                </svg>
             </button>
             <button type="button" class="vs-newspaper-nav__item vs-newspaper-nav__item--primary" id="openRumorModal" aria-label="Söylenti Gönder">
                 <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8z"/></svg>
@@ -245,6 +280,81 @@
                     </label>
                     <div class="vs-rumor-form__actions vs-rumor-form__span">
                         <button type="submit" class="vs-rumor-submit" id="rumorSubmit">Gönder</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </div>
+
+    <div class="vs-modal-backdrop vs-modal-backdrop--rumor vs-modal-backdrop--gazette-form" id="hotExtraModal" role="dialog" aria-modal="true" aria-labelledby="hotExtraModalTitle">
+        <section class="vs-modal vs-modal--rumor-gazette vs-modal--rumor-gazette--active vs-modal--rumor-slot-flash" id="hotExtraModalPanel">
+            <button type="button" class="vs-modal__close vs-modal__close--gazette" id="hotExtraModalClose" aria-label="Kapat">×</button>
+            <div class="vs-modal__body vs-modal__body--rumor">
+                <header class="vs-rumor-modal__head">
+                    <h2 id="hotExtraModalTitle">Flash haber gönder</h2>
+                    <p class="vs-rumor-modal__intro">Tek haber, tek yaprak. Editör onayından sonra ek sayı olarak basılır (ör. 2.1). Günün takvim tarihi o yaprakta görünür. Köşe yazısı veya özet sütunu yoktur.</p>
+                </header>
+                <form id="hotExtraForm" class="vs-form-grid vs-form-grid--rumor" enctype="multipart/form-data">
+                    <div class="vs-rumor-slot-banner">
+                        <span class="vs-rumor-slot-banner__eyebrow">Fırlatma ek sayısı</span>
+                        <span class="vs-rumor-slot-banner__label">Sıcak haber · yazıyor yazıyor</span>
+                        <span class="vs-rumor-slot-banner__issue">Onay sonrası haftanın ek numarası otomatik verilir</span>
+                    </div>
+                    <div class="vs-form-field vs-rumor-form__span">
+                        <span class="vs-form-field__label">Tür</span>
+                        @include('web.partials.news-type-picker', [
+                            'variant' => 'public',
+                            'groupId' => 'hotExtraTypePicker',
+                            'inputId' => 'hotExtraNewsType',
+                            'inputName' => 'news_type',
+                        ])
+                    </div>
+                    <label class="vs-rumor-form__span">
+                        Manşet başlığı
+                        <input type="text" name="title" id="hotExtraTitleInput" required minlength="8" maxlength="255" placeholder="Örn. Limanda yangın: iskele kapatıldı">
+                    </label>
+                    <div class="vs-rumor-form__meta-grid vs-rumor-form__meta-grid--three vs-rumor-form__span">
+                        <label class="vs-rumor-form__meta-cell">
+                            Konum (isteğe bağlı)
+                            <input type="text" name="location_badge" maxlength="150" placeholder="Örn. Isonburg limanı">
+                        </label>
+                        <label class="vs-rumor-form__meta-cell">
+                            Muhabir imzası (isteğe bağlı)
+                            <input type="text" name="author" id="flashAuthorInput" maxlength="120" placeholder="Basılacak isim">
+                        </label>
+                        <div class="vs-rumor-form__meta-cell vs-rumor-form__meta-cell--check">
+                            <input type="checkbox" name="anonymous" id="flashAnonymousInput" class="vs-rumor-form__check-input" tabindex="-1" aria-hidden="true">
+                            <button type="button" class="vs-rumor-anon-toggle" id="flashAnonymousToggle" aria-pressed="false">
+                                Kimliğimi gizli tut
+                            </button>
+                        </div>
+                    </div>
+                    <label class="vs-rumor-form__span">
+                        Görsel
+                        <select name="image_preset" id="hotExtraImagePreset">
+                            <option value="__gazette_auto__">Metinden otomatik woodcut</option>
+                            @foreach (($gazetteImagePresets ?? []) as $presetPath => $presetLabel)
+                            <option value="{{ $presetPath }}">{{ $presetLabel }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                    <div class="vs-flash-image-preview-wrap" id="flashImagePreviewWrap" hidden>
+                        <span class="vs-flash-image-preview__label">Woodcut önizleme</span>
+                        <div class="vs-flash-image-preview">
+                            <img id="flashImagePreview" src="" alt="" width="200" height="120">
+                        </div>
+                        <p class="vs-flash-image-preview__hint" id="flashImagePreviewHint"></p>
+                    </div>
+                    <label class="vs-rumor-form__span">
+                        Veya dosya yükle
+                        <input type="file" name="custom_image" id="flashCustomImageInput" accept="image/jpeg,image/png,image/webp">
+                    </label>
+                    <label class="vs-rumor-form__span">
+                        Haber metni
+                        <textarea name="description" id="hotExtraBodyInput" rows="10" required minlength="80" maxlength="12000" placeholder="Tek sayfalık akıcı anlatım. Köşe yok, özet yok; yazıyor yazıyor."></textarea>
+                    </label>
+                    <div class="vs-rumor-form__actions vs-rumor-form__span">
+                        <button type="submit" class="vs-rumor-submit vs-rumor-submit--flash" id="hotExtraSubmit">Editöre gönder</button>
                     </div>
                 </form>
             </div>

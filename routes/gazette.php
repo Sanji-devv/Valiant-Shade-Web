@@ -26,5 +26,9 @@ Route::prefix('api')->group(function () {
         Route::get('/{id}', [PublicNewsController::class, 'show'])->whereNumber('id');
         Route::post('/submissions', [PublicNewsController::class, 'submit'])
             ->middleware('throttle:public.news.submissions');
+        Route::post('/flash-submissions', [PublicNewsController::class, 'submitFlash'])
+            ->middleware('throttle:public.news.submissions');
+        Route::post('/extra-issues', [PublicNewsController::class, 'publishExtra'])
+            ->middleware(['auth', 'throttle:public.news.submissions']);
     });
 });

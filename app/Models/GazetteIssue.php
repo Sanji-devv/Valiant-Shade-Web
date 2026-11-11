@@ -8,7 +8,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class GazetteIssue extends Model
 {
+    public const KIND_WEEKLY = 'weekly';
+
+    public const KIND_EXTRA = 'extra';
+
     protected $fillable = [
+        'issue_kind',
+        'parent_issue_id',
+        'extra_sequence',
         'issue_number',
         'label',
         'year',
@@ -25,6 +32,8 @@ class GazetteIssue extends Model
     ];
 
     protected $casts = [
+        'extra_sequence' => 'integer',
+        'parent_issue_id' => 'integer',
         'issue_number' => 'integer',
         'year' => 'integer',
         'day' => 'integer',
@@ -39,6 +48,25 @@ class GazetteIssue extends Model
     public function isLocked(): bool
     {
         return (bool) $this->is_locked;
+    }
+
+    public function isExtra(): bool
+    {
+        return ($this->issue_kind ?? self::KIND_WEEKLY) === self::KIND_EXTRA;
+    }
+
+    public function isWeekly(): bool
+    {
+        return ! $this->isExtra();
+    }
+
+    public function displayIssueNumber(): string
+    {
+        if ($this->isExtra() && $this->extra_sequence) {
+            return $this->issue_number.'.'.$this->extra_sequence;
+        }
+
+        return (string) $this->issue_number;
     }
 
     public function news(): HasMany

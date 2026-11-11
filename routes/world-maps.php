@@ -52,6 +52,12 @@ Route::prefix('api')->group(function () {
         Route::post('/submissions', [PublicNewsController::class, 'submit'])
             ->middleware('throttle:public.news.submissions')
             ->name('api.public.news.submit');
+        Route::post('/flash-submissions', [PublicNewsController::class, 'submitFlash'])
+            ->middleware('throttle:public.news.submissions')
+            ->name('api.public.news.flash-submit');
+        Route::post('/extra-issues', [PublicNewsController::class, 'publishExtra'])
+            ->middleware(['auth', 'throttle:public.news.submissions'])
+            ->name('api.public.news.extra-issues');
     });
 
     Route::get('/maps/{slug}', [TerritoryMapController::class, 'show'])->name('api.maps.show');

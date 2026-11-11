@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\News;
+use App\ValiantShade\Support\GazetteEditorGate;
 use App\ValiantShade\Support\GazetteNewsImage;
 use App\ValiantShade\Services\GazetteIssueService;
 use App\ValiantShade\Services\PublicNewsService;
@@ -213,6 +214,144 @@ class PublicNewsController extends Controller
             'success' => true,
             'message' => __('Your rumor was delivered to the editors. It will appear after review.'),
             'submission_id' => $news->id,
+        ], 201);
+    }
+
+    public function submitFlash(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|min:8|max:255',
+            'news_type' => 'required|string|in:'.implode(',', array_keys(config('news.types', []))),
+            'description' => 'required|string|min:80|max:12000',
+            'location_badge' => 'nullable|string|max:150',
+            'author' => 'nullable|string|max:120',
+            'anonymous' => 'nullable|boolean',
+            'image_preset' => 'nullable|string|max:255',
+            'custom_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lütfen flash haber alanlarını kontrol edin.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $data = $validator->validated();
+        $typeConfig = config('news.types.'.$data['news_type']);
+        $anonymous = ! empty($data['anonymous']);
+        $author = $anonymous ? 'Anonim Muhabir' : ($data['author'] ?? 'Sokak Muhabiri');
+
+        $imageUrl = 'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg';
+        if ($request->hasFile('custom_image')) {
+            $file = $request->file('custom_image');
+            $filename = 'flash_'.time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
+            $destination = public_path('static/valiant-shade/assets/img/news');
+            if (! file_exists($destination)) {
+                mkdir($destination, 0755, true);
+            }
+            $file->move($destination, $filename);
+            $imageUrl = 'static/valiant-shade/assets/img/news/'.$filename;
+        } elseif (! empty($data['image_preset']) && $data['image_preset'] !== '__gazette_auto__') {
+            $imageUrl = ltrim((string) $data['image_preset'], '/');
+        }
+
+        $submission = ['gazette_slot_kind' => 'flash'];
+        if ($anonymous) {
+            $submission['anonymous'] = true;
+        }
+
+        $news = News::create([
+            'title' => $data['title'],
+            'category' => $typeConfig['label'],
+            'news_type' => $data['news_type'],
+            'badge_color' => $typeConfig['badge_color'],
+            'category_icon' => $typeConfig['category_icon'],
+            'tag' => 'Flash Haber Gönderisi',
+            'tag_icon' => 'icon-base ti tabler-urgent',
+            'date_text' => WorldCalendar::formatNewsStamp(now()) ?? now()->locale(app()->getLocale())->translatedFormat('d M Y, H:i'),
+            'description' => $data['description'],
+            'image_url' => $imageUrl,
+            'location_badge' => $data['location_badge'] ?? null,
+            'author' => $author,
+            'author_role' => 'Flash haber — editör onayı bekliyor',
+            'stats' => ['submission' => $submission],
+            'status' => 'pending',
+            'is_active' => false,
+            'order' => (int) News::max('order') + 1,
+        ]);
+
+        if (! $request->hasFile('custom_image')
+            && (empty($data['image_preset']) || $data['image_preset'] === '__gazette_auto__')) {
+            GazetteNewsImage::assignFromContent($news);
+            $news->saveQuietly();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Flash haber editöre ulaştı. Onaylanınca ek sayı (ör. 2.1) olarak basılır.',
+            'submission_id' => $news->id,
+        ], 201);
+    }
+
+    public function publishExtra(Request $request): JsonResponse
+    {
+        if (! GazetteEditorGate::canManage($request->user())) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Access denied. You do not have permission to manage news.'),
+            ], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|min:8|max:255',
+            'news_type' => 'required|string|in:'.implode(',', array_keys(config('news.types', []))),
+            'description' => 'required|string|min:80|max:12000',
+            'location_badge' => 'nullable|string|max:150',
+            'author' => 'nullable|string|max:120',
+            'image_preset' => 'nullable|string|max:255',
+            'custom_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lütfen sıcak haber alanlarını kontrol edin.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $data = $validator->validated();
+        $imageUrl = null;
+
+        if ($request->hasFile('custom_image')) {
+            $file = $request->file('custom_image');
+            $filename = 'hot_'.time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
+            $destination = public_path('static/valiant-shade/assets/img/news');
+            if (! file_exists($destination)) {
+                mkdir($destination, 0755, true);
+            }
+            $file->move($destination, $filename);
+            $imageUrl = 'static/valiant-shade/assets/img/news/'.$filename;
+        } elseif (! empty($data['image_preset']) && $data['image_preset'] !== '__gazette_auto__') {
+            $imageUrl = ltrim((string) $data['image_preset'], '/');
+        }
+
+        try {
+            $result = $this->gazetteIssues->publishExtraIssue($data, $imageUrl);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sıcak haber sayısı basılamadı.',
+            ], 500);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sıcak haber ek sayısı basıldı ve arşive eklendi.',
+            'issue' => $result['issue'],
+            'news_id' => $result['news']->id,
         ], 201);
     }
 

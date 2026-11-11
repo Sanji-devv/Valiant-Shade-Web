@@ -29,6 +29,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->configureLocalSessionForGazetteSubdomain();
+
         $authAudit = app(LogAuthenticationActivity::class);
         Event::listen(Login::class, [$authAudit, 'handleLogin']);
         Event::listen(Logout::class, [$authAudit, 'handleLogout']);
@@ -121,5 +123,21 @@ class AppServiceProvider extends ServiceProvider
                 ->expectEnvironment('production'),
             OptimizedAppCheck::new()->label('Optimized Application'),
         ]);
+    }
+
+    protected function configureLocalSessionForGazetteSubdomain(): void
+    {
+        if (! app()->environment('local')) {
+            return;
+        }
+
+        if (env('SESSION_DOMAIN') !== null && env('SESSION_DOMAIN') !== '') {
+            return;
+        }
+
+        $host = parse_url((string) config('app.url'), PHP_URL_HOST);
+        if ($host === 'localhost' || (is_string($host) && str_ends_with($host, '.localhost'))) {
+            config(['session.domain' => '.localhost']);
+        }
     }
 }

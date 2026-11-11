@@ -268,9 +268,17 @@
         </h5>
         <small class="text-body-secondary">{{ __('Review public submissions before publishing to the gazette.') }}</small>
       </div>
-      <a href="{{ route('web.newspaper') }}" class="btn btn-sm btn-label-primary" target="_blank" rel="noopener">
-        <i class="icon-base ti tabler-world me-1"></i> {{ __('Open Public Newspaper') }}
-      </a>
+      @php
+        $gazettePublicUrl = app()->environment('local') ? url('/gazette') : (request()->getScheme().'://'.config('gazette.domain').'/');
+      @endphp
+      <div class="d-flex flex-wrap gap-2">
+        <a href="{{ $gazettePublicUrl }}?flash=1" class="btn btn-sm btn-danger" target="_blank" rel="noopener" title="Halka açık flash haber formu">
+          <i class="icon-base ti tabler-flame me-1"></i> Flash haber gönder
+        </a>
+        <a href="{{ $gazettePublicUrl }}" class="btn btn-sm btn-label-primary" target="_blank" rel="noopener">
+          <i class="icon-base ti tabler-world me-1"></i> {{ __('Open Public Newspaper') }}
+        </a>
+      </div>
     </div>
     <div class="list-group list-group-flush">
       @foreach($pendingNews as $pending)

@@ -45,8 +45,14 @@ class GazetteIssueService
                 continue;
             }
 
-            $issue = GazetteIssue::query()->firstOrNew(['issue_number' => $number]);
+            $issue = GazetteIssue::query()->firstOrNew([
+                'issue_number' => $number,
+                'issue_kind' => GazetteIssue::KIND_WEEKLY,
+            ]);
             $issue->fill([
+                'issue_kind' => GazetteIssue::KIND_WEEKLY,
+                'parent_issue_id' => null,
+                'extra_sequence' => null,
                 'label' => 'Sayı '.$number,
                 'year' => $parts['year'],
                 'month' => $parts['month'],
@@ -100,7 +106,9 @@ class GazetteIssueService
             ->withCount(['news as article_count' => function ($q) {
                 $q->where('status', 'published')->where('is_active', true);
             }])
+            ->orderByDesc('published_on')
             ->orderByDesc('issue_number')
+            ->orderByDesc('extra_sequence')
             ->get()
             ->map(function (GazetteIssue $issue) {
                 $withCorners = (bool) $issue->is_current && ! $issue->isLocked();
@@ -117,11 +125,21 @@ class GazetteIssueService
 
         if ($issueId) {
             return GazetteIssue::query()->where('id', $issueId)->first()
-                ?? GazetteIssue::query()->where('issue_number', $issueId)->first();
+                ?? GazetteIssue::query()
+                    ->where('issue_kind', GazetteIssue::KIND_WEEKLY)
+                    ->where('issue_number', $issueId)
+                    ->first();
         }
 
-        return GazetteIssue::query()->where('is_current', true)->orderByDesc('issue_number')->first()
-            ?? GazetteIssue::query()->orderByDesc('issue_number')->first();
+        return GazetteIssue::query()
+            ->where('issue_kind', GazetteIssue::KIND_WEEKLY)
+            ->where('is_current', true)
+            ->orderByDesc('issue_number')
+            ->first()
+            ?? GazetteIssue::query()
+                ->where('issue_kind', GazetteIssue::KIND_WEEKLY)
+                ->orderByDesc('issue_number')
+                ->first();
     }
 
     public function ensureDefaultIssue(): GazetteIssue
@@ -146,6 +164,7 @@ class GazetteIssueService
         ];
 
         return GazetteIssue::query()->create([
+            'issue_kind' => GazetteIssue::KIND_WEEKLY,
             'issue_number' => 1,
             'label' => 'Sayı 1',
             'year' => (int) $parts['year'],
@@ -176,6 +195,7 @@ class GazetteIssueService
                 foreach ($rows as $news) {
                     $anchor = WorldCalendar::anchorSunday(Carbon::parse($news->created_at));
                     $target = GazetteIssue::query()
+                        ->where('issue_kind', GazetteIssue::KIND_WEEKLY)
                         ->whereDate('published_on', $anchor->toDateString())
                         ->first();
 
@@ -206,6 +226,10 @@ class GazetteIssueService
     ): array {
         $issue = $this->findIssue($issueId) ?? $this->ensureDefaultIssue();
         $this->assignNewsToIssueWeeks();
+
+        if ($issue->isExtra()) {
+            return $this->gazetteBootstrapExtra($issue, $newsType, $search);
+        }
 
         $allNews = $this->publicNews->publishedForIssue($issue->id, $newsType, $search);
         $issue = $this->ensureCoverLayoutMigrated($issue, $allNews);
@@ -315,7 +339,10 @@ class GazetteIssueService
         $this->assignNewsToIssueWeeks();
 
         $touched = 0;
-        GazetteIssue::query()->orderBy('issue_number')->each(function (GazetteIssue $issue) use (&$touched) {
+        GazetteIssue::query()
+            ->where('issue_kind', GazetteIssue::KIND_WEEKLY)
+            ->orderBy('issue_number')
+            ->each(function (GazetteIssue $issue) use (&$touched) {
             if ($issue->isLocked()) {
                 return;
             }
@@ -353,7 +380,9 @@ class GazetteIssueService
         $isPublished = $articleCount > 0;
         $isCurrent = (bool) $issue->is_current;
         $isLocked = (bool) $issue->is_locked;
-        $isSelectable = $isPublished || $isCurrent || $isLocked;
+        $isSelectable = $issue->isExtra()
+            ? $isPublished
+            : ($isPublished || $isCurrent || $isLocked);
 
         $dateShort = WorldCalendar::formatShort(
             $issue->month,
@@ -373,13 +402,19 @@ class GazetteIssueService
             'date_line' => $issue->dateLine(),
             'date_short' => $dateShort,
             'archive_label' => WorldCalendar::formatGazetteIssueArchiveLabel(
-                (int) $issue->issue_number,
+                $issue->displayIssueNumber(),
                 $issue->month,
                 (int) $issue->day,
                 (int) $issue->year,
                 $issue->weekday,
-                unpublishedPast: ! $isPublished && ! $isCurrent,
+                unpublishedPast: ! $isPublished && ! $isCurrent && $issue->isWeekly(),
+                isExtra: $issue->isExtra(),
             ),
+            'issue_kind' => $issue->isExtra() ? GazetteIssue::KIND_EXTRA : GazetteIssue::KIND_WEEKLY,
+            'display_issue_number' => $issue->displayIssueNumber(),
+            'parent_issue_id' => $issue->parent_issue_id,
+            'extra_sequence' => $issue->extra_sequence,
+            'is_extra' => $issue->isExtra(),
             'is_current' => $isCurrent,
             'is_locked' => $isLocked,
             'is_editable' => $isCurrent && ! $isLocked,
@@ -423,6 +458,7 @@ class GazetteIssueService
         $this->syncWeeklyIssues();
 
         return GazetteIssue::query()
+            ->where('issue_kind', GazetteIssue::KIND_WEEKLY)
             ->where('is_current', true)
             ->where('is_locked', false)
             ->orderByDesc('issue_number')
@@ -437,6 +473,7 @@ class GazetteIssueService
         }
 
         GazetteIssue::query()
+            ->where('issue_kind', GazetteIssue::KIND_WEEKLY)
             ->where('is_locked', false)
             ->whereNotNull('published_on')
             ->whereDate('published_on', '<', $currentSunday->toDateString())
@@ -484,13 +521,19 @@ class GazetteIssueService
 
     public function applySubmissionPlacement(News $news): void
     {
-        if ($this->issueIsLocked((int) ($news->gazette_issue_id ?? 0))) {
-            return;
-        }
-
         $stats = is_array($news->stats) ? $news->stats : [];
         $submission = is_array($stats['submission'] ?? null) ? $stats['submission'] : [];
         $kind = (string) ($submission['gazette_slot_kind'] ?? '');
+
+        if ($this->isFlashSubmission($news, $submission)) {
+            $this->promoteFlashNewsToExtraIssue($news);
+
+            return;
+        }
+
+        if ($this->issueIsLocked((int) ($news->gazette_issue_id ?? 0))) {
+            return;
+        }
         $issueId = (int) ($submission['gazette_issue_id'] ?? $news->gazette_issue_id ?? 0);
 
         if ($issueId > 0 && ! $news->gazette_issue_id) {
@@ -1180,6 +1223,12 @@ class GazetteIssueService
             return;
         }
 
+        $stats = is_array($news->stats) ? $news->stats : [];
+        $submission = is_array($stats['submission'] ?? null) ? $stats['submission'] : [];
+        if ($this->isFlashSubmission($news, $submission)) {
+            return;
+        }
+
         if ($news->status !== 'published' || ! $news->is_active) {
             return;
         }
@@ -1191,6 +1240,7 @@ class GazetteIssueService
         $this->syncWeeklyIssues();
         $anchor = WorldCalendar::anchorSunday(Carbon::parse($news->created_at));
         $issue = GazetteIssue::query()
+            ->where('issue_kind', GazetteIssue::KIND_WEEKLY)
             ->whereDate('published_on', $anchor->toDateString())
             ->where('is_locked', false)
             ->first();
@@ -1200,5 +1250,213 @@ class GazetteIssueService
         }
 
         $news->forceFill(['gazette_issue_id' => $issue->id])->saveQuietly();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function gazetteBootstrapExtra(
+        GazetteIssue $issue,
+        ?string $newsType = null,
+        ?string $search = null,
+    ): array {
+        $allNews = $this->publicNews->publishedForIssue($issue->id, $newsType, $search);
+        $lead = $allNews->first();
+        $feedData = $lead
+            ? [$this->publicNews->transformItem($lead)]
+            : [];
+
+        $issuePayload = $this->transformIssue($issue->loadCount([
+            'news as article_count' => fn ($q) => $q->where('status', 'published')->where('is_active', true),
+        ]), false);
+        $issuePayload['cover_lead'] = $lead ? $this->publicNews->transformItem($lead) : null;
+        $issuePayload['cover_briefs'] = [];
+        $issuePayload['cover_mastheads'] = $lead ? [$this->publicNews->transformItem($lead)] : [];
+
+        return [
+            'issue' => $issuePayload,
+            'archive' => $this->archiveList(),
+            'featured' => $lead ? [$this->publicNews->transformItem($lead)] : [],
+            'types' => collect(config('news.types', []))->map(fn ($cfg, $key) => [
+                'key' => $key,
+                'label' => $cfg['label'],
+                'badge_color' => $cfg['badge_color'],
+            ])->values()->all(),
+            'feed' => [
+                'data' => $feedData,
+                'meta' => [
+                    'current_page' => 1,
+                    'last_page' => 1,
+                    'per_page' => 1,
+                    'total' => $allNews->count(),
+                    'sheet_kind' => 'extra',
+                    'inner_per_page' => 1,
+                ],
+                'all_article_ids' => $allNews->pluck('id')->values()->all(),
+                'type_counts' => $this->publicNews->typeCountsForCollection($allNews),
+            ],
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $submission
+     */
+    public function isFlashSubmission(News $news, ?array $submission = null): bool
+    {
+        $stats = is_array($news->stats) ? $news->stats : [];
+        $submission ??= is_array($stats['submission'] ?? null) ? $stats['submission'] : [];
+        $kind = (string) ($submission['gazette_slot_kind'] ?? '');
+        if (in_array($kind, ['flash', 'extra'], true)) {
+            return true;
+        }
+
+        $tag = (string) ($news->tag ?? '');
+
+        return str_contains($tag, 'Flash Haber') || str_contains($tag, 'Sıcak Haber Gönderisi');
+    }
+
+    /**
+     * Onaylanan flash haberi tek sayfalık ek sayıya (2.1 vb.) bağlar.
+     */
+    public function promoteFlashNewsToExtraIssue(News $news): GazetteIssue
+    {
+        if (! Schema::hasTable('gazette_issues')) {
+            throw new \RuntimeException('gazette_issues tablosu yok.');
+        }
+
+        if ($news->gazette_issue_id) {
+            $linked = GazetteIssue::query()->find($news->gazette_issue_id);
+            if ($linked && $linked->isExtra()) {
+                return $linked;
+            }
+        }
+
+        $this->syncWeeklyIssues();
+        $at = Carbon::now();
+        $sunday = WorldCalendar::anchorSunday($at);
+
+        $parent = GazetteIssue::query()
+            ->where('issue_kind', GazetteIssue::KIND_WEEKLY)
+            ->whereDate('published_on', $sunday->toDateString())
+            ->first();
+
+        if (! $parent) {
+            $parent = $this->currentEditableIssue();
+            if ($parent->isExtra() && $parent->parent_issue_id) {
+                $parent = GazetteIssue::query()->find($parent->parent_issue_id) ?? $parent;
+            }
+        }
+
+        $nextSeq = (int) GazetteIssue::query()
+            ->where('parent_issue_id', $parent->id)
+            ->max('extra_sequence') + 1;
+
+        $parts = WorldCalendar::fromDateTime($at) ?? [
+            'year' => (int) $parent->year,
+            'month' => (string) $parent->month,
+            'weekday' => (string) $parent->weekday,
+            'day' => (int) $parent->day,
+        ];
+
+        $displayNum = $parent->issue_number.'.'.$nextSeq;
+
+        $issue = GazetteIssue::create([
+            'issue_kind' => GazetteIssue::KIND_EXTRA,
+            'parent_issue_id' => $parent->id,
+            'extra_sequence' => $nextSeq,
+            'issue_number' => (int) $parent->issue_number,
+            'label' => "Sayı {$displayNum}",
+            'year' => (int) $parts['year'],
+            'month' => (string) $parts['month'],
+            'weekday' => (string) $parts['weekday'],
+            'day' => (int) $parts['day'],
+            'published_on' => $at->toDateString(),
+            'is_current' => false,
+            'is_locked' => true,
+            'locked_at' => $at,
+            'corner_columns' => null,
+            'editorial_note' => 'Gün ortasında basılıp sokaklara fırlatılmış flash / sıcak haber ek sayısı.',
+        ]);
+
+        $stats = is_array($news->stats) ? $news->stats : [];
+        $submission = is_array($stats['submission'] ?? null) ? $stats['submission'] : [];
+        $submission['gazette_slot_kind'] = 'flash';
+        $submission['gazette_issue_id'] = $issue->id;
+        $stats['submission'] = $submission;
+        $stats['gazette_placement'] = 'flash_extra';
+        $stats['gazette_rank'] = 0;
+
+        $news->forceFill([
+            'gazette_issue_id' => $issue->id,
+            'is_breaking' => true,
+            'tag' => 'Sıcak Haber',
+            'tag_icon' => 'icon-base ti tabler-urgent',
+            'date_text' => $news->date_text ?: (WorldCalendar::formatNewsStamp($at) ?? $at->locale(app()->getLocale())->translatedFormat('d M Y, H:i')),
+            'stats' => $stats,
+        ])->saveQuietly();
+
+        $allNews = $this->publicNews->publishedForIssue($issue->id);
+        $issue->forceFill([
+            'archive_snapshot' => $this->buildArchiveSnapshot($issue, $allNews),
+        ])->saveQuietly();
+
+        $this->publicNews->invalidatePublicFeed();
+
+        return $issue;
+    }
+
+    /**
+     * Gün içinde basılan tek sayfalık sıcak haber ek sayısı.
+     *
+     * @param  array{title: string, news_type: string, description: string, location_badge?: ?string, author?: ?string}  $data
+     * @return array{issue: array<string, mixed>, news: News}
+     */
+    public function publishExtraIssue(array $data, ?string $imageUrl = null): array
+    {
+        $at = Carbon::now();
+        $typeConfig = config('news.types.'.$data['news_type'], []);
+        $author = trim((string) ($data['author'] ?? ''));
+        if ($author === '') {
+            $author = 'Lağımdan Sesler Muhabiri';
+        }
+
+        $image = $imageUrl ?? 'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg';
+
+        $news = News::create([
+            'title' => $data['title'],
+            'category' => (string) ($typeConfig['label'] ?? 'Yerel Haberler'),
+            'news_type' => $data['news_type'],
+            'badge_color' => $typeConfig['badge_color'] ?? 'danger',
+            'category_icon' => $typeConfig['category_icon'] ?? 'icon-base ti tabler-flame',
+            'tag' => 'Sıcak Haber',
+            'tag_icon' => 'icon-base ti tabler-urgent',
+            'date_text' => WorldCalendar::formatNewsStamp($at) ?? $at->locale(app()->getLocale())->translatedFormat('d M Y, H:i'),
+            'description' => $data['description'],
+            'image_url' => $image,
+            'location_badge' => $data['location_badge'] ?? null,
+            'author' => $author,
+            'author_role' => 'Sıcak haber muhabiri',
+            'stats' => [
+                'submission' => ['gazette_slot_kind' => 'flash'],
+            ],
+            'status' => 'published',
+            'is_active' => true,
+            'is_breaking' => true,
+            'order' => (int) News::max('order') + 1,
+        ]);
+
+        if (! $imageUrl) {
+            GazetteNewsImage::assignFromContent($news);
+            $news->saveQuietly();
+        }
+
+        $issue = $this->promoteFlashNewsToExtraIssue($news);
+
+        return [
+            'issue' => $this->transformIssue($issue->fresh()->loadCount([
+                'news as article_count' => fn ($q) => $q->where('status', 'published')->where('is_active', true),
+            ])),
+            'news' => $news->fresh(),
+        ];
     }
 }

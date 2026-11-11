@@ -3,6 +3,7 @@
 namespace App\ValiantShade\Http\Controllers\authentications;
 
 use App\ValiantShade\Http\Controllers\Controller;
+use App\ValiantShade\Support\GazetteShareMeta;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,7 +16,7 @@ class LoginBasic extends Controller
   public function index(Request $request)
   {
     $redirect = $request->query('redirect');
-    if (is_string($redirect) && $redirect !== '' && str_starts_with($redirect, url('/'))) {
+    if (is_string($redirect) && $redirect !== '' && GazetteShareMeta::isAllowedReturnUrl($redirect)) {
       redirect()->setIntendedUrl($redirect);
     }
 
