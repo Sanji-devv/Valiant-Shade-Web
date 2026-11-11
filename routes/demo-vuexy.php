@@ -159,7 +159,7 @@ use DemoVuexy\Http\Controllers\maps\Leaflet;
 
 // Main Page Route
 Route::get('/', [Analytics::class, 'index'])->name('demo-vuexy.dashboard-analytics');
-Route::get('/dashboard/analytics', [Analytics::class, 'index'])->name('demo-vuexy.dashboard-analytics');
+Route::get('/dashboard/analytics', [Analytics::class, 'index']);
 Route::get('/dashboard/crm', [Crm::class, 'index'])->name('demo-vuexy.dashboard-crm');
 // locale
 Route::get('/lang/{locale}', [LanguageController::class, 'swap']);
@@ -168,8 +168,8 @@ Route::get('/lang/{locale}', [LanguageController::class, 'swap']);
 Route::get('/layouts/collapsed-menu', [CollapsedMenu::class, 'index'])->name('demo-vuexy.layouts-collapsed-menu');
 Route::get('/layouts/content-navbar', [ContentNavbar::class, 'index'])->name('demo-vuexy.layouts-content-navbar');
 Route::get('/layouts/content-nav-sidebar', [ContentNavSidebar::class, 'index'])->name('demo-vuexy.layouts-content-nav-sidebar');
-Route::get('/layouts/horizontal', [Horizontal::class, 'index'])->name('demo-vuexy.dashboard-analytics');
-Route::get('/layouts/vertical', [Vertical::class, 'index'])->name('demo-vuexy.dashboard-analytics');
+Route::get('/layouts/horizontal', [Horizontal::class, 'index'])->name('demo-vuexy.layouts-horizontal');
+Route::get('/layouts/vertical', [Vertical::class, 'index'])->name('demo-vuexy.layouts-vertical');
 Route::get('/layouts/without-menu', [WithoutMenu::class, 'index'])->name('demo-vuexy.layouts-without-menu');
 Route::get('/layouts/without-navbar', [WithoutNavbar::class, 'index'])->name('demo-vuexy.layouts-without-navbar');
 Route::get('/layouts/fluid', [Fluid::class, 'index'])->name('demo-vuexy.layouts-fluid');
@@ -254,7 +254,7 @@ Route::get('/auth/verify-email-basic', [VerifyEmailBasic::class, 'index'])->name
 Route::get('/auth/verify-email-cover', [VerifyEmailCover::class, 'index'])->name('demo-vuexy.auth-verify-email-cover');
 Route::get('/auth/reset-password-basic', [ResetPasswordBasic::class, 'index'])->name('demo-vuexy.auth-reset-password-basic');
 Route::get('/auth/reset-password-cover', [ResetPasswordCover::class, 'index'])->name('demo-vuexy.auth-reset-password-cover');
-Route::get('/auth/forgot-password-basic', [ForgotPasswordBasic::class, 'index'])->name('demo-vuexy.auth-reset-password-basic');
+Route::get('/auth/forgot-password-basic', [ForgotPasswordBasic::class, 'index'])->name('demo-vuexy.auth-forgot-password-basic');
 Route::get('/auth/forgot-password-cover', [ForgotPasswordCover::class, 'index'])->name('demo-vuexy.auth-forgot-password-cover');
 Route::get('/auth/two-steps-basic', [TwoStepsBasic::class, 'index'])->name('demo-vuexy.auth-two-steps-basic');
 Route::get('/auth/two-steps-cover', [TwoStepsCover::class, 'index'])->name('demo-vuexy.auth-two-steps-cover');

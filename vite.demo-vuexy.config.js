@@ -4,6 +4,7 @@ import html from '@rollup/plugin-html';
 import { globSync } from 'glob';
 import path from 'path';
 import iconsPlugin from './vite.demo-vuexy.icons.plugin.js';
+import { globSyncEntries } from './vite.glob-entries.js';
 
 const resourceRoot = 'resources/demo-vuexy';
 
@@ -14,10 +15,10 @@ function getFilesArray(query) {
 const pageJsFiles = getFilesArray(`${resourceRoot}/assets/js/*.js`);
 const vendorJsFiles = getFilesArray(`${resourceRoot}/assets/vendor/js/*.js`);
 const libsJsFiles = getFilesArray(`${resourceRoot}/assets/vendor/libs/**/*.js`);
-const libsScssFiles = getFilesArray(`${resourceRoot}/assets/vendor/libs/**/!(_)*.scss`);
+const libsScssFiles = globSyncEntries(`${resourceRoot}/assets/vendor/libs/**/!(_)*.scss`);
 const libsCssFiles = getFilesArray(`${resourceRoot}/assets/vendor/libs/**/*.css`);
-const coreScssFiles = getFilesArray(`${resourceRoot}/assets/vendor/scss/**/!(_)*.scss`);
-const fontsScssFiles = getFilesArray(`${resourceRoot}/assets/vendor/fonts/!(_)*.scss`);
+const coreScssFiles = globSyncEntries(`${resourceRoot}/assets/vendor/scss/**/!(_)*.scss`);
+const fontsScssFiles = globSyncEntries(`${resourceRoot}/assets/vendor/fonts/**/!(_)*.scss`);
 const fontsJsFiles = getFilesArray(`${resourceRoot}/assets/vendor/fonts/**/!(_)*.js`);
 const fontsCssFiles = getFilesArray(`${resourceRoot}/assets/vendor/fonts/**/!(_)*.css`);
 

@@ -40,7 +40,7 @@ Route::prefix('/groupName')->group(function () {
 
 // Dashboards
 Route::get('/', [Analytics::class, 'index'])->name('valiant-shade.dashboard-analytics');
-Route::get('/dashboard/analytics', [Analytics::class, 'index'])->name('valiant-shade.dashboard-analytics');
+Route::get('/dashboard/analytics', [Analytics::class, 'index']);
 Route::get('/dashboard/crm', [Crm::class, 'index'])->name('valiant-shade.dashboard-crm');
 
 // Locale
