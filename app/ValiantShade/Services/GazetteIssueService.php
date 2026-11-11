@@ -193,6 +193,23 @@ class GazetteIssueService
             ->orderBy('id')
             ->chunkById(50, function ($rows) use (&$updated) {
                 foreach ($rows as $news) {
+                    if ($this->isFlashSubmission($news)) {
+                        continue;
+                    }
+
+                    $linkedIssueId = (int) ($news->gazette_issue_id ?? 0);
+                    if ($linkedIssueId > 0) {
+                        $linkedIssue = GazetteIssue::query()->find($linkedIssueId);
+                        if ($linkedIssue?->isExtra()) {
+                            continue;
+                        }
+                    }
+
+                    $stats = is_array($news->stats) ? $news->stats : [];
+                    if (($stats['gazette_placement'] ?? '') === 'flash_extra') {
+                        continue;
+                    }
+
                     $anchor = WorldCalendar::anchorSunday(Carbon::parse($news->created_at));
                     $target = GazetteIssue::query()
                         ->where('issue_kind', GazetteIssue::KIND_WEEKLY)
@@ -203,7 +220,7 @@ class GazetteIssueService
                         continue;
                     }
 
-                    if ((int) $news->gazette_issue_id === (int) $target->id) {
+                    if ($linkedIssueId === (int) $target->id) {
                         continue;
                     }
 

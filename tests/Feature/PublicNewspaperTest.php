@@ -164,6 +164,15 @@ class PublicNewspaperTest extends TestCase
         $bootstrap->assertOk()
             ->assertJsonPath('feed.meta.sheet_kind', 'extra')
             ->assertJsonPath('feed.meta.last_page', 1);
+
+        $this->assertDatabaseHas('news', [
+            'id' => $pendingId,
+            'gazette_issue_id' => $issueId,
+        ]);
+
+        $this->getJson('/api/public/news/bootstrap?gazette_layout=1&issue_id='.$issueId)
+            ->assertOk()
+            ->assertJsonPath('feed.data.0.id', $pendingId);
     }
 
     public function test_cache_version_bumps_after_news_change(): void
