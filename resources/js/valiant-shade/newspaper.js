@@ -1146,24 +1146,40 @@ function placeIssueArchiveSelect() {
   els.gazetteArchiveWrap.classList.toggle('vs-gazette-archive-wrap--toolbar', desktop);
   els.gazetteArchiveWrap.classList.toggle('vs-gazette-archive-wrap--mobile-dock', mobileGazette);
   if (els.mobileIssueDock) {
-    els.mobileIssueDock.hidden = !mobileGazette;
-    els.mobileIssueDock.setAttribute('aria-hidden', mobileGazette ? 'false' : 'true');
+    const hideDock = !mobileGazette || isSearchActive();
+    els.mobileIssueDock.hidden = hideDock;
+    els.mobileIssueDock.setAttribute('aria-hidden', hideDock ? 'true' : 'false');
   }
 }
 
 function syncSearchResultsLayout() {
-  const active = isGazetteLayout() && isSearchActive();
+  const gazette = isGazetteLayout();
+  const active = gazette && isSearchActive();
   document.body.classList.toggle('vs-search-active', active);
+  const desktop = window.matchMedia('(min-width: 768px)').matches;
+  const mobileGazette = !desktop && gazette;
+  if (els.gazetteArchiveWrap) {
+    els.gazetteArchiveWrap.hidden = !gazette || active;
+    if (els.gazetteArchiveSelect) {
+      els.gazetteArchiveSelect.disabled = active;
+      els.gazetteArchiveSelect.setAttribute('aria-disabled', active ? 'true' : 'false');
+    }
+  }
+  if (els.mobileIssueDock) {
+    els.mobileIssueDock.hidden = !mobileGazette || active;
+    els.mobileIssueDock.setAttribute('aria-hidden', !mobileGazette || active ? 'true' : 'false');
+  }
 }
 
 function applyLayoutMode() {
   const gazette = isGazetteLayout();
   document.body.classList.toggle('vs-layout-gazette', gazette);
   state.perPage = WEB_ITEMS_PER_PAGE;
-  if (els.gazetteArchiveWrap) {
+  if (els.gazetteArchiveWrap && !isSearchActive()) {
     els.gazetteArchiveWrap.hidden = !gazette;
   }
   placeIssueArchiveSelect();
+  syncSearchResultsLayout();
 
   if (els.gazetteFlip) {
     els.gazetteFlip.hidden = !gazette;
@@ -1225,7 +1241,7 @@ function renderGrid(items) {
     els.newsGrid.innerHTML = items
       .map(
         (item) => `
-        <article class="vs-news-list__item" data-open-id="${item.id}">
+        <article class="vs-news-list__item vs-news-list__item--open" data-open-id="${item.id}" role="button" tabindex="0">
           <span class="vs-news-list__type">${escapeHtml(item.news_type_label || item.category || '')}</span>
           <h3 class="vs-news-list__title">${escapeHtml(item.title || '')}</h3>
           <span class="vs-news-list__meta">${escapeHtml(displayDateText(item))}</span>
@@ -1239,7 +1255,7 @@ function renderGrid(items) {
   els.newsGrid.innerHTML = items
     .map(
       (item) => `
-      <article class="vs-news-card" data-open-id="${item.id}">
+      <article class="vs-news-card vs-news-card--open" data-open-id="${item.id}" role="button" tabindex="0">
         <div class="vs-news-card__thumb" data-image-url="${escapeHtml(item.image_asset || '')}" style="background-image:url('${escapeHtml(item.image_asset || '')}')"></div>
         <div class="vs-news-card__body">
           <span class="vs-badge">${escapeHtml(item.news_type_label || item.category || '')}</span>
@@ -2534,6 +2550,7 @@ function bindEvents() {
   let mediaFitTimer;
   window.addEventListener('resize', () => {
     placeIssueArchiveSelect();
+    syncSearchResultsLayout();
     syncFilterPanelVisibility();
     clearTimeout(mediaFitTimer);
     mediaFitTimer = setTimeout(() => fitAllNewsMedia(document), 120);
@@ -2596,7 +2613,8 @@ function bindEvents() {
     }
     const inGazette = isGazetteLayout();
     if (inGazette) {
-      if (!els.gazetteStage?.contains(openBtn)) {
+      const fromSearchGrid = isSearchActive() && els.newsGrid?.contains(openBtn);
+      if (!els.gazetteStage?.contains(openBtn) && !fromSearchGrid) {
         return;
       }
       if (event.target.closest('.vs-gazette-slot--fill')) {
