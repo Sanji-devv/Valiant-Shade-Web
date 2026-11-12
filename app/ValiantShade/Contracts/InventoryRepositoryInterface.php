@@ -48,6 +48,10 @@ interface InventoryRepositoryInterface
      */
     public function delete(int $id): bool;
 
+    public function deleteMany(array $ids): int;
+
+    public function findManyForUpdate(array $ids): Collection;
+
     /**
      * Truncate all items.
      *

@@ -475,7 +475,7 @@
         <p class="mb-0 small text-light-emphasis" style="color: #dfceb1 !important;">
         </p>
       </div>
-      <i class="icon-base ti tabler-scroll fs-2 text-warning"></i>
+      <i class="icon-base ti tabler-clipboard-list fs-2 text-warning"></i>
     </div>
   </div>
 
@@ -891,7 +891,7 @@
         </div>
       @empty
         <div class="col-12 text-center py-5">
-          <i class="icon-base ti tabler-scroll-off fs-1 text-warning mb-2 d-block"></i>
+          <i class="icon-base ti tabler-clipboard-off fs-1 text-warning mb-2 d-block"></i>
           <h5 class="text-warning font-monospace">{{ __('No Decrees Found Matching These Criteria') }}</h5>
           <p class="text-light-emphasis small">{{ __('Reset filters to view all guild quest notices.') }}</p>
         </div>

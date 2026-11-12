@@ -69,7 +69,7 @@ class PermissionRouteRegistry
                 'key' => 'quests',
                 'name' => 'Quest Board & Decrees',
                 'description' => 'Pin quest notices, edit decrees, update status, and broadcast to Discord.',
-                'icon' => 'ti tabler-scroll',
+                'icon' => 'ti tabler-clipboard-list',
                 'badge' => 'bg-label-secondary',
             ],
             [

@@ -43,21 +43,10 @@
       </button>
     </div>
 
-    <button type="button" class="btn btn-label-secondary btn-sm rounded-pill waves-effect shadow-xs" id="btnExportCsv" title="{{ __('Export CSV') }}">
-      <i class="icon-base ti tabler-file-spreadsheet me-1"></i> {{ __('Export CSV') }}
-    </button>
-
-    @if($isAdmin)
-      <button type="button" class="btn btn-label-warning btn-sm rounded-pill waves-effect shadow-xs" id="btnResetDefaults" title="{{ __('Reset to Original Master Sheet Data') }}">
-        <i class="icon-base ti tabler-rotate-clockwise-2 me-1"></i> {{ __('Reset') }}
-      </button>
-      <button type="button" class="btn btn-primary btn-sm rounded-pill waves-effect waves-light shadow-xs" data-bs-toggle="modal" data-bs-target="#modalAddItem">
-        <i class="icon-base ti tabler-plus me-1"></i> {{ __('Add New Item') }}
-      </button>
-    @else
-      <span class="badge bg-label-secondary rounded-pill d-flex align-items-center gap-1 py-2 px-3 shadow-xs" title="Deleting, updating, and adding items are restricted to Administrators.">
+    @if(!$isAdmin)
+      <span class="badge bg-label-secondary rounded-pill d-flex align-items-center gap-1 py-2 px-3 shadow-xs" title="Inventory management permissions are required to edit items.">
         <i class="icon-base ti tabler-lock fs-6 text-warning"></i>
-        <span>{{ __('Read Only (Admin Access Required)') }}</span>
+        <span>{{ __('Read Only (Inventory Access Required)') }}</span>
       </span>
     @endif
   </div>
@@ -105,7 +94,7 @@
         </div>
         <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top">
           <small class="text-body-secondary">Physical Cash Vault (30k Silver)</small>
-          @if($isAdmin)
+          @if($canUpdate)
             <button type="button" class="btn btn-xs btn-label-warning rounded-pill px-2 py-0" data-bs-toggle="modal" data-bs-target="#modalManageVault">
               <i class="icon-base ti tabler-pencil icon-xs me-1"></i> Manage
             </button>
@@ -211,13 +200,30 @@
         <small class="text-body-secondary">Filter by category or live search in the catalog</small>
       </div>
 
-      <!-- Search Input -->
-      <div class="input-group input-group-merge shadow-xs" style="max-width: 320px;">
-        <span class="input-group-text"><i class="icon-base ti tabler-search text-body-secondary"></i></span>
-        <input type="text" id="inventorySearchInput" class="form-control form-control-sm" placeholder="Search item name, quality or note..." />
-        <button class="btn btn-outline-secondary btn-sm" type="button" id="btnClearSearch" title="Clear">
-          <i class="icon-base ti tabler-x"></i>
-        </button>
+      <div class="d-flex flex-nowrap align-items-center gap-2 ms-auto">
+        @if($canCreate)
+          <button type="button" class="btn btn-success btn-sm rounded-pill waves-effect shadow-xs" id="btnAddItems" data-bs-toggle="modal" data-bs-target="#modalAddItems" title="{{ __('Add items') }}" aria-label="{{ __('Add items') }}">
+            <i class="icon-base ti tabler-plus"></i>
+          </button>
+        @endif
+        @if($canDelete)
+          <button type="button" class="btn btn-success btn-sm rounded-pill waves-effect shadow-xs" id="btnSellSelected" title="{{ __('Sell selected items') }} (50%)" aria-label="{{ __('Sell selected items') }}" disabled>
+            <i class="icon-base ti tabler-coins"></i>
+          </button>
+          <button type="button" class="btn btn-danger btn-sm rounded-pill waves-effect shadow-xs" id="btnDeleteSelected" title="{{ __('Delete selected items') }}" aria-label="{{ __('Delete selected items') }}" disabled>
+            <i class="icon-base ti tabler-minus"></i>
+          </button>
+          <span class="visually-hidden" id="selectedItemCount">0</span>
+        @endif
+
+        <!-- Search Input -->
+        <div class="input-group input-group-merge shadow-xs" style="max-width: 320px;">
+          <span class="input-group-text"><i class="icon-base ti tabler-search text-body-secondary"></i></span>
+          <input type="text" id="inventorySearchInput" class="form-control form-control-sm" placeholder="Search item name, quality or note..." />
+          <button class="btn btn-outline-secondary btn-sm" type="button" id="btnClearSearch" title="Clear">
+            <i class="icon-base ti tabler-x"></i>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -246,6 +252,9 @@
     <table class="table table-hover align-middle mb-0" id="inventoryTable">
       <thead class="border-bottom">
         <tr>
+          @if($canDelete)
+            <th style="width: 42px;" class="text-center"><input type="checkbox" class="form-check-input" id="selectAllItems" aria-label="Select all items"></th>
+          @endif
           <th style="width: 50px;" class="text-center">#</th>
           <th>Inventory (Item Name)</th>
           <th style="width: 100px;" class="text-center">Quality</th>
@@ -253,9 +262,11 @@
           <th style="width: 70px;" class="text-center">Qty</th>
           <th style="width: 130px;" class="text-end col-header-unit">Unit (<span class="curr-col-label">SP</span>)</th>
           <th style="width: 140px;" class="text-end col-header-total">Total (<span class="curr-col-label">SP</span>)</th>
-          <th style="width: 140px;" class="text-end col-header-market">Market (55% <span class="curr-col-label">SP</span>)</th>
-          <th style="width: 130px;" class="text-end col-header-buy">Buy Price (<span class="curr-col-label">SP</span>)</th>
-          <th style="width: 90px;" class="text-center">Actions</th>
+          <th style="width: 130px;" class="text-end col-header-buy">Buy (55% / unit <span class="curr-col-label">SP</span>)</th>
+          <th style="width: 130px;" class="text-end col-header-sell">Sell (50% / unit <span class="curr-col-label">SP</span>)</th>
+          @if($canUpdate)
+            <th style="width: 90px;" class="text-center">Actions</th>
+          @endif
         </tr>
       </thead>
       <tbody class="table-border-bottom-0" id="inventoryTableBody">
@@ -266,8 +277,11 @@
               data-quality="{{ strtolower($item->quality ?? '') }}"
               data-base-unit="{{ $item->unit_price }}"
               data-base-total="{{ $item->total_price }}"
-              data-base-market="{{ $item->market_value }}"
-              data-base-buy="{{ $item->buy_price }}">
+              data-base-buy="{{ $item->buy_price }}"
+              data-base-sell="{{ $item->sell_price }}">
+            @if($canDelete)
+              <td class="text-center"><input type="checkbox" class="form-check-input item-select-checkbox" value="{{ $item->id }}" aria-label="Select {{ $item->name }}"></td>
+            @endif
             <td class="text-center text-body-secondary font-monospace">{{ $index + 1 }}</td>
             <td>
               <div>
@@ -308,15 +322,15 @@
             <td class="text-end font-monospace fw-bold text-heading cell-total-price">
               <span class="cell-num">{{ number_format($item->total_price * 10, 0, '.', ',') }}</span> <small class="text-body-secondary curr-unit-symbol">SP</small>
             </td>
-            <td class="text-end font-monospace fw-semibold text-success cell-market-value">
-              <span class="cell-num">{{ number_format($item->market_value * 10, 1, '.', ',') }}</span> <small class="text-success text-opacity-75 curr-unit-symbol">SP</small>
-            </td>
             <td class="text-end font-monospace text-body cell-buy-price">
               <span class="cell-num">{{ number_format($item->buy_price * 10, 1, '.', ',') }}</span> <small class="text-body-secondary curr-unit-symbol">SP</small>
             </td>
+            <td class="text-end font-monospace text-body cell-sell-price">
+              <span class="cell-num">{{ number_format($item->sell_price * 10, 1, '.', ',') }}</span> <small class="text-body-secondary curr-unit-symbol">SP</small>
+            </td>
+            @if($canUpdate)
             <td class="text-center">
-              @if($isAdmin)
-                <div class="d-flex align-items-center justify-content-center gap-1">
+              <div class="d-flex align-items-center justify-content-center gap-1">
                   <button type="button" class="btn btn-icon btn-text-warning btn-sm rounded-pill btn-edit-item"
                     data-id="{{ $item->id }}"
                     data-name="{{ $item->name }}"
@@ -328,27 +342,19 @@
                     title="Edit Item">
                     <i class="icon-base ti tabler-edit fs-5"></i>
                   </button>
-                  <button type="button" class="btn btn-icon btn-text-danger btn-sm rounded-pill btn-delete-item"
-                    data-id="{{ $item->id }}"
-                    data-name="{{ $item->name }}"
-                    title="Delete Item">
-                    <i class="icon-base ti tabler-trash fs-5"></i>
-                  </button>
-                </div>
-              @else
-                <span class="text-body-secondary opacity-50" title="Administrator access required"><i class="icon-base ti tabler-lock fs-5"></i></span>
-              @endif
+              </div>
             </td>
+            @endif
           </tr>
         @empty
           <tr id="emptyTableRow">
-            <td colspan="10" class="text-center py-5 text-body-secondary">
+            <td colspan="{{ 9 + ($canDelete ? 1 : 0) + ($canUpdate ? 1 : 0) }}" class="text-center py-5 text-body-secondary">
               <i class="icon-base ti tabler-package-off fs-1 mb-2 d-block text-muted"></i>
               <h6 class="fw-bold mb-1">No items found in inventory</h6>
-              <p class="text-body-secondary small mb-3">Add a new item or restore the original inventory list.</p>
-              @if($isAdmin)
-                <button type="button" class="btn btn-sm btn-primary rounded-pill waves-effect waves-light" data-bs-toggle="modal" data-bs-target="#modalAddItem">
-                  <i class="icon-base ti tabler-plus me-1"></i> Add New Item
+              <p class="text-body-secondary small mb-3">Add items to the inventory.</p>
+              @if($canCreate)
+                <button type="button" class="btn btn-sm btn-success rounded-pill waves-effect waves-light" data-bs-toggle="modal" data-bs-target="#modalAddItems">
+                Add Item
                 </button>
               @endif
             </td>
@@ -357,111 +363,80 @@
       </tbody>
       <tfoot class="border-top bg-body">
         <tr>
-          <th colspan="4" class="text-end fw-bold text-heading py-3">TOTAL ({{ $metrics['total_items_count'] ?? 31 }} Items):</th>
+          <th colspan="{{ 4 + ($canDelete ? 1 : 0) }}" class="text-end fw-bold text-heading py-3">TOTAL ({{ $metrics['total_items_count'] ?? 31 }} Items):</th>
           <th class="text-center font-monospace fw-bold text-heading py-3" id="footTotalQty">{{ $metrics['total_quantity'] ?? 0 }}</th>
           <th class="py-3"></th>
           <th class="text-end font-monospace fw-bold text-heading py-3" id="footTotalPrice">
             <span id="footTotalPriceVal">{{ number_format(($metrics['grand_total_price'] ?? 0) * 10, 0, '.', ',') }}</span> <small class="curr-unit-symbol text-body-secondary">SP</small>
           </th>
-          <th class="text-end font-monospace fw-bold text-success py-3" id="footTotalMarket">
-            <span id="footTotalMarketVal">{{ number_format(($metrics['grand_total_market_value'] ?? 0) * 10, 1, '.', ',') }}</span> <small class="curr-unit-symbol text-success text-opacity-75">SP</small>
-          </th>
-          <th colspan="2" class="py-3"></th>
+          <th class="py-3"></th>
+          <th class="py-3"></th>
+          @if($canUpdate)
+            <th class="py-3"></th>
+          @endif
         </tr>
       </tfoot>
     </table>
   </div>
 </div>
 
-@if($isAdmin)
-<!-- MODAL: Add New Item (Admin Only) -->
-<div class="modal fade" id="modalAddItem" tabindex="-1" aria-labelledby="modalAddItemLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+@if($canCreate)
+<!-- MODAL: Add Items -->
+<div class="modal fade" id="modalAddItems" tabindex="-1" aria-labelledby="modalAddItemsLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
     <div class="modal-content">
       <div class="modal-header border-bottom">
-        <h5 class="modal-title d-flex align-items-center gap-2 fw-bold text-heading" id="modalAddItemLabel">
-          <i class="icon-base ti tabler-plus text-primary"></i> Add New Inventory Item
+        <h5 class="modal-title d-flex align-items-center gap-2 fw-bold text-heading" id="modalAddItemsLabel">
+          Add Inventory Items
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <form id="formAddItem" method="POST" action="{{ route('valiant-shade.pages-inventory.store') }}">
+      <form method="POST" action="{{ route('valiant-shade.pages-inventory.store') }}" id="formAddItems">
         @csrf
-        <div class="modal-body py-4">
-          <!-- Item Name -->
-          <div class="mb-3">
-            <label class="form-label fw-semibold" for="addName">Item Name <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="addName" name="name" required placeholder="e.g. Half Plate, Bag of Holding, Goggles of Night..." />
+        <div class="modal-body">
+          <p class="text-body-secondary small">Add as many items as needed. Prices are entered in GP; totals and 55% buy / 50% sell prices are calculated automatically.</p>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead>
+                <tr>
+                  <th>Item Name</th><th>Quality</th><th>Type</th><th>Qty</th><th>Unit Price (GP)</th><th>Total (GP)</th><th>Buy 55% / unit</th><th>Sell 50% / unit</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="itemRows"></tbody>
+              <template id="itemRowTemplate">
+                <tr class="item-row">
+                  <td><input type="text" class="form-control form-control-sm" data-field="name" maxlength="255" required></td>
+                  <td><input type="text" class="form-control form-control-sm" data-field="quality" maxlength="50" placeholder="Optional"></td>
+                  <td>
+                    <select class="form-select form-select-sm" data-field="type" required>
+                      @foreach(\App\Models\InventoryItem::TYPES as $tKey => $tCfg)
+                        <option value="{{ $tKey }}" {{ $tKey === 'Armor' ? 'selected' : '' }}>{{ $tKey }}</option>
+                      @endforeach
+                    </select>
+                  </td>
+                  <td><input type="number" class="form-control form-control-sm" data-field="quantity" min="1" value="1" required></td>
+                  <td><input type="number" step="0.01" class="form-control form-control-sm" data-field="unit_price" min="0" value="0" required></td>
+                  <td class="text-end font-monospace" data-preview="total">0.00</td>
+                  <td class="text-end font-monospace" data-preview="buy">0.00</td>
+                  <td class="text-end font-monospace" data-preview="sell">0.00</td>
+                  <td><button type="button" class="btn btn-icon btn-text-danger btn-sm remove-item-row" title="Remove row"><i class="icon-base ti tabler-trash"></i></button></td>
+                </tr>
+              </template>
+            </table>
           </div>
-
-          <div class="row g-3 mb-3">
-            <!-- Quality / Enchantment (Charges for Wands) -->
-            <div class="col-6">
-              <label class="form-label fw-semibold" for="addQuality" id="addQualityLabel">Quality / Enchantment</label>
-              <input type="text" class="form-control font-monospace" id="addQuality" name="quality" placeholder="e.g. +1, +2, 50 charges..." />
-              <small class="text-body-secondary mt-1 d-none" id="addQualityWandHint" style="font-size: 0.74rem;">
-                <i class="icon-base ti tabler-wand me-1 text-warning"></i>Charges: max 50, min 1 (0 = 0 GP)
-              </small>
-            </div>
-
-            <!-- Type / Category (11 Types) -->
-            <div class="col-6">
-              <label class="form-label fw-semibold" for="addType">Type (Category) <span class="text-danger">*</span></label>
-              <select class="form-select" id="addType" name="type" required>
-                @foreach(\App\Models\InventoryItem::TYPES as $tKey => $tCfg)
-                  <option value="{{ $tKey }}" {{ $tKey === 'Armor' ? 'selected' : '' }}>{{ $tKey }}</option>
-                @endforeach
-              </select>
-            </div>
-          </div>
-
-          <div class="row g-3 mb-3">
-            <!-- Quantity -->
-            <div class="col-6">
-              <label class="form-label fw-semibold" for="addQuantity">Quantity <span class="text-danger">*</span></label>
-              <input type="number" class="form-control font-monospace" id="addQuantity" name="quantity" min="1" value="1" required />
-            </div>
-
-            <!-- Unit Price (Base GP) -->
-            <div class="col-6">
-              <label class="form-label fw-semibold" for="addUnitPrice">Unit Price (GP) <span class="text-danger">*</span></label>
-              <input type="number" step="0.01" class="form-control font-monospace" id="addUnitPrice" name="unit_price" min="0" value="1000" required />
-            </div>
-          </div>
-
-          <!-- Live Price Preview Box (Based on Active Currency) -->
-          <div class="p-3 rounded-2 border border-primary border-opacity-25 bg-label-primary bg-opacity-10 mb-3">
-            <div class="d-flex align-items-center justify-content-between mb-1" style="font-size: 0.82rem;">
-              <span id="addPreviewTotalLabel">Total (Qty &times; Unit):</span>
-              <strong class="font-monospace text-heading" id="addPreviewTotal">10,000 SP</strong>
-            </div>
-            <div class="d-flex align-items-center justify-content-between mb-1" style="font-size: 0.82rem;">
-              <span>Market Value (55%):</span>
-              <strong class="font-monospace text-success" id="addPreviewEderi">5,500 SP</strong>
-            </div>
-            <div class="d-flex align-items-center justify-content-between" style="font-size: 0.82rem;">
-              <span>Buy Price (Per Unit):</span>
-              <strong class="font-monospace text-primary" id="addPreviewAlim">5,500 SP</strong>
-            </div>
-            <div class="text-body-secondary border-top pt-1 mt-1 d-none font-monospace" id="addPreviewFormulaHint" style="font-size: 0.74rem;"></div>
-          </div>
-
-          <!-- Notes -->
-          <div class="mb-0">
-            <label class="form-label fw-semibold" for="addNotes">Notes / Rules Details</label>
-            <textarea class="form-control" id="addNotes" name="notes" rows="2" placeholder="Optional rule notes, mechanical stats, or magical properties..."></textarea>
-          </div>
+          <button type="button" class="btn btn-sm btn-label-primary" id="btnAddItemRow"><i class="icon-base ti tabler-plus me-1"></i>Add another item</button>
         </div>
         <div class="modal-footer border-top">
           <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary waves-effect waves-light">
-            <i class="icon-base ti tabler-check me-1"></i> Save Item
-          </button>
+          <button type="submit" class="btn btn-primary"><i class="icon-base ti tabler-check me-1"></i>Add all items</button>
         </div>
       </form>
     </div>
   </div>
 </div>
+@endif
 
+@if($canUpdate)
 <!-- MODAL: Edit Item (Admin Only) -->
 <div class="modal fade" id="modalEditItem" tabindex="-1" aria-labelledby="modalEditItemLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -530,8 +505,12 @@
               <strong class="font-monospace text-success" id="editPreviewEderi">0 SP</strong>
             </div>
             <div class="d-flex align-items-center justify-content-between" style="font-size: 0.82rem;">
-              <span>New Buy Price:</span>
+              <span>Buy Price (55% / unit):</span>
               <strong class="font-monospace text-primary" id="editPreviewAlim">0 SP</strong>
+            </div>
+            <div class="d-flex align-items-center justify-content-between" style="font-size: 0.82rem;">
+              <span>Sell Price (50% / unit):</span>
+              <strong class="font-monospace text-info" id="editPreviewSell">0 SP</strong>
             </div>
             <div class="text-body-secondary border-top pt-1 mt-1 d-none font-monospace" id="editPreviewFormulaHint" style="font-size: 0.74rem;"></div>
           </div>
@@ -552,7 +531,9 @@
     </div>
   </div>
 </div>
+@endif
 
+@if($canUpdate)
 <!-- Modal: Manage Guild Vault Cash (Admin Only) -->
 <div class="modal fade" id="modalManageVault" tabindex="-1" aria-labelledby="modalManageVaultLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -584,12 +565,15 @@
             </select>
           </div>
 
-          <!-- Amount (Silver / SP) -->
+          <!-- Amount (Silver / Gold) -->
           <div class="mb-3">
-            <label class="form-label fw-semibold" for="vaultAmountSp">Transaction Amount (<span class="text-warning">Silver / SP</span>) <span class="text-danger">*</span></label>
+            <label class="form-label fw-semibold" for="vaultAmount">Transaction Amount (<span class="text-warning">SP or GP</span>) <span class="text-danger">*</span></label>
             <div class="input-group">
-              <input type="number" step="0.01" class="form-control font-monospace" id="vaultAmountSp" name="amount_sp" min="0" value="{{ $vault->balance_sp ?? 30000 }}" required />
-              <span class="input-group-text fw-bold">SP</span>
+              <input type="number" step="0.01" class="form-control font-monospace" id="vaultAmount" name="amount" min="0" value="{{ $vault->balance_sp ?? 30000 }}" required />
+              <select class="form-select fw-bold" id="vaultCurrency" name="currency" style="max-width: 90px;">
+                <option value="SP">SP</option>
+                <option value="GP">GP</option>
+              </select>
             </div>
             <small class="text-muted d-block mt-1" id="vaultOperationHint">Will be set as the new total balance of the guild vault.</small>
           </div>
@@ -623,6 +607,8 @@ document.addEventListener('DOMContentLoaded', function () {
   const rows = tableBody ? Array.from(tableBody.querySelectorAll('tr[data-id]')) : [];
   const categoryBtns = document.querySelectorAll('.filter-type-btn');
   const currencyBtns = document.querySelectorAll('.currency-btn');
+  const itemRows = document.getElementById('itemRows');
+  const itemRowTemplate = document.getElementById('itemRowTemplate');
 
   // Currency rates, symbols, and labels (Default: Silver / SP)
   const currencyConfig = {
@@ -701,8 +687,8 @@ document.addEventListener('DOMContentLoaded', function () {
     rows.forEach(row => {
       const baseUnit = parseFloat(row.getAttribute('data-base-unit')) || 0;
       const baseTotal = parseFloat(row.getAttribute('data-base-total')) || 0;
-      const baseMarket = parseFloat(row.getAttribute('data-base-market')) || 0;
       const baseBuy = parseFloat(row.getAttribute('data-base-buy')) || 0;
+      const baseSell = parseFloat(row.getAttribute('data-base-sell')) || 0;
 
       const cellUnit = row.querySelector('.cell-unit-price .cell-num');
       if (cellUnit) cellUnit.textContent = (baseUnit * rate).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
@@ -710,11 +696,11 @@ document.addEventListener('DOMContentLoaded', function () {
       const cellTotal = row.querySelector('.cell-total-price .cell-num');
       if (cellTotal) cellTotal.textContent = (baseTotal * rate).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
-      const cellMarket = row.querySelector('.cell-market-value .cell-num');
-      if (cellMarket) cellMarket.textContent = (baseMarket * rate).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
-
       const cellBuy = row.querySelector('.cell-buy-price .cell-num');
       if (cellBuy) cellBuy.textContent = (baseBuy * rate).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+
+      const cellSell = row.querySelector('.cell-sell-price .cell-num');
+      if (cellSell) cellSell.textContent = (baseSell * rate).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
     });
 
     // Update table footer values
@@ -724,14 +710,7 @@ document.addEventListener('DOMContentLoaded', function () {
       footTotalVal.textContent = (baseTotal * rate).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
     }
 
-    const footMarketVal = document.getElementById('footTotalMarketVal');
-    if (footMarketVal && elMarket) {
-      const baseMarket = parseFloat(elMarket.getAttribute('data-base-val')) || 0;
-      footMarketVal.textContent = (baseMarket * rate).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
-    }
-
-    // Update modal calculation previews
-    updateAddPreview();
+    // Update modal calculation preview
     updateEditPreview();
   }
 
@@ -767,6 +746,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (emptyRow) {
       emptyRow.style.display = (visibleCount === 0) ? '' : 'none';
     }
+    updateSelectedItems();
   }
 
   // Category filter button click events
@@ -801,6 +781,115 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  // Preview prices for each row; the server remains the source of truth.
+  function updateItemRowPreview(row) {
+    const quantity = Math.max(1, parseInt(row.querySelector('[data-field="quantity"]').value, 10) || 1);
+    const unitPrice = Math.max(0, parseFloat(row.querySelector('[data-field="unit_price"]').value) || 0);
+    const type = row.querySelector('[data-field="type"]').value;
+    const quality = row.querySelector('[data-field="quality"]').value;
+    const total = type === 'Wand' ? (parseWandCharges(quality) / 50) * unitPrice * quantity : unitPrice * quantity;
+    row.querySelector('[data-preview="total"]').textContent = total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    row.querySelector('[data-preview="buy"]').textContent = (quantity ? total * 0.55 / quantity : 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    row.querySelector('[data-preview="sell"]').textContent = (quantity ? total * 0.5 / quantity : 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function addItemRow() {
+    if (!itemRows || !itemRowTemplate) return;
+    const rowIndex = itemRows.children.length;
+    const row = itemRowTemplate.content.firstElementChild.cloneNode(true);
+    row.querySelectorAll('[data-field]').forEach(input => {
+      input.name = `items[${rowIndex}][${input.getAttribute('data-field')}]`;
+      input.addEventListener('input', () => updateItemRowPreview(row));
+      input.addEventListener('change', () => updateItemRowPreview(row));
+    });
+    row.querySelector('.remove-item-row').addEventListener('click', () => {
+      row.remove();
+      Array.from(itemRows.children).forEach((itemRow, index) => {
+        itemRow.querySelectorAll('[data-field]').forEach(input => {
+          input.name = `items[${index}][${input.getAttribute('data-field')}]`;
+        });
+      });
+    });
+    itemRows.appendChild(row);
+    updateItemRowPreview(row);
+  }
+
+  const btnAddItemRow = document.getElementById('btnAddItemRow');
+  if (btnAddItemRow) btnAddItemRow.addEventListener('click', addItemRow);
+  const addItemsModal = document.getElementById('modalAddItems');
+  if (addItemsModal) {
+    addItemsModal.addEventListener('show.bs.modal', () => {
+      if (itemRows && itemRows.children.length === 0) addItemRow();
+    });
+  }
+
+  // Keep selected-item actions and the select-all control in sync with filtered rows.
+  const selectAllItems = document.getElementById('selectAllItems');
+  const selectedDeleteButton = document.getElementById('btnDeleteSelected');
+  const selectedSellButton = document.getElementById('btnSellSelected');
+  const selectedItemCount = document.getElementById('selectedItemCount');
+  const itemCheckboxes = Array.from(document.querySelectorAll('.item-select-checkbox'));
+  function updateSelectedItems() {
+    const checkedCount = itemCheckboxes.filter(checkbox => checkbox.checked).length;
+    if (selectedItemCount) selectedItemCount.textContent = checkedCount;
+    if (selectedDeleteButton) selectedDeleteButton.disabled = checkedCount === 0;
+    if (selectedSellButton) selectedSellButton.disabled = checkedCount === 0;
+    if (selectAllItems) {
+      const visibleCheckboxes = itemCheckboxes.filter(checkbox => checkbox.closest('tr').style.display !== 'none');
+      selectAllItems.checked = visibleCheckboxes.length > 0 && visibleCheckboxes.every(checkbox => checkbox.checked);
+      selectAllItems.indeterminate = visibleCheckboxes.some(checkbox => checkbox.checked) && !selectAllItems.checked;
+    }
+  }
+  itemCheckboxes.forEach(checkbox => checkbox.addEventListener('change', updateSelectedItems));
+  if (selectAllItems) {
+    selectAllItems.addEventListener('change', () => {
+      itemCheckboxes.forEach(checkbox => {
+        if (checkbox.closest('tr').style.display !== 'none') checkbox.checked = selectAllItems.checked;
+      });
+      updateSelectedItems();
+    });
+  }
+  function submitSelectedItems(action, selected, methodOverride = null) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = action;
+    const tokenInput = document.createElement('input');
+    tokenInput.type = 'hidden';
+    tokenInput.name = '_token';
+    tokenInput.value = csrfToken;
+    form.appendChild(tokenInput);
+    if (methodOverride) {
+      const methodInput = document.createElement('input');
+      methodInput.type = 'hidden';
+      methodInput.name = '_method';
+      methodInput.value = methodOverride;
+      form.appendChild(methodInput);
+    }
+    selected.forEach(checkbox => {
+      const idInput = document.createElement('input');
+      idInput.type = 'hidden';
+      idInput.name = 'ids[]';
+      idInput.value = checkbox.value;
+      form.appendChild(idInput);
+    });
+    document.body.appendChild(form);
+    form.submit();
+  }
+  if (selectedSellButton) {
+    selectedSellButton.addEventListener('click', () => {
+      const selected = itemCheckboxes.filter(checkbox => checkbox.checked);
+      if (!selected.length || !confirm(@json(__('Sell selected items for 50% of their value and add proceeds to the Guild Vault?')))) return;
+      submitSelectedItems(`{{ route('valiant-shade.pages-inventory.sell') }}`, selected);
+    });
+  }
+  if (selectedDeleteButton) {
+    selectedDeleteButton.addEventListener('click', () => {
+      const selected = itemCheckboxes.filter(checkbox => checkbox.checked);
+      if (!selected.length || !confirm(`Delete ${selected.length} selected inventory items?`)) return;
+      submitSelectedItems(`{{ route('valiant-shade.pages-inventory.bulk-destroy') }}`, selected, 'DELETE');
+    });
+  }
+
   // Helper: Parse Wand Charges (Max 50, Min 0. If <=0, total price is 0)
   function parseWandCharges(qualityStr) {
     if (!qualityStr || typeof qualityStr !== 'string' || qualityStr.trim() === '') {
@@ -816,95 +905,7 @@ document.addEventListener('DOMContentLoaded', function () {
     return 50;
   }
 
-  // 3. Live Price Preview in Add Item Modal
-  const addQtyInput = document.getElementById('addQuantity');
-  const addPriceInput = document.getElementById('addUnitPrice');
-  const addQualityInput = document.getElementById('addQuality');
-  const addTypeSelect = document.getElementById('addType');
-  const addQualityLabel = document.getElementById('addQualityLabel');
-  const addQualityWandHint = document.getElementById('addQualityWandHint');
-  const addPrevTotal = document.getElementById('addPreviewTotal');
-  const addPrevTotalLabel = document.getElementById('addPreviewTotalLabel');
-  const addPrevEderi = document.getElementById('addPreviewEderi');
-  const addPrevAlim = document.getElementById('addPreviewAlim');
-  const addPreviewFormulaHint = document.getElementById('addPreviewFormulaHint');
-
-  function handleAddTypeChange() {
-    const isWand = (addTypeSelect && addTypeSelect.value === 'Wand');
-    if (addQualityLabel) {
-      addQualityLabel.innerHTML = isWand ? 'Charges (1 - 50) <span class="text-warning">*</span>' : 'Quality / Enchantment';
-    }
-    if (addQualityInput) {
-      addQualityInput.placeholder = isWand ? 'e.g. 50 (or 1 - 50 charges)' : 'e.g. +1, +2, 50 charges...';
-      if (isWand && (!addQualityInput.value || addQualityInput.value.trim() === '')) {
-        addQualityInput.value = '50 charges';
-      }
-    }
-    if (addQualityWandHint) {
-      if (isWand) {
-        addQualityWandHint.classList.remove('d-none');
-      } else {
-        addQualityWandHint.classList.add('d-none');
-      }
-    }
-    updateAddPreview();
-  }
-
-  function updateAddPreview() {
-    if (!addQtyInput || !addPriceInput) return;
-    const rate = currencyConfig[activeCurrency]?.rate || 10.0;
-    const sym = currencyConfig[activeCurrency]?.symbol || 'SP';
-
-    const qty = Math.max(1, parseInt(addQtyInput.value, 10) || 1);
-    const basePriceGP = Math.max(0, parseFloat(addPriceInput.value) || 0);
-    const isWand = (addTypeSelect && addTypeSelect.value === 'Wand');
-
-    let totalGP = 0;
-    let wandCharges = 50;
-
-    if (isWand) {
-      wandCharges = parseWandCharges(addQualityInput ? addQualityInput.value : '');
-      // Wand formula: IF(F51="Wand", E51*H51/50*G51, H51*G51)
-      if (wandCharges <= 0) {
-        totalGP = 0;
-      } else {
-        totalGP = (wandCharges / 50.0) * basePriceGP * qty;
-      }
-      if (addPrevTotalLabel) addPrevTotalLabel.textContent = `Total (Wand ${wandCharges}/50 charges):`;
-      if (addPreviewFormulaHint) {
-        addPreviewFormulaHint.textContent = `Wand formula: (${wandCharges} charges / 50) × ${basePriceGP.toLocaleString('en-US')} GP × ${qty} qty = ${totalGP.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GP`;
-        addPreviewFormulaHint.classList.remove('d-none');
-      }
-    } else {
-      totalGP = qty * basePriceGP;
-      if (addPrevTotalLabel) addPrevTotalLabel.textContent = 'Total (Qty × Unit):';
-      if (addPreviewFormulaHint) addPreviewFormulaHint.classList.add('d-none');
-    }
-
-    const ederiGP = totalGP * 0.55;
-    const alimGP = qty > 0 ? (ederiGP / qty) : 0;
-
-    const totalConverted = totalGP * rate;
-    const ederiConverted = ederiGP * rate;
-    const alimConverted = alimGP * rate;
-
-    if (addPrevTotal) addPrevTotal.textContent = totalConverted.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + sym;
-    if (addPrevEderi) addPrevEderi.textContent = ederiConverted.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + sym;
-    if (addPrevAlim) addPrevAlim.textContent = alimConverted.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + sym;
-  }
-
-  if (addQtyInput && addPriceInput) {
-    addQtyInput.addEventListener('input', updateAddPreview);
-    addPriceInput.addEventListener('input', updateAddPreview);
-  }
-  if (addQualityInput) {
-    addQualityInput.addEventListener('input', updateAddPreview);
-  }
-  if (addTypeSelect) {
-    addTypeSelect.addEventListener('change', handleAddTypeChange);
-  }
-
-  // 4. Live Price Preview in Edit Item Modal
+  // Live Price Preview in Edit Item Modal
   const editQtyInput = document.getElementById('editQuantity');
   const editPriceInput = document.getElementById('editUnitPrice');
   const editQualityInput = document.getElementById('editQuality');
@@ -915,6 +916,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const editPrevTotalLabel = document.getElementById('editPreviewTotalLabel');
   const editPrevEderi = document.getElementById('editPreviewEderi');
   const editPrevAlim = document.getElementById('editPreviewAlim');
+  const editPrevSell = document.getElementById('editPreviewSell');
   const editPreviewFormulaHint = document.getElementById('editPreviewFormulaHint');
 
   function handleEditTypeChange() {
@@ -978,6 +980,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (editPrevTotal) editPrevTotal.textContent = totalConverted.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + sym;
     if (editPrevEderi) editPrevEderi.textContent = ederiConverted.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + sym;
     if (editPrevAlim) editPrevAlim.textContent = alimConverted.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + sym;
+    if (editPrevSell) editPrevSell.textContent = (totalGP * 0.5 / qty * rate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + sym;
   }
 
   if (editQtyInput && editPriceInput) {
@@ -1028,100 +1031,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // 6. Delete Button Handler (Admin Only)
-  document.querySelectorAll('.btn-delete-item').forEach(btn => {
-    btn.addEventListener('click', function () {
-      const id = this.getAttribute('data-id');
-      const name = this.getAttribute('data-name');
-
-      if (!confirm(`Are you sure you want to delete "${name}" from the inventory?`)) {
-        return;
-      }
-
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = `{{ url('/valiant-shade/pages/inventory') }}/${id}`;
-
-      const tokenInput = document.createElement('input');
-      tokenInput.type = 'hidden';
-      tokenInput.name = '_token';
-      tokenInput.value = csrfToken;
-
-      const methodInput = document.createElement('input');
-      methodInput.type = 'hidden';
-      methodInput.name = '_method';
-      methodInput.value = 'DELETE';
-
-      form.appendChild(tokenInput);
-      form.appendChild(methodInput);
-      document.body.appendChild(form);
-      form.submit();
-    });
-  });
-
-  // 7. Reset to Defaults (Admin Only)
-  const btnReset = document.getElementById('btnResetDefaults');
-  if (btnReset) {
-    btnReset.addEventListener('click', function () {
-      if (!confirm('All inventory items will be reset to the original 31 dataset. Do you confirm?')) {
-        return;
-      }
-
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = `{{ route('valiant-shade.pages-inventory.reset-defaults') }}`;
-
-      const tokenInput = document.createElement('input');
-      tokenInput.type = 'hidden';
-      tokenInput.name = '_token';
-      tokenInput.value = csrfToken;
-
-      form.appendChild(tokenInput);
-      document.body.appendChild(form);
-      form.submit();
-    });
-  }
-
-  // 8. CSV Export
-  const btnExport = document.getElementById('btnExportCsv');
-  if (btnExport) {
-    btnExport.addEventListener('click', function () {
-      const sym = currencyConfig[activeCurrency]?.symbol || 'SP';
-      const exportRows = [
-        ['#', 'Item Name', 'Quality', 'Type', 'Qty', `Unit Price (${sym})`, `Total (${sym})`, `Market Value (55% ${sym})`, `Buy Price (${sym})`]
-      ];
-
-      rows.forEach((r, idx) => {
-        if (r.style.display !== 'none') {
-          const cols = Array.from(r.querySelectorAll('td')).map(td => td.innerText.replace(/\n/g, ' ').trim());
-          if (cols.length >= 9) {
-            exportRows.push([
-              idx + 1,
-              `"${cols[1].replace(/"/g, '""')}"`,
-              `"${cols[2]}"`,
-              `"${cols[3]}"`,
-              cols[4],
-              cols[5].replace(` ${sym}`, ''),
-              cols[6].replace(` ${sym}`, ''),
-              cols[7].replace(` ${sym}`, ''),
-              cols[8].replace(` ${sym}`, '')
-            ]);
-          }
-        }
-      });
-
-      const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + exportRows.map(e => e.join(';')).join('\n');
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement('a');
-      link.setAttribute('href', encodedUri);
-      link.setAttribute('download', `valiant_shade_guild_inventory_${activeCurrency}_${new Date().toISOString().slice(0, 10)}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    });
-  }
-
-  // 9. Guild Vault Operation Hint Change
+  // Guild Vault Operation Hint Change
   const vaultOpSelect = document.getElementById('vaultOperation');
   const vaultHint = document.getElementById('vaultOperationHint');
   if (vaultOpSelect && vaultHint) {
@@ -1132,6 +1042,31 @@ document.addEventListener('DOMContentLoaded', function () {
         vaultHint.textContent = 'The entered SP amount will be withdrawn from the guild vault (-).';
       } else {
         vaultHint.textContent = 'Will be set as the new total balance of the guild vault.';
+      }
+
+      const vaultCurrency = document.getElementById('vaultCurrency');
+      const vaultAmountInput = document.getElementById('vaultAmount');
+      if (vaultCurrency && vaultOpSelect && vaultHint) {
+        let previousVaultCurrency = vaultCurrency.value;
+        const updateVaultHint = () => {
+          const currency = vaultCurrency.value;
+          const unit = currency === 'GP' ? 'GP (1 GP = 10 SP)' : 'SP';
+          const action = vaultOpSelect.value === 'deposit'
+            ? 'deposited into'
+            : vaultOpSelect.value === 'withdraw' ? 'withdrawn from' : 'set as the new balance of';
+          vaultHint.textContent = `The entered ${unit} amount will be ${action} the guild vault.`;
+        };
+        vaultCurrency.addEventListener('change', () => {
+          if (vaultAmountInput && vaultCurrency.value !== previousVaultCurrency) {
+            const amount = parseFloat(vaultAmountInput.value) || 0;
+            const convertedAmount = previousVaultCurrency === 'SP' ? amount / 10 : amount * 10;
+            vaultAmountInput.value = convertedAmount.toFixed(2);
+          }
+          previousVaultCurrency = vaultCurrency.value;
+          updateVaultHint();
+        });
+        vaultOpSelect.addEventListener('change', updateVaultHint);
+        updateVaultHint();
       }
     });
   }

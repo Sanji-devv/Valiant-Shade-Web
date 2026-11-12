@@ -209,7 +209,7 @@
   <div class="row align-items-center mb-4 g-3">
     <div class="col-lg-7 col-md-6">
       <div class="d-flex align-items-center gap-2 mb-1">
-        <span class="badge bg-label-primary px-2 py-1"><i class="icon-base ti tabler-scroll me-1"></i> {{ __('Valiant Shade Gazette') }}</span>
+        <span class="badge bg-label-primary px-2 py-1"><i class="icon-base ti tabler-file-text me-1"></i> {{ __('Valiant Shade Gazette') }}</span>
         <span class="badge bg-label-info px-2 py-1"><i class="icon-base ti tabler-speakerphone me-1"></i> Lonca Haberleri &amp; Duyuru Yönetimi</span>
         <span class="badge bg-label-danger px-2 py-1"><i class="icon-base ti tabler-flame me-1"></i> {{ __('Live Bulletin') }}</span>
       </div>
@@ -1052,7 +1052,7 @@
     } else if (itemId === 2) {
       dynamicActions.innerHTML = `
         <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center gap-1" onclick="fermanKayit('${item.title}')">
-          <i class="icon-base ti tabler-scroll"></i>
+          <i class="icon-base ti tabler-file-text"></i>
           <span>{{ __('Enlist for Bounty Hunt') }}</span>
         </button>
       `;

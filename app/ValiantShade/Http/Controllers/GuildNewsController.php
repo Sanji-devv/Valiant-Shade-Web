@@ -91,7 +91,7 @@ class GuildNewsController extends Controller
             'icon-base ti tabler-building-vault' => 'Mahzen / Kasa',
             'icon-base ti tabler-sparkles' => 'Parıltı / Kalıntı',
             'icon-base ti tabler-speakerphone' => 'Hoparlör / Duyuru',
-            'icon-base ti tabler-scroll' => 'Parşömen / Ferman',
+            'icon-base ti tabler-file-text' => 'Parşömen / Ferman',
             'icon-base ti tabler-users-group' => 'Takım / Grup',
             'icon-base ti tabler-candle' => 'Mum / Anma',
             'icon-base ti tabler-coffin' => 'Tabut / Cenaze',

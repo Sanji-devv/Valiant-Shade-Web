@@ -64,11 +64,13 @@ class InventoryCalculationService implements InventoryCalculationServiceInterfac
 
         $marketValue = round($totalPrice * $resaleRate, 2);
         $buyPrice = $quantity > 0 ? round($marketValue / $quantity, 2) : 0;
+        $sellPrice = $quantity > 0 ? round(($totalPrice * 0.50) / $quantity, 2) : 0;
 
         return [
             'total_price' => $totalPrice,
             'market_value' => $marketValue,
             'buy_price' => $buyPrice,
+            'sell_price' => $sellPrice,
         ];
     }
 

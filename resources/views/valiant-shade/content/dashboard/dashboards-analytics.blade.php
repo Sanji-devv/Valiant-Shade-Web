@@ -279,12 +279,12 @@ $configData = \App\ValiantShade\Helpers\Helpers::appClasses();
             <span class="badge bg-label-primary p-2 rounded-3"><i class="icon-base ti tabler-package-import icon-md"></i></span>
             <div>
               <h5 class="mb-0 card-title fw-bold fs-6">{{ __('Guild Inventory') }}</h5>
-              <small class="text-body-secondary">{{ __('Last 30-Day Value & Inflow Chart') }}</small>
+              <small class="text-body-secondary">{{ __('Current Inventory Value') }}</small>
             </div>
           </div>
           <div class="d-flex align-items-center gap-2">
             <span class="badge bg-label-primary font-monospace px-3 py-1_5" style="font-size: 0.78rem;">
-              <i class="icon-base ti tabler-boxes me-1"></i>{{ $inventoryLast30Count ?? 0 }} {{ __('Items') }}
+              <i class="icon-base ti tabler-boxes me-1"></i>{{ $currentInventoryCount ?? 0 }} {{ __('Items') }}
             </span>
             <span class="badge bg-label-info font-monospace px-3 py-1_5" style="font-size: 0.78rem;">
               <i class="icon-base ti tabler-calendar-stats me-1"></i>30 {{ __('Days') }}
@@ -294,14 +294,14 @@ $configData = \App\ValiantShade\Helpers\Helpers::appClasses();
 
         <div class="d-flex align-items-baseline justify-content-between flex-wrap gap-2 pt-1">
           <div>
-            <h2 class="mb-0 fw-bold text-heading font-monospace">{{ number_format($inventoryLast30Sp ?? 0, 0) }} <span class="fs-6 text-body-secondary fw-normal">SP</span></h2>
+            <h2 class="mb-0 fw-bold text-heading font-monospace">{{ number_format($currentInventorySp ?? 0, 0) }} <span class="fs-6 text-body-secondary fw-normal">SP</span></h2>
             <div class="text-warning fw-semibold font-monospace small mt-0_5">
-              <i class="icon-base ti tabler-coin me-1"></i>~{{ number_format($inventoryLast30Gp ?? 0, 1) }} GP {{ __('(Gold Value)') }}
+              <i class="icon-base ti tabler-coin me-1"></i>~{{ number_format($currentInventoryGp ?? 0, 1) }} GP {{ __('(Gold Value)') }}
             </div>
           </div>
           <div class="text-end">
             <small class="text-body-secondary d-block">{{ __('Market Sale (55%)') }}</small>
-            <strong class="text-heading font-monospace fs-6">~{{ number_format(($inventoryLast30MarketSp ?? 0) / 10, 0) }} GP</strong>
+            <strong class="text-heading font-monospace fs-6">~{{ number_format($currentInventoryMarketGp ?? 0, 0) }} GP</strong>
           </div>
         </div>
       </div>
@@ -318,7 +318,7 @@ $configData = \App\ValiantShade\Helpers\Helpers::appClasses();
 
         <div class="px-3 pt-3 border-top mx-1 d-flex align-items-center justify-content-between flex-wrap gap-2 small text-body-secondary mt-auto">
           <span><i class="icon-base ti tabler-chart-line text-primary me-1"></i>{{ __('30-Day Total Inflow') }}: <strong class="text-heading font-monospace">{{ number_format($inventoryLast30Sp ?? 0, 0) }} SP</strong></span>
-          <span><i class="icon-base ti tabler-scale text-warning me-1"></i>{{ __('Market Value (55%)') }}: <strong class="text-warning font-monospace">~{{ number_format(($inventoryLast30MarketSp ?? 0) / 10, 0) }} GP</strong></span>
+          <span><i class="icon-base ti tabler-scale text-warning me-1"></i>{{ __('Market Value (55%)') }}: <strong class="text-warning font-monospace">~{{ number_format($inventoryLast30MarketGp ?? 0, 0) }} GP</strong></span>
           <span><i class="icon-base ti tabler-package text-info me-1"></i>{{ __('Total Items') }}: <strong class="text-primary font-monospace">{{ $inventoryLast30Count ?? 0 }}</strong></span>
         </div>
       </div>
@@ -332,7 +332,7 @@ $configData = \App\ValiantShade\Helpers\Helpers::appClasses();
       <div class="card-header pb-2 border-bottom border-secondary border-opacity-10">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
           <div class="d-flex align-items-center gap-2">
-            <span class="badge bg-label-warning p-2 rounded-3"><i class="icon-base ti tabler-vault icon-md"></i></span>
+            <span class="badge bg-label-warning p-2 rounded-3"><i class="icon-base ti tabler-building-bank icon-md"></i></span>
             <div>
               <h5 class="fw-bold fs-6 text-heading mb-0">{{ __('Vault Cash') }}</h5>
               <small class="text-body-secondary">{{ __('Last 30-Day Vault Reserve & Cash Flow') }}</small>
@@ -350,14 +350,14 @@ $configData = \App\ValiantShade\Helpers\Helpers::appClasses();
 
         <div class="d-flex align-items-baseline justify-content-between flex-wrap gap-2 pt-1">
           <div>
-            <h2 class="card-title mb-0 fw-bold text-heading font-monospace">{{ number_format($vaultCashSp ?? 0, 0) }} <span class="fs-6 text-body-secondary fw-normal">SP</span></h2>
+            <h2 class="card-title mb-0 fw-bold text-heading font-monospace">{{ number_format($vaultCashSp ?? 0, 2) }} <span class="fs-6 text-body-secondary fw-normal">SP</span></h2>
             <div class="text-warning fw-semibold font-monospace small mt-0_5">
               <i class="icon-base ti tabler-coins me-1"></i>~{{ number_format($vaultCashGp ?? 0, 1) }} GP {{ __('(Gold Equivalent)') }}
             </div>
           </div>
           <div class="text-end">
             <small class="text-body-secondary d-block">{{ __('Physical Silver (SP)') }}</small>
-            <strong class="text-info font-monospace fs-6">{{ number_format($vaultCashSp ?? 0, 0) }} SP</strong>
+            <strong class="text-info font-monospace fs-6">{{ number_format($vaultCashSp ?? 0, 2) }} SP</strong>
           </div>
         </div>
       </div>
@@ -386,7 +386,7 @@ $configData = \App\ValiantShade\Helpers\Helpers::appClasses();
                 <span class="small fw-semibold">{{ __('Silver (SP)') }}</span>
                 <span class="badge bg-label-info p-1 rounded"><i class="icon-base ti tabler-coins icon-xs"></i></span>
               </div>
-              <h4 class="mb-0 font-monospace text-info fw-bold fs-5">{{ number_format($vaultCashSp ?? 0, 0) }}</h4>
+              <h4 class="mb-0 font-monospace text-info fw-bold fs-5">{{ number_format($vaultCashSp ?? 0, 2) }}</h4>
               <small class="text-body-secondary" style="font-size: 0.72rem;">{{ __('Physical Liquid Vault') }}</small>
             </div>
           </div>

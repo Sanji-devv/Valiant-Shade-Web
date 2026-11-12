@@ -70,6 +70,8 @@ Route::post('/character/set-active', [UserProfile::class, 'setActiveCharacter'])
 
 
 Route::get('/pages/inventory', [Inventory::class, 'index'])->name('valiant-shade.pages-inventory');
+Route::delete('/pages/inventory/bulk', [Inventory::class, 'destroyMany'])->name('valiant-shade.pages-inventory.bulk-destroy');
+Route::post('/pages/inventory/sell', [Inventory::class, 'sellMany'])->name('valiant-shade.pages-inventory.sell');
 Route::post('/pages/inventory', [Inventory::class, 'store'])->name('valiant-shade.pages-inventory.store');
 Route::put('/pages/inventory/{id}', [Inventory::class, 'update'])->name('valiant-shade.pages-inventory.update');
 Route::delete('/pages/inventory/{id}', [Inventory::class, 'destroy'])->name('valiant-shade.pages-inventory.destroy');

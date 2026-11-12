@@ -65,7 +65,7 @@
         },
         {
             "name": "Quest Board",
-            "icon": "menu-icon icon-base ti tabler-scroll",
+            "icon": "menu-icon icon-base ti tabler-clipboard-list",
             "slug": "pages-quest-board",
             "url": "/valiant-shade/pages/quest-board"
         },

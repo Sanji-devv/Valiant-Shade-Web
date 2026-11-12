@@ -4,6 +4,7 @@ namespace App\ValiantShade\Repositories;
 
 use App\Models\GuildVault;
 use App\ValiantShade\Contracts\GuildVaultRepositoryInterface;
+use Illuminate\Support\Facades\DB;
 
 class GuildVaultRepository implements GuildVaultRepositoryInterface
 {
@@ -33,15 +34,17 @@ class GuildVaultRepository implements GuildVaultRepositoryInterface
 
     public function adjustBalance(float $deltaSp, ?string $notes = null): GuildVault
     {
-        $vault = $this->getVault();
-        $newBalance = max(0, ((float) $vault->balance_sp) + $deltaSp);
-        $vault->balance_sp = $newBalance;
-        if ($notes !== null) {
-            $vault->notes = $notes;
-        }
-        $vault->save();
+        return DB::transaction(function () use ($deltaSp, $notes) {
+            $vault = $this->getVault();
+            $vault = GuildVault::query()->whereKey($vault->id)->lockForUpdate()->firstOrFail();
+            $vault->balance_sp = max(0, ((float) $vault->balance_sp) + $deltaSp);
+            if ($notes !== null) {
+                $vault->notes = $notes;
+            }
+            $vault->save();
 
-        return $vault;
+            return $vault;
+        });
     }
 
     public function resetToDefault(): GuildVault

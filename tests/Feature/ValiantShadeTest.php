@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
+use App\Models\GuildVault;
+use App\ValiantShade\Services\InventoryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -23,6 +26,81 @@ class ValiantShadeTest extends TestCase
         $response = $this->get('/valiant-shade');
 
         $response->assertRedirect(route('valiant-shade.auth-login-basic'));
+    }
+
+    public function test_dashboard_inventory_chart_converts_gp_to_sp_and_keeps_sold_items_in_history(): void
+    {
+        $user = User::factory()->create(['role' => 'Admin']);
+        $inventoryService = app(InventoryService::class);
+        $item = $inventoryService->createItem([
+            'name' => 'Dashboard chart test item',
+            'type' => 'Weapon',
+            'quantity' => 2,
+            'unit_price' => 100,
+        ]);
+        $soldItem = $inventoryService->createItem([
+            'name' => 'Dashboard chart sold item',
+            'type' => 'Potion',
+            'quantity' => 1,
+            'unit_price' => 50,
+        ]);
+        $inventoryService->sellItems([$soldItem->id]);
+
+        $response = $this->actingAs($user)
+            ->withSession(['locale' => 'en'])
+            ->get('/valiant-shade');
+
+        $response->assertOk()
+            ->assertSee('tabler-building-bank', false)
+            ->assertSee('tabler-clipboard-list', false)
+            ->assertDontSee('tabler-vault', false)
+            ->assertDontSee('tabler-scroll', false)
+            ->assertSee('2,000')
+            ->assertSee('200.0 GP')
+            ->assertSee('~110 GP');
+
+        $this->assertSame(
+            1,
+            preg_match('/id="guildInventory30DayChart"[^>]*data-daily-sp="([^"]*)"/s', $response->getContent(), $matches)
+        );
+        $dailySp = json_decode(html_entity_decode($matches[1], ENT_QUOTES | ENT_HTML5), true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame(2500, $dailySp[array_key_last($dailySp)]);
+    }
+
+    public function test_dashboard_shows_current_inventory_value_and_inventory_vault_balance(): void
+    {
+        $user = User::factory()->create(['role' => 'Admin']);
+        $inventoryService = app(InventoryService::class);
+        $inventoryService->updateVaultBalance(130000);
+        GuildVault::create([
+            'id' => 2,
+            'name' => 'Ana Lonca Kasası',
+            'balance_sp' => 358989.50,
+        ]);
+        $inventoryService->createItem([
+            'name' => 'Active dashboard item',
+            'type' => 'Weapon',
+            'quantity' => 1,
+            'unit_price' => 7000,
+        ]);
+        $soldItem = $inventoryService->createItem([
+            'name' => 'Sold dashboard item',
+            'type' => 'Weapon',
+            'quantity' => 1,
+            'unit_price' => 3000,
+        ]);
+        $soldItem->delete();
+
+        $response = $this->actingAs($user)
+            ->withSession(['locale' => 'en'])
+            ->get('/valiant-shade');
+
+        $response->assertOk()
+            ->assertSee('130,000.00')
+            ->assertSee('70,000')
+            ->assertSee('7,000.0 GP')
+            ->assertSee('100,000 SP')
+            ->assertSee('Current Inventory Value');
     }
 
     public function test_valiant_shade_login_renders_successfully(): void

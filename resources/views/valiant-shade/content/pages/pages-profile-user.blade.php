@@ -356,7 +356,7 @@
             <!-- Empty State -->
             <div id="timelineEmptyState" class="text-center py-5 d-none">
               <div class="timeline-empty-icon-wrap mx-auto mb-3 shadow-lg">
-                <i class="icon-base ti tabler-scroll fs-1 text-primary" id="timelineEmptyStateIcon"></i>
+                <i class="icon-base ti tabler-notes fs-1 text-primary" id="timelineEmptyStateIcon"></i>
               </div>
               <h5 class="fw-bold mb-2 text-heading" id="timelineEmptyStateTitle">{{ __('Chronicles of Valiant Shade') }}</h5>
               <p class="text-body-secondary small mb-4" id="timelineEmptyStateDesc" style="max-width: 440px; margin: 0 auto;">
@@ -2356,7 +2356,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (emptyEl) {
         emptyEl.classList.remove('d-none');
-        if (emptyIconEl) emptyIconEl.className = 'icon-base ti tabler-scroll fs-1 text-primary';
+        if (emptyIconEl) emptyIconEl.className = 'icon-base ti tabler-notes fs-1 text-primary';
         if (emptyTitleEl) emptyTitleEl.textContent = '{{ __("Chronicles of Valiant Shade") }}';
         if (emptyDescEl) emptyDescEl.textContent = '{{ __("No hero has stepped forward yet. Create your first character to begin recording quest deeds, milestones, and treasury records.") }}';
         if (emptyActionEl) {
@@ -3131,7 +3131,7 @@ document.addEventListener('DOMContentLoaded', function () {
           addCharacterActivity(char.id, {
             category: 'vault',
             point: 'warning',
-            icon: 'ti tabler-vault',
+            icon: 'ti tabler-building-bank',
             title: '{{ __("Deposited to Guild Vault") }}',
             desc: notes ? `"${notes}"` : '{{ __("Contribution to guild treasury reserves.") }}',
             amount: `-${amt} ${cur}`,

@@ -29,6 +29,7 @@ class InventoryItem extends BaseModel
         'total_price',
         'market_value',
         'buy_price',
+        'sell_price',
         'notes',
         'status',
     ];
@@ -58,6 +59,7 @@ class InventoryItem extends BaseModel
             'total_price' => 'decimal:2',
             'market_value' => 'decimal:2',
             'buy_price' => 'decimal:2',
+            'sell_price' => 'decimal:2',
         ];
     }
 
@@ -115,73 +117,73 @@ class InventoryItem extends BaseModel
     }
 
     /**
-     * All official 11 item types with their exact dot colors and badge styling from the reference.
+     * Shared dot and badge colors for all inventory categories.
      */
     public const TYPES = [
         'Weapon' => [
             'name' => 'Weapon',
-            'dot_color' => '#f8b4b4',
-            'badge_style' => 'background-color: rgba(234, 84, 85, 0.16); color: #ff6b72; border: 1px solid rgba(234, 84, 85, 0.28);',
+            'dot_color' => '#fb7185',
+            'badge_style' => 'background-color: rgba(251, 113, 133, 0.16); color: #fb7185; border: 1px solid rgba(251, 113, 133, 0.28);',
             'icon' => 'tabler-sword',
         ],
         'Potion' => [
             'name' => 'Potion',
-            'dot_color' => '#28c76f',
-            'badge_style' => 'background-color: rgba(40, 199, 111, 0.16); color: #28c76f; border: 1px solid rgba(40, 199, 111, 0.28);',
+            'dot_color' => '#34d399',
+            'badge_style' => 'background-color: rgba(52, 211, 153, 0.16); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.28);',
             'icon' => 'tabler-bottle',
         ],
         'Ring' => [
             'name' => 'Ring',
-            'dot_color' => '#00cfe8',
-            'badge_style' => 'background-color: rgba(0, 207, 232, 0.16); color: #00cfe8; border: 1px solid rgba(0, 207, 232, 0.28);',
+            'dot_color' => '#22d3ee',
+            'badge_style' => 'background-color: rgba(34, 211, 238, 0.16); color: #22d3ee; border: 1px solid rgba(34, 211, 238, 0.28);',
             'icon' => 'tabler-circle-dot',
         ],
         'Armor' => [
             'name' => 'Armor',
-            'dot_color' => '#7367f0',
-            'badge_style' => 'background-color: rgba(115, 103, 240, 0.16); color: #7367f0; border: 1px solid rgba(115, 103, 240, 0.28);',
+            'dot_color' => '#a78bfa',
+            'badge_style' => 'background-color: rgba(167, 139, 250, 0.16); color: #a78bfa; border: 1px solid rgba(167, 139, 250, 0.28);',
             'icon' => 'tabler-shield',
         ],
         'Misc' => [
             'name' => 'Misc',
-            'dot_color' => '#c084fc',
-            'badge_style' => 'background-color: rgba(168, 85, 247, 0.16); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.28);',
+            'dot_color' => '#d8b4fe',
+            'badge_style' => 'background-color: rgba(216, 180, 254, 0.16); color: #d8b4fe; border: 1px solid rgba(216, 180, 254, 0.28);',
             'icon' => 'tabler-cube',
         ],
         'Trade Goods' => [
             'name' => 'Trade Goods',
-            'dot_color' => '#ff9f43',
-            'badge_style' => 'background-color: rgba(255, 159, 67, 0.16); color: #ff9f43; border: 1px solid rgba(255, 159, 67, 0.28);',
+            'dot_color' => '#fbbf24',
+            'badge_style' => 'background-color: rgba(251, 191, 36, 0.16); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.28);',
             'icon' => 'tabler-coins',
         ],
         'Gear' => [
             'name' => 'Gear',
-            'dot_color' => '#38bdf8',
-            'badge_style' => 'background-color: rgba(56, 189, 248, 0.16); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.28);',
+            'dot_color' => '#60a5fa',
+            'badge_style' => 'background-color: rgba(96, 165, 250, 0.16); color: #60a5fa; border: 1px solid rgba(96, 165, 250, 0.28);',
             'icon' => 'tabler-sparkles',
         ],
         'Wand' => [
             'name' => 'Wand',
-            'dot_color' => '#ffe082',
-            'badge_style' => 'background-color: rgba(251, 191, 36, 0.16); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.28);',
+            'dot_color' => '#facc15',
+            'badge_style' => 'background-color: rgba(250, 204, 21, 0.16); color: #facc15; border: 1px solid rgba(250, 204, 21, 0.28);',
             'icon' => 'tabler-wand',
         ],
         'Scroll' => [
             'name' => 'Scroll',
-            'dot_color' => '#94a3b8',
-            'badge_style' => 'background-color: rgba(148, 163, 184, 0.16); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.28);',
+            'dot_color' => '#818cf8',
+            'badge_style' => 'background-color: rgba(129, 140, 248, 0.16); color: #818cf8; border: 1px solid rgba(129, 140, 248, 0.28);',
             'icon' => 'tabler-script',
         ],
         'Ammunition' => [
             'name' => 'Ammunition',
-            'dot_color' => '#cbd5e1',
-            'badge_style' => 'background-color: rgba(203, 213, 225, 0.16); color: #cbd5e1; border: 1px solid rgba(203, 213, 225, 0.28);',
+            'dot_color' => '#2dd4bf',
+            'badge_style' => 'background-color: rgba(45, 212, 191, 0.16); color: #2dd4bf; border: 1px solid rgba(45, 212, 191, 0.28);',
             'icon' => 'tabler-arrow-narrow-right',
         ],
         'Unknown' => [
             'name' => 'Unknown',
-            'dot_color' => '#f97316',
-            'badge_style' => 'background-color: rgba(249, 115, 22, 0.16); color: #f97316; border: 1px solid rgba(249, 115, 22, 0.28);',
+            'dot_color' => '#ef4444',
+            'badge_style' => 'background-color: rgba(239, 68, 68, 0.16); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.28);',
             'icon' => 'tabler-help',
         ],
     ];

@@ -22,7 +22,7 @@ class InventoryRepository implements InventoryRepositoryInterface
 
         $sortCol = $filters['sort_by'] ?? 'id';
         $sortDir = $filters['sort_dir'] ?? 'asc';
-        $allowedCols = ['id', 'name', 'quality', 'type', 'quantity', 'unit_price', 'total_price', 'market_value', 'buy_price'];
+        $allowedCols = ['id', 'name', 'quality', 'type', 'quantity', 'unit_price', 'total_price', 'market_value', 'buy_price', 'sell_price'];
 
         if (in_array($sortCol, $allowedCols, true)) {
             $query->orderBy($sortCol, strtolower($sortDir) === 'desc' ? 'desc' : 'asc');
@@ -54,6 +54,19 @@ class InventoryRepository implements InventoryRepositoryInterface
     {
         $item = InventoryItem::find($id);
         return $item ? (bool) $item->delete() : false;
+    }
+
+    public function deleteMany(array $ids): int
+    {
+        return InventoryItem::query()->whereIn('id', $ids)->delete();
+    }
+
+    public function findManyForUpdate(array $ids): Collection
+    {
+        return InventoryItem::query()
+            ->whereIn('id', $ids)
+            ->lockForUpdate()
+            ->get();
     }
 
     public function truncate(): void

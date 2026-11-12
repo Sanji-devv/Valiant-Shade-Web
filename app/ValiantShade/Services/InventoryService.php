@@ -8,6 +8,8 @@ use App\ValiantShade\Contracts\GuildVaultRepositoryInterface;
 use App\ValiantShade\Contracts\InventoryCalculationServiceInterface;
 use App\ValiantShade\Contracts\InventoryRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class InventoryService
 {
@@ -63,6 +65,7 @@ class InventoryService
             'total_price' => $calculated['total_price'],
             'market_value' => $calculated['market_value'],
             'buy_price' => $calculated['buy_price'],
+            'sell_price' => $calculated['sell_price'],
         ]);
 
         return $this->repository->create($payload);
@@ -74,7 +77,9 @@ class InventoryService
         $quantity = isset($data['quantity']) ? (int) $data['quantity'] : ($existing->quantity ?? 1);
         $unitPrice = isset($data['unit_price']) ? (float) $data['unit_price'] : ($existing->unit_price ?? 0);
         $type = isset($data['type']) ? (string) $data['type'] : ($existing->type ?? 'Misc');
-        $quality = isset($data['quality']) ? (string) $data['quality'] : ($existing->quality ?? null);
+        $quality = array_key_exists('quality', $data)
+            ? ($data['quality'] === null ? null : (string) $data['quality'])
+            : ($existing->quality ?? null);
 
         $calculated = $this->calculator->calculateItemPrices(
             $quantity,
@@ -90,6 +95,7 @@ class InventoryService
             'total_price' => $calculated['total_price'],
             'market_value' => $calculated['market_value'],
             'buy_price' => $calculated['buy_price'],
+            'sell_price' => $calculated['sell_price'],
         ]);
 
         return $this->repository->update($id, $payload);
@@ -98,6 +104,54 @@ class InventoryService
     public function deleteItem(int $id): bool
     {
         return $this->repository->delete($id);
+    }
+
+    public function createItems(array $items): Collection
+    {
+        return DB::transaction(function () use ($items) {
+            $created = new Collection();
+            foreach ($items as $item) {
+                $created->push($this->createItem($item));
+            }
+
+            return $created;
+        });
+    }
+
+    public function deleteItems(array $ids): int
+    {
+        return DB::transaction(fn () => $this->repository->deleteMany($ids));
+    }
+
+    public function sellItems(array $ids): array
+    {
+        return DB::transaction(function () use ($ids) {
+            $items = $this->repository->findManyForUpdate($ids);
+            if ($items->count() !== count(array_unique($ids))) {
+                throw ValidationException::withMessages([
+                    'ids' => 'One or more selected items are no longer available for sale.',
+                ]);
+            }
+
+            $proceedsGp = $items->sum(
+                fn (InventoryItem $item) => (float) $item->sell_price * (int) $item->quantity
+            );
+            $proceedsSp = round($proceedsGp * 10, 2);
+            $soldCount = $this->repository->deleteMany($items->modelKeys());
+            if ($soldCount !== $items->count()) {
+                throw ValidationException::withMessages([
+                    'ids' => 'One or more selected items are no longer available for sale.',
+                ]);
+            }
+
+            $vault = $this->adjustVaultBalance($proceedsSp);
+
+            return [
+                'sold_count' => $soldCount,
+                'proceeds_sp' => $proceedsSp,
+                'vault' => $vault,
+            ];
+        });
     }
 
     public function getMetrics(string $currency = 'SP'): array
@@ -134,7 +188,7 @@ class InventoryService
 
     public function ensureSampleDataSeeded(): void
     {
-        if ($this->repository->count() === 0) {
+        if ($this->repository->count() === 0 && ! InventoryItem::withTrashed()->exists()) {
             $this->resetToDefaults();
         }
     }

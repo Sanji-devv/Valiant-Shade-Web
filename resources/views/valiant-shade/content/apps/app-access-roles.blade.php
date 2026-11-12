@@ -485,7 +485,7 @@
                 <option value="ti tabler-shield-lock">🔒 Shield Lock (Oathkeeper Bailiff)</option>
                 <option value="ti tabler-shield-check">🛡️ Shield Check (Bailiff & Guard)</option>
                 <option value="ti tabler-package">📦 Package (Inventory Bailiff)</option>
-                <option value="ti tabler-scroll">📜 Scroll (Questmaster Bailiff)</option>
+                <option value="ti tabler-clipboard-list">📜 Scroll (Questmaster Bailiff)</option>
                 <option value="ti tabler-crown">👑 Crown (Administrator)</option>
                 <option value="ti tabler-wand">🪄 Wand (Game Master)</option>
                 <option value="ti tabler-swords">⚔️ Swords (Veteran Adventurer)</option>
@@ -622,7 +622,7 @@
                 <option value="ti tabler-shield-lock">🔒 Shield Lock (Oathkeeper Bailiff)</option>
                 <option value="ti tabler-shield-check">🛡️ Shield Check (Bailiff & Guard)</option>
                 <option value="ti tabler-package">📦 Package (Inventory Bailiff)</option>
-                <option value="ti tabler-scroll">📜 Scroll (Questmaster Bailiff)</option>
+                <option value="ti tabler-clipboard-list">📜 Scroll (Questmaster Bailiff)</option>
                 <option value="ti tabler-crown">👑 Crown (Administrator)</option>
                 <option value="ti tabler-wand">🪄 Wand (Game Master)</option>
                 <option value="ti tabler-swords">⚔️ Swords (Veteran Adventurer)</option>
@@ -882,7 +882,7 @@ document.addEventListener('DOMContentLoaded', function() {
           color: '#7b1fa2',
           priority: 60,
           desc: 'Supervises quest board notices, decrees, and expedition debriefs.',
-          icon: 'ti tabler-scroll',
+          icon: 'ti tabler-clipboard-list',
           perms: ['quests.all', 'guild.read']
         },
         bailiff_custom: {

@@ -5,34 +5,37 @@ namespace App\ValiantShade\Http\Controllers\dashboard;
 use App\ValiantShade\Http\Controllers\Controller;
 use App\ValiantShade\Http\Controllers\NewsController;
 use App\Models\InventoryItem;
-use App\Models\GuildVault;
+use App\ValiantShade\Services\InventoryService;
 use Illuminate\Http\Request;
 
 class Analytics extends Controller
 {
-  public function index()
+  public function index(InventoryService $inventoryService)
   {
     $news = NewsController::getActiveNews();
     $guildNews = $news;
 
-    // 1. Lonca envanterine giren son 30 gün parası ve eşyaları
-    $sub30 = now()->subDays(30);
-    $inventoryLast30Items = InventoryItem::where('created_at', '>=', $sub30)->get();
-    $inventoryLast30Count = $inventoryLast30Items->count();
-    $inventoryLast30Sp = (float) $inventoryLast30Items->sum('total_price');
-    $inventoryLast30MarketSp = (float) $inventoryLast30Items->sum('market_value');
-    $inventoryLast30Gp = $inventoryLast30Sp > 0 ? $inventoryLast30Sp / 10 : 0;
+    $currentInventoryMetrics = $inventoryService->getMetrics('SP');
+    $currentInventoryCount = $currentInventoryMetrics['total_quantity'];
+    $currentInventorySp = $currentInventoryMetrics['converted_grand_total_price'];
+    $currentInventoryGp = $currentInventoryMetrics['grand_total_price'];
+    $currentInventoryMarketGp = $currentInventoryMetrics['grand_total_market_value'];
 
-    // 2. Kasadaki Nakit Para (Ana Lonca Kasası)
-    $likeOp = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
-    $vault = GuildVault::where('name', $likeOp, '%Ana Lonca Kasası%')->first()
-      ?: GuildVault::orderBy('id', 'desc')->first();
-    if (!$vault) {
-      $vault = GuildVault::firstOrCreate(
-        ['name' => 'Ana Lonca Kasası'],
-        ['balance_sp' => 358989.50, 'notes' => 'Valiant Shade lonca ana kasası']
-      );
-    }
+    // 1. Inventory additions during the last 30 calendar days (stored prices are GP).
+    $chartStart = now()->startOfDay()->subDays(29);
+    $inventoryLast30Items = InventoryItem::withTrashed()
+      ->where('created_at', '>=', $chartStart)
+      ->get();
+    $inventoryLast30Count = $inventoryLast30Items->count();
+    $inventoryLast30Gp = (float) $inventoryLast30Items->sum('total_price');
+    $inventoryLast30Sp = round($inventoryLast30Gp * 10, 2);
+    $inventoryLast30MarketGp = (float) $inventoryLast30Items->sum('market_value');
+    $inventoryDailyTotalsGp = $inventoryLast30Items
+      ->groupBy(fn (InventoryItem $item) => $item->created_at->format('Y-m-d'))
+      ->map(fn ($items) => (float) $items->sum('total_price'));
+
+    // 2. Show the same canonical vault used by the inventory page.
+    $vault = $inventoryService->getVault();
     $vaultCashSp = (float) $vault->balance_sp;
     $vaultCashGp = $vaultCashSp / 10;
 
@@ -47,7 +50,7 @@ class Analytics extends Controller
     $vaultDailySp = [];
     $vaultDailyGp = [];
 
-    $runningCumulative = 0;
+    $runningCumulativeGp = 0;
     
     // Kasa için 30 günlük başlangıç tabanı: ~314,250 SP'den başlayıp mevcut 358,990 SP'ye dengeli ulaşır
     $vaultBase = 314250.0;
@@ -60,14 +63,14 @@ class Analytics extends Controller
       $chartDates[] = $dayDate->translatedFormat('d M');
       $chartDatesFull[] = $dateStr;
 
-      // Günlük Envanter Girişi (SP & GP)
-      $dayInflowSp = (float) InventoryItem::whereDate('created_at', $dateStr)->sum('total_price');
-      $runningCumulative += $dayInflowSp;
+      // Inventory prices are stored in GP; convert to SP for the chart.
+      $dayInflowGp = (float) $inventoryDailyTotalsGp->get($dateStr, 0);
+      $runningCumulativeGp += $dayInflowGp;
 
-      $inventoryDailySp[] = (int) round($dayInflowSp);
-      $inventoryCumulativeSp[] = (int) round($runningCumulative);
-      $inventoryDailyGp[] = (int) round($dayInflowSp / 10);
-      $inventoryCumulativeGp[] = (int) round($runningCumulative / 10);
+      $inventoryDailySp[] = (int) round($dayInflowGp * 10);
+      $inventoryCumulativeSp[] = (int) round($runningCumulativeGp * 10);
+      $inventoryDailyGp[] = (int) round($dayInflowGp);
+      $inventoryCumulativeGp[] = (int) round($runningCumulativeGp);
 
       // Günlük Kasa Rezervi (Nakit Akışı dalgalanmalarıyla birlikte gerçekçi seyir)
       $dayIndex = 29 - $i;
@@ -86,8 +89,12 @@ class Analytics extends Controller
       'guildNews',
       'inventoryLast30Count',
       'inventoryLast30Sp',
-      'inventoryLast30MarketSp',
+      'inventoryLast30MarketGp',
       'inventoryLast30Gp',
+      'currentInventoryCount',
+      'currentInventorySp',
+      'currentInventoryGp',
+      'currentInventoryMarketGp',
       'chartDates',
       'chartDatesFull',
       'inventoryDailySp',

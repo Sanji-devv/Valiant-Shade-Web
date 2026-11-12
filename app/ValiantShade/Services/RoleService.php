@@ -182,7 +182,7 @@ class RoleService
                 'name' => 'Questmaster Bailiff',
                 'description' => 'Supervises quest board notices, decrees, and expedition debriefs.',
                 'color' => '#7b1fa2',
-                'icon' => 'ti tabler-scroll',
+                'icon' => 'ti tabler-clipboard-list',
                 'priority' => 60,
                 'permissions' => ['quests.all', 'guild.read'],
                 'is_system' => true,

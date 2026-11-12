@@ -627,7 +627,7 @@
   <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
     <div class="d-inline-flex align-items-center p-1 rounded-3 bg-dark bg-opacity-75 border border-secondary border-opacity-25" id="questReportsMainTabs">
       <button type="button" class="tab-nav-switch active" id="tabNavQuests" data-tab-target="#tabViewQuests">
-        <i class="icon-base ti tabler-scroll fs-5"></i>
+        <i class="icon-base ti tabler-file-text fs-5"></i>
         <span>{{ __('Quest Reports (A..BG)') }}</span>
         <span class="badge bg-primary ms-1 font-monospace" id="navTabQuestCount">{{ count($reports) }}</span>
       </button>
@@ -664,7 +664,7 @@
       <div>
         <div class="d-flex align-items-center gap-2 mb-1">
           <div class="avatar avatar-sm bg-label-warning rounded-circle d-flex align-items-center justify-content-center">
-            <i class="icon-base ti tabler-scroll fs-4 text-warning"></i>
+            <i class="icon-base ti tabler-file-text fs-4 text-warning"></i>
           </div>
           <h3 class="mb-0 fw-bold text-heading" style="font-size: 1.45rem; letter-spacing: 0.3px;">
             {{ __('Quest Reports') }}
@@ -1741,7 +1741,7 @@
           <div class="col-12 col-lg-6">
             <div class="report-section-box mb-3">
               <h6 class="mb-3 fw-bold text-heading d-flex align-items-center gap-2">
-                <i class="icon-base ti tabler-scroll text-primary fs-5"></i>
+                <i class="icon-base ti tabler-file-text text-primary fs-5"></i>
                 <span>{{ __('Sefer Parametreleri & Bilgileri') }}</span>
               </h6>
 
@@ -2065,7 +2065,7 @@
           <div class="col-12 col-lg-6">
             <div class="report-section-box mb-3">
               <h6 class="mb-3 fw-bold text-heading d-flex align-items-center gap-2">
-                <i class="icon-base ti tabler-scroll text-warning fs-5"></i>
+                <i class="icon-base ti tabler-file-text text-warning fs-5"></i>
                 <span>{{ __('Sefer Bilgileri & Parametreleri') }}</span>
               </h6>
 

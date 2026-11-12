@@ -7,6 +7,7 @@ use App\ValiantShade\Services\InventoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class Inventory extends Controller
@@ -29,10 +30,10 @@ class Inventory extends Controller
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'This action requires Administrator privileges.',
+                    'message' => 'This action requires inventory management privileges.',
                 ], 403);
             }
-            abort(403, 'This action requires Administrator privileges.');
+            abort(403, 'This action requires inventory management privileges.');
         }
         return null;
     }
@@ -61,7 +62,11 @@ class Inventory extends Controller
         $metrics = $this->inventoryService->getMetrics($currency);
         $categories = $this->inventoryService->getCategories();
         $vault = $this->inventoryService->getVault();
-        $isAdmin = auth()->user()?->hasPermission('inventory.read') ?? false;
+        $user = auth()->user();
+        $canCreate = $user?->hasPermission('inventory.create') ?? false;
+        $canUpdate = $user?->hasPermission('inventory.update') ?? false;
+        $canDelete = $user?->hasPermission('inventory.delete') ?? false;
+        $canManageItems = $canCreate || $canUpdate || $canDelete;
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -71,7 +76,10 @@ class Inventory extends Controller
                 'vault' => $vault,
                 'currency' => $currency,
                 'currencies' => $currencies,
-                'isAdmin' => $isAdmin,
+                'isAdmin' => $canManageItems,
+                'canCreate' => $canCreate,
+                'canUpdate' => $canUpdate,
+                'canDelete' => $canDelete,
             ]);
         }
 
@@ -84,7 +92,10 @@ class Inventory extends Controller
             'currentCurrency' => $currency,
             'currentType' => $filters['type'] ?? 'all',
             'search' => $filters['search'] ?? '',
-            'isAdmin' => $isAdmin,
+            'isAdmin' => $canManageItems,
+            'canCreate' => $canCreate,
+            'canUpdate' => $canUpdate,
+            'canDelete' => $canDelete,
         ]);
     }
 
@@ -99,11 +110,14 @@ class Inventory extends Controller
 
         $validated = $request->validate([
             'operation' => ['required', 'string', 'in:set,deposit,withdraw'],
-            'amount_sp' => ['required', 'numeric', 'min:0'],
+            'amount' => ['required_without:amount_sp', 'numeric', 'min:0'],
+            'amount_sp' => ['required_without:amount', 'numeric', 'min:0'],
+            'currency' => ['nullable', 'string', 'in:SP,GP'],
             'notes' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $amountSp = (float) $validated['amount_sp'];
+        $amount = (float) ($validated['amount'] ?? $validated['amount_sp']);
+        $amountSp = $amount * (($validated['currency'] ?? 'SP') === 'GP' && isset($validated['amount']) ? 10 : 1);
         $operation = $validated['operation'];
         $notes = $validated['notes'] ?? null;
 
@@ -140,28 +154,106 @@ class Inventory extends Controller
             return $forbidden;
         }
 
+        $isMultiple = array_key_exists('items', $request->all());
+        $validated = $isMultiple
+            ? $request->validate([
+                'items' => ['required', 'array', 'min:1'],
+                'items.*.name' => ['required', 'string', 'max:255'],
+                'items.*.quality' => ['nullable', 'string', 'max:50'],
+                'items.*.type' => ['required', 'string', 'max:50'],
+                'items.*.quantity' => ['required', 'integer', 'min:1'],
+                'items.*.unit_price' => ['required', 'numeric', 'min:0'],
+                'items.*.notes' => ['nullable', 'string'],
+            ])
+            : $request->validate([
+                'name' => ['required', 'string', 'max:255'],
+                'quality' => ['nullable', 'string', 'max:50'],
+                'type' => ['required', 'string', 'max:50'],
+                'quantity' => ['required', 'integer', 'min:1'],
+                'unit_price' => ['required', 'numeric', 'min:0'],
+                'notes' => ['nullable', 'string'],
+            ]);
+
+        if ($isMultiple) {
+            $items = $this->inventoryService->createItems($validated['items']);
+            $itemCount = $items->count();
+            $createdItems = ['items' => $items];
+        } else {
+            $item = $this->inventoryService->createItem($validated);
+            $itemCount = 1;
+            $createdItems = ['item' => $item];
+        }
+
+        $message = $itemCount . ' item' . ($itemCount === 1 ? '' : 's') . ' added to inventory successfully.';
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(array_merge([
+                'success' => true,
+                'message' => $message,
+                'metrics' => $this->inventoryService->getMetrics('SP'),
+            ], $createdItems), 201);
+        }
+
+        return redirect()->route('valiant-shade.pages-inventory')->with('success', $message);
+    }
+
+    /**
+     * Delete multiple inventory items in one request (authorized users only).
+     */
+    public function destroyMany(Request $request): JsonResponse|RedirectResponse
+    {
+        if ($forbidden = $this->checkAdmin($request, 'delete')) {
+            return $forbidden;
+        }
+
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'quality' => ['nullable', 'string', 'max:50'],
-            'type' => ['required', 'string', 'max:50'],
-            'quantity' => ['required', 'integer', 'min:1'],
-            'unit_price' => ['required', 'numeric', 'min:0'],
-            'notes' => ['nullable', 'string'],
+            'ids' => ['required', 'array', 'min:1', 'max:1000'],
+            'ids.*' => ['required', 'integer', 'distinct', Rule::exists('inventory_items', 'id')->whereNull('deleted_at')],
         ]);
 
-        $item = $this->inventoryService->createItem($validated);
+        $deletedCount = $this->inventoryService->deleteItems($validated['ids']);
+        $message = $deletedCount . ' items deleted successfully.';
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Item added to inventory successfully.',
-                'item' => $item,
+                'message' => $message,
+                'deletedCount' => $deletedCount,
                 'metrics' => $this->inventoryService->getMetrics('SP'),
-            ], 201);
+            ]);
         }
 
-        return redirect()->route('valiant-shade.pages-inventory')
-            ->with('success', 'Item added to inventory successfully.');
+        return redirect()->route('valiant-shade.pages-inventory')->with('success', $message);
+    }
+
+    public function sellMany(Request $request): JsonResponse|RedirectResponse
+    {
+        if ($forbidden = $this->checkAdmin($request, 'delete')) {
+            return $forbidden;
+        }
+
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:1000'],
+            'ids.*' => ['required', 'integer', 'distinct', Rule::exists('inventory_items', 'id')->whereNull('deleted_at')],
+        ]);
+
+        $sale = $this->inventoryService->sellItems($validated['ids']);
+        $message = __('Sale completed: :amount SP added to the Guild Vault.', [
+            'amount' => number_format($sale['proceeds_sp'], 2, '.', ','),
+        ]);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'soldCount' => $sale['sold_count'],
+                'proceedsSp' => $sale['proceeds_sp'],
+                'vault' => $sale['vault'],
+                'metrics' => $this->inventoryService->getMetrics('SP'),
+            ]);
+        }
+
+        return redirect()->route('valiant-shade.pages-inventory')->with('success', $message);
     }
 
     /**

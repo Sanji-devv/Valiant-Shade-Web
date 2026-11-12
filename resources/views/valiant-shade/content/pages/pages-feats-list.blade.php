@@ -791,7 +791,7 @@
       <div class="char-dossier-card mb-4">
         <div class="char-dossier-header d-flex align-items-center justify-content-between flex-wrap gap-2">
           <div class="d-flex align-items-center gap-2">
-            <i class="icon-base ti tabler-scroll fs-3 text-primary"></i>
+            <i class="icon-base ti tabler-file-text fs-3 text-primary"></i>
             <h4 class="mb-0 fw-bold text-heading font-monospace" style="letter-spacing: 0.3px;">
               {{ $prof->character_name }} &mdash; Feats & Class Progression
             </h4>
