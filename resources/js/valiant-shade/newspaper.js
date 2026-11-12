@@ -891,14 +891,17 @@ function renderGazetteArticle(item, { lead = false } = {}) {
   const leadClass = lead ? ' vs-gazette-article--lead' : '';
   const openId = item.id != null ? escapeHtml(String(item.id)) : '';
 
+  const kickerRumuz = rumuz
+    ? ` <span class="vs-gazette-article__kicker-sep" aria-hidden="true">·</span> <span class="vs-gazette-article__kicker-rumuz" title="${authorTitle}">${rumuz}</span>`
+    : '';
+
   return `
     <article class="vs-gazette-article vs-gazette-article--open${leadClass}" data-open-id="${openId}">
       <div class="vs-gazette-article__rumuz" title="${authorTitle}">
         <span class="vs-gazette-rumuz" aria-label="Rumuz: ${authorTitle}">${rumuz}</span>
       </div>
       <div class="vs-gazette-article__main">
-        ${renderGazetteFigure(item)}
-        <p class="vs-gazette-article__kicker">${type}</p>
+        <p class="vs-gazette-article__kicker">${type}${kickerRumuz}</p>
         <h2 class="vs-gazette-article__title">
           <span class="vs-gazette-article__orn" aria-hidden="true">❧</span>
           <span class="vs-gazette-article__title-text">${title}</span>
@@ -906,6 +909,7 @@ function renderGazetteArticle(item, { lead = false } = {}) {
         </h2>
         ${deck ? `<p class="vs-gazette-article__deck">${deck}</p>` : ''}
         ${loc ? `<p class="vs-gazette-article__place">${loc}</p>` : ''}
+        ${renderGazetteFigure(item)}
         <div class="vs-gazette-article__body">${body}</div>
       </div>
     </article>

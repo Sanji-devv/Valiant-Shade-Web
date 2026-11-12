@@ -66,6 +66,12 @@
                 <h1><button type="button" class="vs-gazette-home-link" data-gazette-home aria-label="Kapak sayfasına dön">{{ $gazetteTitle }}</button></h1>
                 <p class="vs-newspaper-header__tagline">{{ $gazetteTagline }}</p>
             </div>
+            <div class="vs-newspaper-header__issue" id="gazetteHeaderIssue">
+                <label class="vs-gazette-archive-wrap" id="gazetteArchiveWrap" hidden>
+                    <span class="vs-gazette-archive-wrap__label">Sayı</span>
+                    <select class="vs-gazette-archive" id="gazetteArchiveSelect" aria-label="Gazete sayısı arşivi"></select>
+                </label>
+            </div>
         </div>
         <nav class="vs-newspaper-nav" aria-label="Gazete menüsü">
             <a href="{{ $mainSiteUrl }}" class="vs-newspaper-nav__item" aria-label="Ana Sayfa">
@@ -97,15 +103,17 @@
             </button>
             <button
                 type="button"
-                class="vs-newspaper-nav__item vs-newspaper-nav__item--hot vs-newspaper-nav__item--icon-only"
+                class="vs-newspaper-nav__item vs-newspaper-nav__item--hot"
                 id="openHotExtraModal"
-                aria-label="Flash haber gönder"
-                title="Flash haber gönder"
+                aria-label="Flaş haber gönder"
+                title="Flaş haber gönder"
             >
                 <svg class="vs-newspaper-nav__icon vs-newspaper-nav__icon--flame" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M12 22c4.5 0 8-3.25 8-7.5 0-2.65-1.6-4.9-3.85-6.15C15.4 6.9 13.35 3.5 12 2c-1.35 1.5-3.4 4.9-4.15 6.35C5.6 9.6 4 11.85 4 14.5 4 18.75 7.5 22 12 22z"/>
                     <path d="M12 22c-1.8 0-3.25-1.35-3.25-3.25S10.2 15.5 12 15.5s3.25 1.35 3.25 3.25S13.8 22 12 22z"/>
                 </svg>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">Flaş haber</span>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">Flaş</span>
             </button>
             <button type="button" class="vs-newspaper-nav__item vs-newspaper-nav__item--primary" id="openRumorModal" aria-label="Söylenti Gönder">
                 <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8z"/></svg>
@@ -136,12 +144,6 @@
                 <div class="vs-filter-strip">
                     <div class="vs-filter-panel" id="newsFilterPanel" hidden>
                         <div class="vs-filter-group" id="newsFilterGroup"></div>
-                    </div>
-                    <div class="vs-toolbar__gazette" id="gazetteToolbarExtras">
-                        <label class="vs-gazette-archive-wrap" id="gazetteArchiveWrap" hidden>
-                            <span class="vs-gazette-archive-wrap__label">Sayı</span>
-                            <select class="vs-gazette-archive" id="gazetteArchiveSelect" aria-label="Gazete sayısı arşivi"></select>
-                        </label>
                     </div>
                 </div>
             </div>
