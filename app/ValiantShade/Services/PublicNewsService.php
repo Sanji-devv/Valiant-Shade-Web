@@ -7,8 +7,10 @@ use App\ValiantShade\Http\Controllers\NewsController;
 use App\ValiantShade\Support\GazetteTypography;
 use App\ValiantShade\Support\NewsTypeResolver;
 use App\ValiantShade\Support\WorldCalendar;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class PublicNewsService
 {
@@ -190,30 +192,25 @@ class PublicNewsService
         $cacheKey = $this->cacheKey("list.{$locale}.p{$page}.s{$perPage}.t{$typeKey}.q{$searchKey}");
 
         return Cache::remember($cacheKey, $this->cacheTtl(), function () use ($page, $perPage, $newsType, $search) {
-            $items = $this->publishedSource();
-
+            $listQuery = $this->publishedQuery();
+            $this->applyPublicSearch($listQuery, $search);
             if ($newsType) {
-                $items = $items->filter(function ($item) use ($newsType) {
-                    $resolved = $item->news_type ?? NewsTypeResolver::fromCategory((string) ($item->category ?? ''));
-
-                    return $resolved === $newsType;
-                })->values();
+                $listQuery->where('news_type', $newsType);
             }
 
-            if ($search) {
-                $needle = mb_strtolower(trim($search));
-                $items = $items->filter(function ($item) use ($needle) {
-                    return str_contains(mb_strtolower($item->title ?? ''), $needle)
-                        || str_contains(mb_strtolower($item->description ?? ''), $needle)
-                        || str_contains(mb_strtolower($item->location_badge ?? ''), $needle)
-                        || str_contains(mb_strtolower($item->author ?? ''), $needle);
-                })->values();
-            }
-
-            $total = $items->count();
+            $total = (clone $listQuery)->count();
             $lastPage = max(1, (int) ceil($total / $perPage));
             $page = min(max(1, $page), $lastPage);
-            $slice = $items->slice(($page - 1) * $perPage, $perPage)->values();
+            $slice = (clone $listQuery)
+                ->orderByDesc('created_at')
+                ->orderByDesc('id')
+                ->offset(($page - 1) * $perPage)
+                ->limit($perPage)
+                ->get();
+
+            $countsQuery = $this->publishedQuery();
+            $this->applyPublicSearch($countsQuery, $search);
+            $countsCollection = $countsQuery->get();
 
             return [
                 'data' => $slice->map(fn ($item) => $this->transformItem($item))->values()->all(),
@@ -223,8 +220,60 @@ class PublicNewsService
                     'per_page' => $perPage,
                     'total' => $total,
                 ],
-                'type_counts' => $this->typeCounts($this->publishedSource()),
+                'type_counts' => $this->typeCounts($countsCollection),
             ];
+        });
+    }
+
+    protected function publishedQuery(): Builder
+    {
+        return News::query()
+            ->where('status', 'published')
+            ->where('is_active', true);
+    }
+
+    protected function likeOperator(): string
+    {
+        return DB::connection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+    }
+
+    protected function escapeLike(string $value): string
+    {
+        return addcslashes($value, '%_\\');
+    }
+
+    protected function applyPublicSearch(Builder $query, ?string $search): void
+    {
+        $term = trim((string) $search);
+        if ($term === '') {
+            return;
+        }
+
+        $op = $this->likeOperator();
+        $needle = '%'.$this->escapeLike($term).'%';
+        $textColumns = [
+            'title',
+            'description',
+            'full_story',
+            'testimony',
+            'location_badge',
+            'author',
+            'author_role',
+            'category',
+            'tag',
+        ];
+
+        $query->where(function (Builder $q) use ($op, $needle, $textColumns) {
+            foreach ($textColumns as $column) {
+                $q->orWhere($column, $op, $needle);
+            }
+
+            $driver = DB::connection()->getDriverName();
+            if ($driver === 'pgsql') {
+                $q->orWhereRaw('stats::text '.$op.' ?', [$needle]);
+            } else {
+                $q->orWhere('stats', $op, $needle);
+            }
         });
     }
 
@@ -241,35 +290,14 @@ class PublicNewsService
      */
     public function publishedForIssue(int $issueId, ?string $newsType = null, ?string $search = null): Collection
     {
-        $dbNews = News::query()
-            ->where('gazette_issue_id', $issueId)
-            ->where('status', 'published')
-            ->where('is_active', true)
-            ->orderByDesc('created_at')
-            ->orderByDesc('id')
-            ->get();
-
-        $items = $this->sortForGazetteIssue($dbNews);
-
+        $query = $this->publishedQuery()
+            ->where('gazette_issue_id', $issueId);
+        $this->applyPublicSearch($query, $search);
         if ($newsType) {
-            $items = $items->filter(function ($item) use ($newsType) {
-                $resolved = $item->news_type ?? NewsTypeResolver::fromCategory((string) ($item->category ?? ''));
-
-                return $resolved === $newsType;
-            })->values();
+            $query->where('news_type', $newsType);
         }
 
-        if ($search) {
-            $needle = mb_strtolower(trim($search));
-            $items = $items->filter(function ($item) use ($needle) {
-                return str_contains(mb_strtolower($item->title ?? ''), $needle)
-                    || str_contains(mb_strtolower($item->description ?? ''), $needle)
-                    || str_contains(mb_strtolower($item->location_badge ?? ''), $needle)
-                    || str_contains(mb_strtolower($item->author ?? ''), $needle);
-            })->values();
-        }
-
-        return $items;
+        return $this->sortForGazetteIssue($query->orderByDesc('created_at')->orderByDesc('id')->get());
     }
 
     protected function typeCounts(Collection $items): array

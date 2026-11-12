@@ -269,6 +269,62 @@ class PublicNewspaperTest extends TestCase
         $this->assertSame($pendingId, (int) \App\Models\News::query()->where('gazette_issue_id', $extra->id)->value('id'));
     }
 
+    public function test_public_search_matches_title_and_body_across_all_issues(): void
+    {
+        $weekly = \App\Models\GazetteIssue::query()->where('issue_kind', 'weekly')->orderByDesc('issue_number')->first();
+        $extra = \App\Models\GazetteIssue::create([
+            'issue_kind' => 'extra',
+            'parent_issue_id' => $weekly?->id,
+            'extra_sequence' => 9,
+            'issue_number' => $weekly?->issue_number ?? 2,
+            'label' => 'Sayı '.($weekly?->issue_number ?? 2).'.9',
+            'year' => $weekly?->year ?? 631,
+            'month' => $weekly?->month ?? 'Leos',
+            'weekday' => $weekly?->weekday ?? 'Dustar',
+            'day' => $weekly?->day ?? 11,
+            'published_on' => now()->toDateString(),
+            'is_current' => false,
+            'is_locked' => true,
+            'locked_at' => now(),
+        ]);
+
+        News::create([
+            'title' => 'Liman yangını haber başlığı uzun metin',
+            'category' => 'Yerel Haberler',
+            'news_type' => 'local_news',
+            'gazette_issue_id' => $weekly?->id,
+            'status' => 'published',
+            'description' => 'Özet metni.',
+            'full_story' => 'Caspian iskelesinde gecenin sessizliğini çığlıklar böldü.',
+            'image_url' => 'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg',
+            'is_active' => true,
+            'stats' => ['submission' => ['gazette_slot_kind' => 'corner', 'rumuz' => 'Gece Bekçisi']],
+        ]);
+
+        News::create([
+            'title' => 'Başka bir konu haber başlığı uzun',
+            'category' => 'Yerel Haberler',
+            'news_type' => 'local_news',
+            'gazette_issue_id' => $extra->id,
+            'status' => 'published',
+            'description' => 'Flaş: caspian limanında duman yükseldi ve ekipler yönlendi.',
+            'image_url' => 'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg',
+            'is_active' => true,
+            'stats' => ['submission' => ['gazette_slot_kind' => 'flash']],
+        ]);
+
+        $response = $this->getJson('/api/public/news/bootstrap?q=caspian&per_page=24');
+        $response->assertOk()->assertJsonPath('success', true);
+
+        $titles = collect($response->json('feed.data'))->pluck('title')->all();
+        $this->assertCount(2, $titles);
+
+        $emptyExtraBootstrap = $this->getJson('/api/public/news/bootstrap?gazette_layout=1&issue_id='.$extra->id.'&q=caspian');
+        $emptyExtraBootstrap->assertOk()
+            ->assertJsonPath('feed.meta.sheet_kind', 'search');
+        $this->assertCount(2, $emptyExtraBootstrap->json('feed.data') ?? []);
+    }
+
     public function test_cache_version_bumps_after_news_change(): void
     {
         Cache::put('public.news.cache_version', 3, now()->addHour());

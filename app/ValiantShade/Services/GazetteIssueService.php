@@ -249,8 +249,13 @@ class GazetteIssueService
         $issue = $this->findIssue($issueId) ?? $this->ensureDefaultIssue();
         $this->assignNewsToIssueWeeks();
 
+        $searchTerm = $search !== null ? trim($search) : '';
+        if ($searchTerm !== '') {
+            return $this->gazetteBootstrapGlobalSearch($sheet, $issue, $newsType, $searchTerm);
+        }
+
         if ($issue->isExtra()) {
-            return $this->gazetteBootstrapExtra($issue, $newsType, $search);
+            return $this->gazetteBootstrapExtra($issue, $newsType, null);
         }
 
         $allNews = $this->publicNews->publishedForIssue($issue->id, $newsType, $search);
@@ -1272,6 +1277,43 @@ class GazetteIssueService
         }
 
         $news->forceFill(['gazette_issue_id' => $issue->id])->saveQuietly();
+    }
+
+    /**
+     * Arama aktifken tüm sayılardaki yayınlı haberlerde LIKE ile tarar.
+     *
+     * @return array<string, mixed>
+     */
+    protected function gazetteBootstrapGlobalSearch(
+        int $page,
+        GazetteIssue $contextIssue,
+        ?string $newsType,
+        string $search,
+    ): array {
+        $perPage = min(24, max(6, (int) config('news.public_per_page', 9)));
+        $list = $this->publicNews->paginate($page, $perPage, $newsType, $search);
+
+        return [
+            'issue' => $this->transformIssue($contextIssue->loadCount([
+                'news as article_count' => fn ($q) => $q->where('status', 'published')->where('is_active', true),
+            ]), ! $contextIssue->isExtra()),
+            'archive' => $this->archiveList(),
+            'featured' => array_slice($list['data'], 0, 1),
+            'types' => collect(config('news.types', []))->map(fn ($cfg, $key) => [
+                'key' => $key,
+                'label' => $cfg['label'],
+                'badge_color' => $cfg['badge_color'],
+            ])->values()->all(),
+            'feed' => [
+                'data' => $list['data'],
+                'meta' => [
+                    ...$list['meta'],
+                    'sheet_kind' => 'search',
+                ],
+                'all_article_ids' => collect($list['data'])->pluck('id')->values()->all(),
+                'type_counts' => $list['type_counts'],
+            ],
+        ];
     }
 
     /**

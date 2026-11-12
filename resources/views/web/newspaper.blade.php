@@ -60,6 +60,7 @@
     data-gazette-submission-slots='@json(config("gazette.submission_slots", []))'
     data-gazette-corner-slots='@json(config("gazette.corner_slots", []))'
 >
+    <div class="vs-mobile-issue-dock" id="mobileIssueDock" hidden></div>
     <header class="vs-newspaper-header">
         <div class="vs-newspaper-header__mast">
             <div class="vs-newspaper-header__brand">
@@ -140,7 +141,7 @@
         </section>
 
         <section class="vs-toolbar" id="newsToolbar" aria-label="Haber filtreleri">
-            <div class="vs-toolbar__filters-row">
+            <div class="vs-toolbar__filters-row" id="toolbarFiltersRow">
                 <div class="vs-filter-strip">
                     <div class="vs-filter-panel" id="newsFilterPanel" hidden>
                         <div class="vs-filter-group" id="newsFilterGroup"></div>
