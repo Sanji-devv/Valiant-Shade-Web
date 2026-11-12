@@ -1226,7 +1226,7 @@ function updateFilterToggleLabel() {
   }
   const active = (state.filterTypes || []).find((t) => t.key === state.type);
   const short = active?.label ? active.label.split(' ')[0] : state.type;
-  els.toggleFiltersLabel.textContent = short;
+  els.toggleFiltersLabel.textContent = isMobileGazetteLayout() ? 'Filtre' : short;
 }
 
 function syncFilterPanelVisibility() {
@@ -1248,6 +1248,9 @@ function syncFilterPanelVisibility() {
   }
   const expanded = els.toggleFiltersBtn.getAttribute('aria-expanded') === 'true';
   els.filterPanel.hidden = !expanded;
+  if (els.newsToolbar) {
+    els.newsToolbar.classList.toggle('vs-toolbar--filters-open', !desktop && expanded);
+  }
 }
 
 function syncPageNavButtons(meta) {
@@ -1356,15 +1359,31 @@ async function bootstrapPendingArticle() {
 
 function renderPagination(meta) {
   state.lastFeedMeta = meta;
+  const pages = `${meta.current_page} / ${meta.last_page}`;
+  const pagesCompact = `${meta.current_page}/${meta.last_page}`;
   if (isGazetteLayout()) {
     const issue = state.currentIssue || {};
     const num = issue.display_issue_number || issue.issue_number || inWorldCalendar().issueNumber;
     const kind =
       meta.sheet_kind === 'extra' ? 'Sıcak haber' : meta.sheet_kind === 'cover' ? 'Kapak' : 'İç sayfa';
+    const kindShort =
+      meta.sheet_kind === 'extra' ? 'Sıcak' : meta.sheet_kind === 'cover' ? 'Kapak' : 'İç';
     const date = issue.date_short ? ` · ${issue.date_short}` : '';
-    els.pageSheet.textContent = gazetteScrub(`Sayı ${num}${date} · ${kind} · yaprak ${meta.current_page} / ${meta.last_page}`);
+    els.pageSheet.textContent = gazetteScrub(`Sayı ${num}${date} · ${kind} · yaprak ${pages}`);
+    if (els.pageSheetShort) {
+      els.pageSheetShort.textContent = gazetteScrub(`${num} · ${kindShort} ${pagesCompact}`);
+    }
   } else {
-    els.pageSheet.textContent = `Gazete Sayfası ${meta.current_page} / ${meta.last_page}`;
+    els.pageSheet.textContent = `Gazete Sayfası ${pages}`;
+    if (els.pageSheetShort) {
+      els.pageSheetShort.textContent = pagesCompact;
+    }
+  }
+  if (els.prevPage) {
+    els.prevPage.setAttribute('aria-label', isGazetteLayout() ? 'Önceki yaprak' : 'Önceki sayfa');
+  }
+  if (els.nextPage) {
+    els.nextPage.setAttribute('aria-label', isGazetteLayout() ? 'Sonraki yaprak' : 'Sonraki sayfa');
   }
   syncPageNavButtons(meta);
 }
@@ -1494,6 +1513,8 @@ function openCornerReader(slotKey) {
   }
   document.body.classList.add('vs-article-modal-open');
   els.detailModal.classList.add('is-open');
+  resetArticleModalDrag();
+  initArticleModalSwipe();
   state.openArticleId = null;
   syncBrowserUrl();
 }
@@ -1581,6 +1602,8 @@ async function openArticle(id, options = {}) {
   }
   document.body.classList.add('vs-article-modal-open');
   els.detailModal.classList.add('is-open');
+  resetArticleModalDrag();
+  initArticleModalSwipe();
   state.openArticleId = Number(id) || null;
   if (!options.skipUrlSync) {
     syncBrowserUrl({ articleId: id });
@@ -1589,6 +1612,7 @@ async function openArticle(id, options = {}) {
 
 function closeModal() {
   els.detailModal.classList.remove('is-open');
+  resetArticleModalDrag();
   if (els.detailModal) {
     els.detailModal.classList.remove('vs-modal-backdrop--gazette-read', 'vs-modal-backdrop--web-read');
   }
@@ -1631,6 +1655,137 @@ async function copyArticleShareLink(articleId) {
   } catch {
     showToast('Bağlantı kopyalanamadı; adres çubuğundaki URL’yi kullanın.');
   }
+}
+
+async function shareArticle(articleId) {
+  const id = articleId || state.openArticleId;
+  if (!id) {
+    return;
+  }
+  const url = buildShareUrl({ articleId: id }).href;
+  const title = (els.modalTitle?.textContent || '').trim();
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: title || 'Lağımdan Sesler',
+        text: title || undefined,
+        url,
+      });
+      return;
+    }
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      return;
+    }
+  }
+  await copyArticleShareLink(id);
+}
+
+async function downloadArticleModalPng() {
+  const panel = els.detailModalPanel;
+  if (!panel) {
+    showToast('PNG için haber yüklenemedi.');
+    return;
+  }
+  if (els.modalPng) {
+    els.modalPng.disabled = true;
+    els.modalPng.setAttribute('aria-busy', 'true');
+  }
+  try {
+    await document.fonts.ready;
+    const canvas = await html2canvas(panel, {
+      backgroundColor: null,
+      scale: Math.min(2, window.devicePixelRatio || 1.5),
+      useCORS: true,
+    });
+    const blob = await new Promise((resolve, reject) => {
+      canvas.toBlob((result) => (result ? resolve(result) : reject(new Error('PNG oluşturulamadı'))), 'image/png');
+    });
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const safeTitle = (els.modalTitle?.textContent || 'haber').replace(/\s+/g, '-').slice(0, 48);
+    link.href = objectUrl;
+    link.download = `lagimdan-sesler-${safeTitle}.png`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  } catch (error) {
+    console.error(error);
+    showToast('PNG indirilemedi.');
+  } finally {
+    if (els.modalPng) {
+      els.modalPng.disabled = false;
+      els.modalPng.removeAttribute('aria-busy');
+    }
+  }
+}
+
+function printArticleModal() {
+  document.body.classList.add('vs-printing-article');
+  const cleanup = () => document.body.classList.remove('vs-printing-article');
+  window.addEventListener('afterprint', cleanup, { once: true });
+  window.print();
+}
+
+function resetArticleModalDrag() {
+  if (els.detailModal) {
+    els.detailModal.classList.remove('vs-modal-backdrop--dragging');
+  }
+  if (els.detailModalPanel) {
+    els.detailModalPanel.style.removeProperty('--vs-modal-drag-y');
+    els.detailModalPanel.style.transform = '';
+  }
+}
+
+function initArticleModalSwipe() {
+  const panel = els.detailModalPanel;
+  const backdrop = els.detailModal;
+  const scrollRoot = panel?.querySelector('.vs-modal__body--article');
+  if (!panel || !backdrop || panel.dataset.swipeInit === '1') {
+    return;
+  }
+  panel.dataset.swipeInit = '1';
+  let startY = 0;
+  let dragging = false;
+
+  const onStart = (event) => {
+    if (!isMobileGazetteLayout() || !backdrop.classList.contains('is-open')) {
+      return;
+    }
+    if (scrollRoot && scrollRoot.scrollTop > 6) {
+      return;
+    }
+    startY = event.touches[0].clientY;
+    dragging = true;
+    backdrop.classList.add('vs-modal-backdrop--dragging');
+  };
+
+  const onMove = (event) => {
+    if (!dragging) {
+      return;
+    }
+    const dy = Math.max(0, event.touches[0].clientY - startY);
+    panel.style.setProperty('--vs-modal-drag-y', `${dy}px`);
+    panel.style.transform = `translateY(${dy}px)`;
+  };
+
+  const onEnd = (event) => {
+    if (!dragging) {
+      return;
+    }
+    dragging = false;
+    backdrop.classList.remove('vs-modal-backdrop--dragging');
+    const dy = Math.max(0, (event.changedTouches?.[0]?.clientY || startY) - startY);
+    if (dy > 110) {
+      closeModal();
+    } else {
+      resetArticleModalDrag();
+    }
+  };
+
+  panel.addEventListener('touchstart', onStart, { passive: true });
+  panel.addEventListener('touchmove', onMove, { passive: true });
+  panel.addEventListener('touchend', onEnd, { passive: true });
+  panel.addEventListener('touchcancel', onEnd, { passive: true });
 }
 
 async function submitHotExtra(formData) {
@@ -2204,6 +2359,7 @@ function bindEvents() {
     if (window.matchMedia('(max-width: 767px)').matches && els.filterPanel && els.toggleFiltersBtn) {
       els.filterPanel.hidden = true;
       els.toggleFiltersBtn.setAttribute('aria-expanded', 'false');
+      els.newsToolbar?.classList.remove('vs-toolbar--filters-open');
     }
     loadFeed().catch(console.error);
   });
@@ -2211,8 +2367,12 @@ function bindEvents() {
   if (els.toggleFiltersBtn && els.filterPanel) {
     els.toggleFiltersBtn.addEventListener('click', () => {
       const expanded = els.toggleFiltersBtn.getAttribute('aria-expanded') === 'true';
-      els.toggleFiltersBtn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
-      els.filterPanel.hidden = expanded;
+      const next = !expanded;
+      els.toggleFiltersBtn.setAttribute('aria-expanded', next ? 'true' : 'false');
+      els.filterPanel.hidden = !next;
+      if (isMobileGazetteLayout()) {
+        els.newsToolbar?.classList.toggle('vs-toolbar--filters-open', next);
+      }
     });
   }
 
@@ -2427,7 +2587,15 @@ function bindEvents() {
   els.modalClose.addEventListener('click', closeModal);
   if (els.modalShare) {
     els.modalShare.addEventListener('click', () => {
-      copyArticleShareLink(state.openArticleId).catch(console.error);
+      shareArticle(state.openArticleId).catch(console.error);
+    });
+  }
+  if (els.modalPdf) {
+    els.modalPdf.addEventListener('click', printArticleModal);
+  }
+  if (els.modalPng) {
+    els.modalPng.addEventListener('click', () => {
+      downloadArticleModalPng().catch(console.error);
     });
   }
   els.detailModal.addEventListener('click', (event) => {
@@ -2593,6 +2761,7 @@ document.addEventListener('DOMContentLoaded', () => {
   els.nextSlide = qs('newsSliderNext');
   els.filterGroup = qs('newsFilterGroup');
   els.filterPanel = qs('newsFilterPanel');
+  els.newsToolbar = qs('newsToolbar');
   els.toggleFiltersBtn = qs('toggleFiltersBtn');
   els.toggleFiltersLabel = qs('toggleFiltersLabel');
   els.toggleViewModeBtn = qs('toggleViewModeBtn');
@@ -2602,6 +2771,7 @@ document.addEventListener('DOMContentLoaded', () => {
   els.prevPage = qs('newsPrevPage');
   els.nextPage = qs('newsNextPage');
   els.pageSheet = qs('newsPageSheet');
+  els.pageSheetShort = qs('newsPageSheetShort');
   els.detailModal = qs('newsDetailModal');
   els.detailModalPanel = qs('newsDetailModalPanel');
   els.modalHero = qs('newsModalHero');
@@ -2616,6 +2786,8 @@ document.addEventListener('DOMContentLoaded', () => {
   els.modalQuote = qs('newsModalQuote');
   els.modalClose = qs('newsModalClose');
   els.modalShare = qs('newsModalShare');
+  els.modalPdf = qs('newsModalPdf');
+  els.modalPng = qs('newsModalPng');
   els.openHotExtraBtn = qs('openHotExtraModal');
   els.hotExtraModal = qs('hotExtraModal');
   els.hotExtraClose = qs('hotExtraModalClose');

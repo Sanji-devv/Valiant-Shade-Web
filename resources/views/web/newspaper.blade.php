@@ -61,9 +61,11 @@
     data-gazette-corner-slots='@json(config("gazette.corner_slots", []))'
 >
     <header class="vs-newspaper-header">
-        <div class="vs-newspaper-header__brand">
-            <h1><button type="button" class="vs-gazette-home-link" data-gazette-home aria-label="Kapak sayfasına dön">{{ $gazetteTitle }}</button></h1>
-            <p class="vs-newspaper-header__tagline">{{ $gazetteTagline }}</p>
+        <div class="vs-newspaper-header__mast">
+            <div class="vs-newspaper-header__brand">
+                <h1><button type="button" class="vs-gazette-home-link" data-gazette-home aria-label="Kapak sayfasına dön">{{ $gazetteTitle }}</button></h1>
+                <p class="vs-newspaper-header__tagline">{{ $gazetteTagline }}</p>
+            </div>
         </div>
         <nav class="vs-newspaper-nav" aria-label="Gazete menüsü">
             <a href="{{ $mainSiteUrl }}" class="vs-newspaper-nav__item" aria-label="Ana Sayfa">
@@ -129,36 +131,36 @@
             </div>
         </section>
 
-        <section class="vs-toolbar" aria-label="Haber filtreleri">
-            <div class="vs-toolbar__bar">
-                <div class="vs-toolbar__actions">
-                    <button type="button" class="vs-toolbar__btn" id="toggleFiltersBtn" aria-expanded="false" aria-controls="newsFilterPanel">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
-                        <span id="toggleFiltersLabel">Filtreler</span>
-                    </button>
-                    <button type="button" class="vs-toolbar__btn" id="toggleViewModeBtn" aria-pressed="false" title="Liste görünümü">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
-                        <span id="toggleViewModeLabel">Liste</span>
-                    </button>
-                </div>
-                <input type="search" class="vs-search vs-toolbar__search" id="newsSearchInput" placeholder="Haber, söylenti veya kahraman ara…" aria-label="Haber ara">
-                <div class="vs-toolbar__gazette" id="gazetteToolbarExtras">
-                    <label class="vs-gazette-archive-wrap" id="gazetteArchiveWrap" hidden>
-                        <span class="vs-gazette-archive-wrap__label">Sayı</span>
-                        <select class="vs-gazette-archive" id="gazetteArchiveSelect" aria-label="Gazete sayısı arşivi"></select>
-                    </label>
-                </div>
-            </div>
+        <section class="vs-toolbar" id="newsToolbar" aria-label="Haber filtreleri">
             <div class="vs-toolbar__filters-row">
                 <div class="vs-filter-strip">
                     <div class="vs-filter-panel" id="newsFilterPanel" hidden>
                         <div class="vs-filter-group" id="newsFilterGroup"></div>
                     </div>
-                    <button type="button" class="vs-layout-toggle vs-layout-toggle--icon" id="toggleGazetteLayoutBtn" aria-pressed="false" title="Basılı gazete sayfası. Sayfa sayfa gezin." aria-label="Gazete görünümü">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M8 4v16M16 4v16M4 8h16M4 16h16"/></svg>
-                        <span id="toggleGazetteLayoutLabel" hidden>Gazete görünümü</span>
+                    <div class="vs-toolbar__gazette" id="gazetteToolbarExtras">
+                        <label class="vs-gazette-archive-wrap" id="gazetteArchiveWrap" hidden>
+                            <span class="vs-gazette-archive-wrap__label">Sayı</span>
+                            <select class="vs-gazette-archive" id="gazetteArchiveSelect" aria-label="Gazete sayısı arşivi"></select>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="vs-toolbar__bar">
+                <div class="vs-toolbar__actions">
+                    <button type="button" class="vs-toolbar__btn vs-toolbar__btn--filters" id="toggleFiltersBtn" aria-expanded="false" aria-controls="newsFilterPanel">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+                        <span id="toggleFiltersLabel">Filtreler</span>
+                    </button>
+                    <button type="button" class="vs-toolbar__btn vs-toolbar__btn--view" id="toggleViewModeBtn" aria-pressed="false" title="Liste görünümü">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+                        <span id="toggleViewModeLabel">Liste</span>
                     </button>
                 </div>
+                <input type="search" class="vs-search vs-toolbar__search" id="newsSearchInput" placeholder="Haber, söylenti veya kahraman ara…" aria-label="Haber ara" enterkeyhint="search">
+                <button type="button" class="vs-layout-toggle vs-layout-toggle--icon vs-toolbar__layout-toggle" id="toggleGazetteLayoutBtn" aria-pressed="false" title="Basılı gazete sayfası. Sayfa sayfa gezin." aria-label="Gazete görünümü">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M8 4v16M16 4v16M4 8h16M4 16h16"/></svg>
+                    <span id="toggleGazetteLayoutLabel" hidden>Gazete görünümü</span>
+                </button>
             </div>
         </section>
 
@@ -177,13 +179,14 @@
         </div>
 
         <nav class="vs-pagination" id="newsPagination" aria-label="Gazete sayfaları">
-            <button type="button" class="vs-page-nav-btn" id="newsPrevPage">
+            <button type="button" class="vs-page-nav-btn" id="newsPrevPage" aria-label="Önceki sayfa">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
-                <span id="newsPrevPageLabel">Önceki Sayfa</span>
+                <span class="vs-page-nav-btn__label vs-page-nav-btn__label--full" id="newsPrevPageLabel">Önceki Sayfa</span>
             </button>
-            <span class="vs-page-sheet" id="newsPageSheet">Gazete Sayfası 1 / 1</span>
-            <button type="button" class="vs-page-nav-btn" id="newsNextPage">
-                <span id="newsNextPageLabel">Sonraki Sayfa</span>
+            <span class="vs-page-sheet vs-page-sheet--full" id="newsPageSheet">Gazete Sayfası 1 / 1</span>
+            <span class="vs-page-sheet vs-page-sheet--short" id="newsPageSheetShort" aria-hidden="true">1 / 1</span>
+            <button type="button" class="vs-page-nav-btn" id="newsNextPage" aria-label="Sonraki sayfa">
+                <span class="vs-page-nav-btn__label vs-page-nav-btn__label--full" id="newsNextPageLabel">Sonraki Sayfa</span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
             </button>
         </nav>
@@ -192,8 +195,19 @@
 
     <div class="vs-modal-backdrop vs-modal-backdrop--article" id="newsDetailModal" role="dialog" aria-modal="true" aria-labelledby="newsModalTitle">
         <article class="vs-modal vs-modal--article" id="newsDetailModalPanel">
+            <div class="vs-modal__grabber" aria-hidden="true"></div>
             <div class="vs-modal__chrome">
-                <button type="button" class="vs-modal__share" id="newsModalShare" title="Bu haberin bağlantısını kopyala">Bağlantıyı kopyala</button>
+                <div class="vs-modal__chrome-actions" role="group" aria-label="Haber işlemleri">
+                    <button type="button" class="vs-modal__chrome-btn" id="newsModalPdf" aria-label="PDF indir" title="PDF indir">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+                    </button>
+                    <button type="button" class="vs-modal__chrome-btn" id="newsModalPng" aria-label="PNG indir" title="PNG indir">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+                    </button>
+                    <button type="button" class="vs-modal__chrome-btn" id="newsModalShare" aria-label="Paylaş" title="Paylaş">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>
+                    </button>
+                </div>
                 <button type="button" class="vs-modal__close" id="newsModalClose" aria-label="Kapat">×</button>
             </div>
             <div class="vs-modal__hero" id="newsModalHero">
