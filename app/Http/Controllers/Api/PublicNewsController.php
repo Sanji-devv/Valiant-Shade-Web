@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\News;
 use App\ValiantShade\Support\GazetteEditorGate;
 use App\ValiantShade\Support\GazetteNewsImage;
+use App\ValiantShade\Support\GazetteSubmissionImageStore;
 use App\ValiantShade\Services\GazetteIssueService;
 use App\ValiantShade\Services\PublicNewsService;
 use App\ValiantShade\Support\WorldCalendar;
@@ -118,6 +119,8 @@ class PublicNewsController extends Controller
             'gazette_slot_key' => 'nullable|string|max:64',
             'gazette_slot_label' => 'nullable|string|max:150',
             'gazette_issue_id' => 'nullable|integer|exists:gazette_issues,id',
+            'image_preset' => 'nullable|string|max:255',
+            'custom_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
         if ($validator->fails()) {
@@ -151,7 +154,7 @@ class PublicNewsController extends Controller
         $slotKind = $data['gazette_slot_kind'] ?? null;
         $rumuz = isset($data['rumuz']) ? trim((string) $data['rumuz']) : '';
 
-        $anonymous = ! empty($data['anonymous']);
+        $anonymous = $request->boolean('anonymous');
         $author = $anonymous ? 'Anonim Gözcü' : ($data['author'] ?? 'Sokak Muhabiri');
         if ($slotKind === 'corner' && ! $anonymous && $rumuz !== '') {
             $author = trim((string) ($data['author'] ?? '')) !== '' ? trim((string) $data['author']) : $rumuz;
@@ -186,6 +189,33 @@ class PublicNewsController extends Controller
             'submission' => $submission,
         ];
 
+        $useAutoImage = ! $request->hasFile('custom_image')
+            && (empty($data['image_preset']) || $data['image_preset'] === '__gazette_auto__');
+        $imagePrefix = match ($slotKind) {
+            'lead' => 'lead',
+            'corner' => 'corner',
+            default => 'rumor',
+        };
+
+        try {
+            GazetteSubmissionImageStore::ensureDirectoryExists();
+            $imageUrl = GazetteSubmissionImageStore::resolveUploadedOrPreset(
+                $request->file('custom_image'),
+                $data['image_preset'] ?? null,
+                'static/valiant-shade/assets/img/news/guild_tavern_whispers.jpg',
+                $imagePrefix,
+            );
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'message' => $e instanceof \RuntimeException
+                    ? $e->getMessage()
+                    : 'Görsel yüklenemedi.',
+            ], 500);
+        }
+
         $news = News::create([
             'title' => $data['title'],
             'category' => $typeConfig['label'],
@@ -197,7 +227,7 @@ class PublicNewsController extends Controller
             'tag_icon' => 'icon-base ti tabler-message-2-share',
             'date_text' => WorldCalendar::formatNewsStamp(now()) ?? now()->locale(app()->getLocale())->translatedFormat('d M Y, H:i'),
             'description' => $data['description'],
-            'image_url' => 'static/valiant-shade/assets/img/news/guild_tavern_whispers.jpg',
+            'image_url' => $imageUrl,
             'location_badge' => $data['location_badge'] ?? null,
             'author' => $author,
             'author_role' => $authorRole,
@@ -207,8 +237,10 @@ class PublicNewsController extends Controller
             'order' => (int) News::max('order') + 1,
         ]);
 
-        GazetteNewsImage::assignFromContent($news);
-        $news->saveQuietly();
+        if ($useAutoImage) {
+            GazetteNewsImage::assignFromContent($news);
+            $news->saveQuietly();
+        }
 
         return response()->json([
             'success' => true,
@@ -240,21 +272,29 @@ class PublicNewsController extends Controller
 
         $data = $validator->validated();
         $typeConfig = config('news.types.'.$data['news_type']);
-        $anonymous = ! empty($data['anonymous']);
+        $anonymous = $request->boolean('anonymous');
         $author = $anonymous ? 'Anonim Muhabir' : ($data['author'] ?? 'Sokak Muhabiri');
 
-        $imageUrl = 'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg';
-        if ($request->hasFile('custom_image')) {
-            $file = $request->file('custom_image');
-            $filename = 'flash_'.time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
-            $destination = public_path('static/valiant-shade/assets/img/news');
-            if (! file_exists($destination)) {
-                mkdir($destination, 0755, true);
-            }
-            $file->move($destination, $filename);
-            $imageUrl = 'static/valiant-shade/assets/img/news/'.$filename;
-        } elseif (! empty($data['image_preset']) && $data['image_preset'] !== '__gazette_auto__') {
-            $imageUrl = ltrim((string) $data['image_preset'], '/');
+        $useAutoImage = ! $request->hasFile('custom_image')
+            && (empty($data['image_preset']) || $data['image_preset'] === '__gazette_auto__');
+
+        try {
+            GazetteSubmissionImageStore::ensureDirectoryExists();
+            $imageUrl = GazetteSubmissionImageStore::resolveUploadedOrPreset(
+                $request->file('custom_image'),
+                $data['image_preset'] ?? null,
+                'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg',
+                'flash',
+            );
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'message' => $e instanceof \RuntimeException
+                    ? $e->getMessage()
+                    : 'Görsel yüklenemedi.',
+            ], 500);
         }
 
         $submission = ['gazette_slot_kind' => 'flash'];
@@ -282,8 +322,7 @@ class PublicNewsController extends Controller
             'order' => (int) News::max('order') + 1,
         ]);
 
-        if (! $request->hasFile('custom_image')
-            && (empty($data['image_preset']) || $data['image_preset'] === '__gazette_auto__')) {
+        if ($useAutoImage) {
             GazetteNewsImage::assignFromContent($news);
             $news->saveQuietly();
         }
@@ -325,17 +364,25 @@ class PublicNewsController extends Controller
         $data = $validator->validated();
         $imageUrl = null;
 
-        if ($request->hasFile('custom_image')) {
-            $file = $request->file('custom_image');
-            $filename = 'hot_'.time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
-            $destination = public_path('static/valiant-shade/assets/img/news');
-            if (! file_exists($destination)) {
-                mkdir($destination, 0755, true);
+        try {
+            GazetteSubmissionImageStore::ensureDirectoryExists();
+            if ($request->hasFile('custom_image') || ! empty($data['image_preset'])) {
+                $imageUrl = GazetteSubmissionImageStore::resolveUploadedOrPreset(
+                    $request->file('custom_image'),
+                    $data['image_preset'] ?? null,
+                    'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg',
+                    'hot',
+                );
             }
-            $file->move($destination, $filename);
-            $imageUrl = 'static/valiant-shade/assets/img/news/'.$filename;
-        } elseif (! empty($data['image_preset']) && $data['image_preset'] !== '__gazette_auto__') {
-            $imageUrl = ltrim((string) $data['image_preset'], '/');
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'message' => $e instanceof \RuntimeException
+                    ? $e->getMessage()
+                    : 'Görsel yüklenemedi.',
+            ], 500);
         }
 
         try {

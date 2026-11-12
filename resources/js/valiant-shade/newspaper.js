@@ -1,6 +1,13 @@
-import html2canvas from 'html2canvas';
-
 const WEB_ITEMS_PER_PAGE = 9;
+
+let html2canvasModulePromise;
+
+async function loadHtml2Canvas() {
+  if (!html2canvasModulePromise) {
+    html2canvasModulePromise = import('html2canvas').then((mod) => mod.default || mod);
+  }
+  return html2canvasModulePromise;
+}
 const GAZETTE_SUMMARY_SLOTS = 5;
 
 const state = {
@@ -1097,6 +1104,7 @@ async function downloadGazettePagePng() {
       });
     }));
 
+    const html2canvas = await loadHtml2Canvas();
     const canvas = await html2canvas(sheet, {
       backgroundColor: null,
       scale: 2,
@@ -1790,6 +1798,7 @@ async function downloadArticleModalPng() {
   }
   try {
     await document.fonts.ready;
+    const html2canvas = await loadHtml2Canvas();
     const canvas = await html2canvas(panel, {
       backgroundColor: null,
       scale: Math.min(2, window.devicePixelRatio || 1.5),
@@ -1991,7 +2000,8 @@ async function submitHotExtra(formData) {
   });
   const payload = await response.json();
   if (!response.ok || !payload.success) {
-    throw new Error(payload.message || 'Ek sayı basılamadı.');
+    const detail = payload.errors ? Object.values(payload.errors).flat().join(' ') : '';
+    throw new Error([payload.message, detail].filter(Boolean).join(' ') || 'Ek sayı basılamadı.');
   }
   return payload;
 }
@@ -2093,15 +2103,15 @@ async function submitRumor(formData) {
   const response = await fetch('/api/public/news/submissions', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
       Accept: 'application/json',
       'X-CSRF-TOKEN': token || '',
     },
-    body: JSON.stringify(formData),
+    body: formData,
   });
   const payload = await response.json();
   if (!response.ok || !payload.success) {
-    throw new Error(payload.message || 'Gönderim başarısız.');
+    const detail = payload.errors ? Object.values(payload.errors).flat().join(' ') : '';
+    throw new Error([payload.message, detail].filter(Boolean).join(' ') || 'Gönderim başarısız.');
   }
   return payload;
 }
@@ -2844,6 +2854,17 @@ function bindEvents() {
     els.flashCustomImageInput.addEventListener('change', updateFlashImagePreview);
   }
 
+  if (els.rumorImagePreset && els.rumorCustomImageInput) {
+    els.rumorImagePreset.addEventListener('change', () => {
+      els.rumorCustomImageInput.value = '';
+    });
+    els.rumorCustomImageInput.addEventListener('change', () => {
+      if (els.rumorCustomImageInput.files?.length) {
+        els.rumorImagePreset.value = '__gazette_auto__';
+      }
+    });
+  }
+
   if (els.hotExtraForm) {
     els.hotExtraForm.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -2852,6 +2873,11 @@ function bindEvents() {
       }
       try {
         const formData = new FormData(els.hotExtraForm);
+        if (els.flashAnonymousInput?.checked) {
+          formData.set('anonymous', '1');
+        } else {
+          formData.delete('anonymous');
+        }
         const payload = await submitHotExtra(formData);
         closeHotExtraModal();
         showToast(payload.message || 'Flash haber editöre gönderildi.');
@@ -2935,22 +2961,13 @@ function bindEvents() {
     event.preventDefault();
     els.rumorSubmit.disabled = true;
     try {
-      const form = new FormData(els.rumorForm);
-      const slotKind = form.get('gazette_slot_kind') || null;
-      const rumuz = (form.get('rumuz') || '').toString().trim() || null;
-      const payload = await submitRumor({
-        title: form.get('title'),
-        news_type: form.get('news_type'),
-        description: form.get('description'),
-        location_badge: form.get('location_badge') || null,
-        author: form.get('author') || null,
-        anonymous: form.get('anonymous') === 'on',
-        gazette_slot_kind: slotKind || null,
-        gazette_slot_key: form.get('gazette_slot_key') || null,
-        gazette_slot_label: form.get('gazette_slot_label') || null,
-        gazette_issue_id: form.get('gazette_issue_id') ? Number(form.get('gazette_issue_id')) : null,
-        rumuz,
-      });
+      const formData = new FormData(els.rumorForm);
+      if (els.rumorAnonymousInput?.checked) {
+        formData.set('anonymous', '1');
+      } else {
+        formData.delete('anonymous');
+      }
+      const payload = await submitRumor(formData);
       closeRumorModal();
       showToast(payload.message);
     } catch (error) {
@@ -3030,6 +3047,8 @@ document.addEventListener('DOMContentLoaded', () => {
   els.rumorTitleInput = qs('rumorTitleInput');
   els.rumorBodyLabel = qs('rumorBodyLabel');
   els.rumorBodyInput = qs('rumorBodyInput');
+  els.rumorImagePreset = qs('rumorImagePreset');
+  els.rumorCustomImageInput = qs('rumorCustomImageInput');
   els.rumorRumuzWrap = qs('rumorRumuzWrap');
   els.rumorMetaGrid = qs('rumorMetaGrid');
   els.rumorRumuzInput = qs('rumorRumuzInput');

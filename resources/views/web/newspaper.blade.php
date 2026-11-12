@@ -268,7 +268,7 @@
                         <div class="vs-rumor-corner-pick__grid" id="rumorCornerPickerGrid"></div>
                     </div>
                 </div>
-                <form id="rumorForm" class="vs-form-grid vs-form-grid--rumor">
+                <form id="rumorForm" class="vs-form-grid vs-form-grid--rumor" enctype="multipart/form-data">
                     <input type="hidden" name="gazette_slot_kind" id="rumorGazetteSlotKind" value="">
                     <input type="hidden" name="gazette_slot_key" id="rumorGazetteSlotKey" value="">
                     <input type="hidden" name="gazette_slot_label" id="rumorGazetteSlotLabelHidden" value="">
@@ -305,6 +305,19 @@
                     <label class="vs-rumor-form__span">
                         <span id="rumorTitleLabel">Başlık</span>
                         <input type="text" name="title" id="rumorTitleInput" required minlength="8" maxlength="255" placeholder="Örn. Kızıl Han'da gizli buluşma…">
+                    </label>
+                    <label class="vs-rumor-form__span">
+                        Görsel
+                        <select name="image_preset" id="rumorImagePreset">
+                            <option value="__gazette_auto__">Metinden otomatik woodcut</option>
+                            @foreach (($gazetteImagePresets ?? []) as $presetPath => $presetLabel)
+                            <option value="{{ $presetPath }}">{{ $presetLabel }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                    <label class="vs-rumor-form__span">
+                        Veya dosya yükle
+                        <input type="file" name="custom_image" id="rumorCustomImageInput" accept="image/jpeg,image/png,image/webp">
                     </label>
                     <label class="vs-rumor-form__span">
                         <span id="rumorBodyLabel">Söylenti / ihbar metni</span>
