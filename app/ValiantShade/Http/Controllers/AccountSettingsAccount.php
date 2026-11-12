@@ -16,8 +16,13 @@ class AccountSettingsAccount extends Controller
     public function index()
     {
         $user = Auth::user() ?: User::orderBy('id', 'asc')->first();
-
-        $displayName = $user ? ($user->display_name ?: ($user->name ?: $user->username)) : '';
+        $displayName = '';
+        if ($user) {
+            $displayName = $user->getRawOriginal('display_name')
+                ?? $user->getRawOriginal('name')
+                ?? '';
+            $displayName = (string) $displayName;
+        }
 
         $characters = $user ? CharacterProfile::where('user_id', $user->id)->get() : collect();
         if ($characters->isEmpty()) {
@@ -43,9 +48,7 @@ class AccountSettingsAccount extends Controller
         }
 
         $validated = $request->validate([
-            'displayName' => ['nullable', 'string', 'max:100'],
-            'firstName' => ['nullable', 'string', 'max:100'],
-            'lastName' => ['nullable', 'string', 'max:100'],
+            'displayName' => ['required', 'string', 'max:100'],
             'username' => ['required', 'string', 'max:100', Rule::unique('users', 'username')->ignore($user->id)],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'current_character' => ['nullable', 'string', 'max:255'],
@@ -59,12 +62,6 @@ class AccountSettingsAccount extends Controller
         ]);
 
         $displayName = trim($validated['displayName'] ?? '');
-        if (empty($displayName) && !empty($validated['firstName'])) {
-            $displayName = trim($validated['firstName'] . ' ' . ($validated['lastName'] ?? ''));
-        }
-        if (empty($displayName)) {
-            $displayName = $user->display_name ?: ($user->name ?: $validated['username']);
-        }
 
         $user->display_name = $displayName;
         $user->name = $displayName;

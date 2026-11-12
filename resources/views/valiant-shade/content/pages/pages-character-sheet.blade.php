@@ -1799,8 +1799,8 @@ document.addEventListener('DOMContentLoaded', function () {
   // -------------------------------------------------------------
   // Storage & Active Character Identification
   // -------------------------------------------------------------
-  const userUuid = "{{ Auth::user()->uuid ?? Auth::id() ?? 'guest' }}";
-  const charStorageKey = 'valiant_shade_characters_' + userUuid;
+  const userStorageId = @json(Auth::user()->isAdmin() ? (Auth::user()->uuid ?? Auth::id()) : ('user-' . Auth::id()));
+  const charStorageKey = 'valiant_shade_characters_' + userStorageId;
   const serverDbChar = @json($dbCharacter ?? null);
 
   function escapeHtml(str) {
@@ -1997,7 +1997,7 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('sheetLevelInput').value = currentChar.level || 1;
   document.getElementById('sheetClassSelect').value = currentChar.classKey || 'paladin';
   document.getElementById('sheetAlignmentSelect').value = sData.alignment || 'Lawful Good (LG)';
-  document.getElementById('sheetPlayerName').value = sData.player || '{{ Auth::user()->name ?? "Adventurer" }}';
+  document.getElementById('sheetPlayerName').value = sData.player || @json(Auth::user()->display_name ?: (Auth::user()->username ?: 'Adventurer'));
   document.getElementById('sheetRaceInput').value = cleanText(currentChar.race) || 'Human';
   document.getElementById('sheetDeityInput').value = sData.deity || 'Iomedae';
   document.getElementById('sheetHomelandInput').value = sData.homeland || 'Korvosa';

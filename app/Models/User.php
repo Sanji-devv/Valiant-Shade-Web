@@ -48,6 +48,15 @@ class User extends Authenticatable
 
     protected static function booted(): void
     {
+        static::saving(function (User $user) {
+            if (
+                $user->exists
+                && ($user->isDirty('password') || $user->isDirty('name') || $user->isDirty('display_name'))
+            ) {
+                $user->syncCompatibilityColumns();
+            }
+        });
+
         static::creating(function (User $user) {
             if (empty($user->uuid)) {
                 $user->uuid = (string) Str::uuid();
@@ -55,12 +64,39 @@ class User extends Authenticatable
             if (empty($user->username) && !empty($user->email)) {
                 $user->username = Str::slug(explode('@', $user->email)[0], '_') . '_' . Str::random(4);
             }
-            $displayName = $user->display_name ?: ($user->name ?: ($user->username));
-            if (!empty($displayName)) {
-                $user->display_name = $displayName;
-                $user->name = $displayName;
+            $hasExplicitBlankName = array_key_exists('name', $user->attributes)
+                && $user->attributes['name'] === '';
+            if (! $hasExplicitBlankName) {
+                $displayName = $user->display_name ?: ($user->name ?: ($user->username));
+                if (!empty($displayName)) {
+                    $user->name = $displayName;
+                }
             }
+
+            $user->syncCompatibilityColumns();
         });
+    }
+
+    protected function syncCompatibilityColumns(): void
+    {
+        $columns = $this->getConnection()->getSchemaBuilder()->getColumnListing($this->getTable());
+
+        if ($this->isDirty('password') && in_array('password_hash', $columns, true)) {
+            $this->attributes['password_hash'] = $this->attributes['password'];
+        }
+
+        if (
+            ($this->isDirty('name') || $this->isDirty('display_name'))
+            && in_array('display_name', $columns, true)
+        ) {
+            $displayName = $this->isDirty('name')
+                ? $this->attributes['name']
+                : ($this->attributes['display_name'] ?? $this->attributes['name'] ?? null);
+
+            if ($displayName !== null) {
+                $this->attributes['display_name'] = $displayName;
+            }
+        }
     }
 
     /**
@@ -88,25 +124,21 @@ class User extends Authenticatable
     {
         $hashed = Hash::needsRehash($value) ? Hash::make($value) : $value;
         $this->attributes['password'] = $hashed;
-        $this->attributes['password_hash'] = $hashed;
     }
 
     public function setDisplayNameAttribute($value): void
     {
-        $this->attributes['display_name'] = $value;
         $this->attributes['name'] = $value;
     }
 
     public function setRealNameAttribute($value): void
     {
-        $this->attributes['display_name'] = $value;
         $this->attributes['name'] = $value;
     }
 
     public function setNameAttribute($value): void
     {
         $this->attributes['name'] = $value;
-        $this->attributes['display_name'] = $value;
     }
 
     public function getDisplayNameAttribute(): string

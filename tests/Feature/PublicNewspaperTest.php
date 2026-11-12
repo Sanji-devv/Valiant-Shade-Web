@@ -26,11 +26,26 @@ class PublicNewspaperTest extends TestCase
             ->assertSee('property="og:description"', false);
     }
 
+    public function test_local_home_page_links_to_the_same_host_gazette_route(): void
+    {
+        $originalEnvironment = $this->app->environment();
+
+        try {
+            $this->app->detectEnvironment(static fn () => 'local');
+
+            $this->get('/')
+                ->assertOk()
+                ->assertSee('href="'.url('/gazette').'"', false);
+        } finally {
+            $this->app->detectEnvironment(static fn () => $originalEnvironment);
+        }
+    }
+
     public function test_gazette_page_shows_separate_pdf_and_png_download_buttons(): void
     {
         $host = config('gazette.domain');
 
-        $this->withServerVariables(['HTTP_HOST' => $host])
+        $response = $this->withServerVariables(['HTTP_HOST' => $host])
             ->get('http://'.$host.'/?gorunum=gazette&sayi=2&yaprak=1')
             ->assertOk()
             ->assertSee('class="vs-newspaper-page vs-layout-gazette"', false)
@@ -39,6 +54,12 @@ class PublicNewspaperTest extends TestCase
             ->assertSee('id="downloadGazettePngBtn"', false)
             ->assertDontSee('id="downloadGazettePngBtn" hidden', false)
             ->assertSee('id="openHotExtraModal"', false);
+
+        $content = $response->getContent();
+        $this->assertLessThan(
+            strpos($content, 'id="openHotExtraModal"'),
+            strpos($content, 'id="downloadGazettePngBtn"'),
+        );
     }
 
     public function test_whatsapp_preview_meta_for_shared_article_link(): void

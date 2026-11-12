@@ -24,10 +24,12 @@
         <div class="flex-grow-1 mt-3 mt-lg-5">
           <div class="d-flex align-items-md-end align-items-sm-start align-items-center justify-content-md-between justify-content-start mx-5 flex-md-row flex-column gap-4">
             <div class="user-profile-info">
-              <h4 class="mb-1 mt-lg-6">{{ Auth::user()->name ?? 'Valiant Shade' }}</h4>
+              <h4 class="mb-1 mt-lg-6">{{ Auth::user()->display_name ?: (Auth::user()->username ?: 'Valiant Shade') }}</h4>
               @if (Auth::check())
               <div class="text-body-secondary small mb-2 d-flex align-items-center gap-2 flex-wrap">
-                <span class="badge bg-label-primary font-monospace fs-7 d-inline-flex align-items-center">UUID: {{ Auth::user()->uuid ?? ('VS-' . str_pad(Auth::user()->id, 8, '0', STR_PAD_LEFT)) }}</span>
+                @if (Auth::user()->isAdmin())
+                  <span class="badge bg-label-primary font-monospace fs-7 d-inline-flex align-items-center">UUID: {{ Auth::user()->uuid ?? ('VS-' . str_pad(Auth::user()->id, 8, '0', STR_PAD_LEFT)) }}</span>
+                @endif
                 <span class="badge bg-label-primary font-monospace fs-7 d-inline-flex align-items-center">ID: #{{ Auth::user()->id }}</span>
               </div>
               @endif

@@ -12,7 +12,7 @@ class GazetteEditorGate
             return false;
         }
 
-        if ($user->isAdmin() || $user->hasPermission('archives.all') || $user->canBailiffArchives()) {
+        if ($user->isAdmin() || $user->hasPermission('archives.all') || $user->isArchivistBailiff()) {
             return true;
         }
 

@@ -8,18 +8,14 @@ use Tests\TestCase;
 class ValiantShadeTest extends TestCase
 {
     use RefreshDatabase;
-    public function test_home_page_does_not_link_to_valiant_shade_panel(): void
+    public function test_home_page_beta_links_to_valiant_shade_panel(): void
     {
         $response = $this->get('/');
 
         $response->assertStatus(200);
-        $response->assertDontSee(url('/valiant-shade'));
-        $response->assertDontSee('Valiant Shade Panel');
-        $response->assertSee('Valiant Shade');
-        $response->assertSee('Gazette');
-        $response->assertSee('Monster Database');
-        $response->assertSee('Guild Records');
-        $response->assertSee('Coming soon');
+        $response->assertSee('href="/valiant-shade"', false);
+        $response->assertSee('vs-quad__cell--dimmed', false);
+        $response->assertSee('BETA');
     }
 
     public function test_valiant_shade_dashboard_redirects_guests_to_login(): void

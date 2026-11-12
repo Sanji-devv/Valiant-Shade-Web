@@ -65,9 +65,11 @@
         <div class="d-flex align-items-start align-items-sm-center gap-6">
           <img src="{{ $user->profile_photo_url ?? asset('static/valiant-shade/assets/img/avatars/user.png') }}" alt="user-avatar" class="d-block w-px-100 h-px-100 rounded object-fit-cover shadow-sm" id="uploadedAvatar" />
           <div class="button-wrapper">
-            <h4 class="mb-1 fw-bold">{{ $user->display_name ?: ($user->name ?: $user->username) }}</h4>
+            <h4 class="mb-1 fw-bold">{{ $user->display_name ?: ($user->username ?: 'Valiant Shade') }}</h4>
             <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-              <span class="badge bg-label-primary font-monospace" title="{{ $user->uuid }}">UUID: {{ Str::limit($user->uuid, 16, '...') }}</span>
+              @if ($user->isAdmin())
+                <span class="badge bg-label-primary font-monospace" title="{{ $user->uuid }}">UUID: {{ Str::limit($user->uuid, 16, '...') }}</span>
+              @endif
               <span class="badge bg-label-secondary font-monospace">ID: #{{ $user->id }}</span>
               @forelse($user->ordered_roles as $role)
                 <span class="badge rounded-pill d-inline-flex align-items-center gap-1_5 px-2_5 py-1 shadow-xs"
@@ -82,9 +84,6 @@
               @if ($user->current_character)
                 <span class="badge bg-label-warning"><i class="icon-base ti tabler-shield me-1"></i>{{ $user->current_character }}</span>
               @endif
-              <span class="badge {{ $user->status == 1 ? 'bg-label-success' : ($user->status == 2 ? 'bg-label-primary' : 'bg-label-danger') }}">
-                {{ $user->status == 1 ? __('Active') : ($user->status == 2 ? __('Pending') : __('Inactive')) }}
-              </span>
             </div>
             <div class="text-body-secondary small">
               <i class="icon-base ti tabler-calendar me-1"></i>{{ __('Joined:') }} {{ $user->created_at ? $user->created_at->translatedFormat('d F Y') : '-' }}
@@ -99,7 +98,7 @@
           <div class="row gy-4 gx-6 mb-6">
             <div class="col-md-6 form-control-validation">
               <label for="displayName" class="form-label">{{ __('Display Name') }} <span class="text-danger">*</span></label>
-              <input class="form-control" type="text" id="displayName" name="displayName" value="{{ old('displayName', $displayName ?? ($user->display_name ?: $user->name)) }}" required autofocus placeholder="{{ __('e.g. ShadowBlade, Valerius') }}" />
+              <input class="form-control" type="text" id="displayName" name="displayName" value="{{ old('displayName', $displayName) }}" required autofocus placeholder="{{ __('e.g. ShadowBlade, Valerius') }}" />
               <div class="form-text">{{ __('Your public display name shown across the guild and party rosters.') }}</div>
             </div>
 
@@ -144,25 +143,29 @@
               </select>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-6">
               <label for="role" class="form-label">{{ __('Role') }}</label>
-              <input type="text" class="form-control bg-light" id="role" value="{{ $user->ordered_roles->pluck('name')->implode(', ') ?: ($user->role ?? 'Player') }}" readonly disabled />
+              <div class="d-flex flex-wrap gap-2" role="list" aria-label="{{ __('Assigned roles') }}">
+                @forelse($user->ordered_roles as $role)
+                  <span class="badge rounded-pill d-inline-flex align-items-center gap-1_5 px-3 py-2"
+                        role="listitem"
+                        style="background-color: {{ $role->color }}20; color: {{ $role->color }}; border: 1px solid {{ $role->color }}55;">
+                    <span class="badge-dot-indicator rounded-circle" style="width: 7px; height: 7px; background-color: {{ $role->color }}; display: inline-block;"></span>
+                    {{ __($role->name) }}
+                  </span>
+                @empty
+                  <span class="badge bg-label-secondary">{{ $user->role ?? 'PLAYER' }}</span>
+                @endforelse
+              </div>
+              <div class="form-text">{{ __('Your assigned roles are managed by an administrator.') }}</div>
             </div>
 
-            <div class="col-md-4">
-              <label for="status" class="form-label">{{ __('Account Status') }}</label>
-              <input type="text" class="form-control bg-light" id="status" value="{{ $user->status == 1 ? __('Active') : ($user->status == 2 ? __('Pending') : __('Inactive')) }}" readonly disabled />
-            </div>
-
-            <div class="col-md-4">
-              <label for="organization" class="form-label">{{ __('Guild / Organization') }}</label>
-              <input type="text" class="form-control bg-light" id="organization" value="{{ config('valiant-shade-variables.creatorName', 'Valiant Shade') }}" readonly disabled />
-            </div>
-
-            <div class="col-md-12">
-              <label for="uuid" class="form-label">{{ __('Unique User UUID') }}</label>
-              <input type="text" class="form-control font-monospace bg-light" id="uuid" value="{{ $user->uuid }}" readonly disabled />
-            </div>
+            @if ($user->isAdmin())
+              <div class="col-md-12">
+                <label for="uuid" class="form-label">{{ __('Unique User UUID') }}</label>
+                <input type="text" class="form-control font-monospace bg-light" id="uuid" value="{{ $user->uuid }}" readonly disabled />
+              </div>
+            @endif
           </div>
 
           <div class="mt-2 d-flex gap-2">

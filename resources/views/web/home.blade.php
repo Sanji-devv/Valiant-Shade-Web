@@ -1,6 +1,8 @@
 @php
     $appHost = parse_url(config('app.url'), PHP_URL_HOST) ?: 'valiantshade.com';
-    $gazetteUrl = 'https://' . config('gazette.domain');
+    $gazetteUrl = app()->environment('local')
+        ? url('/gazette')
+        : route('web.newspaper');
     $monsterDbUrl = 'https://md.' . $appHost;
 
     $imgGazette = asset('static/valiant-shade/assets/img/news/guild_tavern_whispers.jpg');
@@ -128,7 +130,8 @@
             pointer-events: none;
         }
 
-        .vs-quad__cell--locked::after {
+        .vs-quad__cell--locked::after,
+        .vs-quad__cell--dimmed::after {
             content: '';
             position: absolute;
             inset: 10px;
@@ -139,7 +142,8 @@
             box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.65);
         }
 
-        .vs-quad__cell--locked::before {
+        .vs-quad__cell--locked::before,
+        .vs-quad__cell--dimmed::before {
             background: linear-gradient(
                 180deg,
                 rgba(12, 10, 16, 0.72) 0%,
@@ -147,7 +151,8 @@
             );
         }
 
-        .vs-quad__cell--locked .vs-quad__bg {
+        .vs-quad__cell--locked .vs-quad__bg,
+        .vs-quad__cell--dimmed .vs-quad__bg {
             filter: grayscale(0.85) brightness(0.45) contrast(0.9);
         }
 
@@ -197,7 +202,8 @@
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
         }
 
-        .vs-quad__cell--locked .vs-quad__title {
+        .vs-quad__cell--locked .vs-quad__title,
+        .vs-quad__cell--dimmed .vs-quad__title {
             opacity: 0.72;
             font-size: clamp(1.5rem, 4.5vw, 3rem);
         }
@@ -249,16 +255,16 @@
             <h1 class="vs-quad__title">{{ __('Map') }}</h1>
         </div>
 
-        <div class="vs-quad__cell vs-quad__cell--records vs-quad__cell--locked" aria-disabled="true">
+        <a href="/valiant-shade" class="vs-quad__cell vs-quad__cell--records vs-quad__cell--dimmed">
             <div class="vs-quad__bg" style="background-image: url('{{ $imgRecords }}');" aria-hidden="true"></div>
             <div class="vs-quad__lock-overlay" aria-hidden="true"></div>
-            <span class="vs-quad__badge">{{ __('Coming soon') }}</span>
+            <span class="vs-quad__badge">{{ __('BETA') }}</span>
             <span class="vs-quad__corner vs-quad__corner--tl" aria-hidden="true"></span>
             <span class="vs-quad__corner vs-quad__corner--tr" aria-hidden="true"></span>
             <span class="vs-quad__corner vs-quad__corner--bl" aria-hidden="true"></span>
             <span class="vs-quad__corner vs-quad__corner--br" aria-hidden="true"></span>
-            <h1 class="vs-quad__title">{{ __('Guild Records') }}</h1>
-        </div>
+            <h1 class="vs-quad__title">{{ __('BETA') }}</h1>
+        </a>
     </main>
 </body>
 </html>

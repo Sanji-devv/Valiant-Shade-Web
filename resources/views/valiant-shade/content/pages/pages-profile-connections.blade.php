@@ -22,7 +22,7 @@
         <div class="flex-grow-1 mt-3 mt-lg-5">
           <div class="d-flex align-items-md-end align-items-sm-start align-items-center justify-content-md-between justify-content-start mx-5 flex-md-row flex-column gap-4">
             <div class="user-profile-info">
-              <h4 class="mb-1 mt-lg-6">{{ Auth::user()->name ?? 'Valiant Shade' }}</h4>
+              <h4 class="mb-1 mt-lg-6">{{ Auth::user()->display_name ?: (Auth::user()->username ?: 'Valiant Shade') }}</h4>
               @if (Auth::check())
               <div class="text-body-secondary small mb-2 d-flex align-items-center gap-1">
                 <i class="icon-base ti tabler-id-badge-2 icon-sm text-primary"></i>
