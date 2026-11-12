@@ -160,10 +160,12 @@
                     </button>
                 </div>
                 <input type="search" class="vs-search vs-toolbar__search" id="newsSearchInput" placeholder="Haber, söylenti veya kahraman ara…" aria-label="Haber ara" enterkeyhint="search">
-                <button type="button" class="vs-layout-toggle vs-layout-toggle--icon vs-toolbar__layout-toggle" id="toggleGazetteLayoutBtn" aria-pressed="false" title="Basılı gazete sayfası. Sayfa sayfa gezin." aria-label="Gazete görünümü">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M8 4v16M16 4v16M4 8h16M4 16h16"/></svg>
-                    <span id="toggleGazetteLayoutLabel" hidden>Gazete görünümü</span>
-                </button>
+                <div class="vs-toolbar__bar-end" id="toolbarBarEnd">
+                    <button type="button" class="vs-layout-toggle vs-layout-toggle--icon vs-toolbar__layout-toggle" id="toggleGazetteLayoutBtn" aria-pressed="false" title="Basılı gazete sayfası. Sayfa sayfa gezin." aria-label="Gazete görünümü">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M8 4v16M16 4v16M4 8h16M4 16h16"/></svg>
+                        <span id="toggleGazetteLayoutLabel" hidden>Gazete görünümü</span>
+                    </button>
+                </div>
             </div>
         </section>
 

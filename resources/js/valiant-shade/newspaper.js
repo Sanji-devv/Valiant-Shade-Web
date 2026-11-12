@@ -456,14 +456,20 @@ function renderIssueArchiveSelect() {
   if (!els.gazetteArchiveSelect) {
     return;
   }
+  const searchActive = isSearchActive();
+  const placeholder = searchActive
+    ? '<option value="" selected>Sayı seçin… (şu an tüm sayılarda arama)</option>'
+    : '';
   const options = (state.issueArchive || []).map((issue) => {
     const selected =
-      Number(state.issueId) === Number(issue.id) || (!state.issueId && issue.is_current);
+      !searchActive &&
+      (Number(state.issueId) === Number(issue.id) || (!state.issueId && issue.is_current));
     const disabled = !issue.is_selectable;
     return `<option value="${issue.id}"${selected ? ' selected' : ''}${disabled ? ' disabled' : ''}>${escapeHtml(issueArchiveOptionText(issue))}</option>`;
   });
-  els.gazetteArchiveSelect.innerHTML = options.join('') || '<option value="">Sayı yok</option>';
-  if (!state.issueId && state.currentIssue?.id) {
+  const list = placeholder + (options.join('') || '<option value="">Sayı yok</option>');
+  els.gazetteArchiveSelect.innerHTML = list;
+  if (!searchActive && !state.issueId && state.currentIssue?.id) {
     state.issueId = state.currentIssue.id;
   }
 }
@@ -1135,20 +1141,27 @@ function placeIssueArchiveSelect() {
   const desktop = window.matchMedia('(min-width: 768px)').matches;
   const mobileGazette = !desktop && isGazetteLayout();
   let target = els.headerIssueSlot;
-  if (desktop) {
-    target = els.toolbarFiltersRow;
+  if (desktop && els.toolbarBarEnd) {
+    target = els.toolbarBarEnd;
   } else if (mobileGazette && els.mobileIssueDock) {
     target = els.mobileIssueDock;
   }
-  if (target && els.gazetteArchiveWrap.parentElement !== target) {
-    target.appendChild(els.gazetteArchiveWrap);
+  if (target) {
+    if (
+      desktop &&
+      els.toolbarBarEnd &&
+      els.toggleGazetteLayoutBtn?.parentElement === els.toolbarBarEnd
+    ) {
+      els.toolbarBarEnd.insertBefore(els.gazetteArchiveWrap, els.toggleGazetteLayoutBtn);
+    } else if (els.gazetteArchiveWrap.parentElement !== target) {
+      target.appendChild(els.gazetteArchiveWrap);
+    }
   }
   els.gazetteArchiveWrap.classList.toggle('vs-gazette-archive-wrap--toolbar', desktop);
   els.gazetteArchiveWrap.classList.toggle('vs-gazette-archive-wrap--mobile-dock', mobileGazette);
   if (els.mobileIssueDock) {
-    const hideDock = !mobileGazette || isSearchActive();
-    els.mobileIssueDock.hidden = hideDock;
-    els.mobileIssueDock.setAttribute('aria-hidden', hideDock ? 'true' : 'false');
+    els.mobileIssueDock.hidden = !mobileGazette;
+    els.mobileIssueDock.setAttribute('aria-hidden', mobileGazette ? 'false' : 'true');
   }
 }
 
@@ -1156,26 +1169,21 @@ function syncSearchResultsLayout() {
   const gazette = isGazetteLayout();
   const active = gazette && isSearchActive();
   document.body.classList.toggle('vs-search-active', active);
-  const desktop = window.matchMedia('(min-width: 768px)').matches;
-  const mobileGazette = !desktop && gazette;
   if (els.gazetteArchiveWrap) {
-    els.gazetteArchiveWrap.hidden = !gazette || active;
+    els.gazetteArchiveWrap.hidden = !gazette;
     if (els.gazetteArchiveSelect) {
-      els.gazetteArchiveSelect.disabled = active;
-      els.gazetteArchiveSelect.setAttribute('aria-disabled', active ? 'true' : 'false');
+      els.gazetteArchiveSelect.disabled = false;
+      els.gazetteArchiveSelect.removeAttribute('aria-disabled');
     }
   }
-  if (els.mobileIssueDock) {
-    els.mobileIssueDock.hidden = !mobileGazette || active;
-    els.mobileIssueDock.setAttribute('aria-hidden', !mobileGazette || active ? 'true' : 'false');
-  }
+  renderIssueArchiveSelect();
 }
 
 function applyLayoutMode() {
   const gazette = isGazetteLayout();
   document.body.classList.toggle('vs-layout-gazette', gazette);
   state.perPage = WEB_ITEMS_PER_PAGE;
-  if (els.gazetteArchiveWrap && !isSearchActive()) {
+  if (els.gazetteArchiveWrap) {
     els.gazetteArchiveWrap.hidden = !gazette;
   }
   placeIssueArchiveSelect();
@@ -2495,8 +2503,21 @@ function bindEvents() {
 
   if (els.gazetteArchiveSelect) {
     els.gazetteArchiveSelect.addEventListener('change', () => {
-      const value = Number(els.gazetteArchiveSelect.value);
-      state.issueId = Number.isFinite(value) && value > 0 ? value : null;
+      const raw = els.gazetteArchiveSelect.value;
+      if (raw === '') {
+        return;
+      }
+      const value = Number(raw);
+      if (!Number.isFinite(value) || value <= 0) {
+        return;
+      }
+      if (isSearchActive()) {
+        state.search = '';
+        if (els.searchInput) {
+          els.searchInput.value = '';
+        }
+      }
+      state.issueId = value;
       state.page = 1;
       loadFeed().catch(console.error);
     });
@@ -2936,6 +2957,7 @@ document.addEventListener('DOMContentLoaded', () => {
   els.gazetteArchiveWrap = qs('gazetteArchiveWrap');
   els.headerIssueSlot = qs('gazetteHeaderIssue');
   els.toolbarFiltersRow = qs('toolbarFiltersRow');
+  els.toolbarBarEnd = qs('toolbarBarEnd');
   els.mobileIssueDock = qs('mobileIssueDock');
 
   initNewsTypePicker(els.rumorTypePicker, els.rumorNewsType);
