@@ -1682,6 +1682,29 @@ body.vs-article-modal-open {
   .vs-modal-backdrop--gazette-read .vs-modal__hero {
     height: min(38vh, 320px);
     min-height: 180px;
+    transition:
+      height 0.22s ease,
+      min-height 0.22s ease,
+      opacity 0.16s ease,
+      border-width 0.16s ease;
+  }
+
+  .vs-modal-backdrop--article.is-open .vs-modal__hero {
+    transition:
+      height 0.22s ease,
+      min-height 0.22s ease,
+      opacity 0.16s ease,
+      border-width 0.16s ease;
+  }
+
+  .vs-modal--article.vs-modal--hero-hidden .vs-modal__hero,
+  .vs-modal__hero.vs-modal__hero--peek-hidden {
+    height: 0 !important;
+    min-height: 0 !important;
+    opacity: 0;
+    border-width: 0;
+    overflow: hidden;
+    pointer-events: none;
   }
 
   .vs-modal-backdrop--gazette-read .vs-modal__body--article {
@@ -3217,7 +3240,7 @@ body.vs-layout-gazette .vs-gazette-flip {
   box-shadow: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   body.vs-layout-gazette .vs-gazette-flip {
     position: relative;
     padding: 0;
@@ -3226,32 +3249,11 @@ body.vs-layout-gazette .vs-gazette-flip {
   }
 
   .vs-gazette-flip__arrow {
-    position: absolute;
-    top: 50%;
-    z-index: 3;
-    transform: translateY(-50%);
-    width: 2.5rem;
-    height: 2.85rem;
-    border-radius: 999px;
-    background: rgba(242, 228, 200, 0.94);
-    backdrop-filter: blur(6px);
-    box-shadow: 0 8px 22px rgba(28, 18, 8, 0.2);
+    display: none !important;
   }
 
-  .vs-gazette-flip__arrow--prev {
-    left: 0.2rem;
-  }
-
-  .vs-gazette-flip__arrow--next {
-    right: 0.2rem;
-  }
-
-  .vs-gazette-flip__arrow:hover:not(:disabled) {
-    transform: translateY(-50%);
-  }
-
-  .vs-gazette-flip__arrow:active:not(:disabled) {
-    transform: translateY(-50%) scale(0.96);
+  body.vs-layout-gazette .vs-gazette-flip__sheet {
+    touch-action: pan-y pinch-zoom;
   }
 }
 

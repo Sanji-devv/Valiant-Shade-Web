@@ -1606,7 +1606,9 @@ function openCornerReader(slotKey) {
   document.body.classList.add('vs-article-modal-open');
   els.detailModal.classList.add('is-open');
   resetArticleModalDrag();
+  resetArticleModalHeroPeek();
   initArticleModalSwipe();
+  initArticleModalHeroScroll();
   state.openArticleId = null;
   syncBrowserUrl();
 }
@@ -1695,7 +1697,9 @@ async function openArticle(id, options = {}) {
   document.body.classList.add('vs-article-modal-open');
   els.detailModal.classList.add('is-open');
   resetArticleModalDrag();
+  resetArticleModalHeroPeek();
   initArticleModalSwipe();
+  initArticleModalHeroScroll();
   state.openArticleId = Number(id) || null;
   if (!options.skipUrlSync) {
     syncBrowserUrl({ articleId: id });
@@ -1705,6 +1709,7 @@ async function openArticle(id, options = {}) {
 function closeModal() {
   els.detailModal.classList.remove('is-open');
   resetArticleModalDrag();
+  resetArticleModalHeroPeek();
   if (els.detailModal) {
     els.detailModal.classList.remove('vs-modal-backdrop--gazette-read', 'vs-modal-backdrop--web-read');
   }
@@ -1828,6 +1833,36 @@ function resetArticleModalDrag() {
   }
 }
 
+function resetArticleModalHeroPeek() {
+  const scrollRoot = els.detailModalPanel?.querySelector('.vs-modal__body--article');
+  if (scrollRoot) {
+    scrollRoot.scrollTop = 0;
+  }
+  els.modalHero?.classList.remove('vs-modal__hero--peek-hidden');
+  els.detailModalPanel?.classList.remove('vs-modal--hero-hidden');
+}
+
+function initArticleModalHeroScroll() {
+  const scrollRoot = els.detailModalPanel?.querySelector('.vs-modal__body--article');
+  const hero = els.modalHero;
+  const panel = els.detailModalPanel;
+  if (!scrollRoot || !hero || !panel || scrollRoot.dataset.heroScrollInit === '1') {
+    return;
+  }
+  scrollRoot.dataset.heroScrollInit = '1';
+
+  const onScroll = () => {
+    if (!isMobileGazetteLayout() || !els.detailModal?.classList.contains('is-open') || hero.hidden) {
+      return;
+    }
+    const hide = scrollRoot.scrollTop > 10;
+    hero.classList.toggle('vs-modal__hero--peek-hidden', hide);
+    panel.classList.toggle('vs-modal--hero-hidden', hide);
+  };
+
+  scrollRoot.addEventListener('scroll', onScroll, { passive: true });
+}
+
 function initArticleModalSwipe() {
   const panel = els.detailModalPanel;
   const backdrop = els.detailModal;
@@ -1878,6 +1913,70 @@ function initArticleModalSwipe() {
   panel.addEventListener('touchmove', onMove, { passive: true });
   panel.addEventListener('touchend', onEnd, { passive: true });
   panel.addEventListener('touchcancel', onEnd, { passive: true });
+}
+
+function initGazetteFlipSwipe() {
+  const root = els.gazetteFlip;
+  if (!root || root.dataset.flipSwipeInit === '1') {
+    return;
+  }
+  root.dataset.flipSwipeInit = '1';
+  let startX = 0;
+  let startY = 0;
+  let tracking = false;
+
+  const canSwipe = () =>
+    isGazetteLayout() &&
+    isMobileGazetteLayout() &&
+    !isSearchActive() &&
+    root &&
+    !root.hidden;
+
+  const onStart = (event) => {
+    if (!canSwipe()) {
+      return;
+    }
+    if (event.target.closest('input, textarea, select, button, a, [contenteditable="true"]')) {
+      return;
+    }
+    if (els.detailModal?.classList.contains('is-open')) {
+      return;
+    }
+    startX = event.touches[0].clientX;
+    startY = event.touches[0].clientY;
+    tracking = true;
+  };
+
+  const onEnd = (event) => {
+    if (!tracking) {
+      return;
+    }
+    tracking = false;
+    if (!canSwipe()) {
+      return;
+    }
+    const touch = event.changedTouches?.[0];
+    if (!touch) {
+      return;
+    }
+    const dx = touch.clientX - startX;
+    const dy = touch.clientY - startY;
+    const threshold = 52;
+    if (Math.abs(dx) < threshold || Math.abs(dx) < Math.abs(dy) * 1.2) {
+      return;
+    }
+    if (dx < 0 && !els.nextPage?.disabled) {
+      goToFeedPage(state.page + 1, 'fwd');
+    } else if (dx > 0 && !els.prevPage?.disabled) {
+      goToFeedPage(state.page - 1, 'back');
+    }
+  };
+
+  root.addEventListener('touchstart', onStart, { passive: true });
+  root.addEventListener('touchend', onEnd, { passive: true });
+  root.addEventListener('touchcancel', () => {
+    tracking = false;
+  });
 }
 
 async function submitHotExtra(formData) {
@@ -2992,6 +3091,8 @@ document.addEventListener('DOMContentLoaded', () => {
   applyLayoutMode();
   syncFilterPanelVisibility();
   bindEvents();
+  initGazetteFlipSwipe();
+  initArticleModalHeroScroll();
   if (state.pendingFlashModal) {
     state.pendingFlashModal = false;
     openHotExtraModal();
