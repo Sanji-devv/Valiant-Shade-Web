@@ -43,7 +43,7 @@ class EnsureValiantShadePanelAccess
             abort(403, __('Your account is not active.'));
         }
 
-        $rule = $this->authorization->accessRule($routeName);
+        $rule = $this->authorization->accessRule($routeName, $request->method());
 
         if ($this->authorization->userMayAccess($user, $rule)) {
             return $next($request);

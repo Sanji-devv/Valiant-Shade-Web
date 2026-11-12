@@ -781,7 +781,7 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
             ];
         }
 
-        if ($user->isAdmin() || $user->hasPermission('archives.all') || $user->canBailiffArchives()) {
+        if ($user->isAdmin() || $user->hasPermission('archives.all') || $user->isArchivistBailiff()) {
             return [
                 'canManageNews' => true,
                 'canUpdateNews' => true,
@@ -827,7 +827,7 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
         $user = auth()->user();
         abort_unless($user, 403);
 
-        if ($user->isAdmin() || $user->hasPermission('archives.all') || $user->canBailiffArchives()) {
+        if ($user->isAdmin() || $user->hasPermission('archives.all') || $user->isArchivistBailiff()) {
             return;
         }
 

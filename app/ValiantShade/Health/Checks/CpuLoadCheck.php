@@ -27,6 +27,14 @@ class CpuLoadCheck extends Check
 
     public function run(): Result
     {
+        if (! function_exists('sys_getloadavg')) {
+            $message = __('CPU load averages are not available on this operating system.');
+
+            return Result::make()
+                ->shortSummary($message)
+                ->warning($message);
+        }
+
         $loads = sys_getloadavg();
 
         if ($loads === false) {

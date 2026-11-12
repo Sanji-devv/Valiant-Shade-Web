@@ -19,16 +19,18 @@ class RegisterBasic extends Controller
   public function register(Request $request): RedirectResponse
   {
     $request->validate([
-      'username' => ['required', 'string', 'max:255'],
+      'username' => ['required', 'string', 'max:255', 'unique:users,username'],
       'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
       'password' => ['required', 'string', 'min:6'],
       'terms' => ['accepted'],
     ]);
 
     $user = User::create([
-      'name' => $request->input('username'),
+      'username' => $request->input('username'),
+      'name' => '',
       'email' => $request->input('email'),
       'password' => $request->input('password'),
+      'status' => 1,
     ]);
 
     Auth::login($user);

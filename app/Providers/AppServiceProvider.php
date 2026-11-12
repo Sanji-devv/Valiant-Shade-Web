@@ -135,8 +135,8 @@ class AppServiceProvider extends ServiceProvider
             return;
         }
 
-        $host = parse_url((string) config('app.url'), PHP_URL_HOST);
-        if ($host === 'localhost' || (is_string($host) && str_ends_with($host, '.localhost'))) {
+        $host = request()->getHost();
+        if ($host === 'localhost' || str_ends_with($host, '.localhost')) {
             config(['session.domain' => '.localhost']);
         }
     }

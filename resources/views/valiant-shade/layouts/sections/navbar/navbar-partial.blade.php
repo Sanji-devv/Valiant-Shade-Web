@@ -436,7 +436,7 @@ use Illuminate\Support\Facades\Route;
               </div>
               <div class="flex-grow-1">
                 <h6 class="mb-0 d-flex align-items-center flex-wrap gap-1">
-                  <span>{{ Auth::user()->name }}</span>
+                  <span>{{ Auth::user()->display_name ?: (Auth::user()->username ?: Auth::user()->name) }}</span>
                   @if($topRole = Auth::user()->highest_role)
                     <span class="badge rounded-pill d-inline-flex align-items-center gap-1" style="font-size: 0.65rem; background-color: {{ $topRole->color }}22; color: {{ $topRole->color }}; border: 1px solid {{ $topRole->color }}55;">
                       <span class="badge-dot-indicator rounded-circle" style="width: 5px; height: 5px; background-color: {{ $topRole->color }}; display: inline-block;"></span>
@@ -445,9 +445,11 @@ use Illuminate\Support\Facades\Route;
                   @endif
                 </h6>
                 <small class="text-body-secondary d-block">{{ Auth::user()->email ?? 'User' }}</small>
-                <small class="text-muted font-monospace d-block" style="font-size: 0.75rem;" title="{{ Auth::user()->uuid }}">
-                  UUID: {{ Str::limit(Auth::user()->uuid, 16, '...') }}
-                </small>
+                @if (Auth::user()->isAdmin())
+                  <small class="text-muted font-monospace d-block" style="font-size: 0.75rem;" title="{{ Auth::user()->uuid }}">
+                    UUID: {{ Str::limit(Auth::user()->uuid, 16, '...') }}
+                  </small>
+                @endif
               </div>
             </div>
           </a>

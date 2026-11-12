@@ -82,17 +82,18 @@ $customizerHidden = 'customizer-hide';
           <form id="formAuthentication" class="mb-6" action="{{ route('valiant-shade.auth-register-basic.post') }}" method="POST">
             @csrf
             <div class="mb-6 form-control-validation">
-              <label for="username" class="form-label">{{ __('Username') }}</label>
+              <label for="username" class="form-label">{{ __('Username') }} <span class="text-danger">*</span></label>
               <input type="text" class="form-control" id="username" name="username"
                 value="{{ old('username') }}"
                 placeholder="Enter your username"
-                autofocus />
+                autocomplete="username" required autofocus />
             </div>
             <div class="mb-6 form-control-validation">
-              <label for="email" class="form-label">{{ __('Email') }}</label>
-              <input type="text" class="form-control" id="email" name="email"
+              <label for="email" class="form-label">{{ __('Email') }} <span class="text-danger">*</span></label>
+              <input type="email" class="form-control" id="email" name="email"
                 value="{{ old('email') }}"
-                placeholder="Enter your email" />
+                placeholder="Enter your email"
+                autocomplete="email" required />
             </div>
             <div class="mb-6 form-password-toggle form-control-validation">
               <label class="form-label" for="password">{{ __('Password') }}</label>
@@ -112,6 +113,7 @@ $customizerHidden = 'customizer-hide';
                 </label>
               </div>
             </div>
+            <p class="form-text mb-6">{{ __('After registering, choose your public display name in Account Settings.') }}</p>
             <button class="btn btn-primary d-grid w-100" type="submit">{{ __('Sign up') }}</button>
           </form>
 

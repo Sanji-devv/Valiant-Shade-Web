@@ -38,10 +38,12 @@
         <div class="flex-grow-1 mt-3 mt-lg-5">
           <div class="d-flex align-items-md-end align-items-sm-start align-items-center justify-content-md-between justify-content-start mx-5 flex-md-row flex-column gap-4">
             <div class="user-profile-info">
-              <h4 class="mb-1 mt-lg-6">{{ Auth::user()->name ?? 'Valiant Shade' }}</h4>
+              <h4 class="mb-1 mt-lg-6">{{ Auth::user()->display_name ?: (Auth::user()->username ?: 'Valiant Shade') }}</h4>
               @if (Auth::check())
               <div class="text-body-secondary small mb-2 d-flex align-items-center gap-2 flex-wrap">
-                <span class="badge bg-label-primary font-monospace fs-7 d-inline-flex align-items-center">UUID: {{ Auth::user()->uuid ?? ('VS-' . str_pad(Auth::user()->id, 8, '0', STR_PAD_LEFT)) }}</span>
+                @if (Auth::user()->isAdmin())
+                  <span class="badge bg-label-primary font-monospace fs-7 d-inline-flex align-items-center">UUID: {{ Auth::user()->uuid ?? ('VS-' . str_pad(Auth::user()->id, 8, '0', STR_PAD_LEFT)) }}</span>
+                @endif
                 <span class="badge bg-label-primary font-monospace fs-7 d-inline-flex align-items-center">ID: #{{ Auth::user()->id }}</span>
               </div>
               @endif
@@ -134,7 +136,7 @@
               </div>
               <div class="overflow-hidden">
                 <h5 class="card-title mb-0 fw-bold text-nowrap">{{ __('My Characters') }}</h5>
-                <small class="text-body-secondary text-nowrap">{{ Auth::user()->name ?? 'Player' }} &bull; {{ __('Active Heroes') }}</small>
+                <small class="text-body-secondary text-nowrap">{{ Auth::user()->display_name ?: (Auth::user()->username ?: 'Player') }} &bull; {{ __('Active Heroes') }}</small>
               </div>
             </div>
             <div class="d-flex align-items-center gap-2 flex-shrink-0">
@@ -839,7 +841,7 @@
                           {{ $c->name }}
                         @endif
                       </div>
-                      <small class="text-body-secondary">{{ Auth::user()->name ?? 'Player' }}</small>
+                      <small class="text-body-secondary">{{ Auth::user()->display_name ?: (Auth::user()->username ?: 'Player') }}</small>
                     </div>
                   </div>
                 </td>
@@ -1907,8 +1909,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }).join('');
   }
 
-  const userUuid = "{{ Auth::user()->uuid ?? Auth::id() ?? 'guest' }}";
-  const charStorageKey = 'valiant_shade_characters_' + userUuid;
+  const userStorageId = @json(Auth::user()->isAdmin() ? (Auth::user()->uuid ?? Auth::id()) : ('user-' . Auth::id()));
+  const charStorageKey = 'valiant_shade_characters_' + userStorageId;
 
   function syncCharacterWithBackend(characterName) {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
@@ -2216,7 +2218,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // ----------------------------------------------------
   // ACTIVITY TIMELINE & FINANCIAL LEDGER ENGINE
   // ----------------------------------------------------
-  const activityStorageKey = 'valiant_shade_activities_v7_' + userUuid;
+  const activityStorageKey = 'valiant_shade_activities_v7_' + userStorageId;
   let currentTimelineFilter = 'all';
 
   function formatActivityDateTime(dateInput) {
@@ -2260,10 +2262,10 @@ document.addEventListener('DOMContentLoaded', function () {
     try {
       let raw = localStorage.getItem(activityStorageKey);
       if (!raw) {
-        raw = localStorage.getItem('valiant_shade_activities_v6_' + userUuid) ||
-              localStorage.getItem('valiant_shade_activities_v5_' + userUuid) ||
-              localStorage.getItem('valiant_shade_activities_v4_' + userUuid) ||
-              localStorage.getItem('valiant_shade_activities_v3_' + userUuid);
+        raw = localStorage.getItem('valiant_shade_activities_v6_' + userStorageId) ||
+              localStorage.getItem('valiant_shade_activities_v5_' + userStorageId) ||
+              localStorage.getItem('valiant_shade_activities_v4_' + userStorageId) ||
+              localStorage.getItem('valiant_shade_activities_v3_' + userStorageId);
       }
       if (raw) {
         const parsed = JSON.parse(raw) || {};
@@ -2281,7 +2283,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Purge legacy storage keys so they never reload old mock activities
         ['v6', 'v5', 'v4', 'v3'].forEach(v => {
-          try { localStorage.removeItem('valiant_shade_activities_' + v + '_' + userUuid); } catch (e) {}
+          try { localStorage.removeItem('valiant_shade_activities_' + v + '_' + userStorageId); } catch (e) {}
         });
 
         if (modified || !localStorage.getItem(activityStorageKey)) {

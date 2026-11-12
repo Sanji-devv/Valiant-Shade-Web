@@ -14,6 +14,8 @@
         'type' => 'website',
         'image_alt' => $gazetteTitle,
     ];
+    $isGazetteView = request()->query('gorunum') === 'gazette'
+        || request()->hasAny(['yaprak', 'sayi', 'haber']);
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -43,7 +45,7 @@
     @vite(['resources/css/valiant-shade/newspaper.css', 'resources/js/valiant-shade/newspaper.js'], 'static/valiant-shade/build')
 </head>
 <body
-    class="vs-newspaper-page"
+    class="vs-newspaper-page{{ $isGazetteView ? ' vs-layout-gazette' : '' }}"
     data-gazette-logo="{{ $gazetteCrest }}"
     data-gazette-name="{{ $gazetteTitle }}"
     data-gazette-motto="{{ $gazetteMotto }}"
@@ -75,10 +77,21 @@
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">Lonca</span>
                 <span class="vs-newspaper-nav__tooltip" role="tooltip">{{ __('Coming soon') }}</span>
             </span>
-            <button type="button" class="vs-newspaper-nav__item vs-newspaper-nav__item--print" id="printGazetteBtn" hidden aria-label="PDF İndir">
+            <button type="button" class="vs-newspaper-nav__item vs-newspaper-nav__item--print" id="printGazetteBtn" @if (! $isGazetteView) hidden @endif aria-label="PDF İndir">
                 <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">PDF İndir</span>
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">PDF</span>
+            </button>
+            <button
+                type="button"
+                class="vs-newspaper-nav__item vs-newspaper-nav__item--print"
+                id="downloadGazettePngBtn"
+                @if (! $isGazetteView) hidden @endif
+                aria-label="Açık gazete yaprağını PNG olarak indir"
+            >
+                <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">PNG İndir</span>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">PNG</span>
             </button>
             <button
                 type="button"

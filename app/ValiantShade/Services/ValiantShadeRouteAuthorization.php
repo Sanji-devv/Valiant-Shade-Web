@@ -22,6 +22,7 @@ class ValiantShadeRouteAuthorization
 
     /** @var list<string> */
     private const MODULE_ROUTE_PREFIXES = [
+        'valiant-shade.app-user-list' => 'users',
         'valiant-shade.pages-inventory' => 'inventory',
         'valiant-shade.pages-xp-tracker' => 'xp',
         'valiant-shade.pages-adventurer-info' => 'guild',
@@ -36,8 +37,39 @@ class ValiantShadeRouteAuthorization
         'valiant-shade.pages-featntrait' => 'hr',
         'valiant-shade.pages-feats' => 'hr',
         'valiant-shade.pages-traits' => 'hr',
-        'valiant-shade.app-user' => 'users',
         'valiant-shade.app-roles' => 'roles',
+    ];
+
+    /** @var list<string> */
+    private const ADMIN_ONLY_ROUTE_PREFIXES = [
+        'valiant-shade.app-roles',
+        'valiant-shade.app-audit-logs',
+        'valiant-shade.app-health',
+    ];
+
+    /** @var list<string> */
+    private const MEMBER_VISIBLE_READ_ROUTE_NAMES = [
+        'valiant-shade.dashboard-analytics',
+        'valiant-shade.app-user-list',
+        'valiant-shade.app-user-list.data',
+    ];
+
+    /** @var list<string> */
+    private const MEMBER_VISIBLE_READ_ROUTE_PREFIXES = [
+        'valiant-shade.pages-inventory',
+        'valiant-shade.pages-news',
+        'valiant-shade.pages-guild-news',
+        'valiant-shade.pages-xp-tracker',
+        'valiant-shade.pages-adventurer-info',
+        'valiant-shade.pages-maceraci-info',
+        'valiant-shade.pages-guild-overview',
+        'valiant-shade.pages-quest-board',
+        'valiant-shade.pages-gorev-listesi',
+        'valiant-shade.pages-quest-reports',
+        'valiant-shade.pages-gorev-raporlari',
+        'valiant-shade.pages-featntrait',
+        'valiant-shade.pages-feats-list',
+        'valiant-shade.pages-feats-and-traits',
     ];
 
     /** @var list<string> */
@@ -62,19 +94,31 @@ class ValiantShadeRouteAuthorization
 
     /**
      * @return null Any authenticated member
-     * @return '__panel__' Guild panel (module read or bailiff/admin)
+     * @return '__admin__' Administrator-only page
+     * @return '__panel__' Guild panel (module permission)
      * @return list<string> Any one of these permissions (module.action)
      */
-    public function accessRule(?string $routeName): null|string|array
+    public function accessRule(?string $routeName, string $method = 'GET'): null|string|array
     {
         if ($routeName === null) {
             return '__panel__';
         }
 
+        foreach (self::ADMIN_ONLY_ROUTE_PREFIXES as $prefix) {
+            if ($this->matchesRoutePrefix($routeName, $prefix)) {
+                return '__admin__';
+            }
+        }
+
         foreach (self::MEMBER_ROUTE_PREFIXES as $prefix) {
-            if (str_starts_with($routeName, $prefix)) {
+            if ($this->matchesRoutePrefix($routeName, $prefix)) {
                 return null;
             }
+        }
+
+        if (in_array(strtoupper($method), ['GET', 'HEAD'], true)
+            && $this->isMemberVisibleReadRoute($routeName)) {
+            return null;
         }
 
         if (str_starts_with($routeName, 'valiant-shade.dashboard')) {
@@ -82,17 +126,34 @@ class ValiantShadeRouteAuthorization
         }
 
         foreach (self::MODULE_ROUTE_PREFIXES as $prefix => $module) {
-            if (str_starts_with($routeName, $prefix)) {
+            if ($this->matchesRoutePrefix($routeName, $prefix)) {
                 return $this->permissionsForModule($module);
             }
         }
 
-        if (str_starts_with($routeName, 'valiant-shade.app-health')
-            || str_starts_with($routeName, 'valiant-shade.app-audit-logs')) {
-            return ['roles.all'];
+        return '__panel__';
+    }
+
+    private function isMemberVisibleReadRoute(string $routeName): bool
+    {
+        if (in_array($routeName, self::MEMBER_VISIBLE_READ_ROUTE_NAMES, true)) {
+            return true;
         }
 
-        return '__panel__';
+        foreach (self::MEMBER_VISIBLE_READ_ROUTE_PREFIXES as $prefix) {
+            if ($this->matchesRoutePrefix($routeName, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function matchesRoutePrefix(string $routeName, string $prefix): bool
+    {
+        return $routeName === $prefix
+            || str_starts_with($routeName, $prefix.'.')
+            || str_starts_with($routeName, $prefix.'-');
     }
 
     /**
@@ -134,6 +195,10 @@ class ValiantShadeRouteAuthorization
 
         if ($rule === '__panel__') {
             return $this->hasPanelAccess($user);
+        }
+
+        if ($rule === '__admin__') {
+            return $user->isAdmin();
         }
 
         if (is_array($rule)) {

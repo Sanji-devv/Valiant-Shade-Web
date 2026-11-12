@@ -14,10 +14,10 @@ document.addEventListener('DOMContentLoaded', function (e) {
     if (formAccSettings) {
       const fv = FormValidation.formValidation(formAccSettings, {
         fields: {
-          firstName: {
+          displayName: {
             validators: {
               notEmpty: {
-                message: 'Please enter first name'
+                message: 'Please enter display name'
               }
             }
           },
