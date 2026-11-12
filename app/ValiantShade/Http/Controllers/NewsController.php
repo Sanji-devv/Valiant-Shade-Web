@@ -1056,8 +1056,10 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
         $this->authorizeNewsManagement('delete');
 
         $news = News::findOrFail($id);
-        app(GazetteIssueService::class)->releaseNewsFromGazette($news);
+        $gazette = app(GazetteIssueService::class);
+        $gazette->releaseNewsFromGazette($news);
         $news->delete();
+        $gazette->afterExtraIssueNewsRemoved($news);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json(['success' => true, 'message' => __('News deleted.')]);

@@ -175,6 +175,50 @@ class PublicNewspaperTest extends TestCase
             ->assertJsonPath('feed.data.0.id', $pendingId);
     }
 
+    public function test_empty_extra_issue_is_removed_and_sequences_renumbered(): void
+    {
+        $user = \App\Models\User::factory()->create(['role' => 'ADMIN']);
+        $weekly = \App\Models\GazetteIssue::query()->where('issue_kind', 'weekly')->orderByDesc('issue_number')->first();
+        $this->assertNotNull($weekly);
+
+        $emptyExtra = \App\Models\GazetteIssue::create([
+            'issue_kind' => 'extra',
+            'parent_issue_id' => $weekly->id,
+            'extra_sequence' => 1,
+            'issue_number' => $weekly->issue_number,
+            'label' => 'Sayı '.$weekly->issue_number.'.1',
+            'year' => $weekly->year,
+            'month' => $weekly->month,
+            'weekday' => $weekly->weekday,
+            'day' => $weekly->day,
+            'published_on' => now()->toDateString(),
+            'is_current' => false,
+            'is_locked' => true,
+            'locked_at' => now(),
+        ]);
+
+        $response = $this->post('/api/public/news/flash-submissions', [
+            'title' => 'İkinci flash haber başlığı uzun metin',
+            'news_type' => 'local_news',
+            'description' => str_repeat(
+                'Tek sayfa ek sayı numarası boş yaprak silindikten sonra bir olmalı. ',
+                8,
+            ),
+        ]);
+        $pendingId = (int) $response->json('submission_id');
+        $this->actingAs($user)->post(route('valiant-shade.pages-news.approve', $pendingId));
+
+        $this->assertNull(\App\Models\GazetteIssue::query()->find($emptyExtra->id));
+
+        $extra = \App\Models\GazetteIssue::query()
+            ->where('parent_issue_id', $weekly->id)
+            ->where('issue_kind', 'extra')
+            ->where('extra_sequence', 1)
+            ->first();
+        $this->assertNotNull($extra);
+        $this->assertSame($pendingId, (int) \App\Models\News::query()->where('gazette_issue_id', $extra->id)->value('id'));
+    }
+
     public function test_cache_version_bumps_after_news_change(): void
     {
         Cache::put('public.news.cache_version', 3, now()->addHour());

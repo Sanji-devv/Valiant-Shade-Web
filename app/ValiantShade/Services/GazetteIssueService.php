@@ -101,6 +101,11 @@ class GazetteIssueService
     public function archiveList(): array
     {
         $this->syncWeeklyIssues();
+        GazetteIssue::query()
+            ->where('issue_kind', GazetteIssue::KIND_WEEKLY)
+            ->select('id')
+            ->orderBy('id')
+            ->each(fn (GazetteIssue $row) => $this->compactExtraIssuesForParent((int) $row->id));
 
         return GazetteIssue::query()
             ->withCount(['news as article_count' => function ($q) {
@@ -1333,6 +1338,74 @@ class GazetteIssueService
     }
 
     /**
+     * Boş ek sayıları siler; kalanları 2.1, 2.2 … diye yeniden numaralar.
+     */
+    public function compactExtraIssuesForParent(int $parentWeeklyId): void
+    {
+        if (! Schema::hasTable('gazette_issues')) {
+            return;
+        }
+
+        $parent = GazetteIssue::query()->find($parentWeeklyId);
+        if (! $parent || ! $parent->isWeekly()) {
+            return;
+        }
+
+        $extras = GazetteIssue::query()
+            ->where('parent_issue_id', $parent->id)
+            ->where('issue_kind', GazetteIssue::KIND_EXTRA)
+            ->orderBy('extra_sequence')
+            ->orderBy('id')
+            ->get();
+
+        $kept = [];
+        foreach ($extras as $extra) {
+            $hasPublished = News::query()
+                ->where('gazette_issue_id', $extra->id)
+                ->where('status', 'published')
+                ->where('is_active', true)
+                ->exists();
+            $hasPending = News::query()
+                ->where('gazette_issue_id', $extra->id)
+                ->where('status', 'pending')
+                ->exists();
+
+            if (! $hasPublished && ! $hasPending) {
+                $extra->delete();
+
+                continue;
+            }
+            $kept[] = $extra;
+        }
+
+        $seq = 1;
+        foreach ($kept as $extra) {
+            $display = $parent->issue_number.'.'.$seq;
+            $extra->forceFill([
+                'extra_sequence' => $seq,
+                'label' => "Sayı {$display}",
+            ])->saveQuietly();
+            $seq++;
+        }
+    }
+
+    public function afterExtraIssueNewsRemoved(News $news): void
+    {
+        $issueId = (int) ($news->gazette_issue_id ?? 0);
+        if ($issueId <= 0) {
+            return;
+        }
+
+        $issue = GazetteIssue::query()->find($issueId);
+        if (! $issue?->isExtra() || ! $issue->parent_issue_id) {
+            return;
+        }
+
+        $this->compactExtraIssuesForParent((int) $issue->parent_issue_id);
+        $this->publicNews->invalidatePublicFeed();
+    }
+
+    /**
      * Onaylanan flash haberi tek sayfalık ek sayıya (2.1 vb.) bağlar.
      */
     public function promoteFlashNewsToExtraIssue(News $news): GazetteIssue
@@ -1364,9 +1437,13 @@ class GazetteIssueService
             }
         }
 
+        $this->compactExtraIssuesForParent((int) $parent->id);
+
         $nextSeq = (int) GazetteIssue::query()
             ->where('parent_issue_id', $parent->id)
-            ->max('extra_sequence') + 1;
+            ->where('issue_kind', GazetteIssue::KIND_EXTRA)
+            ->max('extra_sequence');
+        $nextSeq = $nextSeq > 0 ? $nextSeq + 1 : 1;
 
         $parts = WorldCalendar::fromDateTime($at) ?? [
             'year' => (int) $parent->year,
