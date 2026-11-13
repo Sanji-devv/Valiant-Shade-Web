@@ -159,6 +159,42 @@ class PublicNewspaperTest extends TestCase
         ]);
     }
 
+    public function test_public_can_submit_rumor_for_upcoming_weekly_issue(): void
+    {
+        $service = app(\App\ValiantShade\Services\GazetteIssueService::class);
+        $service->syncWeeklyIssues();
+        $upcoming = $service->upcomingWeeklyIssue();
+        $this->assertNotNull($upcoming);
+        $this->assertFalse((bool) $upcoming->is_current);
+
+        $response = $this->postJson('/api/public/news/submissions', [
+            'title' => 'Gelecek sayı için planlanan söylenti başlığı',
+            'news_type' => 'guild_rumor',
+            'description' => 'Bu metin gelecek Pazar basılacak sayıya önceden gönderilir; editör onayından sonra o sayıda yer alır.',
+            'gazette_issue_id' => $upcoming->id,
+            'anonymous' => true,
+        ]);
+
+        $response->assertCreated()->assertJsonPath('success', true);
+
+        $this->assertDatabaseHas('news', [
+            'title' => 'Gelecek sayı için planlanan söylenti başlığı',
+            'gazette_issue_id' => $upcoming->id,
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_gazette_archive_lists_upcoming_issue_as_editable(): void
+    {
+        $response = $this->getJson('/api/public/news/gazette-issues');
+        $response->assertOk()->assertJsonPath('success', true);
+
+        $upcoming = collect($response->json('data'))->firstWhere('is_upcoming', true);
+        $this->assertNotNull($upcoming);
+        $this->assertTrue($upcoming['is_editable']);
+        $this->assertFalse($upcoming['is_current']);
+    }
+
     public function test_approved_news_appears_in_public_bootstrap_immediately(): void
     {
         $user = \App\Models\User::factory()->create(['role' => 'ADMIN']);

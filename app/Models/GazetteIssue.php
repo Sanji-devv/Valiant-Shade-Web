@@ -115,7 +115,7 @@ class GazetteIssue extends Model
 
                 return [
                     'key' => (string) ($merged['key'] ?? $def['key'] ?? ''),
-                    'title' => (string) ($merged['title'] ?? $def['title'] ?? 'Köşe'),
+                    'title' => (string) ($def['title'] ?? $merged['title'] ?? 'Köşe'),
                     'rumuz' => isset($merged['rumuz']) && $merged['rumuz'] !== ''
                         ? (string) $merged['rumuz']
                         : null,

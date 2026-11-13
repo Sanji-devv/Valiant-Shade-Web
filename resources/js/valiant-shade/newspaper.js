@@ -2220,6 +2220,9 @@ function submissionTargetIssue() {
 
 function rumorIssueSelectOptionText(issue) {
   const base = issueArchiveOptionText(issue);
+  if (issue.is_editable && issue.is_upcoming) {
+    return `${base} · Gelecek sayı (Pazar)`;
+  }
   if (issue.is_editable) {
     return `${base} · Açık sayı`;
   }
@@ -2233,13 +2236,17 @@ function rumorIssueSelectOptionText(issue) {
 }
 
 function defaultRumorSubmissionIssueId() {
+  const current = (state.issueArchive || []).find((row) => row.is_current && row.is_editable);
+  if (current?.id) {
+    return Number(current.id);
+  }
   const editable = (state.issueArchive || []).find((row) => row.is_editable);
   if (editable?.id) {
     return Number(editable.id);
   }
-  const current = (state.issueArchive || []).find((row) => row.is_current && !row.is_locked);
-  if (current?.id) {
-    return Number(current.id);
+  const currentUnlocked = (state.issueArchive || []).find((row) => row.is_current && !row.is_locked);
+  if (currentUnlocked?.id) {
+    return Number(currentUnlocked.id);
   }
   return activeIssueMeta().id;
 }

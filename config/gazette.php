@@ -87,7 +87,7 @@ return [
         ],
         [
             'key' => 'bahisci',
-            'title' => 'Bahis Köşesi',
+            'title' => 'Maske Düştü',
             'rumuz' => null,
             'body' => null,
         ],

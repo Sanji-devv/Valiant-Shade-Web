@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\Schema;
 
 class GazetteIssueService
 {
+    private ?GazetteIssue $upcomingWeeklyIssueCache = null;
+
+    private bool $upcomingWeeklyIssueResolved = false;
+
     public function __construct(
         private PublicNewsService $publicNews,
     ) {}
@@ -77,7 +81,86 @@ class GazetteIssueService
             ->whereDate('published_on', '!=', $currentSunday->toDateString())
             ->update(['is_current' => false]);
 
+        $this->ensureUpcomingWeeklyIssue($cursor, $number);
+
         $this->lockPastIssues($currentSunday);
+
+        $this->upcomingWeeklyIssueResolved = false;
+        $this->upcomingWeeklyIssueCache = null;
+    }
+
+    /**
+     * Gelecek Pazara ait sayıyı oluşturur; haftalık yayınlamadan önce gönderi alınabilir.
+     */
+    protected function ensureUpcomingWeeklyIssue(Carbon $nextSunday, int $issueNumber): void
+    {
+        $currentSunday = WorldCalendar::anchorSunday(Carbon::now());
+        if ($nextSunday->lte($currentSunday)) {
+            return;
+        }
+
+        $parts = WorldCalendar::issuePartsFromGregorian($nextSunday);
+        if (! $parts) {
+            return;
+        }
+
+        $issue = GazetteIssue::query()->firstOrNew([
+            'issue_number' => $issueNumber,
+            'issue_kind' => GazetteIssue::KIND_WEEKLY,
+        ]);
+        $issue->fill([
+            'issue_kind' => GazetteIssue::KIND_WEEKLY,
+            'parent_issue_id' => null,
+            'extra_sequence' => null,
+            'label' => 'Sayı '.$issueNumber,
+            'year' => $parts['year'],
+            'month' => $parts['month'],
+            'weekday' => $parts['weekday'],
+            'day' => $parts['day'],
+            'published_on' => $nextSunday->toDateString(),
+            'is_current' => false,
+            'corner_columns' => $issue->corner_columns ?? $this->defaultCornerColumns(),
+            'editorial_note' => $issue->editorial_note ?? (string) config('gazette.schedule', ''),
+        ]);
+        if (! $issue->exists) {
+            $issue->corner_columns = $this->defaultCornerColumns();
+        }
+        $issue->save();
+    }
+
+    public function upcomingWeeklyIssue(): ?GazetteIssue
+    {
+        if ($this->upcomingWeeklyIssueResolved) {
+            return $this->upcomingWeeklyIssueCache;
+        }
+
+        $this->syncWeeklyIssues();
+
+        $nextSunday = WorldCalendar::anchorSunday(Carbon::now())->addWeek();
+
+        $this->upcomingWeeklyIssueCache = GazetteIssue::query()
+            ->where('issue_kind', GazetteIssue::KIND_WEEKLY)
+            ->whereDate('published_on', $nextSunday->toDateString())
+            ->where('is_locked', false)
+            ->first();
+        $this->upcomingWeeklyIssueResolved = true;
+
+        return $this->upcomingWeeklyIssueCache;
+    }
+
+    public function issueAcceptsSubmissions(GazetteIssue $issue): bool
+    {
+        if ($issue->isLocked() || $issue->isExtra()) {
+            return false;
+        }
+
+        if ($issue->is_current) {
+            return true;
+        }
+
+        $upcoming = $this->upcomingWeeklyIssue();
+
+        return $upcoming && (int) $upcoming->id === (int) $issue->id;
     }
 
     protected function firstIssueSunday(): Carbon
@@ -116,7 +199,7 @@ class GazetteIssueService
             ->orderByDesc('extra_sequence')
             ->get()
             ->map(function (GazetteIssue $issue) {
-                $withCorners = (bool) $issue->is_current && ! $issue->isLocked();
+                $withCorners = $this->issueAcceptsSubmissions($issue);
 
                 return $this->transformIssue($issue, $withCorners);
             })
@@ -407,6 +490,9 @@ class GazetteIssueService
         $isPublished = $articleCount > 0;
         $isCurrent = (bool) $issue->is_current;
         $isLocked = (bool) $issue->is_locked;
+        $upcoming = $this->upcomingWeeklyIssue();
+        $isUpcoming = $upcoming && (int) $upcoming->id === (int) $issue->id;
+        $acceptsSubmissions = $this->issueAcceptsSubmissions($issue);
         $isSelectable = $issue->isExtra()
             ? $isPublished
             : ($isPublished || $isCurrent || $isLocked);
@@ -444,7 +530,8 @@ class GazetteIssueService
             'is_extra' => $issue->isExtra(),
             'is_current' => $isCurrent,
             'is_locked' => $isLocked,
-            'is_editable' => $isCurrent && ! $isLocked,
+            'is_upcoming' => $isUpcoming,
+            'is_editable' => $acceptsSubmissions,
             'is_published' => $isPublished,
             'is_selectable' => $isSelectable,
             'article_count' => $articleCount,

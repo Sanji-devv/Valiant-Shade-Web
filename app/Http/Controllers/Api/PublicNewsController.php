@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\GazetteIssue;
 use App\Models\News;
 use App\ValiantShade\Support\GazetteEditorGate;
 use App\ValiantShade\Support\GazetteNewsImage;
@@ -138,17 +139,22 @@ class PublicNewsController extends Controller
         $targetIssue = $this->gazetteIssues->currentEditableIssue();
 
         if ($requestedIssueId && (int) $requestedIssueId !== (int) $targetIssue->id) {
-            if ($this->gazetteIssues->issueIsLocked($requestedIssueId)) {
+            $requestedIssue = GazetteIssue::query()->find($requestedIssueId);
+            if (! $requestedIssue || ! $this->gazetteIssues->issueAcceptsSubmissions($requestedIssue)) {
+                if ($this->gazetteIssues->issueIsLocked($requestedIssueId)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Bu gazete sayısı yayımlandı; yeni gönderi yalnızca açık sayıya yapılabilir.',
+                    ], 422);
+                }
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'Bu gazete sayısı yayımlandı; yeni gönderi yalnızca açık sayıya yapılabilir.',
+                    'message' => 'Gönderiler yalnızca güncel veya gelecek haftanın açık sayısına alınır.',
                 ], 422);
             }
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Gönderiler yalnızca düzenlenmekte olan güncel sayıya alınır.',
-            ], 422);
+            $targetIssue = $requestedIssue;
         }
 
         $slotKind = $data['gazette_slot_kind'] ?? null;
