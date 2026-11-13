@@ -11,6 +11,20 @@ use Tests\TestCase;
 class ValiantShadeTest extends TestCase
 {
     use RefreshDatabase;
+    public function test_home_page_has_public_seo_and_favicon(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertOk()
+            ->assertSee('<title>'.config('seo.home.title').'</title>', false)
+            ->assertSee('name="description"', false)
+            ->assertSee(config('seo.home.description'), false)
+            ->assertSee('rel="canonical"', false)
+            ->assertSee('rel="icon"', false)
+            ->assertSee(url('/favicon.ico'), false)
+            ->assertSee('application/ld+json', false);
+    }
+
     public function test_home_page_beta_links_to_valiant_shade_panel(): void
     {
         $response = $this->get('/');

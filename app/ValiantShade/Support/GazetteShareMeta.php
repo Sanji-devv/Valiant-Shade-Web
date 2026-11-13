@@ -41,8 +41,10 @@ final class GazetteShareMeta
             ];
         }
 
+        $suffix = (string) config('seo.gazette.title_suffix', config('seo.site_name', 'Valiant Shade'));
+
         return [
-            'title' => "{$brandTitle} · ".config('app.name', 'Valiant Shade'),
+            'title' => "{$brandTitle} · {$suffix}",
             'description' => $defaultDescription,
             'image' => $defaultImage,
             'url' => self::shareUrl($request),

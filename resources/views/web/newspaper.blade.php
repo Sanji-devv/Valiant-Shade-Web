@@ -24,21 +24,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $share['title'] }}</title>
-    <meta name="description" content="{{ $share['description'] }}">
-    <link rel="canonical" href="{{ $share['url'] }}">
-    <meta property="og:site_name" content="{{ $gazetteTitle }}">
-    <meta property="og:locale" content="tr_TR">
-    <meta property="og:title" content="{{ $share['title'] }}">
-    <meta property="og:description" content="{{ $share['description'] }}">
-    <meta property="og:url" content="{{ $share['url'] }}">
-    <meta property="og:type" content="{{ $share['type'] }}">
-    <meta property="og:image" content="{{ $share['image'] }}">
-    <meta property="og:image:secure_url" content="{{ $share['image'] }}">
-    <meta property="og:image:alt" content="{{ $share['image_alt'] }}">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ $share['title'] }}">
-    <meta name="twitter:description" content="{{ $share['description'] }}">
-    <meta name="twitter:image" content="{{ $share['image'] }}">
+    @include('web.partials.head-favicon')
+    @include('web.partials.head-public-seo', [
+        'title' => $share['title'],
+        'description' => $share['description'],
+        'canonical' => $share['url'],
+        'ogSiteName' => $gazetteTitle,
+        'ogType' => $share['type'],
+        'ogImage' => $share['image'],
+        'ogImageAlt' => $share['image_alt'],
+    ])
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=IM+Fell+English:ital@0;1&family=Newsreader:ital,opsz,wght@0,12..72,400;0,12..72,600;0,12..72,700;1,12..72,400&display=swap" rel="stylesheet">

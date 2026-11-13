@@ -23,7 +23,9 @@ class PublicNewspaperTest extends TestCase
             ->assertSee('Lağımdan Sesler')
             ->assertSee('href="'.$mainSiteUrl.'"', false)
             ->assertSee('property="og:image"', false)
-            ->assertSee('property="og:description"', false);
+            ->assertSee('property="og:description"', false)
+            ->assertSee(url('/favicon.ico'), false)
+            ->assertSee(config('seo.gazette.title_suffix'), false);
     }
 
     public function test_local_home_page_links_to_the_same_host_gazette_route(): void

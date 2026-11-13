@@ -9,6 +9,11 @@
     $imgMonster = asset('static/valiant-shade/assets/img/news/guild_dragon_quest.jpg');
     $imgMap = asset('static/valiant-shade/world/feldan-kralligi-preview.webp');
     $imgRecords = asset('static/valiant-shade/assets/img/news/guild_treasury_vault.jpg');
+
+    $pageTitle = (string) config('seo.home.title');
+    $pageDescription = (string) config('seo.home.description');
+    $canonicalUrl = rtrim((string) config('app.url'), '/') . '/';
+    $ogImage = asset((string) config('seo.home.og_image'));
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -16,7 +21,26 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#1a1520">
-    <title>{{ config('app.name', 'Valiant Shade') }}</title>
+    <title>{{ $pageTitle }}</title>
+    @include('web.partials.head-favicon')
+    @include('web.partials.head-public-seo', [
+        'title' => $pageTitle,
+        'description' => $pageDescription,
+        'keywords' => config('seo.home.keywords'),
+        'canonical' => $canonicalUrl,
+        'ogImage' => $ogImage,
+        'ogImageAlt' => config('seo.site_name'),
+    ])
+    <script type="application/ld+json">
+        {!! json_encode([
+            '@context' => 'https://schema.org',
+            '@type' => 'WebSite',
+            'name' => config('seo.site_name'),
+            'url' => $canonicalUrl,
+            'description' => $pageDescription,
+            'inLanguage' => 'tr-TR',
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) !!}
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Public+Sans:wght@500;600&display=swap" rel="stylesheet">
