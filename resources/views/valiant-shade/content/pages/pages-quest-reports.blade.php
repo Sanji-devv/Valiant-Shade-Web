@@ -679,14 +679,9 @@
       </div>
 
       <div class="d-flex align-items-center gap-2 flex-wrap">
-        <!-- Google Sheet Default Reset -->
-        <button type="button" class="btn btn-outline-warning btn-sm" id="btnResetToMasterDefaults" title="{{ __('Reset to Google Sheet Original 32 Rows') }}">
-          <i class="icon-base ti tabler-refresh me-1"></i> {{ __('Reset Sheet') }}
-        </button>
-
         @if(auth()->user()?->isAdmin())
         <button type="button" class="btn btn-outline-danger btn-sm" id="btnClearQuestReports">
-          <i class="icon-base ti tabler-trash me-1"></i> Tüm Raporları Sil
+          Tüm Raporları Sil
         </button>
         @endif
 
@@ -2679,7 +2674,6 @@ document.addEventListener('DOMContentLoaded', function () {
   const sortSelect = document.getElementById('reportsSortSelect');
   const btnResetFilters = document.getElementById('btnResetReportsFilters');
   const btnEmptyResetFilters = document.getElementById('btnEmptyResetFilters');
-  const btnResetToMasterDefaults = document.getElementById('btnResetToMasterDefaults');
   const btnImportQuestReports = document.getElementById('btnImportQuestReports');
   const btnClearQuestReports = document.getElementById('btnClearQuestReports');
   const questReportsJsonFile = document.getElementById('questReportsJsonFile');
@@ -3762,66 +3756,6 @@ document.addEventListener('DOMContentLoaded', function () {
     btnModalDistributeXp.addEventListener('click', function () {
       if (currentDetailReportId) {
         distributeReportXp(currentDetailReportId);
-      }
-    });
-  }
-
-  // ====================================================
-  // 6. RESET TO GOOGLE SHEET DEFAULTS
-  // ====================================================
-  if (btnResetToMasterDefaults) {
-    btnResetToMasterDefaults.addEventListener('click', function () {
-      if (window.Swal) {
-        Swal.fire({
-          title: '{{ __("Reset to Google Sheet Data?") }}',
-          text: '{{ __("All custom added reports will be removed and your table will be reset to Google Sheet original 32 rows.") }}',
-          icon: 'warning',
-          showCancelButton: true,
-          confirmButtonColor: '#f59e0b',
-          cancelButtonColor: '#82868b',
-          confirmButtonText: '{{ __("Yes, Reset!") }}',
-          cancelButtonText: '{{ __("Cancel") }}'
-        }).then((result) => {
-          if (result.isConfirmed) {
-            executeResetToDefaults();
-          }
-        });
-      } else {
-        if (confirm('{{ __("Reset to Master Sheet data?") }}')) {
-          executeResetToDefaults();
-        }
-      }
-
-      function executeResetToDefaults() {
-        fetch('{{ route("valiant-shade.pages-quest-reports.reset-defaults") }}', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')?.value
-          }
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (!data.success) {
-            alert('{{ __("Reset failed.") }}');
-            return;
-          }
-          reportsData = data.reports;
-          currentPage = 1;
-          updateStatsDom(data.stats);
-          renderTable();
-
-          if (window.Swal) {
-            Swal.fire({
-              icon: 'success',
-              title: '{{ __("Table Reset!") }}',
-              text: '{{ __("Quest Reports table was successfully reset to Master Sheet data (1,528 reports).") }}',
-              timer: 2000,
-              showConfirmButton: false
-            });
-          }
-        });
       }
     });
   }

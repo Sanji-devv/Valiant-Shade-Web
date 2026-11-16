@@ -8,6 +8,7 @@ use App\ValiantShade\Services\QuestReportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class QuestReportsRequirementsTest extends TestCase
@@ -244,7 +245,9 @@ class QuestReportsRequirementsTest extends TestCase
         $questId = DB::table('quests')->insertGetId(['title' => 'Reset Quest']);
         DB::table('quest_participants')->insert(['quest_id' => $questId, 'character_id' => $characterId]);
 
-        $this->actingAs($admin)->get('/valiant-shade/pages/quest-reports')->assertSee('btnClearQuestReports');
+        $page = $this->actingAs($admin)->get('/valiant-shade/pages/quest-reports');
+        $page->assertSee('btnClearQuestReports')->assertDontSee('btnResetToMasterDefaults');
+        $this->assertMatchesRegularExpression('/id="btnClearQuestReports">\s*Tüm Raporları Sil\s*<\/button>/u', $page->getContent());
         $this->actingAs($admin)->deleteJson('/valiant-shade/pages/quest-reports')->assertOk()->assertJsonPath('success', true);
 
         $this->assertSame([], $this->service->getAllReportsData());
@@ -269,6 +272,19 @@ class QuestReportsRequirementsTest extends TestCase
         $this->actingAs($admin)->deleteJson('/valiant-shade/pages/quest-reports')->assertOk();
         $this->actingAs($admin)->get('/valiant-shade/pages/xp-tracker')->assertOk();
         $this->assertSame(0, DB::table('player_xps')->count());
+    }
+
+    public function test_clear_succeeds_when_legacy_character_xp_table_is_missing(): void
+    {
+        Schema::drop('character_xp');
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        DB::table('player_xps')->insert(['character_name' => 'Reset Character', 'level' => 3, 'total_xp' => 4000]);
+        DB::table('quests')->insert(['title' => 'Reset Quest']);
+
+        $this->actingAs($admin)->deleteJson('/valiant-shade/pages/quest-reports')->assertOk()->assertJsonPath('success', true);
+        $this->assertSame([], $this->service->getAllReportsData());
+        $this->assertDatabaseMissing('quests', ['title' => 'Reset Quest']);
+        $this->assertDatabaseHas('player_xps', ['character_name' => 'Reset Character', 'level' => 1, 'total_xp' => 0]);
     }
 
     public function test_clear_rolls_back_database_if_archive_write_fails(): void

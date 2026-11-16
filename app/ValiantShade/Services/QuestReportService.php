@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Database\Seeders\QuestReportsSeeder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
@@ -174,16 +175,20 @@ class QuestReportService
                     'wiki_xp' => 0,
                     'updated_at' => now(),
                 ]);
-                DB::table('character_xp')->update([
-                    'current_level' => 1,
-                    'total_xp' => 0,
-                    'quest_xp' => 0,
-                    'report_xp' => 0,
-                    'bailiff_xp' => 0,
-                    'ex_char_xp' => 0,
-                    'wiki_xp' => 0,
-                    'updated_at' => now(),
-                ]);
+                if (Schema::hasTable('character_xp')) {
+                    DB::table('character_xp')->update([
+                        'current_level' => 1,
+                        'total_xp' => 0,
+                        'quest_xp' => 0,
+                        'report_xp' => 0,
+                        'bailiff_xp' => 0,
+                        'ex_char_xp' => 0,
+                        'wiki_xp' => 0,
+                        'updated_at' => now(),
+                    ]);
+                } else {
+                    Log::info('Görev raporları temizlenirken isteğe bağlı character_xp tablosu bulunamadı.');
+                }
                 DB::table('user_xp')->update([
                     'total_xp' => 0,
                     'ex_char_xp' => 0,
