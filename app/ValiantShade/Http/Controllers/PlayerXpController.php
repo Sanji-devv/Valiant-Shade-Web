@@ -240,6 +240,22 @@ class PlayerXpController extends Controller
         ]);
     }
 
+    public function linkReports(QuestReportService $reports): JsonResponse
+    {
+        $result = $reports->linkHistoricalXp();
+
+        return response()->json([
+            'success' => true,
+            'message' => __(':reports reports linked, :entries participant records saved. :unresolved participants and :skipped reports need review; existing XP totals were not changed.', [
+                'reports' => $result['reports'],
+                'entries' => $result['entries'],
+                'unresolved' => count($result['unresolved']),
+                'skipped' => count($result['skipped']),
+            ]),
+            ...$result,
+        ]);
+    }
+
     /**
      * Quick XP Award to an adventurer.
      */

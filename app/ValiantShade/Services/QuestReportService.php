@@ -236,6 +236,97 @@ class QuestReportService
         return $this->withArchiveLock(fn () => app(PlayerXpImportService::class)->import($path));
     }
 
+    public function linkHistoricalXp(): array
+    {
+        return $this->withArchiveLock(function (): array {
+            $this->requireReportXpEntries();
+            if (! Schema::hasTable('quest_report_xp_distributions')) {
+                throw ValidationException::withMessages([
+                    'xp' => __('Run database migrations before linking quest report XP.'),
+                ]);
+            }
+
+            $reports = $this->getAllReportsData();
+            return DB::transaction(function () use ($reports): array {
+                $quests = Quest::all()->keyBy('id');
+                $byIdentity = $quests->groupBy(fn ($quest) => $this->reportIdentity(
+                    $quest->title,
+                    $quest->quest_date?->format('Y-m-d') ?? ''
+                ));
+                $mapped = [];
+                $skipped = [];
+                foreach ($reports as $report) {
+                    $id = $report['id'] ?? '?';
+                    if (! empty($report['quest_id'])) {
+                        $quest = $quests->get($report['quest_id']);
+                    } else {
+                        $matches = $byIdentity->get($this->reportIdentity(
+                            (string) ($report['title'] ?? ''),
+                            (string) ($report['date'] ?? '')
+                        ), collect());
+                        $quest = $matches->count() === 1 ? $matches->first() : null;
+                    }
+                    if (! $quest) {
+                        $skipped[] = $id;
+                        continue;
+                    }
+                    $mapped[$quest->id][] = $report;
+                }
+
+                $distributions = DB::table('quest_report_xp_distributions')->lockForUpdate()->get()->keyBy('quest_id');
+                $links = app(QuestReportXpLinkService::class);
+                $indexes = $links->indexes();
+                $count = 0;
+                $entries = 0;
+                $unresolved = [];
+                foreach ($mapped as $questId => $group) {
+                    if (count($group) !== 1) {
+                        foreach ($group as $report) {
+                            $skipped[] = $report['id'] ?? '?';
+                        }
+                        continue;
+                    }
+                    $report = $group[0];
+                    $distribution = $distributions->get($questId);
+                    try {
+                        $awards = $distribution ? json_decode($distribution->awards, true, 512, JSON_THROW_ON_ERROR) : [];
+                    } catch (\JsonException) {
+                        throw ValidationException::withMessages(['xp' => __('The quest XP distribution record is invalid.')]);
+                    }
+                    if (! is_array($awards) || ! array_is_list($awards)) {
+                        throw ValidationException::withMessages(['xp' => __('The quest XP distribution record is invalid.')]);
+                    }
+                    $state = ! $distribution ? 'historical' : ($awards === [] ? 'pending' : 'distributed');
+                    try {
+                        $result = $links->sync($quests[$questId], $report, $state, $indexes, $awards);
+                    } catch (ValidationException $exception) {
+                        if ($state === 'distributed') {
+                            throw $exception;
+                        }
+                        $skipped[] = $report['id'] ?? '?';
+                        continue;
+                    }
+                    $count++;
+                    $entries += $result['entries'];
+                    foreach ($result['unresolved'] as $name) {
+                        $unresolved[] = ['report_id' => $report['id'] ?? '?', 'name' => $name];
+                    }
+                }
+
+                return ['reports' => $count, 'entries' => $entries, 'unresolved' => $unresolved, 'skipped' => $skipped];
+            });
+        });
+    }
+
+    private function requireReportXpEntries(): void
+    {
+        if (! Schema::hasTable('quest_report_xp_entries')) {
+            throw ValidationException::withMessages([
+                'xp' => __('Run database migrations before using quest report XP.'),
+            ]);
+        }
+    }
+
     public function clearReportsAndPlayerXp(): void
     {
         $this->withArchiveLock(fn () => $this->clearReportsAndPlayerXpLocked());
@@ -332,6 +423,7 @@ class QuestReportService
 
     private function importReportsLocked(array $rows): array
     {
+        $this->requireReportXpEntries();
         if (! Schema::hasTable('quests') || ! Schema::hasTable('quest_participants')) {
             throw new \RuntimeException('Görev raporları tabloları bulunamadı. Önce veritabanı migration işlemlerini çalıştırın.');
         }
@@ -364,20 +456,13 @@ class QuestReportService
             }
         }
 
-        $characterNames = [];
-        foreach ($rows as $row) {
-            if (! is_array($row)) {
-                continue;
-            }
-            $characterNames[] = trim((string) ($row['GM'] ?? ''));
-            $characterNames[] = trim((string) ($row['Raporlayan'] ?? ''));
-            foreach ($this->importParticipantNames($row) as $name) {
-                $characterNames[] = $name;
-            }
-        }
-        $characters = Character::whereIn('name', array_values(array_unique(array_filter($characterNames))))
-            ->get()
-            ->keyBy('name');
+        $xpLinks = app(QuestReportXpLinkService::class);
+        $xpIndexes = $xpLinks->indexes();
+        $uniqueCharacter = static function (string $name) use ($xpIndexes): ?Character {
+            $matches = $xpIndexes['characters']->get(mb_strtolower(trim($name)), collect());
+
+            return $matches->count() === 1 ? $matches->first() : null;
+        };
 
         $imported = 0;
         $skipped = 0;
@@ -392,7 +477,9 @@ class QuestReportService
             &$skipped,
             &$seenIncoming,
             &$archiveChanged,
-            $characters
+            $uniqueCharacter,
+            $xpLinks,
+            $xpIndexes
         ): void {
             foreach ($rows as $row) {
                 if (! is_array($row) || trim((string) ($row['Görev adı'] ?? '')) === '') {
@@ -476,8 +563,8 @@ class QuestReportService
                 ], $computed);
 
                 $gmName = trim((string) ($row['GM'] ?? ''));
-                $gmCharacter = $characters->get($gmName);
-                $reporterCharacter = $characters->get($reporter);
+                $gmCharacter = $uniqueCharacter($gmName);
+                $reporterCharacter = $uniqueCharacter($reporter);
                 $quest = Quest::create([
                     'title' => $title,
                     'quest_date' => $databaseDate,
@@ -499,7 +586,7 @@ class QuestReportService
 
                 $participants = [];
                 foreach (array_unique(array_merge([$reporter], $otherPlayers)) as $name) {
-                    $character = $characters->get($name);
+                    $character = $uniqueCharacter($name);
                     if (! $character) {
                         continue;
                     }
@@ -518,6 +605,7 @@ class QuestReportService
                 if ($participants) {
                     QuestParticipant::insert(array_values($participants));
                 }
+                $xpLinks->sync($quest, $report, 'historical', $xpIndexes);
 
                 $questGroups[$baseKey][] = $quest->id;
                 if ($existingIndex !== null) {
@@ -795,6 +883,7 @@ class QuestReportService
 
     private function createReportLocked(array $data, ?array &$distribution): array
     {
+        $this->requireReportXpEntries();
         if (! Schema::hasTable('quests') || ! Schema::hasTable('quest_participants') ||
             ! Schema::hasTable('quest_report_xp_distributions')) {
             throw new \RuntimeException('Görev ve XP dağıtım tabloları bulunamadı. Veritabanı migration işlemlerini çalıştırın.');
@@ -855,6 +944,14 @@ class QuestReportService
                     $participants = $this->ensureReportParticipants($quest, $newReport);
                     $this->syncReportParticipants($quest, $newReport, $participants);
                 }
+                $links = app(QuestReportXpLinkService::class);
+                $links->sync(
+                    $quest,
+                    $newReport,
+                    $distribution ? 'distributed' : 'pending',
+                    $links->indexes(),
+                    $distribution['players_awarded'] ?? []
+                );
             }
 
             array_unshift($all, $newReport);
@@ -914,6 +1011,9 @@ class QuestReportService
         ], $computed);
 
         $qRecord = $this->findReportQuest($existing);
+        if ($qRecord) {
+            $this->requireReportXpEntries();
+        }
         $xpWarning = null;
         $unlinkedPlayers = [];
         $this->transactionWithArchive(function (callable $saveReports) use ($qRecord, &$updated, &$xpWarning, &$unlinkedPlayers, $dbQuestDate, $foundIndex, $all): void {
@@ -947,6 +1047,9 @@ class QuestReportService
                 } else {
                     $xpWarning = 'Bu eski raporun XP dağıtımı doğrulanamadığı için karakter XP’leri değiştirilmedi.';
                 }
+                $links = app(QuestReportXpLinkService::class);
+                $state = ! $distribution ? 'historical' : ($awards === [] ? 'pending' : 'distributed');
+                $links->sync($qRecord, $updated, $state, $links->indexes(), $result['players_awarded'] ?? []);
             } else {
                 $xpWarning = 'Bu eski raporun XP dağıtımı doğrulanamadığı için karakter XP’leri değiştirilmedi.';
             }
@@ -1012,6 +1115,9 @@ class QuestReportService
 
         if (count($filtered) !== $originalCount) {
             $qRecord = $this->findReportQuest($toDelete);
+            if ($qRecord) {
+                $this->requireReportXpEntries();
+            }
             $this->transactionWithArchive(function (callable $saveReports) use ($qRecord, $filtered, &$xpWarning): void {
                 if ($qRecord) {
                     $qRecord = Quest::whereKey($qRecord->id)->lockForUpdate()->firstOrFail();
@@ -1025,6 +1131,7 @@ class QuestReportService
                     if (Schema::hasTable('quest_participants')) {
                         QuestParticipant::where('quest_id', $qRecord->id)->delete();
                     }
+                    DB::table('quest_report_xp_entries')->where('quest_id', $qRecord->id)->delete();
                     $qRecord->delete();
                 } else {
                     $xpWarning = 'Eski raporun XP dağıtımı doğrulanamadığı için karakter XP’leri değiştirilmedi.';
@@ -1080,6 +1187,7 @@ class QuestReportService
         if (! $quest) {
             throw new \InvalidArgumentException('Raporun görev kaydı bulunamadı; XP dağıtımı doğrulanamıyor.');
         }
+        $this->requireReportXpEntries();
 
         return DB::transaction(function () use ($quest, $report): array {
             $quest = Quest::whereKey($quest->id)->lockForUpdate()->firstOrFail();
@@ -1091,7 +1199,11 @@ class QuestReportService
                 throw new \InvalidArgumentException('Bu raporun XP’si zaten dağıtılmış.');
             }
 
-            return $this->applyReportAwards($quest, $report);
+            $result = $this->applyReportAwards($quest, $report);
+            $links = app(QuestReportXpLinkService::class);
+            $links->sync($quest, $report, 'distributed', $links->indexes(), $result['players_awarded']);
+
+            return $result;
         });
     }
 

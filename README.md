@@ -24,7 +24,9 @@ Administrators can upload the JSON using **Import Data** on the XP Tracker, or r
 
 Administrators can use **Delete All XP Records** to clear the tracker without deleting characters or quest reports. Deletion is blocked if records are linked to distributed quest XP. Records are soft-deleted, and an empty tracker is not automatically repopulated with sample data.
 
-The quest XP distribution and guild settings tables must be present before importing or clearing XP records. Run the application's database migrations as part of deployment.
+Run `php artisan migrate --force` as part of deployment to create the quest XP distribution, report XP entry, and guild settings tables.
+
+After importing quest reports and XP Tracker records, administrators can use **Link Report XP** on the XP Tracker to link existing reports to uniquely matching characters and tracker records. Repeat this after importing or correcting records. Historical amounts are snapshots only: they are unverified and do not change existing XP totals. Missing or ambiguous matches and reports without a unique quest are reported for review; the response includes the complete lists. New reports maintain their links when XP is pending, distributed, edited, or deleted.
 - [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.

@@ -169,6 +169,11 @@ class Character extends BaseModel
         return $this->hasMany(QuestParticipant::class, 'character_id');
     }
 
+    public function reportXpEntries(): HasMany
+    {
+        return $this->hasMany(QuestReportXpEntry::class);
+    }
+
     public function quests(): BelongsToMany
     {
         return $this->belongsToMany(Quest::class, 'quest_participants')

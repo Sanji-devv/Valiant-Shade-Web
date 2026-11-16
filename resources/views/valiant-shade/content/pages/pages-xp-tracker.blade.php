@@ -164,6 +164,9 @@
         <button type="button" class="btn btn-label-info btn-sm rounded-pill waves-effect shadow-xs" id="btnImportXp">
           <i class="icon-base ti tabler-database-import me-1"></i> {{ __('Import Data') }}
         </button>
+        <button type="button" class="btn btn-label-info btn-sm rounded-pill waves-effect shadow-xs" id="btnLinkReportXp">
+          <i class="icon-base ti tabler-link me-1"></i> {{ __('Link Report XP') }}
+        </button>
         <button type="button" class="btn btn-label-danger btn-sm rounded-pill waves-effect shadow-xs" id="btnClearXp">
           <i class="icon-base ti tabler-trash me-1"></i> {{ __('Delete All XP Records') }}
         </button>
@@ -1144,6 +1147,10 @@ document.addEventListener('DOMContentLoaded', function() {
     importSuccess: @json(__('Data Imported')),
     importFailure: @json(__('Data import failed')),
     serverError: @json(__('The server could not process the request. Check the application logs.')),
+    linkTitle: @json(__('Link historical report XP?')),
+    linkText: @json(__('Report participants will be matched to unique existing character and XP records. Existing XP totals will not change; ambiguous matches require review.')),
+    linkUnresolved: @json(__('Unresolved participants:')),
+    linkSkipped: @json(__('Skipped report IDs:')),
     deletedTitle: @json(__('Deleted!')),
     levelPrefix: @json(__('Level ')),
     maximum: @json(__('Maximum')),
@@ -2099,6 +2106,54 @@ document.addEventListener('DOMContentLoaded', function() {
       } finally {
         btnImportXp.disabled = false;
         xpTrackerJsonFile.value = '';
+      }
+    });
+  }
+
+  const btnLinkReportXp = document.getElementById('btnLinkReportXp');
+  if (btnLinkReportXp) {
+    btnLinkReportXp.addEventListener('click', async function() {
+      const confirmation = await Swal.fire({
+        title: i18n.linkTitle,
+        text: i18n.linkText,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: i18n.confirm,
+        cancelButtonText: i18n.cancel
+      });
+      if (!confirmation.isConfirmed) return;
+      btnLinkReportXp.disabled = true;
+      try {
+        const response = await fetch("{{ route('valiant-shade.pages-xp-tracker.link-reports') }}", {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+          }
+        });
+        const data = await readXpResponse(response);
+        const unresolved = data.unresolved.map(item => `#${item.report_id}: ${item.name}`);
+        const skipped = data.skipped.map(id => `#${id}`);
+        const details = [
+          data.message,
+          unresolved.length ? `${i18n.linkUnresolved}\n${unresolved.join('\n')}` : '',
+          skipped.length ? `${i18n.linkSkipped}\n${skipped.join(', ')}` : ''
+        ].filter(Boolean).join('\n\n');
+        await Swal.fire({
+          icon: data.unresolved.length || data.skipped.length ? 'warning' : 'success',
+          title: i18n.successTitle,
+          text: details,
+          didOpen: () => {
+            const content = Swal.getHtmlContainer();
+            content.style.whiteSpace = 'pre-line';
+            content.style.maxHeight = '50vh';
+            content.style.overflowY = 'auto';
+          }
+        });
+      } catch (error) {
+        await Swal.fire({ icon: 'error', title: i18n.errorTitle, text: error.message || i18n.networkError });
+      } finally {
+        btnLinkReportXp.disabled = false;
       }
     });
   }

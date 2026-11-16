@@ -121,7 +121,7 @@ class PlayerXpRepository implements PlayerXpRepositoryInterface
 
     public function truncate(): void
     {
-        PlayerXp::truncate();
+        PlayerXp::withTrashed()->forceDelete();
     }
 
     public function getStatistics(): array

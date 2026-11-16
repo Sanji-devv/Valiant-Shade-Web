@@ -211,6 +211,16 @@ class QuestReportsRequirementsTest extends TestCase
             ->assertOk()->assertJsonPath('report.level', 11)->assertJsonPath('report.total_xp', 3250)
             ->assertJsonPath('distribution.xp_per_player', 1381);
         $id = $created->json('report.id');
+        $questId = $created->json('report.quest_id');
+        $this->assertDatabaseHas('quest_report_xp_entries', [
+            'quest_id' => $questId, 'participant_name' => 'Level Ten', 'state' => 'distributed',
+            'quest_xp' => 1381, 'report_xp' => 325,
+        ]);
+        $this->actingAs($admin)->postJson('/valiant-shade/pages/xp-tracker/link-reports')->assertOk();
+        $this->assertDatabaseHas('quest_report_xp_entries', [
+            'quest_id' => $questId, 'participant_name' => 'Level Ten', 'state' => 'distributed',
+            'quest_xp' => 1381, 'report_xp' => 325,
+        ]);
 
         $this->assertDatabaseHas('player_xps', ['character_name' => 'Level Ten', 'mission_xp' => 72381, 'report_xp' => 325, 'total_xp' => 72706]);
         $this->assertDatabaseHas('characters', ['name' => 'Level Eleven', 'quest_xp' => 106381, 'total_xp' => 106381]);
@@ -228,9 +238,12 @@ class QuestReportsRequirementsTest extends TestCase
         $this->assertDatabaseHas('characters', ['name' => 'Level Eleven', 'quest_xp' => 105000, 'total_xp' => 105000]);
         $this->assertDatabaseHas('player_xps', ['character_name' => 'Level Ten', 'mission_xp' => 71850, 'report_xp' => 200, 'total_xp' => 72050]);
         $this->assertDatabaseHas('player_xps', ['character_name' => 'New Adventurer', 'player_name' => 'Unknown 16.11.2026 1', 'mission_xp' => 850]);
+        $this->assertDatabaseMissing('quest_report_xp_entries', ['quest_id' => $questId, 'participant_name' => 'Level Eleven']);
+        $this->assertDatabaseHas('quest_report_xp_entries', ['quest_id' => $questId, 'participant_name' => 'New Adventurer', 'state' => 'distributed']);
 
         $this->actingAs($admin)->deleteJson("/valiant-shade/pages/quest-reports/{$id}")->assertOk();
         $this->assertDatabaseMissing('quest_report_xp_distributions', ['quest_id' => $created->json('report.quest_id')]);
+        $this->assertDatabaseMissing('quest_report_xp_entries', ['quest_id' => $questId]);
         $this->assertDatabaseHas('player_xps', ['character_name' => 'Level Ten', 'mission_xp' => 71000, 'report_xp' => 0, 'total_xp' => 71000]);
         $this->assertDatabaseHas('player_xps', ['character_name' => 'New Adventurer', 'mission_xp' => 0, 'total_xp' => 0]);
     }
@@ -318,6 +331,9 @@ class QuestReportsRequirementsTest extends TestCase
             'distribute_xp_auto' => false,
         ];
         $created = $this->actingAs($admin)->postJson('/valiant-shade/pages/quest-reports', $payload)->assertOk();
+        $this->assertDatabaseHas('quest_report_xp_entries', [
+            'quest_id' => $created->json('report.quest_id'), 'participant_name' => 'Prior Orphan', 'state' => 'pending',
+        ]);
         $character = Character::where('name', 'Prior Orphan')->firstOrFail();
         $player = PlayerXp::where('character_name', 'Prior Orphan')->firstOrFail();
         $this->assertSame($character->user_id, $player->user_id);
@@ -331,6 +347,9 @@ class QuestReportsRequirementsTest extends TestCase
 
         $url = '/valiant-shade/pages/quest-reports/'.$created->json('report.id');
         $this->actingAs($admin)->postJson($url.'/distribute-xp')->assertOk();
+        $this->assertDatabaseHas('quest_report_xp_entries', [
+            'quest_id' => $created->json('report.quest_id'), 'participant_name' => 'Prior Orphan', 'state' => 'distributed',
+        ]);
         $this->assertDatabaseHas('characters', ['id' => $character->id, 'total_xp' => 5394]);
         $this->actingAs($admin)->deleteJson($url)->assertOk();
         $this->assertDatabaseHas('characters', ['id' => $character->id, 'total_xp' => 5000, 'quest_xp' => 1000, 'report_xp' => 300]);
@@ -437,10 +456,156 @@ class QuestReportsRequirementsTest extends TestCase
             $this->assertDatabaseCount('characters', 0);
             $this->assertDatabaseMissing('users', ['name' => 'Unknown 16.11.2026 1']);
             $this->assertDatabaseCount('quest_report_xp_distributions', 0);
+            $this->assertDatabaseCount('quest_report_xp_entries', 0);
         } finally {
             unlink($path);
             unlink($path.'.lock');
         }
+    }
+
+    public function test_historical_report_links_are_idempotent_and_preserve_existing_xp(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        $owner = User::factory()->create();
+        $otherOwner = User::factory()->create();
+        $knownId = DB::table('characters')->insertGetId([
+            'user_id' => $owner->id, 'name' => 'Known Hero', 'quest_xp' => 900, 'total_xp' => 1000,
+        ]);
+        DB::table('characters')->insert([
+            ['user_id' => $owner->id, 'name' => 'Ambiguous Hero'],
+            ['user_id' => $otherOwner->id, 'name' => 'Ambiguous Hero'],
+        ]);
+        $xpId = DB::table('player_xps')->insertGetId([
+            'character_name' => 'Known Hero', 'player_name' => 'Unknown 01.01.2020 1',
+            'mission_xp' => 900, 'report_xp' => 100, 'total_xp' => 1000,
+        ]);
+        $this->service->importReports([[
+            'Görev adı' => 'Historical Link Test', 'Tarih' => '2020-01-01',
+            'Raporlayan' => 'Known Hero', 'Diğer Oyuncular' => ['Ambiguous Hero', 'Missing Hero'],
+            'XP' => 750, 'Rapor' => 75, 'Ortalama' => 212.5,
+        ]]);
+        $report = collect($this->service->getAllReportsData())->firstWhere('title', 'Historical Link Test');
+        $questId = $report['quest_id'];
+        $this->assertDatabaseHas('quest_report_xp_entries', [
+            'quest_id' => $questId, 'participant_name' => 'Known Hero', 'character_id' => $knownId,
+            'player_xp_id' => $xpId, 'state' => 'historical', 'quest_xp' => 212.5, 'report_xp' => 75,
+        ]);
+        $this->assertDatabaseMissing('quest_participants', ['quest_id' => $questId, 'character_id' => DB::table('characters')->where('name', 'Ambiguous Hero')->value('id')]);
+
+        DB::table('quest_report_xp_entries')->where('quest_id', $questId)->delete();
+        $url = '/valiant-shade/pages/xp-tracker/link-reports';
+        $this->actingAs($this->user)->postJson($url)->assertForbidden();
+        for ($i = 0; $i < 2; $i++) {
+            $response = $this->actingAs($admin)->postJson($url)->assertOk()
+                ->assertJsonPath('reports', 1)->assertJsonPath('entries', 3);
+            $this->assertEqualsCanonicalizing(['Ambiguous Hero', 'Missing Hero'], array_column($response->json('unresolved'), 'name'));
+            $this->assertDatabaseCount('quest_report_xp_entries', 3);
+            $this->assertDatabaseHas('quest_report_xp_entries', [
+                'quest_id' => $questId, 'participant_name' => 'Ambiguous Hero', 'character_id' => null,
+                'player_xp_id' => null, 'state' => 'historical',
+            ]);
+            $this->assertDatabaseHas('characters', ['id' => $knownId, 'quest_xp' => 900, 'total_xp' => 1000]);
+            $this->assertDatabaseHas('player_xps', ['id' => $xpId, 'mission_xp' => 900, 'report_xp' => 100, 'total_xp' => 1000]);
+        }
+
+        $this->actingAs($admin)->putJson('/valiant-shade/pages/quest-reports/'.$report['id'], [
+            'title' => 'Updated Historical Link', 'date' => '2020-01-01', 'level' => 1,
+            'gm' => 'GM', 'reporter' => 'Known Hero', 'other_players' => ['Missing Hero'],
+        ])->assertOk();
+        $this->assertDatabaseMissing('quest_report_xp_entries', ['quest_id' => $questId, 'participant_name' => 'Ambiguous Hero']);
+        $this->assertDatabaseHas('player_xps', ['id' => $xpId, 'total_xp' => 1000]);
+        $this->actingAs($admin)->deleteJson('/valiant-shade/pages/quest-reports/'.$report['id'])->assertOk();
+        $this->assertDatabaseMissing('quest_report_xp_entries', ['quest_id' => $questId]);
+        $this->assertDatabaseHas('characters', ['id' => $knownId, 'total_xp' => 1000]);
+    }
+
+    public function test_historical_linking_rolls_back_if_a_later_report_fails(): void
+    {
+        $this->service->importReports([
+            ['Görev adı' => 'Rollback One', 'Tarih' => '2020-01-01', 'Raporlayan' => 'First'],
+            ['Görev adı' => 'Rollback Two', 'Tarih' => '2020-01-02', 'Raporlayan' => 'Second'],
+        ]);
+        DB::table('quest_report_xp_entries')->delete();
+        $linker = new class extends \App\ValiantShade\Services\QuestReportXpLinkService
+        {
+            private int $calls = 0;
+
+            public function sync(Quest $quest, array $report, string $state, array $indexes, array $awards = []): array
+            {
+                $result = parent::sync($quest, $report, $state, $indexes, $awards);
+                if (++$this->calls === 2) {
+                    throw new \RuntimeException('Linking failed');
+                }
+
+                return $result;
+            }
+        };
+        $this->app->instance(\App\ValiantShade\Services\QuestReportXpLinkService::class, $linker);
+
+        try {
+            $this->service->linkHistoricalXp();
+            $this->fail('The failed link operation must be reported.');
+        } catch (\RuntimeException $exception) {
+            $this->assertSame('Linking failed', $exception->getMessage());
+        }
+        $this->assertDatabaseCount('quest_report_xp_entries', 0);
+    }
+
+    public function test_historical_linking_skips_ambiguous_quests(): void
+    {
+        $this->service->importReports([[
+            'Görev adı' => 'Ambiguous Quest', 'Tarih' => '2020-01-01', 'Raporlayan' => 'Hero',
+        ]]);
+        $reports = $this->service->getAllReportsData();
+        $index = collect($reports)->search(fn ($report) => $report['title'] === 'Ambiguous Quest');
+        $reportId = $reports[$index]['id'];
+        unset($reports[$index]['quest_id']);
+        file_put_contents(storage_path('app/quest_reports_testing.json'), json_encode($reports, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+        Quest::create(['title' => 'Ambiguous Quest', 'quest_date' => '2020-01-01']);
+        DB::table('quest_report_xp_entries')->delete();
+
+        $result = $this->service->linkHistoricalXp();
+
+        $this->assertContains($reportId, $result['skipped']);
+        $this->assertDatabaseCount('quest_report_xp_entries', 0);
+    }
+
+    public function test_missing_report_xp_migration_returns_actionable_error_without_changes(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        $payload = [
+            'title' => 'Migration Check', 'date' => '2020-01-01', 'level' => 1,
+            'gm' => 'GM', 'reporter' => 'Hero',
+        ];
+        $created = $this->actingAs($admin)->postJson('/valiant-shade/pages/quest-reports', $payload)->assertOk();
+        $url = '/valiant-shade/pages/quest-reports/'.$created->json('report.id');
+        Schema::drop('quest_report_xp_entries');
+
+        $message = 'Run database migrations before using quest report XP.';
+        $this->actingAs($admin)->withSession(['locale' => 'en'])
+            ->postJson('/valiant-shade/pages/xp-tracker/link-reports')->assertUnprocessable()
+            ->assertJsonPath('errors.xp.0', $message);
+        $this->actingAs($admin)->withSession(['locale' => 'en'])
+            ->putJson($url, $payload)->assertUnprocessable()->assertJsonPath('errors.xp.0', $message);
+        $this->actingAs($admin)->withSession(['locale' => 'en'])
+            ->deleteJson($url)->assertUnprocessable()->assertJsonPath('errors.xp.0', $message);
+        $this->assertNotNull($this->service->getReportById($created->json('report.id')));
+        $this->assertDatabaseHas('quests', ['id' => $created->json('report.quest_id'), 'deleted_at' => null]);
+    }
+
+    public function test_resetting_xp_records_keeps_historical_report_snapshots_without_dangling_links(): void
+    {
+        $xpId = DB::table('player_xps')->insertGetId(['character_name' => 'Archived Hero']);
+        $this->service->importReports([[
+            'Görev adı' => 'Snapshot Reset', 'Tarih' => '2020-01-01', 'Raporlayan' => 'Archived Hero',
+        ]]);
+        $this->assertDatabaseHas('quest_report_xp_entries', ['player_xp_id' => $xpId]);
+
+        app(\App\ValiantShade\Services\PlayerXpService::class)->resetToDefaults();
+
+        $this->assertDatabaseHas('quest_report_xp_entries', [
+            'participant_name' => 'Archived Hero', 'player_xp_id' => null, 'state' => 'historical',
+        ]);
     }
 
     public function test_json_import_persists_reports_and_delete_button_route_works(): void

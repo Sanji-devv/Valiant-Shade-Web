@@ -92,6 +92,11 @@ class Quest extends BaseModel
         return $this->hasMany(QuestParticipant::class, 'quest_id');
     }
 
+    public function reportXpEntries(): HasMany
+    {
+        return $this->hasMany(QuestReportXpEntry::class);
+    }
+
     public function characters(): BelongsToMany
     {
         return $this->belongsToMany(Character::class, 'quest_participants')
