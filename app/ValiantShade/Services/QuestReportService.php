@@ -3,6 +3,7 @@
 namespace App\ValiantShade\Services;
 
 use App\Models\Character;
+use App\Models\GuildSetting;
 use App\Models\LevelThreshold;
 use App\Models\PlayerXp;
 use App\Models\Quest;
@@ -178,6 +179,35 @@ class QuestReportService
             }
             throw $e;
         }
+    }
+
+    public function clearPlayerXpRecords(): int
+    {
+        return $this->withArchiveLock(fn () => DB::transaction(function (): int {
+            $ids = PlayerXp::query()->lockForUpdate()->pluck('id')->all();
+            $idSet = array_fill_keys($ids, true);
+            foreach (DB::table('quest_report_xp_distributions')->lockForUpdate()->pluck('awards') as $json) {
+                $awards = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+                if (! is_array($awards) || ! array_is_list($awards)) {
+                    throw new \RuntimeException(__('The quest XP distribution record is invalid.'));
+                }
+                foreach ($awards as $award) {
+                    if (! is_array($award) || ! isset($award['player_xp_id'])) {
+                        throw new \RuntimeException(__('The quest XP distribution record is invalid.'));
+                    }
+                    if (isset($idSet[$award['player_xp_id']])) {
+                        throw ValidationException::withMessages([
+                            'xp' => __('XP records linked to distributed quest reports cannot be deleted.'),
+                        ]);
+                    }
+                }
+            }
+
+            $count = PlayerXp::query()->delete();
+            GuildSetting::set('player_xp_tracker_cleared', '1');
+
+            return $count;
+        }));
     }
 
     public function clearReportsAndPlayerXp(): void

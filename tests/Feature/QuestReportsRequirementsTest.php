@@ -445,9 +445,9 @@ class QuestReportsRequirementsTest extends TestCase
 
     public function test_json_import_persists_reports_and_delete_button_route_works(): void
     {
-        $page = $this->actingAs($this->user)->get('/valiant-shade/pages/quest-reports');
+        $page = $this->actingAs($this->user)->withSession(['locale' => 'en'])->get('/valiant-shade/pages/quest-reports');
         $page->assertSee('btnImportQuestReports');
-        $page->assertSee('Veri Ekle');
+        $page->assertSee('Import Data');
         $page->assertSee('Rapor Sil');
         $admin = User::factory()->create(['role' => 'ADMIN']);
 
@@ -516,6 +516,22 @@ class QuestReportsRequirementsTest extends TestCase
         $delete->assertOk();
         $delete->assertJsonPath('success', true);
         $this->assertSoftDeleted('quests', ['title' => 'Güncellenmiş Test Görevi']);
+    }
+
+    public function test_report_import_controls_and_invalid_json_error_are_localized(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        foreach ([
+            'en' => ['Import Data', 'The selected file is not valid JSON.'],
+            'tr' => ['Veri Ekle', 'Seçilen dosya geçerli bir JSON değil.'],
+        ] as $locale => [$label, $message]) {
+            $this->actingAs($admin)->withSession(['locale' => $locale])
+                ->get('/valiant-shade/pages/quest-reports')->assertOk()->assertSee($label);
+            $this->actingAs($admin)->withSession(['locale' => $locale])
+                ->postJson('/valiant-shade/pages/quest-reports/import', [
+                    'file' => UploadedFile::fake()->createWithContent('reports.json', '{'),
+                ])->assertUnprocessable()->assertJsonPath('message', $message);
+        }
     }
 
     public function test_import_requires_full_dates_and_keeps_repeated_rows(): void

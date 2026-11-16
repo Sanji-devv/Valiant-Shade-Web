@@ -749,13 +749,13 @@
       <div class="d-flex align-items-center gap-2 flex-wrap">
         @if(auth()->user()?->isAdmin())
         <button type="button" class="btn btn-outline-danger btn-sm" id="btnClearQuestReports">
-          Tüm Raporları Sil
+          {{ __('Delete All Reports') }}
         </button>
         @endif
 
         <input type="file" id="questReportsJsonFile" accept=".json,application/json" class="d-none">
         <button type="button" class="btn btn-outline-info btn-sm" id="btnImportQuestReports">
-          <i class="icon-base ti tabler-database-import me-1"></i> Veri Ekle
+          <i class="icon-base ti tabler-database-import me-1"></i> {{ __('Import Data') }}
         </button>
 
         <!-- New Quest Report Button (Primary) -->
@@ -2752,16 +2752,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (btnClearQuestReports) {
     btnClearQuestReports.addEventListener('click', async function () {
-      const message = 'Tüm raporlar, görev ve katılımcı kayıtları silinecek; tüm oyuncu XP’leri sıfırlanacak ve seviyeler 1 yapılacak. Görev panosuyla bağlantılı veriler etkilenebilir. Bu işlem geri alınamaz.';
+      const message = @json(__('All reports, quests and participant records will be deleted; player XP will be reset and levels set to 1. Quest board data may be affected. This cannot be undone.'));
       let confirmed;
       if (window.Swal) {
         const result = await Swal.fire({
-          title: 'Tüm raporlar silinsin mi?',
+          title: @json(__('Delete all reports?')),
           text: message,
           icon: 'warning',
           showCancelButton: true,
           confirmButtonColor: '#ea5455',
-          confirmButtonText: 'Evet, tümünü sil',
+          confirmButtonText: @json(__('Yes, delete all')),
           cancelButtonText: '{{ __("Cancel") }}'
         });
         confirmed = result.isConfirmed;
@@ -2781,12 +2781,12 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         const data = await response.json();
         if (!response.ok || !data.success) {
-          throw new Error(data.message || 'Raporlar silinemedi.');
+          throw new Error(data.message || @json(__('Reports could not be deleted.')));
         }
         window.location.reload();
       } catch (error) {
         if (window.Swal) {
-          Swal.fire({ icon: 'error', title: 'İşlem başarısız', text: error.message });
+          Swal.fire({ icon: 'error', title: @json(__('Operation failed')), text: error.message });
         } else {
           alert(error.message);
         }
@@ -2816,7 +2816,7 @@ document.addEventListener('DOMContentLoaded', function () {
       .then(async response => {
         const data = await response.json();
         if (!response.ok || !data.success) {
-          throw new Error(data.message || 'Veri eklenemedi.');
+          throw new Error(data.message || @json(__('Data could not be imported.')));
         }
         return data;
       })
@@ -2824,7 +2824,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (window.Swal) {
           Swal.fire({
             icon: 'success',
-            title: 'Veri Eklendi',
+            title: @json(__('Data Imported')),
             text: data.message,
             confirmButtonText: '{{ __("OK") }}'
           }).then(() => window.location.reload());
@@ -2837,7 +2837,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (window.Swal) {
           Swal.fire({
             icon: 'error',
-            title: 'Veri ekleme başarısız',
+            title: @json(__('Data import failed')),
             text: error.message
           });
         } else {

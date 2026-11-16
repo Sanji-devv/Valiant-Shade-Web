@@ -75,7 +75,7 @@ class QuestReportsController extends Controller
         } catch (\JsonException) {
             return response()->json([
                 'success' => false,
-                'message' => 'Seçilen dosya geçerli bir JSON değil.',
+                'message' => __('The selected file is not valid JSON.'),
             ], 422);
         }
 
@@ -84,7 +84,7 @@ class QuestReportsController extends Controller
         )) {
             return response()->json([
                 'success' => false,
-                'message' => 'JSON dosyasında görev raporu bulunamadı.',
+                'message' => __('No quest reports were found in the JSON file.'),
             ], 422);
         }
 
@@ -92,7 +92,10 @@ class QuestReportsController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "{$result['imported']} rapor veritabanına eklendi; {$result['skipped']} mevcut veya geçersiz satır atlandı.",
+            'message' => __(':imported reports were added; :skipped existing or invalid rows were skipped.', [
+                'imported' => $result['imported'],
+                'skipped' => $result['skipped'],
+            ]),
             ...$result,
             'stats' => $this->service->getStatistics(),
             'gms' => $this->service->getDistinctGms(),
@@ -242,7 +245,7 @@ class QuestReportsController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Tüm raporlar, görev kayıtları ve oyuncu XP’leri sıfırlandı.',
+            'message' => __('All reports, quest records and player XP have been reset.'),
         ]);
     }
 

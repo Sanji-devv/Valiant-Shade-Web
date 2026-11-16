@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\PlayerXp;
+use App\Models\Character;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class PlayerXpTest extends TestCase
@@ -222,6 +224,67 @@ class PlayerXpTest extends TestCase
         // Reset forbidden for non-admin
         $resetResp = $this->actingAs($user)->postJson('/valiant-shade/pages/xp-tracker/reset-defaults');
         $resetResp->assertStatus(403);
+    }
+
+    public function test_admin_can_clear_all_xp_records_without_deleting_characters_and_the_page_stays_empty(): void
+    {
+        $admin = User::factory()->create(['role' => 'Admin']);
+        $character = Character::create(['user_id' => $admin->id, 'name' => 'Saved Hero', 'status' => 'ACTIVE']);
+        $active = PlayerXp::create(['character_name' => 'Saved Hero', 'user_id' => $admin->id]);
+        $fallen = PlayerXp::create(['character_name' => 'Fallen Hero', 'status' => 'kia']);
+        $questId = DB::table('quests')->insertGetId(['title' => 'Preserved quest']);
+
+        $this->actingAs($admin)->get('/valiant-shade/pages/xp-tracker?search=Saved')
+            ->assertOk()->assertSee('id="btnClearXp"', false);
+        $this->actingAs($admin)->deleteJson('/valiant-shade/pages/xp-tracker')
+            ->assertOk()->assertJsonPath('success', true);
+
+        $this->assertSoftDeleted('player_xps', ['id' => $active->id]);
+        $this->assertSoftDeleted('player_xps', ['id' => $fallen->id]);
+        $this->assertDatabaseHas('characters', ['id' => $character->id]);
+        $this->assertDatabaseHas('quests', ['id' => $questId]);
+        $this->actingAs($admin)->getJson('/valiant-shade/pages/xp-tracker')->assertOk()->assertJsonCount(0, 'all_adventurers');
+        $this->assertSame(0, PlayerXp::count());
+    }
+
+    public function test_clear_is_admin_only_and_rejects_records_with_distributed_quest_xp(): void
+    {
+        $user = User::factory()->create(['role' => 'User']);
+        $admin = User::factory()->create(['role' => 'Admin']);
+        $xp = PlayerXp::create(['character_name' => 'Hero', 'total_xp' => 100]);
+        $other = PlayerXp::create(['character_name' => 'Other']);
+        $questId = DB::table('quests')->insertGetId(['title' => 'Awarded quest']);
+        DB::table('quest_report_xp_distributions')->insert([
+            'quest_id' => $questId,
+            'awards' => json_encode([['player_xp_id' => $xp->id]], JSON_THROW_ON_ERROR),
+        ]);
+
+        $this->actingAs($user)->get('/valiant-shade/pages/xp-tracker')->assertDontSee('id="btnClearXp"', false);
+        $this->actingAs($user)->deleteJson('/valiant-shade/pages/xp-tracker')->assertForbidden();
+        $this->actingAs($admin)->deleteJson('/valiant-shade/pages/xp-tracker')->assertUnprocessable();
+        $this->assertSame(2, PlayerXp::count());
+        $this->assertDatabaseHas('player_xps', ['id' => $xp->id, 'total_xp' => 100, 'deleted_at' => null]);
+        $this->assertDatabaseHas('player_xps', ['id' => $other->id, 'deleted_at' => null]);
+    }
+
+    public function test_clear_button_and_distribution_error_follow_the_selected_locale(): void
+    {
+        $admin = User::factory()->create(['role' => 'Admin']);
+        $xp = PlayerXp::create(['character_name' => 'Hero']);
+        $questId = DB::table('quests')->insertGetId(['title' => 'Awarded quest']);
+        DB::table('quest_report_xp_distributions')->insert([
+            'quest_id' => $questId,
+            'awards' => json_encode([['player_xp_id' => $xp->id]], JSON_THROW_ON_ERROR),
+        ]);
+
+        $this->actingAs($admin)->withSession(['locale' => 'en'])->get('/valiant-shade/pages/xp-tracker')
+            ->assertSee('Delete All XP Records');
+        $this->actingAs($admin)->withSession(['locale' => 'en'])->deleteJson('/valiant-shade/pages/xp-tracker')
+            ->assertUnprocessable()->assertJsonPath('message', 'XP records linked to distributed quest reports cannot be deleted.');
+        $this->actingAs($admin)->withSession(['locale' => 'tr'])->get('/valiant-shade/pages/xp-tracker')
+            ->assertSee('Tüm XP Kayıtlarını Sil');
+        $this->actingAs($admin)->withSession(['locale' => 'tr'])->deleteJson('/valiant-shade/pages/xp-tracker')
+            ->assertUnprocessable()->assertJsonPath('message', 'XP dağıtımı yapılmış görev raporlarına bağlı XP kayıtları silinemez.');
     }
 
     public function test_admin_can_reset_to_original_data(): void

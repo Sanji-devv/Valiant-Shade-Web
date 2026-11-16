@@ -159,6 +159,12 @@
         <i class="icon-base ti tabler-rotate-clockwise-2 me-1"></i> {{ __('Reset Defaults') }}
       </button>
 
+      @if(auth()->user()?->isAdmin())
+        <button type="button" class="btn btn-label-danger btn-sm rounded-pill waves-effect shadow-xs" id="btnClearXp">
+          <i class="icon-base ti tabler-trash me-1"></i> {{ __('Delete All XP Records') }}
+        </button>
+      @endif
+
       <!-- Add Adventurer Button (Opens Offcanvas Drawer like Demo-Vuexy) -->
       <button type="button" class="btn btn-primary btn-sm rounded-pill waves-effect waves-light shadow-xs" data-bs-toggle="offcanvas" data-bs-target="#offcanvasAddAdventurer">
         <i class="icon-base ti tabler-plus me-1"></i> {{ __('Add New Adventurer') }}
@@ -1127,6 +1133,8 @@ document.addEventListener('DOMContentLoaded', function() {
     resetText: @json(__('All current records will be deleted and the original 64 adventurers will be reloaded!')),
     resetConfirm: @json(__('Yes, Reset')),
     resetSuccessTitle: @json(__('Reset Successful!')),
+    clearTitle: @json(__('Delete all XP records?')),
+    clearText: @json(__('All XP Tracker records will be removed, including records hidden by filters. Characters and quest reports will not be deleted. Records linked to distributed quest XP cannot be deleted.')),
     deletedTitle: @json(__('Deleted!')),
     levelPrefix: @json(__('Level ')),
     maximum: @json(__('Maximum')),
@@ -2032,6 +2040,45 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     });
   });
+
+  const btnClearXp = document.getElementById('btnClearXp');
+  if (btnClearXp) {
+    btnClearXp.addEventListener('click', function() {
+      Swal.fire({
+        title: i18n.clearTitle,
+        text: i18n.clearText,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: i18n.deleteConfirm,
+        cancelButtonText: i18n.cancel,
+        customClass: {
+          confirmButton: 'btn btn-danger rounded-pill me-2',
+          cancelButton: 'btn btn-label-secondary rounded-pill'
+        },
+        buttonsStyling: false
+      }).then(result => {
+        if (!result.isConfirmed) return;
+
+        fetch("{{ route('valiant-shade.pages-xp-tracker.clear') }}", {
+          method: 'DELETE',
+          headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            Swal.fire({ icon: 'success', title: i18n.deletedTitle, text: data.message })
+              .then(() => location.reload());
+          } else {
+            Swal.fire({ icon: 'error', title: i18n.errorTitle, text: data.message });
+          }
+        })
+        .catch(() => Swal.fire({ icon: 'error', title: i18n.errorTitle, text: i18n.networkError }));
+      });
+    });
+  }
 
   // Reset to Defaults Button
   const btnReset = document.getElementById('btnResetDefaults');

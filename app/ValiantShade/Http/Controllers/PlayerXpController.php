@@ -5,6 +5,7 @@ namespace App\ValiantShade\Http\Controllers;
 use App\Models\PlayerXp;
 use App\ValiantShade\Http\Controllers\Controller;
 use App\ValiantShade\Services\PlayerXpService;
+use App\ValiantShade\Services\QuestReportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -205,6 +206,16 @@ class PlayerXpController extends Controller
         ]);
     }
 
+    public function clear(QuestReportService $reports): JsonResponse
+    {
+        $count = $reports->clearPlayerXpRecords();
+
+        return response()->json([
+            'success' => true,
+            'message' => __(':count XP records deleted.', ['count' => $count]),
+        ]);
+    }
+
     /**
      * Quick XP Award to an adventurer.
      */
@@ -282,7 +293,11 @@ class PlayerXpController extends Controller
             $count = count($updated);
             return response()->json([
                 'success' => true,
-                'message' => "+{$validated['amount']} XP ({$validated['category']}) başarıyla seçilen {$count} maceracıya dağıtıldı.",
+                'message' => __('+:amount XP (:category) was awarded to :count selected adventurers.', [
+                    'amount' => $validated['amount'],
+                    'category' => $validated['category'],
+                    'count' => $count,
+                ]),
                 'data' => $updated,
             ]);
         } catch (\Exception $e) {
@@ -315,7 +330,10 @@ class PlayerXpController extends Controller
             $count = count($updated);
             return response()->json([
                 'success' => true,
-                'message' => "Seçilen {$count} maceracının durumu '" . strtoupper($validated['status']) . "' olarak güncellendi.",
+                'message' => __('The status of :count selected adventurers was changed to :status.', [
+                    'count' => $count,
+                    'status' => strtoupper($validated['status']),
+                ]),
                 'data' => $updated,
             ]);
         } catch (\Exception $e) {

@@ -3,6 +3,7 @@
 namespace App\ValiantShade\Services;
 
 use App\Models\PlayerXp;
+use App\Models\GuildSetting;
 use App\ValiantShade\Contracts\PlayerXpRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -183,7 +184,9 @@ class PlayerXpService
 
     public function ensureSampleDataSeeded(): void
     {
-        if ($this->repository->count() === 0 && app(QuestReportService::class)->getAllReportsData() !== []) {
+        if ($this->repository->count() === 0
+            && GuildSetting::get('player_xp_tracker_cleared') !== '1'
+            && app(QuestReportService::class)->getAllReportsData() !== []) {
             $this->resetToDefaults();
         }
     }
