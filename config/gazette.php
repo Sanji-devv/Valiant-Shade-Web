@@ -2,7 +2,13 @@
 
 $appUrl = (string) env('APP_URL', 'http://localhost');
 $appHost = parse_url($appUrl, PHP_URL_HOST) ?: 'localhost';
-$subdomain = (string) env('GAZETTE_SUBDOMAIN', 'gazette');
+
+$gazetteCanonical = env('GAZETTE_CANONICAL_DOMAIN') ?: "gazete.{$appHost}";
+$gazetteAlias = env('GAZETTE_ALIAS_DOMAIN') ?: 'gazette.'.$appHost;
+
+$gazetteAliasDomains = $gazetteAlias !== $gazetteCanonical
+    ? array_values(array_unique([$gazetteAlias]))
+    : [];
 
 return [
     /*
@@ -10,11 +16,12 @@ return [
     | Gazete (halka açık ön yüz) alt alan adı
     |--------------------------------------------------------------------------
     |
-    | Örnek: gazette.valiantshade.com — yalnızca müşteri/ziyaretçi gazetesi.
-    | Valiant Shade paneli (/valiant-shade/pages/news) ana domain üzerinde kalır.
+    | Kanonik: gazete.{domain} — gazette.{domain} aynı içeriğe 301 ile yönlendirilir.
     |
     */
-    'domain' => env('GAZETTE_DOMAIN') ?: "{$subdomain}.{$appHost}",
+    'domain' => $gazetteCanonical,
+    'alias_domains' => $gazetteAliasDomains,
+    'domains' => array_values(array_unique(array_filter([$gazetteCanonical, ...$gazetteAliasDomains]))),
 
     'title' => 'Lağımdan Sesler',
     'motto' => 'Dedikodu burada doğrulanır; yoksa da en azından mürekkeple basılır.',

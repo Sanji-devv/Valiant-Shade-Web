@@ -1,4 +1,5 @@
 @php
+    use App\Support\WorldMap;
     use App\Support\WorldNavigation;
 
     $kingdoms = WorldNavigation::rootKingdoms();
@@ -13,13 +14,7 @@
                 $isCurrent = $kingdomId === $currentLocationId;
                 $mapConfigKey = $mapKeys[$kingdomId] ?? null;
                 $mapConfig = $mapConfigKey ? config("world-maps.{$mapConfigKey}") : null;
-                $kingdomDestinations = collect($mapConfig['hotspots'] ?? [])->map(fn ($hotspot) => [
-                    'label' => $hotspot['label'],
-                    'description' => $hotspot['description'] ?? null,
-                    'href' => $hotspot['href'] ?? null,
-                    'category' => $hotspot['category'] ?? null,
-                    'icon' => $hotspot['icon'] ?? '📍',
-                ])->all();
+                $kingdomDestinations = WorldMap::hotspotDestinations($mapConfig['hotspots'] ?? []);
                 $kingdomBuildings = $mapConfig['buildings'] ?? [];
             @endphp
             <details

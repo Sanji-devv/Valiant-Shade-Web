@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\PublicSiteUrls;
 use App\Http\Controllers\Api\BuildingTypeController;
 use App\Http\Controllers\Api\PublicNewsController;
 use App\Http\Controllers\Api\MapBuildingController;
@@ -15,18 +16,23 @@ use Illuminate\Support\Facades\Route;
 | Ana domain: harita yönlendirmeleri, düzenleme rotaları, API
 |--------------------------------------------------------------------------
 |
-| Halka açık harita sayfaları map.{domain} üzerinde (routes/map.php).
+| Halka açık harita sayfaları harita.{domain} üzerinde (routes/map.php).
+| Yönlendirmeler yalnızca ana hostta — alt alanlarda route() döngüsüne yol açmaz.
 |
 */
 
-Route::get('/feldan', fn () => redirect()->route('web.feldan', status: 301));
-Route::get('/rovesta', fn () => redirect()->route('web.rovesta', status: 301));
-Route::get('/isonburg', fn () => redirect()->route('web.isonburg', status: 301));
-Route::get('/isonburg/sehir', fn () => redirect()->route('web.isonburg.city', status: 301));
-Route::get('/isonburg/arazi', fn () => redirect()->route('web.isonburg.terrain', status: 301));
+$mainHost = parse_url((string) config('app.url'), PHP_URL_HOST) ?: 'localhost';
 
-Route::prefix('world')->group(function () {
-    Route::get('/valiant-shade', fn () => redirect()->route('web.valiant-shade', status: 301));
+Route::domain($mainHost)->group(function (): void {
+    Route::get('/feldan', fn () => redirect(PublicSiteUrls::map('/feldan'), 301));
+    Route::get('/rovesta', fn () => redirect(PublicSiteUrls::map('/rovesta'), 301));
+    Route::get('/isonburg', fn () => redirect(PublicSiteUrls::map('/isonburg'), 301));
+    Route::get('/isonburg/sehir', fn () => redirect(PublicSiteUrls::map('/isonburg/sehir'), 301));
+    Route::get('/isonburg/arazi', fn () => redirect(PublicSiteUrls::map('/isonburg/arazi'), 301));
+
+    Route::prefix('world')->group(function (): void {
+        Route::get('/valiant-shade', fn () => redirect(PublicSiteUrls::map('/world/valiant-shade'), 301));
+    });
 });
 
 Route::get('/isonburg/sehir/edit', [IsonburgCityController::class, 'edit'])

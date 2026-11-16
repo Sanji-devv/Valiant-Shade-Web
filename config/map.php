@@ -2,7 +2,13 @@
 
 $appUrl = (string) env('APP_URL', 'http://localhost');
 $appHost = parse_url($appUrl, PHP_URL_HOST) ?: 'localhost';
-$subdomain = (string) env('MAP_SUBDOMAIN', 'map');
+
+$mapCanonical = env('MAP_CANONICAL_DOMAIN') ?: "harita.{$appHost}";
+$mapAlias = env('MAP_ALIAS_DOMAIN') ?: "map.{$appHost}";
+
+$mapAliasDomains = $mapAlias !== $mapCanonical
+    ? array_values(array_unique([$mapAlias]))
+    : [];
 
 return [
     /*
@@ -10,9 +16,10 @@ return [
     | Dünya haritası (halka açık ön yüz) alt alan adı
     |--------------------------------------------------------------------------
     |
-    | Örnek: map.valiantshade.com/feldan — ziyaretçi harita sayfaları.
-    | Harita düzenleme (/…/edit) ve editör API ana domain üzerinde kalır.
+    | Kanonik: harita.{domain} — map.{domain} aynı içeriğe 301 ile yönlendirilir.
     |
     */
-    'domain' => env('MAP_DOMAIN') ?: "{$subdomain}.{$appHost}",
+    'domain' => $mapCanonical,
+    'alias_domains' => $mapAliasDomains,
+    'domains' => array_values(array_unique(array_filter([$mapCanonical, ...$mapAliasDomains]))),
 ];

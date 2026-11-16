@@ -1,9 +1,9 @@
 @php
-    $appHost = parse_url(config('app.url'), PHP_URL_HOST) ?: 'valiantshade.com';
-    $gazetteUrl = app()->environment('local')
-        ? url('/gazette')
-        : route('web.newspaper');
-    $monsterDbUrl = 'https://md.' . $appHost;
+    use App\Support\PublicSiteUrls;
+
+    $gazetteUrl = PublicSiteUrls::gazette();
+    $mapUrl = PublicSiteUrls::map('/feldan');
+    $monsterDbUrl = PublicSiteUrls::monsterDatabase();
 
     $imgGazette = asset('static/valiant-shade/assets/img/news/guild_tavern_whispers.jpg');
     $imgMonster = asset('static/valiant-shade/assets/img/news/guild_dragon_quest.jpg');
@@ -52,6 +52,16 @@
             overflow: hidden;
         }
 
+        @media (max-width: 639px) {
+            html, body {
+                height: auto;
+                min-height: 100dvh;
+                overflow-x: hidden;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+
         body {
             font-family: 'Public Sans', system-ui, sans-serif;
             background: #0f0d14;
@@ -71,8 +81,9 @@
         @media (max-width: 639px) {
             .vs-quad {
                 grid-template-columns: 1fr;
-                grid-template-rows: repeat(4, 1fr);
-                overflow-y: auto;
+                grid-template-rows: none;
+                grid-auto-rows: minmax(42vh, auto);
+                overflow: visible;
                 height: auto;
                 min-height: 100dvh;
             }
@@ -259,6 +270,15 @@
             <h1 class="vs-quad__title">{{ __('Gazette') }}</h1>
         </a>
 
+        <a href="{{ $mapUrl }}" class="vs-quad__cell vs-quad__cell--map" rel="noopener">
+            <div class="vs-quad__bg" style="background-image: url('{{ $imgMap }}');" aria-hidden="true"></div>
+            <span class="vs-quad__corner vs-quad__corner--tl" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--tr" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--bl" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--br" aria-hidden="true"></span>
+            <h1 class="vs-quad__title">{{ __('Map') }}</h1>
+        </a>
+
         <a href="{{ $monsterDbUrl }}" class="vs-quad__cell vs-quad__cell--monster" rel="noopener">
             <div class="vs-quad__bg" style="background-image: url('{{ $imgMonster }}');" aria-hidden="true"></div>
             <span class="vs-quad__corner vs-quad__corner--tl" aria-hidden="true"></span>
@@ -267,17 +287,6 @@
             <span class="vs-quad__corner vs-quad__corner--br" aria-hidden="true"></span>
             <h1 class="vs-quad__title">{{ __('Monster Database') }}</h1>
         </a>
-
-        <div class="vs-quad__cell vs-quad__cell--map vs-quad__cell--locked" aria-disabled="true">
-            <div class="vs-quad__bg" style="background-image: url('{{ $imgMap }}');" aria-hidden="true"></div>
-            <div class="vs-quad__lock-overlay" aria-hidden="true"></div>
-            <span class="vs-quad__badge">{{ __('Coming soon') }}</span>
-            <span class="vs-quad__corner vs-quad__corner--tl" aria-hidden="true"></span>
-            <span class="vs-quad__corner vs-quad__corner--tr" aria-hidden="true"></span>
-            <span class="vs-quad__corner vs-quad__corner--bl" aria-hidden="true"></span>
-            <span class="vs-quad__corner vs-quad__corner--br" aria-hidden="true"></span>
-            <h1 class="vs-quad__title">{{ __('Map') }}</h1>
-        </div>
 
         <a href="/valiant-shade" class="vs-quad__cell vs-quad__cell--records vs-quad__cell--dimmed">
             <div class="vs-quad__bg" style="background-image: url('{{ $imgRecords }}');" aria-hidden="true"></div>

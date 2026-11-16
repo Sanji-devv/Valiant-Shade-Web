@@ -11,7 +11,8 @@ return [
         'location_id' => 'feldan',
         'image' => 'static/valiant-shade/world/feldan-kralligi-preview.webp',
         'image_preview' => 'static/valiant-shade/world/feldan-kralligi-preview.webp',
-        'image_hd' => 'static/valiant-shade/world/feldan-kralligi-hd.jpg',
+        'image_display' => 'static/valiant-shade/world/feldan-kralligi-display.webp',
+        'image_hd' => 'static/valiant-shade/world/feldan-kralligi-hd.webp',
         'back_route' => null,
         'hotspots' => [
             [
@@ -34,7 +35,8 @@ return [
         'location_id' => 'rovesta',
         'image' => 'static/valiant-shade/world/rovesta-kralligi-preview.webp',
         'image_preview' => 'static/valiant-shade/world/rovesta-kralligi-preview.webp',
-        'image_hd' => 'static/valiant-shade/world/rovesta-kralligi.jpg',
+        'image_display' => 'static/valiant-shade/world/rovesta-kralligi-display.webp',
+        'image_hd' => 'static/valiant-shade/world/rovesta-kralligi-hd.webp',
         'back_route' => null,
         'hotspots' => [
             [
@@ -152,7 +154,10 @@ return [
         'title' => 'Isonburg Krallığı',
         'subtitle' => 'Bölge haritası',
         'location_id' => 'isonburg',
-        'image' => 'static/valiant-shade/world/isonburg-kralligi.jpg',
+        'image' => 'static/valiant-shade/world/isonburg-kralligi-preview.webp',
+        'image_preview' => 'static/valiant-shade/world/isonburg-kralligi-preview.webp',
+        'image_display' => 'static/valiant-shade/world/isonburg-kralligi-display.webp',
+        'image_hd' => 'static/valiant-shade/world/isonburg-kralligi-hd.webp',
         'back_route' => 'web.feldan',
         'hotspots' => [
             [
@@ -184,9 +189,13 @@ return [
         'title' => 'Isonburg',
         'subtitle' => 'Şehir haritası',
         'location_id' => 'isonburg-city',
+        'enable_tile_map' => false,
         'tile_layer_label' => 'İnteraktif harita',
         'art_layer_label' => 'Görsel harita',
-        'image' => 'static/valiant-shade/world/isonburg-sehri.jpg',
+        'image' => 'static/valiant-shade/world/isonburg-sehri-preview.webp',
+        'image_preview' => 'static/valiant-shade/world/isonburg-sehri-preview.webp',
+        'image_display' => 'static/valiant-shade/world/isonburg-sehri-display.webp',
+        'image_hd' => 'static/valiant-shade/world/isonburg-sehri-hd.jpg',
         'back_route' => 'web.isonburg',
         'hotspots' => [
             [
@@ -206,9 +215,12 @@ return [
     'valiant-shade-guild' => [
         'title' => 'Valiant Shade',
         'subtitle' => 'Lonca arazisi',
-        'image' => 'static/valiant-shade/world/valiant-shade-arazi-preview.jpg',
-        'image_preview' => 'static/valiant-shade/world/valiant-shade-arazi-preview.jpg',
-        'image_hd' => 'static/valiant-shade/world/valiant-shade-arazi-hd.jpg',
+        'location_id' => 'valiant-shade',
+        'enable_tile_map' => false,
+        'image' => 'static/valiant-shade/world/valiant-shade-arazi-preview.webp',
+        'image_preview' => 'static/valiant-shade/world/valiant-shade-arazi-preview.webp',
+        'image_display' => 'static/valiant-shade/world/valiant-shade-arazi-display.webp',
+        'image_hd' => 'static/valiant-shade/world/valiant-shade-arazi-hd.webp',
         'back_route' => 'web.isonburg',
         'tile_layer_label' => 'İnteraktif harita',
         'art_layer_label' => 'Görsel harita',

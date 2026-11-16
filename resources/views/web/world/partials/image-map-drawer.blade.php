@@ -11,26 +11,18 @@
         @endif
 
         <nav class="vs-drawer__nav">
-            <a class="vs-drawer__nav-link" href="{{ route('web.home') }}">Ana Sayfa</a>
+            @php use App\Support\PublicSiteUrls; @endphp
+            <a class="vs-drawer__nav-link" href="{{ PublicSiteUrls::gazette() }}">Gazete</a>
+            <a class="vs-drawer__nav-link" href="{{ PublicSiteUrls::main() }}">Ana Sayfa</a>
             @include('web.world.partials.kingdom-switcher', ['currentLocationId' => $config['location_id'] ?? null])
         </nav>
 
         @if (! empty($config['location_id']))
-            @php
-                $locationMeta = config('world-navigation.locations.'.$config['location_id'], []);
-                $useKingdomAccordions = ($locationMeta['parent'] ?? null) === null;
-            @endphp
             <div class="vs-drawer__section">
                 @include('web.world.partials.world-location-sidebar', [
                     'currentLocationId' => $config['location_id'],
-                    'useKingdomAccordions' => $useKingdomAccordions,
-                    'destinations' => collect($config['hotspots'] ?? [])->map(fn ($hotspot) => [
-                        'label' => $hotspot['label'],
-                        'description' => $hotspot['description'] ?? null,
-                        'href' => $hotspot['href'] ?? null,
-                        'category' => $hotspot['category'] ?? null,
-                        'icon' => $hotspot['icon'] ?? '📍',
-                    ])->all(),
+                    'destinations' => \App\Support\WorldMap::hotspotDestinations($config['hotspots'] ?? []),
+                    'buildings' => $config['buildings'] ?? [],
                 ])
             </div>
         @endif

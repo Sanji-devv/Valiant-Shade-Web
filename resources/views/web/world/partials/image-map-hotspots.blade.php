@@ -28,6 +28,11 @@
             data-poi-name="{{ $hotspot['label'] }}"
             data-poi-desc="{{ $hotspot['description'] ?? '' }}"
             data-poi-icon="{{ $icon }}"
+            data-poi-id="{{ $hotspot['id'] ?? '' }}"
+            data-poi-x="{{ $hotspot['x'] ?? 0 }}"
+            data-poi-y="{{ $hotspot['y'] ?? 0 }}"
+            data-poi-w="{{ $hotspot['w'] ?? 5 }}"
+            data-poi-h="{{ $hotspot['h'] ?? 5 }}"
         ></button>
     @endif
 @endforeach

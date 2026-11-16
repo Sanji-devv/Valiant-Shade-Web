@@ -11,6 +11,21 @@ class PublicNewspaperTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_gazette_alias_redirects_to_gazete(): void
+    {
+        $aliases = config('gazette.alias_domains', []);
+        if ($aliases === []) {
+            $this->markTestSkipped('gazette alias not configured');
+        }
+
+        $host = $aliases[0];
+        $canonical = config('gazette.domain');
+
+        $this->withServerVariables(['HTTP_HOST' => $host])
+            ->get('http://'.$host.'/')
+            ->assertRedirect('http://'.$canonical.'/');
+    }
+
     public function test_newspaper_page_is_public_on_gazette_subdomain(): void
     {
         $host = config('gazette.domain');
@@ -28,19 +43,13 @@ class PublicNewspaperTest extends TestCase
             ->assertSee(config('seo.gazette.title_suffix'), false);
     }
 
-    public function test_local_home_page_links_to_the_same_host_gazette_route(): void
+    public function test_local_home_page_links_to_gazete_subdomain(): void
     {
-        $originalEnvironment = $this->app->environment();
+        $gazetteUrl = \App\Support\PublicSiteUrls::gazette();
 
-        try {
-            $this->app->detectEnvironment(static fn () => 'local');
-
-            $this->get('/')
-                ->assertOk()
-                ->assertSee('href="'.url('/gazette').'"', false);
-        } finally {
-            $this->app->detectEnvironment(static fn () => $originalEnvironment);
-        }
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('href="'.$gazetteUrl.'"', false);
     }
 
     public function test_gazette_page_shows_separate_pdf_and_png_download_buttons(): void

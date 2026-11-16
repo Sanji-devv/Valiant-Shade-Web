@@ -269,7 +269,7 @@
         <small class="text-body-secondary">{{ __('Review public submissions before publishing to the gazette.') }}</small>
       </div>
       @php
-        $gazettePublicUrl = app()->environment('local') ? url('/gazette') : (request()->getScheme().'://'.config('gazette.domain').'/');
+        $gazettePublicUrl = \App\Support\PublicSiteUrls::gazette();
       @endphp
       <div class="d-flex flex-wrap gap-2">
         <a href="{{ $gazettePublicUrl }}?flash=1" class="btn btn-sm btn-danger" target="_blank" rel="noopener" title="Halka açık flash haber formu">

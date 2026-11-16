@@ -1,5 +1,7 @@
 @php
-    $mainSiteUrl = rtrim((string) config('app.url'), '/');
+    use App\Support\PublicSiteUrls;
+
+    $mainSiteUrl = PublicSiteUrls::main();
     $gb = $gazetteBrand ?? [];
     $gazetteTitle = $gb['title'] ?? 'Lağımdan Sesler';
     $gazetteMotto = $gb['motto'] ?? '';
@@ -75,12 +77,11 @@
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">Ana Sayfa</span>
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">Ana Sayfa</span>
             </a>
-            <span class="vs-newspaper-nav__item vs-newspaper-nav__soon" tabindex="0" aria-disabled="true" aria-label="Lonca Arazisi · {{ __('Coming soon') }}">
-                <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3 4 9v12h6v-7h4v7h6V9l-8-6z"/></svg>
-                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">Lonca Arazisi</span>
-                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">Lonca</span>
-                <span class="vs-newspaper-nav__tooltip" role="tooltip">{{ __('Coming soon') }}</span>
-            </span>
+            <a href="{{ PublicSiteUrls::map('/feldan') }}" class="vs-newspaper-nav__item" aria-label="Harita — Feldan Krallığı">
+                <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2V6z"/><path d="M9 4v14M15 6v14"/></svg>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">Harita</span>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">Harita</span>
+            </a>
             <button type="button" class="vs-newspaper-nav__item vs-newspaper-nav__item--print" id="printGazetteBtn" @if (! $isGazetteView) hidden @endif aria-label="PDF İndir">
                 <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">PDF İndir</span>

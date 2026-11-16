@@ -37,6 +37,7 @@
                         data-poi-name="{{ $destination['label'] }}"
                         data-poi-desc="{{ $destination['description'] ?? '' }}"
                         data-poi-icon="{{ $destination['icon'] ?? '📍' }}"
+                        @include('web.world.partials.hotspot-poi-attributes', ['destination' => $destination])
                     >
                         <span class="vs-building-menu__icon">{{ $destination['icon'] ?? '📍' }}</span>
                         <span class="vs-image-map-sidebar__label">{{ $destination['label'] }}</span>

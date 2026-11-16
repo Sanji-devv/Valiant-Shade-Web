@@ -12,13 +12,15 @@
         </div>
 
         <nav class="vs-drawer__nav">
-            <button
-                type="button"
-                class="vs-drawer__nav-link vs-drawer__nav-btn"
-                data-toggle-city-map
-                data-tile-label="{{ $tileLabel }}"
-                data-art-label="{{ $artLabel }}"
-            >{{ $tileLabel }}</button>
+            @if ($artConfig['enable_tile_map'] ?? false)
+                <button
+                    type="button"
+                    class="vs-drawer__nav-link vs-drawer__nav-btn"
+                    data-toggle-city-map
+                    data-tile-label="{{ $tileLabel }}"
+                    data-art-label="{{ $artLabel }}"
+                >{{ $tileLabel }}</button>
+            @endif
             @auth
                 @if (auth()->user()->isAdmin())
                     <a class="vs-drawer__nav-link" href="{{ route('web.valiant-shade.edit') }}">Düzen Modu</a>
@@ -27,7 +29,9 @@
             @if (! empty($artConfig['back_route']))
                 <a class="vs-drawer__nav-link" href="{{ route($artConfig['back_route']) }}">← Geri</a>
             @endif
-            <a class="vs-drawer__nav-link" href="{{ route('web.home') }}">Ana Sayfa</a>
+            @php use App\Support\PublicSiteUrls; @endphp
+            <a class="vs-drawer__nav-link" href="{{ PublicSiteUrls::gazette() }}">Gazete</a>
+            <a class="vs-drawer__nav-link" href="{{ PublicSiteUrls::main() }}">Ana Sayfa</a>
         </nav>
 
         <div class="vs-drawer__section">

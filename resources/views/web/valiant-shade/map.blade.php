@@ -57,7 +57,7 @@
                         <a class="vs-link" href="{{ route('valiant-shade.auth-login-basic', ['redirect' => route($mapEditRoute)]) }}">Yönetici Girişi</a>
                     @endauth
                 @endif
-                <a class="vs-link" href="{{ route('web.home') }}">Ana Sayfa</a>
+                <a class="vs-link" href="{{ \App\Support\PublicSiteUrls::main() }}">Ana Sayfa</a>
             </nav>
         </header>
 

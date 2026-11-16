@@ -40,9 +40,8 @@ function closePanel() {
 panelClose?.addEventListener('click', closePanel);
 
 if (!viewport || !world) {
-    throw new Error('Harita konteyneri bulunamadı.');
-}
-
+    // Görsel harita sayfalarında karo motoru yok.
+} else {
 let editorPanel = null;
 let buildingModal = null;
 
@@ -244,4 +243,5 @@ if (!canEdit) {
             closePanel();
         }
     });
+}
 }

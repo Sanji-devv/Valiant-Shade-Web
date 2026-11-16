@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Support\PublicSiteUrls;
 use App\ValiantShade\Listeners\LogAuthenticationActivity;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Auth\Events\Failed;
 use Spatie\Activitylog\Actions\LogActivityAction;
 use Illuminate\Auth\Events\Login;
@@ -29,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->configurePublicPortalUrlRoot();
         $this->configureLocalSessionForGazetteSubdomain();
 
         $authAudit = app(LogAuthenticationActivity::class);
@@ -123,6 +126,19 @@ class AppServiceProvider extends ServiceProvider
                 ->expectEnvironment('production'),
             OptimizedAppCheck::new()->label('Optimized Application'),
         ]);
+    }
+
+    protected function configurePublicPortalUrlRoot(): void
+    {
+        if ($this->app->runningInConsole()) {
+            return;
+        }
+
+        if (! PublicSiteUrls::isPublicSubdomainRequest()) {
+            return;
+        }
+
+        URL::forceRootUrl(rtrim((string) config('app.url'), '/'));
     }
 
     protected function configureLocalSessionForGazetteSubdomain(): void

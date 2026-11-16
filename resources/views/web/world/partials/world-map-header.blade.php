@@ -1,4 +1,6 @@
 @php
+    use App\Support\PublicSiteUrls;
+
     $tileLabel = $tileLabel ?? 'İnteraktif harita';
     $artLabel = $artLabel ?? 'Görsel harita';
 @endphp
@@ -31,6 +33,7 @@
         @if (! empty($backRoute))
             <a class="vs-link" href="{{ route($backRoute) }}">← Geri</a>
         @endif
-        <a class="vs-link" href="{{ route('web.home') }}">Ana Sayfa</a>
+        <a class="vs-link" href="{{ PublicSiteUrls::gazette() }}">Gazete</a>
+        <a class="vs-link" href="{{ PublicSiteUrls::main() }}">Ana Sayfa</a>
     </nav>
 </header>

@@ -5,16 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Isonburg — {{ config('app.name', 'Valiant Shade') }}</title>
-    @vite([
-        'resources/css/valiant-shade/image-map.css',
-        'resources/css/valiant-shade/map.css',
-        'resources/js/valiant-shade/image-map.js',
-        'resources/js/valiant-shade/map.js',
-    ], 'static/valiant-shade/build')
+    @php
+        $artConfig = config('world-maps.isonburg-city-art');
+    @endphp
+    @include('web.world.partials.image-map-asset-hints', ['config' => $artConfig])
+    @php
+        $viteEntries = [
+            'resources/css/valiant-shade/image-map.css',
+            'resources/js/valiant-shade/image-map.js',
+        ];
+        if ($artConfig['enable_tile_map'] ?? false) {
+            $viteEntries[] = 'resources/css/valiant-shade/map.css';
+            $viteEntries[] = 'resources/js/valiant-shade/map.js';
+        }
+    @endphp
+    @vite($viteEntries, 'static/valiant-shade/build')
 </head>
 <body class="vs-image-map-page vs-image-map-page--dual">
     @php
-        $artConfig = config('world-maps.isonburg-city-art');
+        use App\Support\WorldMap;
+
+        $previewImage = $artConfig['image_preview'] ?? $artConfig['image'];
+        $displayImage = $artConfig['image_display'] ?? null;
+        $hdImage = $artConfig['image_hd'] ?? null;
         $tileLabel = $artConfig['tile_layer_label'] ?? 'İnteraktif harita';
         $artLabel = $artConfig['art_layer_label'] ?? 'Görsel harita';
     @endphp
@@ -22,7 +35,7 @@
     @include('web.world.partials.world-map-header', [
         'title' => $artConfig['title'],
         'subtitle' => $artConfig['subtitle'] ?? null,
-        'showTileToggle' => true,
+        'showTileToggle' => (bool) ($artConfig['enable_tile_map'] ?? false),
         'tileLabel' => $tileLabel,
         'artLabel' => $artLabel,
         'editRoute' => auth()->check() && auth()->user()->isAdmin() ? 'web.isonburg.city.edit' : null,
@@ -30,7 +43,8 @@
     ])
 
     <main class="vs-image-map-layout">
-        <div class="vs-image-map-stage vs-image-map-stage--dual">
+        <div class="vs-image-map-stage vs-image-map-stage--dual" data-image-map>
+            @if ($artConfig['enable_tile_map'] ?? false)
             <div class="vs-dual-map-layer vs-dual-map-layer--tile" data-city-map-layer>
                 <div class="vs-map-shell vs-map-shell--embedded">
                     <div
@@ -43,9 +57,14 @@
                     </div>
                 </div>
             </div>
+            @endif
 
-            <div class="vs-dual-map-layer vs-dual-map-layer--art" data-city-art-layer>
-                <div class="vs-image-map-frame" data-image-map-zoom data-image-map-zoom-mode="transform">
+            <div @class([
+                'vs-dual-map-layer',
+                'vs-dual-map-layer--art',
+                'vs-dual-map-layer--art-solo' => ! ($artConfig['enable_tile_map'] ?? false),
+            ]) data-city-art-layer>
+                <div class="vs-image-map-frame" data-image-map-zoom data-image-map-fit="panel" data-image-map-zoom-mode="width">
                     <div class="vs-image-map-zoom-controls" aria-label="Yakınlaştırma">
                         <button type="button" class="vs-zoom-btn" data-zoom-out aria-label="Uzaklaştır">−</button>
                         <span class="vs-zoom-label" data-zoom-label>100%</span>
@@ -55,10 +74,20 @@
                     <div class="vs-image-map-viewport" data-image-map-viewport>
                         <div class="vs-image-map-canvas" data-image-map-canvas>
                             <img
-                                src="{{ asset($artConfig['image']) }}"
+                                src="{{ asset($previewImage) }}"
                                 alt="Isonburg şehir haritası"
                                 class="vs-image-map-art"
                                 draggable="false"
+                                decoding="async"
+                                @if ($displayImage || $hdImage)
+                                    data-image-preview="{{ asset($previewImage) }}"
+                                    @if ($displayImage)
+                                        data-image-display="{{ asset($displayImage) }}"
+                                    @endif
+                                    @if ($hdImage)
+                                        data-image-hd="{{ asset($hdImage) }}"
+                                    @endif
+                                @endif
                             >
                             @foreach ($artConfig['hotspots'] as $hotspot)
                                 <a
@@ -80,11 +109,7 @@
             <aside class="vs-image-map-sidebar vs-image-map-sidebar--desktop" aria-label="Bölgeler">
                 @include('web.world.partials.world-location-sidebar', [
                     'currentLocationId' => $artConfig['location_id'],
-                    'destinations' => collect($artConfig['hotspots'] ?? [])->map(fn ($hotspot) => [
-                        'label' => $hotspot['label'],
-                        'description' => $hotspot['description'] ?? null,
-                        'href' => $hotspot['href'],
-                    ])->all(),
+                    'destinations' => WorldMap::hotspotDestinations($artConfig['hotspots'] ?? []),
                 ])
             </aside>
         @endif
