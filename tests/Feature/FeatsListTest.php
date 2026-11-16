@@ -88,6 +88,61 @@ class FeatsListTest extends TestCase
         $response->assertSee('Quick Draw');
     }
 
+    public function test_empty_progression_slots_are_displayed_with_slot_specific_add_actions(): void
+    {
+        $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait');
+        CharacterProfile::create([
+            'user_id' => $this->user->id,
+            'character_name' => 'Empty Slot Tester',
+            'player_name' => 'Test Player',
+            'race' => 'Elf',
+            'class_name' => 'Fighter',
+            'level' => 1,
+        ]);
+
+        $response = $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait?character=Empty%20Slot%20Tester');
+
+        $response->assertStatus(200);
+        $response->assertSee('1. Level Class Bonus Feat');
+        $response->assertSee('Boş slot');
+        $response->assertSee('quickAddFeatToSlot(1,', false);
+    }
+
+    public function test_can_assign_a_feat_to_a_specific_progression_slot(): void
+    {
+        $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait');
+        CharacterProfile::create([
+            'user_id' => $this->user->id,
+            'character_name' => 'Slot Assignment Tester',
+            'player_name' => 'Test Player',
+            'race' => 'Elf',
+            'class_name' => 'Fighter',
+            'level' => 1,
+        ]);
+
+        $response = $this->actingAs($this->user)->postJson('/valiant-shade/pages/featntrait', [
+            'character_name' => 'Slot Assignment Tester',
+            'level' => 1,
+            'slot_type' => 'class_bonus',
+            'class_feat_name' => 'lvl_1_class_bonus',
+            'feat_name' => 'Assigned Slot Feat',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson(['success' => true]);
+        $this->assertDatabaseHas('character_feats', [
+            'character_name' => 'Slot Assignment Tester',
+            'level' => 1,
+            'class_feat_name' => 'lvl_1_class_bonus',
+            'feat_name' => 'Assigned Slot Feat',
+        ]);
+
+        $page = $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait?character=Slot%20Assignment%20Tester');
+        $page->assertStatus(200);
+        $page->assertSee('1. Level Class Bonus Feat');
+        $page->assertSee('Assigned Slot Feat');
+    }
+
     public function test_level_cell_shows_only_bonus_feat_and_human_badges_without_normal_labels(): void
     {
         // 1. Check Balmond (Half-Orc Magus Level 8)

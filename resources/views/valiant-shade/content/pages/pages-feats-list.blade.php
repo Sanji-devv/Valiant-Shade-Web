@@ -854,57 +854,79 @@
 
                   <!-- FEAT ADI Column (Standard, Class Talents, Bonus Feats, Traits, Reserve) -->
                   <td>
-                    @if($slot['all_active_feats']->isNotEmpty() || $slot['reserve_feats']->isNotEmpty())
+                    @if(!empty($slot['slots']) || $slot['extra_feats']->isNotEmpty())
                       <div class="d-flex flex-column gap-1">
-                        @foreach($slot['all_active_feats'] as $feat)
-                          <div class="d-flex align-items-center justify-content-between gap-2 p-2 rounded bg-dark bg-opacity-60 border {{ in_array($feat->slot_type, ['class_talent', 'class_bonus']) || $feat->is_class_feat ? 'border-success border-opacity-30' : 'border-secondary border-opacity-25' }}">
+                        @foreach($slot['slots'] as $progressionSlot)
+                          <div class="d-flex align-items-center justify-content-between gap-2 p-2 rounded bg-dark {{ $progressionSlot['is_empty'] ? 'bg-opacity-25 border border-secondary border-opacity-25' : 'bg-opacity-60 border border-secondary border-opacity-25' }}">
+                            <div class="min-w-0">
+                              <span class="badge {{ $progressionSlot['badge'] }} me-1">{{ $progressionSlot['name'] }}</span>
+                              @if($progressionSlot['feat'])
+                                @php($feat = $progressionSlot['feat'])
+                                <span class="fw-bold {{ in_array($feat->slot_type, ['class_talent', 'class_bonus']) || $feat->is_class_feat ? 'text-success' : 'text-heading' }}" style="font-size: 0.94rem;">{{ $feat->feat_name }}</span>
+                                @if($feat->slot_type === 'class_talent')
+                                  <span class="badge bg-label-success ms-1">Sınıf Yeteneği ({{ $feat->category ?: 'Talent' }})</span>
+                                @elseif($feat->slot_type === 'class_bonus')
+                                  <span class="badge bg-label-warning ms-1">Sınıf Bonusu</span>
+                                @elseif($feat->slot_type === 'racial_bonus')
+                                  <span class="badge bg-label-info ms-1">Irk Bonusu</span>
+                                @elseif($feat->slot_type === 'trait')
+                                  <span class="badge bg-label-secondary ms-1">Trait</span>
+                                @else
+                                  <span class="badge bg-label-primary ms-1">Normal Feat</span>
+                                @endif
+                                @if($feat->prerequisites)
+                                  <small class="text-body-secondary d-block mt-1">
+                                    {{ __("Prerequisite:") }} {{ $feat->prerequisites }}
+                                  </small>
+                                @endif
+                                @if($feat->notes)
+                                  <small class="text-body-secondary d-block fst-italic">{{ $feat->notes }}</small>
+                                @endif
+                              @else
+                                <span class="text-body-secondary fst-italic">Boş slot</span>
+                              @endif
+                            </div>
+                            @if($progressionSlot['feat'])
+                              <div class="d-flex align-items-center gap-1">
+                                <button type="button" class="btn btn-xs btn-icon btn-text-secondary btn-row-action" title="{{ __("Edit") }}" onclick="openEditFeatModal({{ $feat->id }}, '{{ addslashes($feat->feat_name) }}', {{ $feat->level }}, '{{ $feat->slot_type }}', '{{ addslashes($feat->category ?? '') }}', '{{ addslashes($feat->prerequisites ?? '') }}', '{{ addslashes($feat->notes ?? '') }}', {{ $feat->is_class_feat ? 1 : 0 }})">
+                                  <i class="icon-base ti tabler-edit {{ in_array($feat->slot_type, ['class_talent', 'class_bonus']) || $feat->is_class_feat ? 'text-success' : 'text-primary' }}"></i>
+                                </button>
+                                <button type="button" class="btn btn-xs btn-icon btn-text-danger btn-row-action" title="Sil" onclick="deleteFeatConfirm({{ $feat->id }}, '{{ addslashes($feat->feat_name) }}')">
+                                  <i class="icon-base ti tabler-trash"></i>
+                                </button>
+                              </div>
+                            @else
+                              <button type="button" class="btn btn-xs btn-outline-primary flex-shrink-0" onclick="quickAddFeatToSlot({{ $lvl }}, @json($progressionSlot['type']), @json($progressionSlot['name']))">
+                                <i class="icon-base ti tabler-plus me-1"></i> Doldur
+                              </button>
+                            @endif
+                          </div>
+                        @endforeach
+
+                        @foreach($slot['extra_feats'] as $feat)
+                          <div class="d-flex align-items-center justify-content-between gap-2 p-2 rounded bg-dark {{ $feat->slot_type === 'reserve' ? 'bg-opacity-40 border border-secondary border-opacity-20' : 'bg-opacity-60 border border-secondary border-opacity-25' }}">
                             <div>
-                              <span class="fw-bold {{ in_array($feat->slot_type, ['class_talent', 'class_bonus']) || $feat->is_class_feat ? 'text-success' : 'text-heading' }}" style="font-size: 0.94rem;">{{ $feat->feat_name }}</span>
-                              @if($feat->slot_type === 'class_talent')
+                              <span class="{{ $feat->slot_type === 'reserve' ? 'text-warning fst-italic' : 'fw-bold text-heading' }}" style="font-size: 0.88rem;">{{ $feat->feat_name }}</span>
+                              @if($feat->slot_type === 'reserve')
+                                <span class="badge bg-label-secondary ms-1">{{ __('Planned / Prerequisite') }}</span>
+                              @elseif($feat->slot_type === 'class_talent')
                                 <span class="badge bg-label-success ms-1">Sınıf Yeteneği ({{ $feat->category ?: 'Talent' }})</span>
                               @elseif($feat->slot_type === 'class_bonus')
                                 <span class="badge bg-label-warning ms-1">Sınıf Bonusu</span>
                               @elseif($feat->slot_type === 'racial_bonus')
-                                <span class="badge bg-label-info ms-1">İnsan Bonusu</span>
+                                <span class="badge bg-label-info ms-1">Irk Bonusu</span>
                               @elseif($feat->slot_type === 'trait')
                                 <span class="badge bg-label-secondary ms-1">Trait</span>
                               @else
                                 <span class="badge bg-label-primary ms-1">Normal Feat</span>
                               @endif
-                              @if($feat->prerequisites)
-                                <small class="text-body-secondary d-block mt-0" style="font-size: 0.75rem;">
-                                  {{ __("Prerequisite:") }} {{ $feat->prerequisites }}
-                                </small>
-                              @endif
-                              @if($feat->notes)
-                                <small class="text-body-secondary d-block fst-italic" style="font-size: 0.73rem;">
-                                  {{ $feat->notes }}
-                                </small>
-                              @endif
-                            </div>
-                            <div class="d-flex align-items-center gap-1">
-                              <button type="button" class="btn btn-xs btn-icon btn-text-secondary btn-row-action" title="{{ __("Edit") }}" onclick="openEditFeatModal({{ $feat->id }}, '{{ addslashes($feat->feat_name) }}', {{ $feat->level }}, '{{ $feat->slot_type }}', '{{ addslashes($feat->category ?? '') }}', '{{ addslashes($feat->prerequisites ?? '') }}', '{{ addslashes($feat->notes ?? '') }}', {{ $feat->is_class_feat ? 1 : 0 }})">
-                                <i class="icon-base ti tabler-edit {{ in_array($feat->slot_type, ['class_talent', 'class_bonus']) || $feat->is_class_feat ? 'text-success' : 'text-primary' }}"></i>
-                              </button>
-                              <button type="button" class="btn btn-xs btn-icon btn-text-danger btn-row-action" title="Sil" onclick="deleteFeatConfirm({{ $feat->id }}, '{{ addslashes($feat->feat_name) }}')">
-                                <i class="icon-base ti tabler-trash"></i>
-                              </button>
-                            </div>
-                          </div>
-                        @endforeach
-
-                        @foreach($slot['reserve_feats'] as $feat)
-                          <div class="d-flex align-items-center justify-content-between gap-2 p-2 rounded bg-dark bg-opacity-40 border border-secondary border-opacity-20">
-                            <div>
-                              <span class="text-warning fst-italic" style="font-size: 0.88rem;">{{ $feat->feat_name }}</span>
-                              <span class="badge bg-label-secondary ms-1">{{ __('Planned / Prerequisite') }}</span>
                               @if($feat->notes)
                                 <small class="text-muted d-block" style="font-size: 0.73rem;">{{ $feat->notes }}</small>
                               @endif
                             </div>
                             <div class="d-flex align-items-center gap-1">
-                              <button type="button" class="btn btn-xs btn-icon btn-text-secondary btn-row-action" title="{{ __("Edit") }}" onclick="openEditFeatModal({{ $feat->id }}, '{{ addslashes($feat->feat_name) }}', {{ $feat->level }}, '{{ $feat->slot_type }}', '{{ addslashes($feat->category ?? '') }}', '{{ addslashes($feat->prerequisites ?? '') }}', '{{ addslashes($feat->notes ?? '') }}', 0)">
-                                <i class="icon-base ti tabler-edit text-warning"></i>
+                              <button type="button" class="btn btn-xs btn-icon btn-text-secondary btn-row-action" title="{{ __("Edit") }}" onclick="openEditFeatModal({{ $feat->id }}, '{{ addslashes($feat->feat_name) }}', {{ $feat->level }}, '{{ $feat->slot_type }}', '{{ addslashes($feat->category ?? '') }}', '{{ addslashes($feat->prerequisites ?? '') }}', '{{ addslashes($feat->notes ?? '') }}', {{ $feat->is_class_feat ? 1 : 0 }})">
+                                <i class="icon-base ti tabler-edit {{ $feat->slot_type === 'reserve' ? 'text-warning' : 'text-primary' }}"></i>
                               </button>
                               <button type="button" class="btn btn-xs btn-icon btn-text-danger btn-row-action" title="Sil" onclick="deleteFeatConfirm({{ $feat->id }}, '{{ addslashes($feat->feat_name) }}')">
                                 <i class="icon-base ti tabler-trash"></i>
@@ -1027,6 +1049,7 @@
       </div>
       <form id="formFeatAction" onsubmit="return false;">
         <input type="hidden" id="editFeatId" value="" />
+        <input type="hidden" id="featInputClassSlot" value="" />
         <div class="modal-body p-3 p-md-4">
 
           <!-- Character Name -->
@@ -1496,6 +1519,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (btnOpenAddFeat) {
     btnOpenAddFeat.addEventListener('click', function () {
       document.getElementById('editFeatId').value = '';
+      document.getElementById('featInputClassSlot').value = '';
       document.getElementById('featModalModeText').textContent = "{{ __('Add Feat') }}";
       document.getElementById('featInputName').value = '';
       document.getElementById('featInputPreq').value = '';
@@ -1510,6 +1534,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Quick Add for specific level
   window.quickAddFeatToLevel = function(level) {
     document.getElementById('editFeatId').value = '';
+    document.getElementById('featInputClassSlot').value = '';
     document.getElementById('featModalModeText').textContent = `{{ __("Add Feat for Level") }} ${level}`;
     document.getElementById('featInputLevel').value = level;
     document.getElementById('featInputName').value = '';
@@ -1520,9 +1545,17 @@ document.addEventListener('DOMContentLoaded', function () {
     featModal.show();
   };
 
+  window.quickAddFeatToSlot = function(level, slotType, slotName) {
+    quickAddFeatToLevel(level);
+    document.getElementById('featInputSlotType').value = slotType;
+    document.getElementById('featInputClassSlot').value = slotName;
+    document.getElementById('featModalModeText').textContent = `${slotName} — {{ __('Add Feat') }}`;
+  };
+
   // Open Edit Feat Modal
   window.openEditFeatModal = function(id, name, level, slotType, category, preq, notes, isClassFeat) {
     document.getElementById('editFeatId').value = id;
+    document.getElementById('featInputClassSlot').value = '';
     document.getElementById('featModalModeText').textContent = "{{ __('Edit Feat') }}";
     document.getElementById('featInputLevel').value = level;
     document.getElementById('featInputSlotType').value = slotType;
@@ -1563,6 +1596,7 @@ document.addEventListener('DOMContentLoaded', function () {
         prerequisites: preq,
         notes: notes,
         is_class_feat: ['class_bonus', 'class_talent'].includes(slotType),
+        class_feat_name: document.getElementById('featInputClassSlot').value || undefined,
       };
 
       const url = featId 
