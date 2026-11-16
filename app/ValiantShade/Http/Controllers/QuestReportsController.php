@@ -5,6 +5,8 @@ namespace App\ValiantShade\Http\Controllers;
 use App\ValiantShade\Services\QuestReportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class QuestReportsController extends Controller
@@ -86,6 +88,26 @@ class QuestReportsController extends Controller
                 'success' => false,
                 'message' => __('No quest reports were found in the JSON file.'),
             ], 422);
+        }
+
+        try {
+            $exitCode = Artisan::call('migrate', ['--force' => true, '--no-interaction' => true]);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return response()->json([
+                'success' => false,
+                'message' => __('Database migration failed. No reports were imported. Check the server logs.'),
+            ], 500);
+        }
+
+        if ($exitCode !== 0) {
+            Log::error('Quest report import migration failed.', ['exit_code' => $exitCode]);
+
+            return response()->json([
+                'success' => false,
+                'message' => __('Database migration failed. No reports were imported. Check the server logs.'),
+            ], 500);
         }
 
         $result = $this->service->importReports($rows);

@@ -7,6 +7,7 @@ use App\Models\Quest;
 use App\ValiantShade\Services\QuestReportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Tests\Support\IsolatedQuestReportService;
 
 class QuestReportsTest extends TestCase
 {
@@ -14,15 +15,24 @@ class QuestReportsTest extends TestCase
 
     protected User $user;
 
-    protected QuestReportService $service;
+    protected IsolatedQuestReportService $service;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->user = User::factory()->create(['role' => 'ADMIN']);
-        $this->service = app(QuestReportService::class);
+        $path = tempnam(sys_get_temp_dir(), 'quest-reports-test-');
+        $this->assertNotFalse($path);
+        $this->service = new IsolatedQuestReportService($path);
+        $this->app->instance(QuestReportService::class, $this->service);
         $this->service->resetToExcelDefaults();
         $this->service->resetGuildPoolDefaults();
+    }
+
+    protected function tearDown(): void
+    {
+        $this->service->cleanup();
+        parent::tearDown();
     }
 
     public function test_quest_reports_page_renders_successfully(): void
@@ -48,7 +58,7 @@ class QuestReportsTest extends TestCase
         $response->assertSee('Clerk');
 
         // New Report & Calculator Button & Modal assertions
-        $response->assertSee('Yeni Rapor & Ortalama Hesapla');
+        $response->assertSee('Görev Raporu Ekle');
         $response->assertSee('btnTopOpenAddReportModal');
         $response->assertSee('modalAddQuestReport');
         $response->assertSee('liveAddAvgXpBadge');
@@ -304,5 +314,24 @@ class QuestReportsTest extends TestCase
         $resReset->assertStatus(200);
         $resReset->assertJsonPath('success', true);
         $resReset->assertJsonPath('guildPoolData.grand_total_xp', 3459587.5);
+    }
+
+    public function test_guild_pool_zero_values_are_preserved_on_update_and_page(): void
+    {
+        $this->actingAs($this->user)->postJson('/valiant-shade/pages/quest-reports-pool/update', [
+            'wiki_xp' => ['total' => 0, 'distributed' => 0],
+            'guild_xp' => ['total' => 0, 'base' => 0, 'next_level_threshold' => 0, 'remaining' => 0, 'level' => 1],
+            'pool_total' => 0,
+            'extra_fund' => 0,
+        ])->assertOk()->assertJsonPath('guildPoolData.pool_total', 0)
+            ->assertJsonPath('guildPoolData.wiki_xp.remaining', 0);
+
+        $html = $this->actingAs($this->user)->get('/valiant-shade/pages/quest-reports')->assertOk()->getContent();
+        $document = new \DOMDocument;
+        @$document->loadHTML($html);
+        $xpath = new \DOMXPath($document);
+        foreach (['kpiWikiTotalVal', 'kpiWikiDistVal', 'kpiGuildRemainingVal', 'kpiPoolTotalVal'] as $id) {
+            $this->assertSame('0.00', trim($xpath->query('//*[@id="'.$id.'"]')->item(0)->textContent));
+        }
     }
 }

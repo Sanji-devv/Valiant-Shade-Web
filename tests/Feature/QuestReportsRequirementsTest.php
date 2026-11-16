@@ -10,8 +10,10 @@ use App\ValiantShade\Services\QuestReportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
+use Tests\Support\IsolatedQuestReportService;
 
 class QuestReportsRequirementsTest extends TestCase
 {
@@ -19,14 +21,23 @@ class QuestReportsRequirementsTest extends TestCase
 
     protected User $user;
 
-    protected QuestReportService $service;
+    protected IsolatedQuestReportService $service;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->user = User::factory()->create();
-        $this->service = app(QuestReportService::class);
+        $path = tempnam(sys_get_temp_dir(), 'quest-reports-test-');
+        $this->assertNotFalse($path);
+        $this->service = new IsolatedQuestReportService($path);
+        $this->app->instance(QuestReportService::class, $this->service);
         $this->service->resetToDefaults();
+    }
+
+    protected function tearDown(): void
+    {
+        $this->service->cleanup();
+        parent::tearDown();
     }
 
     public function test_all_user_requirements_present_in_page_dom(): void
@@ -69,6 +80,38 @@ class QuestReportsRequirementsTest extends TestCase
         // 7. Game Master (GM) *
         $this->assertStringContainsString('id="addReportGm"', $html);
         $this->assertStringContainsString('name="gm"', $html);
+    }
+
+    public function test_redesigned_page_has_one_add_action_and_displays_all_report_xp_values(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        $this->service->importReports([[
+            'Görev adı' => 'Responsive XP Check', 'Tarih' => '2020-01-01',
+            'Raporlayan' => 'Hero', 'Diğer Oyuncular' => ['Ally'],
+            'XP' => 1000, 'Lonca' => 50.125, 'Depo' => 10.25,
+            'Rapor' => 75.5, 'Ek' => 4.75, 'Ortalama' => 434.4375,
+        ]]);
+        $report = collect($this->service->getAllReportsData())->firstWhere('title', 'Responsive XP Check');
+        $html = $this->actingAs($admin)->withSession(['locale' => 'en'])
+            ->get('/valiant-shade/pages/quest-reports?search=Responsive%20XP%20Check')->assertOk()->getContent();
+
+        $document = new \DOMDocument;
+        @$document->loadHTML($html);
+        $xpath = new \DOMXPath($document);
+        $this->assertSame(1, $xpath->query('//button[contains(concat(" ", normalize-space(@class), " "), " btn-add-report-trigger ")]')->length);
+        $this->assertStringNotContainsString('A..BG', $xpath->query('//*[@id="questReportsMainTabs"]')->item(0)->textContent);
+        $this->assertStringNotContainsString('BU..CA', $xpath->query('//*[@id="questReportsMainTabs"]')->item(0)->textContent);
+        $this->assertSame(2, $xpath->query('//div[@id="tabViewGuildPool"]/details[not(@open)]')->length);
+        $this->assertSame(16, $xpath->query('//table[contains(@class, "reports-list-table")]/thead/tr/th[@scope="col"]')->length);
+        $this->assertSame(0, $xpath->query('//*[@id="kpiTotalGuildCutVal" or @id="totalReportsSpan"]')->length);
+        $row = $xpath->query('//tbody[@id="reportsTableBody"]/tr[@data-id="'.$report['id'].'"]')->item(0);
+        $this->assertNotNull($row);
+        $cells = $xpath->query('./td', $row);
+        $this->assertSame('Side', trim($cells->item(3)->textContent));
+        foreach ([5 => '1,000', 6 => '50.125', 7 => '10.25', 8 => '75.5', 9 => '4.75', 10 => '434.4375'] as $index => $expected) {
+            $this->assertSame($expected, trim($cells->item($index)->textContent));
+        }
+        $this->assertSame(4, $xpath->query('.//button[@aria-label]', $row)->length);
     }
 
     public function test_create_report_with_date_and_auto_depo_and_fixed_rapor_cut(): void
@@ -560,7 +603,7 @@ class QuestReportsRequirementsTest extends TestCase
         $index = collect($reports)->search(fn ($report) => $report['title'] === 'Ambiguous Quest');
         $reportId = $reports[$index]['id'];
         unset($reports[$index]['quest_id']);
-        file_put_contents(storage_path('app/quest_reports_testing.json'), json_encode($reports, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+        file_put_contents($this->service->archivePath, json_encode($reports, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
         Quest::create(['title' => 'Ambiguous Quest', 'quest_date' => '2020-01-01']);
         DB::table('quest_report_xp_entries')->delete();
 
@@ -611,10 +654,11 @@ class QuestReportsRequirementsTest extends TestCase
     public function test_json_import_persists_reports_and_delete_button_route_works(): void
     {
         $page = $this->actingAs($this->user)->withSession(['locale' => 'en'])->get('/valiant-shade/pages/quest-reports');
-        $page->assertSee('btnImportQuestReports');
-        $page->assertSee('Import Data');
+        $page->assertDontSee('id="btnImportQuestReports"', false);
         $page->assertSee('Rapor Sil');
         $admin = User::factory()->create(['role' => 'ADMIN']);
+        $this->actingAs($admin)->withSession(['locale' => 'en'])
+            ->get('/valiant-shade/pages/quest-reports')->assertSee('id="btnImportQuestReports"', false);
 
         $json = json_encode([[
             'Görev adı' => 'JSON İçe Aktarma Test Görevi',
@@ -699,6 +743,74 @@ class QuestReportsRequirementsTest extends TestCase
         }
     }
 
+    public function test_import_runs_pending_migrations_before_processing_reports(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        Schema::drop('quest_report_xp_entries');
+        DB::table('migrations')->where('migration', '2026_11_16_000002_create_quest_report_xp_entries_table')->delete();
+        $json = json_encode([[
+            'Görev adı' => 'Migration Import', 'Tarih' => '2020-01-01',
+            'Raporlayan' => 'Hero', 'XP' => 1000, 'column_F' => '✗',
+            'Depo' => '=IF(F2="✗",E2*0.2,0)',
+        ]], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+
+        $this->actingAs($admin)->postJson('/valiant-shade/pages/quest-reports/import', [
+            'file' => UploadedFile::fake()->createWithContent('reports.json', $json),
+        ])->assertOk()->assertJsonPath('imported', 1);
+        $this->assertTrue(Schema::hasTable('quest_report_xp_entries'));
+        $this->assertDatabaseHas('migrations', ['migration' => '2026_11_16_000002_create_quest_report_xp_entries_table']);
+        $this->assertDatabaseHas('quests', ['title' => 'Migration Import', 'depo_fee_xp' => 200]);
+        $report = collect($this->service->getAllReportsData())->firstWhere('title', 'Migration Import');
+        $this->assertEquals(200, $report['depo_cut']);
+    }
+
+    public function test_import_stops_if_migration_fails_and_requires_an_administrator(): void
+    {
+        $json = json_encode([['Görev adı' => 'Migration Failure', 'Tarih' => '2020-01-01']], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+        $member = User::factory()->create(['role' => 'PLAYER']);
+        $member->givePermissionTo(\Spatie\Permission\Models\Permission::findOrCreate('quests.all', 'web'));
+        Artisan::shouldReceive('call')->once()->with('migrate', ['--force' => true, '--no-interaction' => true])->andReturn(1);
+
+        $this->actingAs($member)->postJson('/valiant-shade/pages/quest-reports/import', [
+            'file' => UploadedFile::fake()->createWithContent('reports.json', $json),
+        ])->assertForbidden();
+        $this->actingAs(User::factory()->create(['role' => 'ADMIN']))->withSession(['locale' => 'en'])
+            ->postJson('/valiant-shade/pages/quest-reports/import', [
+                'file' => UploadedFile::fake()->createWithContent('reports.json', $json),
+            ])->assertStatus(500)->assertJsonPath('message', 'Database migration failed. No reports were imported. Check the server logs.');
+        $this->assertDatabaseMissing('quests', ['title' => 'Migration Failure']);
+        $this->assertNull(collect($this->service->getAllReportsData())->firstWhere('title', 'Migration Failure'));
+    }
+
+    public function test_import_calculates_depot_formula_and_preserves_numeric_deductions(): void
+    {
+        $rows = [
+            ['Görev adı' => 'Failed Depot', 'Tarih' => '2020-01-01', 'XP' => 1250, 'column_F' => '✗', 'Depo' => '=IF(F2="✗",E2*0.2,0)'],
+            ['Görev adı' => 'Successful Depot', 'Tarih' => '2020-01-02', 'XP' => 1250, 'column_F' => '🗸', 'Depo' => '=IF(F3="✗",E3*0.2,0)'],
+            ['Görev adı' => 'Manual Depot', 'Tarih' => '2020-01-03', 'XP' => 1250, 'column_F' => '✗', 'Depo' => 12.5],
+        ];
+        $this->service->importReports($rows);
+        $reports = collect($this->service->getAllReportsData())->keyBy('title');
+        $this->assertEquals(250, $reports['Failed Depot']['depo_cut']);
+        $this->assertEquals(0, $reports['Successful Depot']['depo_cut']);
+        $this->assertEquals(12.5, $reports['Manual Depot']['depo_cut']);
+        $this->assertDatabaseHas('quests', ['title' => 'Failed Depot', 'depo_fee_xp' => 250]);
+    }
+
+    public function test_import_rejects_depot_formula_without_a_known_status(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        $json = json_encode([
+            ['Görev adı' => 'Good Row', 'Tarih' => '2020-01-01'],
+            ['Görev adı' => 'Bad Formula', 'Tarih' => '2020-01-02', 'XP' => 1000, 'Depo' => '=IF(F2="✗",E2*0.2,0)'],
+        ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+        $this->actingAs($admin)->withSession(['locale' => 'en'])->postJson('/valiant-shade/pages/quest-reports/import', [
+            'file' => UploadedFile::fake()->createWithContent('reports.json', $json),
+        ])->assertUnprocessable()->assertJsonValidationErrors('file');
+        $this->assertDatabaseMissing('quests', ['title' => 'Good Row']);
+        $this->assertNull(collect($this->service->getAllReportsData())->firstWhere('title', 'Good Row'));
+    }
+
     public function test_import_requires_full_dates_and_keeps_repeated_rows(): void
     {
         $admin = User::factory()->create(['role' => 'ADMIN']);
@@ -745,7 +857,7 @@ class QuestReportsRequirementsTest extends TestCase
         $index = collect($reports)->search(fn ($report) => $report['title'] === 'Castello Operasyonu');
         $originalQuestId = $reports[$index]['quest_id'];
         unset($reports[$index]['quest_id']);
-        file_put_contents(storage_path('app/quest_reports_testing.json'), json_encode($reports, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+        file_put_contents($this->service->archivePath, json_encode($reports, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
 
         $this->actingAs($admin)->postJson('/valiant-shade/pages/quest-reports/import', [
             'file' => $upload([$first, $second, $reordered]),
@@ -816,7 +928,7 @@ class QuestReportsRequirementsTest extends TestCase
 
         $page = $this->actingAs($admin)->get('/valiant-shade/pages/quest-reports');
         $page->assertSee('btnClearQuestReports')->assertDontSee('btnResetToMasterDefaults');
-        $this->assertMatchesRegularExpression('/id="btnClearQuestReports">\s*Tüm Raporları Sil\s*<\/button>/u', $page->getContent());
+        $this->assertMatchesRegularExpression('/id="btnClearQuestReports">.*?Tüm Raporları Sil.*?<\/button>/su', $page->getContent());
         $this->actingAs($admin)->deleteJson('/valiant-shade/pages/quest-reports')->assertOk()->assertJsonPath('success', true);
 
         $this->assertSame([], $this->service->getAllReportsData());

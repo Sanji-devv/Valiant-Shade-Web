@@ -26,6 +26,8 @@ Administrators can use **Delete All XP Records** to clear the tracker without de
 
 Run `php artisan migrate --force` as part of deployment to create the quest XP distribution, report XP entry, and guild settings tables.
 
+Quest report JSON uploads are administrator-only. Before importing a valid file, the server runs all pending database migrations; if migration fails, the import is stopped and the error is logged. Completed migrations are not rolled back if the subsequent import fails. Back up the database before deploying migrations. Imported numeric depot deductions are preserved; the supported sheet formula `=IF(F2="✗",E2*0.2,0)` is calculated using the row's depot status and XP.
+
 After importing quest reports and XP Tracker records, administrators can use **Link Report XP** on the XP Tracker to link existing reports to uniquely matching characters and tracker records. Repeat this after importing or correcting records. Historical amounts are snapshots only: they are unverified and do not change existing XP totals. Missing or ambiguous matches and reports without a unique quest are reported for review; the response includes the complete lists. New reports maintain their links when XP is pending, distributed, edited, or deleted.
 - [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
 

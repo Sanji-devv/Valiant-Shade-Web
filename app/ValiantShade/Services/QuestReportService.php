@@ -520,7 +520,23 @@ class QuestReportService
                 $level = max(1, (int) ($row['Level'] ?? 1));
                 $totalXp = is_numeric($row['XP'] ?? null) ? (float) $row['XP'] : 0.0;
                 $guildCut = is_numeric($row['Lonca'] ?? null) ? (float) $row['Lonca'] : 0.0;
-                $depoCut = is_numeric($row['Depo'] ?? null) ? (float) $row['Depo'] : 0.0;
+                $depoInput = $row['Depo'] ?? null;
+                if (is_string($depoInput) && str_starts_with(trim($depoInput), '=')) {
+                    $depoFlag = is_bool($depoValue)
+                        ? ($depoValue ? '1' : '0')
+                        : mb_strtolower(trim((string) $depoValue));
+                    $validFlags = ['✓', '🗸', '1', 'true', 'yes', '✗', '✘', '0', 'false', 'no'];
+                    if (! is_numeric($row['XP'] ?? null)
+                        || ! preg_match('/^=\s*IF\s*\(\s*F(\d+)\s*=\s*"✗"\s*,\s*E\1\s*\*\s*0\.2\s*,\s*0\s*\)\s*$/iu', trim($depoInput))
+                        || ! in_array($depoFlag, $validFlags, true)) {
+                        throw ValidationException::withMessages([
+                            'file' => __('The depot formula, XP, or status is invalid for report ":title".', ['title' => $title]),
+                        ]);
+                    }
+                    $depoCut = $depoStatus ? 0.0 : round($totalXp * 0.20, 2);
+                } else {
+                    $depoCut = is_numeric($depoInput) ? (float) $depoInput : 0.0;
+                }
                 $raporCut = is_numeric($row['Rapor'] ?? null) ? (float) $row['Rapor'] : 0.0;
                 $extraReward = is_numeric($row['Ek'] ?? null) ? (float) $row['Ek'] : 0.0;
                 $playerCount = is_numeric($row['Oyuncu'] ?? null)
@@ -541,6 +557,7 @@ class QuestReportService
                     'other_players' => $otherPlayers,
                     'player_count' => $playerCount,
                 ]);
+                $computed['total_xp'] = $totalXp;
                 $computed['guild_cut'] = $guildCut;
                 $computed['depo_cut'] = $depoCut;
                 $computed['avg_reward'] = $avgReward;
