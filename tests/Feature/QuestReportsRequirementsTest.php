@@ -222,6 +222,53 @@ class QuestReportsRequirementsTest extends TestCase
         $this->assertSame(['2021-08-08', '2022-08-08'], $dates);
     }
 
+    public function test_import_and_edit_distinguish_same_day_reports_by_player_roster(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        $first = [
+            'Görev adı' => 'Castello Operasyonu', 'Tarih' => '2021-10-31',
+            'GM' => 'Bart', 'Raporlayan' => 'Aelinor', 'Diğer Oyuncular' => ['Bismuth', 'Boris'],
+        ];
+        $second = [
+            ...$first, 'GM' => 'Shalvaz', 'Raporlayan' => 'Dobby', 'Diğer Oyuncular' => ['Elindel', 'Hall'],
+        ];
+        $reordered = [
+            ...$first, 'GM' => 'Another GM', 'Raporlayan' => ' boris ', 'Diğer Oyuncular' => ['BISMUTH', 'Aelinor'],
+        ];
+        $upload = fn (array $rows) => UploadedFile::fake()->createWithContent('reports.json', json_encode($rows, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+
+        $this->actingAs($admin)->postJson('/valiant-shade/pages/quest-reports/import', [
+            'file' => $upload([$first]),
+        ])->assertOk()->assertJsonPath('imported', 1);
+        $reports = $this->service->getAllReportsData();
+        $index = collect($reports)->search(fn ($report) => $report['title'] === 'Castello Operasyonu');
+        $originalQuestId = $reports[$index]['quest_id'];
+        unset($reports[$index]['quest_id']);
+        file_put_contents(storage_path('app/quest_reports_testing.json'), json_encode($reports, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+
+        $this->actingAs($admin)->postJson('/valiant-shade/pages/quest-reports/import', [
+            'file' => $upload([$first, $second, $reordered]),
+        ])->assertOk()->assertJsonPath('imported', 1)->assertJsonPath('skipped', 2);
+        $this->actingAs($admin)->postJson('/valiant-shade/pages/quest-reports/import', [
+            'file' => $upload([$first, $second, $reordered]),
+        ])->assertOk()->assertJsonPath('imported', 0)->assertJsonPath('skipped', 3);
+
+        $reports = collect($this->service->getAllReportsData())->where('title', 'Castello Operasyonu');
+        $this->assertCount(2, $reports);
+        $this->assertSame($originalQuestId, $reports->firstWhere('reporter', 'Aelinor')['quest_id']);
+        $secondReport = $reports->firstWhere('reporter', 'Dobby');
+        $this->assertNotSame($originalQuestId, $secondReport['quest_id']);
+
+        $payload = ['title' => 'Castello Güncellendi', 'date' => '2021-10-31', 'level' => 1,
+            'gm' => 'Shalvaz', 'reporter' => 'Dobby', 'other_players' => ['Elindel', 'Hall']];
+        $this->actingAs($admin)->putJson("/valiant-shade/pages/quest-reports/{$secondReport['id']}", $payload)->assertOk();
+        $this->assertDatabaseHas('quests', ['id' => $originalQuestId, 'title' => 'Castello Operasyonu']);
+        $this->assertDatabaseHas('quests', ['id' => $secondReport['quest_id'], 'title' => 'Castello Güncellendi']);
+        $this->actingAs($admin)->deleteJson("/valiant-shade/pages/quest-reports/{$secondReport['id']}")->assertOk();
+        $this->assertDatabaseHas('quests', ['id' => $originalQuestId, 'deleted_at' => null]);
+        $this->assertSoftDeleted('quests', ['id' => $secondReport['quest_id']]);
+    }
+
     public function test_admin_can_clear_all_reports_and_reset_player_xp(): void
     {
         $admin = User::factory()->create(['role' => 'ADMIN']);

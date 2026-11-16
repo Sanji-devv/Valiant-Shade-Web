@@ -223,21 +223,30 @@ class QuestReportService
 
         $allReports = $this->getAllReportsData();
         $canonicalKeys = [];
+        $archiveGroups = [];
         $nextId = 1;
-        foreach ($allReports as $report) {
-            $key = $this->reportIdentity((string) ($report['title'] ?? ''), (string) ($report['date'] ?? ''));
-            if ($key !== '|') {
-                $canonicalKeys[$key] = (int) ($report['id'] ?? 0);
-            }
+        foreach ($allReports as $index => $report) {
+            $baseKey = $this->reportIdentity((string) ($report['title'] ?? ''), (string) ($report['date'] ?? ''));
+            $canonicalKeys[$this->reportPartyIdentity($baseKey, $report['reporter'] ?? '', $report['other_players'] ?? [])] = $index;
+            $archiveGroups[$baseKey][] = $index;
             $nextId = max($nextId, ((int) ($report['id'] ?? 0)) + 1);
         }
 
-        $existingQuestKeys = [];
-        foreach (Quest::query()->get(['title', 'quest_date']) as $quest) {
+        $questGroups = [];
+        foreach (Quest::query()->get(['id', 'title', 'quest_date']) as $quest) {
             $questDate = $quest->quest_date instanceof \DateTimeInterface
                 ? $quest->quest_date->format('Y-m-d')
                 : (string) ($quest->quest_date ?? '');
-            $existingQuestKeys[$this->reportIdentity($quest->title, $questDate)] = true;
+            $questGroups[$this->reportIdentity($quest->title, $questDate)][] = $quest->id;
+        }
+
+        $archiveChanged = false;
+        foreach ($archiveGroups as $baseKey => $indices) {
+            if (count($indices) === 1 && count($questGroups[$baseKey] ?? []) === 1
+                && empty($allReports[$indices[0]]['quest_id'])) {
+                $allReports[$indices[0]]['quest_id'] = $questGroups[$baseKey][0];
+                $archiveChanged = true;
+            }
         }
 
         $characterNames = [];
@@ -257,17 +266,15 @@ class QuestReportService
 
         $imported = 0;
         $skipped = 0;
-        $newReports = [];
-
         DB::transaction(function () use (
             $rows,
             &$allReports,
             &$canonicalKeys,
-            &$existingQuestKeys,
+            &$questGroups,
             &$nextId,
             &$imported,
             &$skipped,
-            &$newReports,
+            &$archiveChanged,
             $characters
         ): void {
             foreach ($rows as $row) {
@@ -284,7 +291,16 @@ class QuestReportService
 
                     continue;
                 }
-                $key = $this->reportIdentity($title, $databaseDate);
+                $reporter = trim((string) ($row['Raporlayan'] ?? '')) ?: 'Tolrun';
+                $otherPlayers = $this->importParticipantNames($row);
+                $baseKey = $this->reportIdentity($title, $databaseDate);
+                $key = $this->reportPartyIdentity($baseKey, $reporter, $otherPlayers);
+                $existingIndex = $canonicalKeys[$key] ?? null;
+                if ($existingIndex !== null && (! empty($allReports[$existingIndex]['quest_id']) || ! empty($questGroups[$baseKey]))) {
+                    $skipped++;
+
+                    continue;
+                }
 
                 $mqValue = trim((string) ($row['MQ'] ?? ''));
                 $isEpic = in_array($mqValue, ['✓✓', '🗸🗸'], true);
@@ -295,8 +311,6 @@ class QuestReportService
                 $depoStatus = $depoValue === null
                     ? (float) ($row['Depo'] ?? 0) === 0.0
                     : in_array(mb_strtolower(trim((string) $depoValue)), ['✓', '🗸', '1', 'true', 'yes'], true);
-                $reporter = trim((string) ($row['Raporlayan'] ?? '')) ?: 'Tolrun';
-                $otherPlayers = $this->importParticipantNames($row);
                 $level = max(1, (int) ($row['Level'] ?? 1));
                 $totalXp = is_numeric($row['XP'] ?? null) ? (float) $row['XP'] : 0.0;
                 $guildCut = is_numeric($row['Lonca'] ?? null) ? (float) $row['Lonca'] : 0.0;
@@ -331,7 +345,7 @@ class QuestReportService
                 unset($member);
 
                 $report = array_merge([
-                    'id' => $canonicalKeys[$key] ?? $nextId++,
+                    'id' => $existingIndex !== null ? $allReports[$existingIndex]['id'] : $nextId++,
                     'title' => $title,
                     'date' => $displayDate,
                     'status' => $depoStatus ? 'success' : 'failed',
@@ -341,17 +355,6 @@ class QuestReportService
                     'report_summary' => "{$title} görevi tamamlandı. Toplam {$totalXp} XP dağıtıldı.",
                     'full_report' => "{$title} görevi için kaynak rapor verileri içe aktarıldı.",
                 ], $computed);
-
-                if (! array_key_exists($key, $canonicalKeys)) {
-                    $newReports[] = $report;
-                    $canonicalKeys[$key] = $report['id'];
-                }
-
-                if (isset($existingQuestKeys[$key])) {
-                    $skipped++;
-
-                    continue;
-                }
 
                 $gmName = trim((string) ($row['GM'] ?? ''));
                 $gmCharacter = $characters->get($gmName);
@@ -397,12 +400,19 @@ class QuestReportService
                     QuestParticipant::insert(array_values($participants));
                 }
 
-                $existingQuestKeys[$key] = true;
+                $questGroups[$baseKey][] = $quest->id;
+                if ($existingIndex !== null) {
+                    $allReports[$existingIndex]['quest_id'] = $quest->id;
+                } else {
+                    $report['quest_id'] = $quest->id;
+                    $canonicalKeys[$key] = count($allReports);
+                    $allReports[] = $report;
+                }
+                $archiveChanged = true;
                 $imported++;
             }
 
-            if ($newReports) {
-                $allReports = array_merge($newReports, $allReports);
+            if ($archiveChanged) {
                 $this->saveReportsData($allReports);
             }
         });
@@ -474,7 +484,20 @@ class QuestReportService
         return mb_strtolower(trim($title)).'|'.$date;
     }
 
-    private function validateReportIdentity(array $reports, string $title, string $date, ?int $excludedId = null): array
+    private function reportPartyIdentity(string $baseKey, string $reporter, mixed $otherPlayers): string
+    {
+        $players = is_array($otherPlayers) ? $otherPlayers : [];
+        $players[] = $reporter;
+        $players = array_values(array_unique(array_filter(array_map(
+            static fn ($name) => mb_strtolower(trim((string) $name)),
+            $players
+        ), static fn ($name) => $name !== '' && ! in_array($name, ['-', 'yok'], true))));
+        sort($players, SORT_STRING);
+
+        return json_encode([$baseKey, $players], JSON_THROW_ON_ERROR);
+    }
+
+    private function validateReportIdentity(array $reports, string $title, string $date, string $reporter, array $otherPlayers, ?int $excludedId = null): array
     {
         [$displayDate, $databaseDate] = $this->parseImportDate($date);
         if ($databaseDate === null) {
@@ -483,12 +506,16 @@ class QuestReportService
             ]);
         }
 
-        $key = $this->reportIdentity($title, $databaseDate);
+        $key = $this->reportPartyIdentity($this->reportIdentity($title, $databaseDate), $reporter, $otherPlayers);
         foreach ($reports as $report) {
             if ((int) ($report['id'] ?? 0) !== $excludedId
-                && $this->reportIdentity((string) ($report['title'] ?? ''), (string) ($report['date'] ?? '')) === $key) {
+                && $this->reportPartyIdentity(
+                    $this->reportIdentity((string) ($report['title'] ?? ''), (string) ($report['date'] ?? '')),
+                    $report['reporter'] ?? '',
+                    $report['other_players'] ?? []
+                ) === $key) {
                 throw ValidationException::withMessages([
-                    'title' => 'Aynı ad ve tarihte bir görev raporu zaten mevcut.',
+                    'title' => 'Aynı ad, tarih ve oyuncularla bir görev raporu zaten mevcut.',
                 ]);
             }
         }
@@ -639,7 +666,9 @@ class QuestReportService
 
         $computed = $this->calculateReportValues($data);
 
-        [$displayDate, $dbQuestDate] = $this->validateReportIdentity($all, $data['title'], $data['date']);
+        [$displayDate, $dbQuestDate] = $this->validateReportIdentity(
+            $all, $data['title'], $data['date'], $computed['reporter'], $computed['other_players']
+        );
 
         $newReport = array_merge([
             'id' => $nextId,
@@ -653,12 +682,7 @@ class QuestReportService
             'full_report' => trim($data['full_report'] ?? ($data['report_summary'] ?? 'Görev detayları kaydedildi.')),
         ], $computed);
 
-        // Prepend to list
-        array_unshift($all, $newReport);
-        $this->saveReportsData($all);
-
-        // Sync to database Quests & QuestParticipants if available
-        try {
+        DB::transaction(function () use (&$newReport, $dbQuestDate, $all): void {
             if (Schema::hasTable('quests')) {
                 $gmChar = Character::where('name', $newReport['gm'])->first();
                 $reporterChar = Character::where('name', $newReport['reporter'])->first();
@@ -679,6 +703,7 @@ class QuestReportService
                     'reporter_character_id' => $reporterChar?->id,
                     'status' => 'APPROVED',
                 ]);
+                $newReport['quest_id'] = $quest->id;
 
                 if ($reporterChar && Schema::hasTable('quest_participants')) {
                     QuestParticipant::create([
@@ -707,9 +732,10 @@ class QuestReportService
                     }
                 }
             }
-        } catch (\Throwable $e) {
-            // DB sync is best-effort (e.g. during test sqlite in-memory without migrations)
-        }
+
+            array_unshift($all, $newReport);
+            $this->saveReportsData($all);
+        });
 
         return $newReport;
     }
@@ -741,6 +767,8 @@ class QuestReportService
             $all,
             $data['title'] ?? $existing['title'],
             $data['date'] ?? $existing['date'],
+            $computed['reporter'],
+            $computed['other_players'],
             $id
         );
 
@@ -755,35 +783,24 @@ class QuestReportService
             'full_report' => trim($data['full_report'] ?? ($existing['full_report'] ?? '')),
         ], $computed);
 
-        $all[$foundIndex] = $updated;
-        $this->saveReportsData($all);
-
-        // Update database quest if present
-        try {
-            if (Schema::hasTable('quests')) {
-                [, $existingDate] = $this->parseImportDate($existing['date'] ?? '');
-                $query = Quest::where('title', $existing['title']);
-                if ($existingDate !== null) {
-                    $query->whereDate('quest_date', $existingDate);
-                }
-                $qRecord = $query->first();
-                if ($qRecord) {
-                    $qRecord->update([
-                        'title' => $updated['title'],
-                        'quest_date' => $dbQuestDate,
-                        'level' => (int) $updated['level'],
-                        'base_xp' => (float) $updated['total_xp'],
-                        'depo_fee_xp' => (float) $updated['depo_cut'],
-                        'guild_cut_xp' => (float) $updated['guild_cut'],
-                        'report_reward_xp' => (float) $updated['rapor_cut'],
-                        'bonus_pool_xp' => (float) $updated['extra_reward'],
-                        'per_player_xp' => (float) $updated['avg_reward'],
-                    ]);
-                }
+        $qRecord = $this->findReportQuest($existing);
+        DB::transaction(function () use ($qRecord, $updated, $dbQuestDate, $foundIndex, $all): void {
+            if ($qRecord) {
+                $qRecord->update([
+                    'title' => $updated['title'],
+                    'quest_date' => $dbQuestDate,
+                    'level' => (int) $updated['level'],
+                    'base_xp' => (float) $updated['total_xp'],
+                    'depo_fee_xp' => (float) $updated['depo_cut'],
+                    'guild_cut_xp' => (float) $updated['guild_cut'],
+                    'report_reward_xp' => (float) $updated['rapor_cut'],
+                    'bonus_pool_xp' => (float) $updated['extra_reward'],
+                    'per_player_xp' => (float) $updated['avg_reward'],
+                ]);
             }
-        } catch (\Throwable $e) {
-            // Silently fallback
-        }
+            $all[$foundIndex] = $updated;
+            $this->saveReportsData($all);
+        });
 
         return $updated;
     }
@@ -801,31 +818,44 @@ class QuestReportService
         $filtered = array_filter($all, fn ($r) => (int) $r['id'] !== $id);
 
         if (count($filtered) !== $originalCount) {
-            $this->saveReportsData($filtered);
-
-            try {
-                if ($toDelete && Schema::hasTable('quests')) {
-                    [, $existingDate] = $this->parseImportDate($toDelete['date'] ?? '');
-                    $query = Quest::where('title', $toDelete['title']);
-                    if ($existingDate !== null) {
-                        $query->whereDate('quest_date', $existingDate);
+            $qRecord = $this->findReportQuest($toDelete);
+            DB::transaction(function () use ($qRecord, $filtered): void {
+                if ($qRecord) {
+                    if (Schema::hasTable('quest_participants')) {
+                        QuestParticipant::where('quest_id', $qRecord->id)->delete();
                     }
-                    $qRecord = $query->first();
-                    if ($qRecord) {
-                        if (Schema::hasTable('quest_participants')) {
-                            QuestParticipant::where('quest_id', $qRecord->id)->delete();
-                        }
-                        $qRecord->delete();
-                    }
+                    $qRecord->delete();
                 }
-            } catch (\Throwable $e) {
-                // Silently fallback
-            }
+                $this->saveReportsData($filtered);
+            });
 
             return true;
         }
 
         return false;
+    }
+
+    private function findReportQuest(array $report): ?Quest
+    {
+        if (! Schema::hasTable('quests')) {
+            return null;
+        }
+        if (! empty($report['quest_id'])) {
+            return Quest::find($report['quest_id']);
+        }
+        [, $date] = $this->parseImportDate((string) ($report['date'] ?? ''));
+        $query = Quest::where('title', $report['title']);
+        if ($date !== null) {
+            $query->whereDate('quest_date', $date);
+        }
+        $matches = $query->limit(2)->get();
+        if ($matches->count() > 1) {
+            throw ValidationException::withMessages([
+                'title' => 'Bu raporun veritabanı kaydı kesin olarak belirlenemedi.',
+            ]);
+        }
+
+        return $matches->first();
     }
 
     /**

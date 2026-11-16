@@ -220,6 +220,28 @@ class QuestReportsTest extends TestCase
         $this->assertSame('2021-08-08', $remaining->first()->quest_date->toDateString());
     }
 
+    public function test_manual_report_duplicate_check_uses_the_entire_player_roster(): void
+    {
+        $payload = [
+            'title' => 'Ekip Görevi',
+            'date' => '2021-10-31',
+            'level' => 1,
+            'gm' => 'Bart',
+            'reporter' => 'Aelinor',
+            'other_players' => ['Bismuth', 'Boris'],
+        ];
+        $this->actingAs($this->user)->postJson('/valiant-shade/pages/quest-reports', $payload)->assertOk();
+        $this->actingAs($this->user)->postJson('/valiant-shade/pages/quest-reports', [
+            ...$payload, 'reporter' => 'Boris', 'other_players' => ['Aelinor', 'Bismuth'],
+        ])->assertUnprocessable()->assertJsonValidationErrors('title');
+        $secondId = $this->actingAs($this->user)->postJson('/valiant-shade/pages/quest-reports', [
+            ...$payload, 'reporter' => 'Dobby', 'other_players' => ['Elindel'],
+        ])->assertOk()->json('report.id');
+        $this->actingAs($this->user)->putJson("/valiant-shade/pages/quest-reports/{$secondId}", [
+            ...$payload, 'reporter' => 'Boris', 'other_players' => ['Bismuth', 'Aelinor'],
+        ])->assertUnprocessable()->assertJsonValidationErrors('title');
+    }
+
     public function test_guild_pool_and_ranks_exact_master_sheet_formulas(): void
     {
         $poolData = $this->service->getGuildPoolData();
