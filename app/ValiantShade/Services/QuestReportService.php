@@ -11,6 +11,7 @@ use Database\Seeders\QuestReportsSeeder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 
 class QuestReportService
 {
@@ -84,22 +85,33 @@ class QuestReportService
         return $this->resetToDefaults();
     }
 
-    /**
-     * Get all quest reports from storage (with fallback).
-     */
     public function getAllReportsData(): array
     {
         $this->ensureInitialized();
         $path = $this->getStoragePath();
-        if (file_exists($path)) {
-            $json = file_get_contents($path);
-            $decoded = json_decode($json, true);
-            if (is_array($decoded) && ! empty($decoded)) {
-                return $decoded;
+        $file = fopen($path, 'rb');
+        if ($file === false) {
+            throw new \RuntimeException('Görev raporları arşivi okunamadı.');
+        }
+        try {
+            if (! flock($file, LOCK_SH)) {
+                throw new \RuntimeException('Görev raporları arşivi kilitlenemedi.');
             }
+            $json = stream_get_contents($file);
+        } finally {
+            flock($file, LOCK_UN);
+            fclose($file);
         }
 
-        return $this->getRawReportsData();
+        if ($json === false) {
+            throw new \RuntimeException('Görev raporları arşivi okunamadı.');
+        }
+        $decoded = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        if (! is_array($decoded) || ! array_is_list($decoded)) {
+            throw new \RuntimeException('Görev raporları arşivi geçersiz.');
+        }
+
+        return $decoded;
     }
 
     /**
@@ -115,6 +127,81 @@ class QuestReportService
         $json = json_encode(array_values($reports), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         if (file_put_contents($path, $json, LOCK_EX) === false) {
             throw new \RuntimeException('Görev raporları dosyası kaydedilemedi.');
+        }
+    }
+
+    public function clearReportsAndPlayerXp(): void
+    {
+        $this->ensureInitialized();
+        $path = $this->getStoragePath();
+        $original = file_get_contents($path);
+        if ($original === false) {
+            throw new \RuntimeException('Görev raporları arşivi okunamadı.');
+        }
+
+        $reports = json_decode($original, true, 512, JSON_THROW_ON_ERROR);
+        if (! is_array($reports) || ! array_is_list($reports)) {
+            throw new \RuntimeException('Görev raporları arşivi geçersiz.');
+        }
+
+        $writeAttempted = false;
+        try {
+            DB::transaction(function () use (&$writeAttempted): void {
+                DB::table('quest_participants')->delete();
+                DB::table('quests')->delete();
+                DB::table('xp_ledger')->delete();
+                DB::table('player_xps')->update([
+                    'level' => 1,
+                    'sessions_count' => 0,
+                    'rank_xp' => 0,
+                    'mission_xp' => 0,
+                    'report_xp' => 0,
+                    'bailiff_xp' => 0,
+                    'extra_xp' => 0,
+                    'bonus_xp' => 0,
+                    'total_xp' => 0,
+                    'inactive_threshold_xp' => null,
+                    'updated_at' => now(),
+                ]);
+                DB::table('characters')->update([
+                    'current_level' => 1,
+                    'total_xp' => 0,
+                    'rank_floor_xp' => 0,
+                    'quest_xp' => 0,
+                    'report_xp' => 0,
+                    'bailiff_xp' => 0,
+                    'ex_char_xp' => 0,
+                    'wiki_xp' => 0,
+                    'updated_at' => now(),
+                ]);
+                DB::table('character_xp')->update([
+                    'current_level' => 1,
+                    'total_xp' => 0,
+                    'quest_xp' => 0,
+                    'report_xp' => 0,
+                    'bailiff_xp' => 0,
+                    'ex_char_xp' => 0,
+                    'wiki_xp' => 0,
+                    'updated_at' => now(),
+                ]);
+                DB::table('user_xp')->update([
+                    'total_xp' => 0,
+                    'ex_char_xp' => 0,
+                    'ex_bailiff_xp' => 0,
+                    'wiki_xp' => 0,
+                    'updated_at' => now(),
+                ]);
+                DB::table('character_profiles')->update(['level' => 1, 'updated_at' => now()]);
+
+                $writeAttempted = true;
+                $this->saveReportsData([]);
+            });
+        } catch (\Throwable $e) {
+            if ($writeAttempted && file_put_contents($path, $original, LOCK_EX) === false) {
+                throw new \RuntimeException('İşlem başarısız oldu ve rapor arşivi geri yüklenemedi.', 0, $e);
+            }
+
+            throw $e;
         }
     }
 
@@ -187,8 +274,12 @@ class QuestReportService
 
                 $title = trim((string) $row['Görev adı']);
                 [$displayDate, $databaseDate] = $this->parseImportDate($row['Tarih'] ?? '');
-                $identityDate = $databaseDate ?? trim((string) ($row['Tarih'] ?? ''));
-                $key = $this->reportIdentity($title, $identityDate);
+                if ($databaseDate === null) {
+                    $skipped++;
+
+                    continue;
+                }
+                $key = $this->reportIdentity($title, $databaseDate);
 
                 $mqValue = trim((string) ($row['MQ'] ?? ''));
                 $isEpic = in_array($mqValue, ['✓✓', '🗸🗸'], true);
@@ -353,35 +444,51 @@ class QuestReportService
     private function parseImportDate(mixed $date): array
     {
         $rawDate = trim((string) $date);
-        if ($rawDate === '') {
+        if (preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})$/', $rawDate, $matches)) {
+            [, $year, $month, $day] = $matches;
+        } elseif (preg_match('/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})$/', $rawDate, $matches)) {
+            [, $day, $month, $year] = $matches;
+        } else {
             return ['', null];
         }
 
-        try {
-            $parsed = Carbon::parse($rawDate);
-
-            return [$parsed->format('d/m/Y'), $parsed->toDateString()];
-        } catch (\Exception) {
+        if (! checkdate((int) $month, (int) $day, (int) $year)) {
             return [$rawDate, null];
         }
+
+        $parsed = Carbon::createFromDate((int) $year, (int) $month, (int) $day);
+
+        return [$parsed->format('d/m/Y'), $parsed->toDateString()];
     }
 
     private function reportIdentity(string $title, string $date): string
     {
-        $date = trim($date);
-        if ($date !== '') {
-            try {
-                if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $date, $matches)) {
-                    $date = Carbon::createFromFormat('!d/m/Y', "{$matches[1]}/{$matches[2]}/{$matches[3]}")->toDateString();
-                } else {
-                    $date = Carbon::parse($date)->toDateString();
-                }
-            } catch (\Exception) {
-                $date = mb_strtolower($date);
+        [, $parsedDate] = $this->parseImportDate($date);
+        $date = $parsedDate ?? mb_strtolower(trim($date));
+
+        return mb_strtolower(trim($title)).'|'.$date;
+    }
+
+    private function validateReportIdentity(array $reports, string $title, string $date, ?int $excludedId = null): array
+    {
+        [$displayDate, $databaseDate] = $this->parseImportDate($date);
+        if ($databaseDate === null) {
+            throw ValidationException::withMessages([
+                'date' => 'Tarih geçerli bir gün, ay ve yıl içermelidir.',
+            ]);
+        }
+
+        $key = $this->reportIdentity($title, $databaseDate);
+        foreach ($reports as $report) {
+            if ((int) ($report['id'] ?? 0) !== $excludedId
+                && $this->reportIdentity((string) ($report['title'] ?? ''), (string) ($report['date'] ?? '')) === $key) {
+                throw ValidationException::withMessages([
+                    'title' => 'Aynı ad ve tarihte bir görev raporu zaten mevcut.',
+                ]);
             }
         }
 
-        return mb_strtolower(trim($title)).'|'.$date;
+        return [$displayDate, $databaseDate];
     }
 
     /**
@@ -527,19 +634,7 @@ class QuestReportService
 
         $computed = $this->calculateReportValues($data);
 
-        $rawDate = trim($data['date'] ?? date('d/m/Y'));
-        try {
-            if (preg_match('/^(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{4})$/', $rawDate, $m)) {
-                $parsedDate = Carbon::createFromDate((int) $m[3], (int) $m[2], (int) $m[1]);
-            } else {
-                $parsedDate = Carbon::parse($rawDate);
-            }
-            $displayDate = $parsedDate->format('d/m/Y');
-            $dbQuestDate = $parsedDate->toDateString();
-        } catch (\Throwable $e) {
-            $displayDate = $rawDate;
-            $dbQuestDate = now()->toDateString();
-        }
+        [$displayDate, $dbQuestDate] = $this->validateReportIdentity($all, $data['title'], $data['date']);
 
         $newReport = array_merge([
             'id' => $nextId,
@@ -637,19 +732,12 @@ class QuestReportService
         $existing = $all[$foundIndex];
         $computed = $this->calculateReportValues(array_merge($existing, $data));
 
-        $rawDate = trim($data['date'] ?? $existing['date']);
-        try {
-            if (preg_match('/^(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{4})$/', $rawDate, $m)) {
-                $parsedDate = Carbon::createFromDate((int) $m[3], (int) $m[2], (int) $m[1]);
-            } else {
-                $parsedDate = Carbon::parse($rawDate);
-            }
-            $displayDate = $parsedDate->format('d/m/Y');
-            $dbQuestDate = $parsedDate->toDateString();
-        } catch (\Throwable $e) {
-            $displayDate = $rawDate;
-            $dbQuestDate = now()->toDateString();
-        }
+        [$displayDate, $dbQuestDate] = $this->validateReportIdentity(
+            $all,
+            $data['title'] ?? $existing['title'],
+            $data['date'] ?? $existing['date'],
+            $id
+        );
 
         $updated = array_merge($existing, [
             'title' => trim($data['title'] ?? $existing['title']),
@@ -668,7 +756,12 @@ class QuestReportService
         // Update database quest if present
         try {
             if (Schema::hasTable('quests')) {
-                $qRecord = Quest::where('title', $existing['title'])->first();
+                [, $existingDate] = $this->parseImportDate($existing['date'] ?? '');
+                $query = Quest::where('title', $existing['title']);
+                if ($existingDate !== null) {
+                    $query->whereDate('quest_date', $existingDate);
+                }
+                $qRecord = $query->first();
                 if ($qRecord) {
                     $qRecord->update([
                         'title' => $updated['title'],
@@ -707,7 +800,12 @@ class QuestReportService
 
             try {
                 if ($toDelete && Schema::hasTable('quests')) {
-                    $qRecord = Quest::where('title', $toDelete['title'])->first();
+                    [, $existingDate] = $this->parseImportDate($toDelete['date'] ?? '');
+                    $query = Quest::where('title', $toDelete['title']);
+                    if ($existingDate !== null) {
+                        $query->whereDate('quest_date', $existingDate);
+                    }
+                    $qRecord = $query->first();
                     if ($qRecord) {
                         if (Schema::hasTable('quest_participants')) {
                             QuestParticipant::where('quest_id', $qRecord->id)->delete();

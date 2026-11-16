@@ -3,9 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Models\Quest;
 use App\ValiantShade\Services\QuestReportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class QuestReportsRequirementsTest extends TestCase
@@ -21,6 +23,7 @@ class QuestReportsRequirementsTest extends TestCase
         parent::setUp();
         $this->user = User::factory()->create();
         $this->service = app(QuestReportService::class);
+        $this->service->resetToDefaults();
     }
 
     public function test_all_user_requirements_present_in_page_dom(): void
@@ -192,5 +195,117 @@ class QuestReportsRequirementsTest extends TestCase
         $delete->assertOk();
         $delete->assertJsonPath('success', true);
         $this->assertSoftDeleted('quests', ['title' => 'Güncellenmiş Test Görevi']);
+    }
+
+    public function test_import_requires_full_dates_and_treats_different_years_as_distinct(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        $rows = [
+            ['Görev adı' => 'Yıl İçe Aktarma Testi', 'Tarih' => '08/08/2021'],
+            ['Görev adı' => 'Yıl İçe Aktarma Testi', 'Tarih' => '2021-08-08'],
+            ['Görev adı' => 'Yıl İçe Aktarma Testi', 'Tarih' => '08/08/2022'],
+            ['Görev adı' => 'Yıl İçe Aktarma Testi', 'Tarih' => '8/8'],
+            ['Görev adı' => 'Yıl İçe Aktarma Testi', 'Tarih' => '29/02/2021'],
+        ];
+        $json = json_encode($rows, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+
+        $this->actingAs($admin)->postJson('/valiant-shade/pages/quest-reports/import', [
+            'file' => UploadedFile::fake()->createWithContent('reports.json', $json),
+        ])->assertOk()->assertJsonPath('imported', 2)->assertJsonPath('skipped', 3);
+
+        $dates = Quest::where('title', 'Yıl İçe Aktarma Testi')
+            ->orderBy('quest_date')
+            ->get()
+            ->map(fn (Quest $quest) => $quest->quest_date->toDateString())
+            ->all();
+        $this->assertSame(['2021-08-08', '2022-08-08'], $dates);
+    }
+
+    public function test_admin_can_clear_all_reports_and_reset_player_xp(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        $characterId = DB::table('characters')->insertGetId([
+            'user_id' => $admin->id,
+            'name' => 'Reset Character',
+            'current_level' => 3,
+            'total_xp' => 4000,
+            'quest_xp' => 4000,
+        ]);
+        DB::table('player_xps')->insert([
+            'character_name' => 'Reset Character',
+            'level' => 3,
+            'mission_xp' => 4000,
+            'total_xp' => 4000,
+        ]);
+        DB::table('character_xp')->insert(['character_id' => $characterId, 'current_level' => 3, 'total_xp' => 4000, 'quest_xp' => 4000]);
+        DB::table('user_xp')->insert(['user_id' => $admin->id, 'total_xp' => 4000, 'wiki_xp' => 4000]);
+        DB::table('character_profiles')->insert(['character_name' => 'Reset Character', 'level' => 3]);
+        DB::table('xp_ledger')->insert(['character_id' => $characterId, 'amount' => 4000, 'category' => 'QUEST']);
+        $questId = DB::table('quests')->insertGetId(['title' => 'Reset Quest']);
+        DB::table('quest_participants')->insert(['quest_id' => $questId, 'character_id' => $characterId]);
+
+        $this->actingAs($admin)->get('/valiant-shade/pages/quest-reports')->assertSee('btnClearQuestReports');
+        $this->actingAs($admin)->deleteJson('/valiant-shade/pages/quest-reports')->assertOk()->assertJsonPath('success', true);
+
+        $this->assertSame([], $this->service->getAllReportsData());
+        $this->assertSame(0, DB::table('quests')->count());
+        $this->assertSame(0, DB::table('quest_participants')->count());
+        $this->assertSame(0, DB::table('xp_ledger')->count());
+        $this->assertDatabaseHas('player_xps', ['character_name' => 'Reset Character', 'level' => 1, 'mission_xp' => 0, 'total_xp' => 0]);
+        $this->assertDatabaseHas('characters', ['id' => $characterId, 'current_level' => 1, 'quest_xp' => 0, 'total_xp' => 0]);
+        $this->assertDatabaseHas('character_xp', ['character_id' => $characterId, 'current_level' => 1, 'quest_xp' => 0, 'total_xp' => 0]);
+        $this->assertDatabaseHas('user_xp', ['user_id' => $admin->id, 'wiki_xp' => 0, 'total_xp' => 0]);
+        $this->assertDatabaseHas('character_profiles', ['character_name' => 'Reset Character', 'level' => 1]);
+        $this->actingAs($admin)->getJson('/valiant-shade/pages/quest-reports')->assertOk()->assertJsonPath('stats.total_quests', 0);
+    }
+
+    public function test_non_admin_cannot_clear_reports_and_empty_xp_tracker_is_not_reseeded(): void
+    {
+        $this->actingAs($this->user)->get('/valiant-shade/pages/quest-reports')->assertDontSee('id="btnClearQuestReports"', false);
+        $this->actingAs($this->user)->deleteJson('/valiant-shade/pages/quest-reports')->assertForbidden();
+        $this->assertNotEmpty($this->service->getAllReportsData());
+
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        $this->actingAs($admin)->deleteJson('/valiant-shade/pages/quest-reports')->assertOk();
+        $this->actingAs($admin)->get('/valiant-shade/pages/xp-tracker')->assertOk();
+        $this->assertSame(0, DB::table('player_xps')->count());
+    }
+
+    public function test_clear_rolls_back_database_if_archive_write_fails(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'quest-report-');
+        $this->assertNotFalse($path);
+        $original = '[{"id":1,"title":"Existing"}]';
+        file_put_contents($path, $original);
+        $service = new class($path) extends QuestReportService
+        {
+            public function __construct(private string $path) {}
+
+            protected function getStoragePath(): string
+            {
+                return $this->path;
+            }
+
+            protected function saveReportsData(array $reports): void
+            {
+                throw new \RuntimeException('Archive write failed');
+            }
+        };
+        DB::table('quests')->insert(['title' => 'Existing']);
+        DB::table('player_xps')->insert(['character_name' => 'Existing', 'total_xp' => 4000, 'level' => 3]);
+
+        try {
+            try {
+                $service->clearReportsAndPlayerXp();
+                $this->fail('The failed archive write must be reported.');
+            } catch (\RuntimeException $e) {
+                $this->assertSame('Archive write failed', $e->getMessage());
+            }
+            $this->assertDatabaseHas('quests', ['title' => 'Existing']);
+            $this->assertDatabaseHas('player_xps', ['character_name' => 'Existing', 'total_xp' => 4000, 'level' => 3]);
+            $this->assertSame($original, file_get_contents($path));
+        } finally {
+            unlink($path);
+        }
     }
 }

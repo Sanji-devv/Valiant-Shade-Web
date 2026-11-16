@@ -25,6 +25,7 @@ use App\ValiantShade\Http\Controllers\UserProjects;
 use App\ValiantShade\Http\Controllers\UserTeams;
 use App\ValiantShade\Http\Middleware\EnsureCanManageRoles;
 use App\ValiantShade\Http\Middleware\EnsureUserIsAdmin;
+use App\ValiantShade\Http\Middleware\LockQuestReportMutations;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -148,14 +149,19 @@ Route::middleware(['throttle:valiant-shade.quest-mutations'])->group(function ()
 // Quest Reports (Görev Raporları) Routes
 Route::get('/pages/quest-reports', [QuestReportsController::class, 'index'])->name('valiant-shade.pages-quest-reports');
 Route::get('/pages/gorev-raporlari', [QuestReportsController::class, 'index'])->name('valiant-shade.pages-gorev-raporlari');
-Route::post('/pages/quest-reports/import', [QuestReportsController::class, 'import'])->name('valiant-shade.pages-quest-reports.import');
-Route::post('/pages/quest-reports', [QuestReportsController::class, 'store'])->name('valiant-shade.pages-quest-reports.store');
-Route::put('/pages/quest-reports/{id}', [QuestReportsController::class, 'update'])->name('valiant-shade.pages-quest-reports.update');
-Route::delete('/pages/quest-reports/{id}', [QuestReportsController::class, 'destroy'])->name('valiant-shade.pages-quest-reports.destroy');
+Route::middleware(LockQuestReportMutations::class)->group(function () {
+    Route::post('/pages/quest-reports/import', [QuestReportsController::class, 'import'])->name('valiant-shade.pages-quest-reports.import');
+    Route::post('/pages/quest-reports', [QuestReportsController::class, 'store'])->name('valiant-shade.pages-quest-reports.store');
+    Route::delete('/pages/quest-reports', [QuestReportsController::class, 'clear'])
+        ->middleware(EnsureUserIsAdmin::class)
+        ->name('valiant-shade.pages-quest-reports.clear');
+    Route::put('/pages/quest-reports/{id}', [QuestReportsController::class, 'update'])->name('valiant-shade.pages-quest-reports.update');
+    Route::delete('/pages/quest-reports/{id}', [QuestReportsController::class, 'destroy'])->name('valiant-shade.pages-quest-reports.destroy');
+    Route::post('/pages/quest-reports/{id}/distribute-xp', [QuestReportsController::class, 'distributeXp'])->name('valiant-shade.pages-quest-reports.distribute-xp');
+    Route::post('/pages/quest-reports/reset-defaults', [QuestReportsController::class, 'resetDefaults'])->name('valiant-shade.pages-quest-reports.reset-defaults');
+    Route::post('/pages/quest-reports/reset-excel', [QuestReportsController::class, 'resetExcel'])->name('valiant-shade.pages-quest-reports.reset-excel');
+});
 Route::get('/pages/quest-reports/{id}', [QuestReportsController::class, 'show'])->name('valiant-shade.pages-quest-reports.show');
-Route::post('/pages/quest-reports/{id}/distribute-xp', [QuestReportsController::class, 'distributeXp'])->name('valiant-shade.pages-quest-reports.distribute-xp');
-Route::post('/pages/quest-reports/reset-defaults', [QuestReportsController::class, 'resetDefaults'])->name('valiant-shade.pages-quest-reports.reset-defaults');
-Route::post('/pages/quest-reports/reset-excel', [QuestReportsController::class, 'resetExcel'])->name('valiant-shade.pages-quest-reports.reset-excel');
 Route::get('/pages/quest-reports-pool', [QuestReportsController::class, 'getGuildPool'])->name('valiant-shade.pages-quest-reports.guild-pool.get');
 Route::post('/pages/quest-reports-pool/update', [QuestReportsController::class, 'updateGuildPool'])->name('valiant-shade.pages-quest-reports.guild-pool.update');
 Route::post('/pages/quest-reports-pool/reset', [QuestReportsController::class, 'resetGuildPool'])->name('valiant-shade.pages-quest-reports.guild-pool.reset');

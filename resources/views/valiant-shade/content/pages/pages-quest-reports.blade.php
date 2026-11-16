@@ -684,6 +684,12 @@
           <i class="icon-base ti tabler-refresh me-1"></i> {{ __('Reset Sheet') }}
         </button>
 
+        @if(auth()->user()?->isAdmin())
+        <button type="button" class="btn btn-outline-danger btn-sm" id="btnClearQuestReports">
+          <i class="icon-base ti tabler-trash me-1"></i> Tüm Raporları Sil
+        </button>
+        @endif
+
         <input type="file" id="questReportsJsonFile" accept=".json,application/json" class="d-none">
         <button type="button" class="btn btn-outline-info btn-sm" id="btnImportQuestReports">
           <i class="icon-base ti tabler-database-import me-1"></i> Veri Ekle
@@ -837,8 +843,8 @@
 
         <!-- Sort Select -->
         <select class="form-select form-select-sm bg-transparent border-secondary border-opacity-25 text-heading" id="reportsSortSelect" style="width: auto;">
-          <option value="date-desc">{{ __('Tarih: Yeniden Eskiye') }}</option>
           <option value="date-asc">{{ __('Tarih: Eskiden Yeniye') }}</option>
+          <option value="date-desc">{{ __('Tarih: Yeniden Eskiye') }}</option>
           <option value="xp-desc">{{ __('Total XP: Highest') }}</option>
           <option value="avg-desc">{{ __('Average XP: Highest') }}</option>
           <option value="title-asc">{{ __('Quest Name: A-Z') }}</option>
@@ -2675,7 +2681,53 @@ document.addEventListener('DOMContentLoaded', function () {
   const btnEmptyResetFilters = document.getElementById('btnEmptyResetFilters');
   const btnResetToMasterDefaults = document.getElementById('btnResetToMasterDefaults');
   const btnImportQuestReports = document.getElementById('btnImportQuestReports');
+  const btnClearQuestReports = document.getElementById('btnClearQuestReports');
   const questReportsJsonFile = document.getElementById('questReportsJsonFile');
+
+  if (btnClearQuestReports) {
+    btnClearQuestReports.addEventListener('click', async function () {
+      const message = 'Tüm raporlar, görev ve katılımcı kayıtları silinecek; tüm oyuncu XP’leri sıfırlanacak ve seviyeler 1 yapılacak. Görev panosuyla bağlantılı veriler etkilenebilir. Bu işlem geri alınamaz.';
+      let confirmed;
+      if (window.Swal) {
+        const result = await Swal.fire({
+          title: 'Tüm raporlar silinsin mi?',
+          text: message,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#ea5455',
+          confirmButtonText: 'Evet, tümünü sil',
+          cancelButtonText: '{{ __("Cancel") }}'
+        });
+        confirmed = result.isConfirmed;
+      } else {
+        confirmed = confirm(message);
+      }
+      if (!confirmed) return;
+
+      btnClearQuestReports.disabled = true;
+      try {
+        const response = await fetch('{{ route("valiant-shade.pages-quest-reports.clear") }}', {
+          method: 'DELETE',
+          headers: {
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')?.value || ''
+          }
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || 'Raporlar silinemedi.');
+        }
+        window.location.reload();
+      } catch (error) {
+        if (window.Swal) {
+          Swal.fire({ icon: 'error', title: 'İşlem başarısız', text: error.message });
+        } else {
+          alert(error.message);
+        }
+        btnClearQuestReports.disabled = false;
+      }
+    });
+  }
 
   if (btnImportQuestReports && questReportsJsonFile) {
     btnImportQuestReports.addEventListener('click', () => questReportsJsonFile.click());
@@ -3936,7 +3988,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const term = (searchInput?.value || '').trim().toLowerCase();
     const gmVal = (gmFilter?.value || 'all').toLowerCase();
     const levelVal = levelFilter?.value || 'all';
-    const sortVal = sortSelect?.value || 'date-desc';
+    const sortVal = sortSelect?.value || 'date-asc';
 
     let list = reportsData.filter(r => {
       // Type Filter
@@ -3983,23 +4035,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Sort
     function parseDate(dStr) {
-      if (!dStr) return 0;
-      // can be "8/8" or "08.08.2026"
-      if (dStr.includes('/')) {
-        const p = dStr.split('/');
-        return parseInt(p[1], 10) * 100 + parseInt(p[0], 10);
-      } else if (dStr.includes('.')) {
-        const p = dStr.split('.');
-        return parseInt(p[1], 10) * 100 + parseInt(p[0], 10);
-      }
-      return 0;
+      const match = /^(\d{1,2})[/.](\d{1,2})[/.](\d{4})$/.exec(dStr || '');
+      if (!match) return null;
+      const day = Number(match[1]), month = Number(match[2]), year = Number(match[3]);
+      const date = new Date(Date.UTC(year, month - 1, day));
+      if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return null;
+      return date.getTime();
     }
 
     list.sort((a, b) => {
-      if (sortVal === 'date-desc') {
-        return parseDate(b.date) - parseDate(a.date) || b.id - a.id;
-      } else if (sortVal === 'date-asc') {
-        return parseDate(a.date) - parseDate(b.date) || a.id - b.id;
+      if (sortVal === 'date-desc' || sortVal === 'date-asc') {
+        const dateA = parseDate(a.date), dateB = parseDate(b.date);
+        if (dateA === null && dateB !== null) return 1;
+        if (dateB === null && dateA !== null) return -1;
+        if (dateA === null && dateB === null) return a.id - b.id;
+        return sortVal === 'date-asc' ? dateA - dateB || a.id - b.id : dateB - dateA || b.id - a.id;
       } else if (sortVal === 'xp-desc') {
         return (b.total_xp || 0) - (a.total_xp || 0);
       } else if (sortVal === 'avg-desc') {
@@ -4371,7 +4421,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btnSearchClear) btnSearchClear.classList.add('d-none');
     if (gmFilter) gmFilter.value = 'all';
     if (levelFilter) levelFilter.value = 'all';
-    if (sortSelect) sortSelect.value = 'date-desc';
+    if (sortSelect) sortSelect.value = 'date-asc';
     currentTypeFilter = 'all';
     typeButtons.forEach(b => {
       b.classList.toggle('active', b.getAttribute('data-type') === 'all');

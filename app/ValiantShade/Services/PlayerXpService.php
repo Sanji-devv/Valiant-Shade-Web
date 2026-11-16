@@ -183,7 +183,7 @@ class PlayerXpService
 
     public function ensureSampleDataSeeded(): void
     {
-        if ($this->repository->count() === 0) {
+        if ($this->repository->count() === 0 && app(QuestReportService::class)->getAllReportsData() !== []) {
             $this->resetToDefaults();
         }
     }

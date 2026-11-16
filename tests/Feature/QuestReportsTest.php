@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Models\Quest;
 use App\ValiantShade\Services\QuestReportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -107,7 +108,7 @@ class QuestReportsTest extends TestCase
     {
         $payload = [
             'title' => 'Karanlık Orman Baskını',
-            'date' => '24/9',
+            'date' => '2026-09-24',
             'mq' => 'epic',
             'level' => 2,
             'depo_status' => '1',
@@ -165,6 +166,58 @@ class QuestReportsTest extends TestCase
                 unlink($path);
             }
         }
+    }
+
+    public function test_empty_archive_remains_empty(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'quest-report-');
+        $this->assertNotFalse($path);
+        file_put_contents($path, '[]');
+        $service = new class($path) extends QuestReportService
+        {
+            public function __construct(private string $path) {}
+
+            protected function getStoragePath(): string
+            {
+                return $this->path;
+            }
+        };
+
+        try {
+            $this->assertSame([], $service->getAllReportsData());
+        } finally {
+            unlink($path);
+        }
+    }
+
+    public function test_report_dates_require_a_year_and_duplicate_names_are_checked_per_date(): void
+    {
+        $payload = [
+            'title' => 'Yıl Kontrol Görevi',
+            'date' => '2021-08-08',
+            'level' => 1,
+            'gm' => 'Bart',
+            'reporter' => 'Tolrun',
+        ];
+
+        $this->actingAs($this->user)->postJson('/valiant-shade/pages/quest-reports', $payload)->assertOk();
+        $this->actingAs($this->user)->postJson('/valiant-shade/pages/quest-reports', [
+            ...$payload, 'date' => '08/08/2021',
+        ])->assertUnprocessable()->assertJsonValidationErrors('title');
+        $second = $this->actingAs($this->user)->postJson('/valiant-shade/pages/quest-reports', [
+            ...$payload, 'date' => '2022-08-08',
+        ])->assertOk()->json('report.id');
+        $this->actingAs($this->user)->postJson('/valiant-shade/pages/quest-reports', [
+            ...$payload, 'date' => '8/8',
+        ])->assertUnprocessable()->assertJsonValidationErrors('date');
+        $this->actingAs($this->user)->postJson('/valiant-shade/pages/quest-reports', [
+            ...$payload, 'date' => '2021-02-29',
+        ])->assertUnprocessable()->assertJsonValidationErrors('date');
+
+        $this->actingAs($this->user)->deleteJson("/valiant-shade/pages/quest-reports/{$second}")->assertOk();
+        $remaining = Quest::where('title', $payload['title'])->get();
+        $this->assertCount(1, $remaining);
+        $this->assertSame('2021-08-08', $remaining->first()->quest_date->toDateString());
     }
 
     public function test_guild_pool_and_ranks_exact_master_sheet_formulas(): void

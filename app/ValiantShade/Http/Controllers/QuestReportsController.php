@@ -245,6 +245,16 @@ class QuestReportsController extends Controller
         ]);
     }
 
+    public function clear(): JsonResponse
+    {
+        $this->service->clearReportsAndPlayerXp();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tüm raporlar, görev kayıtları ve oyuncu XP’leri sıfırlandı.',
+        ]);
+    }
+
     /**
      * Reset quest reports dataset to the original 32 master rows.
      */
