@@ -135,6 +135,38 @@ class QuestReportsTest extends TestCase
         $this->assertCount(32, $response->json('reports'));
     }
 
+    public function test_missing_archive_is_initialized_without_resetting_quest_data(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'quest-report-');
+        $this->assertNotFalse($path);
+        unlink($path);
+
+        $service = new class($path) extends QuestReportService
+        {
+            public function __construct(private string $path) {}
+
+            protected function getStoragePath(): string
+            {
+                return $this->path;
+            }
+
+            public function resetToDefaults(): array
+            {
+                throw new \LogicException('A page load must not reset quest data.');
+            }
+        };
+
+        try {
+            $service->ensureInitialized();
+            $this->assertFileExists($path);
+            $this->assertCount(32, json_decode(file_get_contents($path), true, 512, JSON_THROW_ON_ERROR));
+        } finally {
+            if (is_file($path)) {
+                unlink($path);
+            }
+        }
+    }
+
     public function test_guild_pool_and_ranks_exact_master_sheet_formulas(): void
     {
         $poolData = $this->service->getGuildPoolData();

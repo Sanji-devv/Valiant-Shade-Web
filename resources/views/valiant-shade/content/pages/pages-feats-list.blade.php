@@ -417,6 +417,12 @@
 @section('content')
 <div class="container-xxl flex-grow-1 container-p-y">
 
+  @if(!$featsInitialized)
+    <div class="alert alert-warning" role="alert">
+      Feat başlangıç dosyası bulunamadı. Mevcut karakter verileri içe aktarılmadı; yönetici başlangıç dosyasını sunucuya yüklemelidir.
+    </div>
+  @endif
+
   <!-- ====================================================
        1. HERO KPI BANNER & METRICS (VUEXY DEMO STYLE)
        ==================================================== -->

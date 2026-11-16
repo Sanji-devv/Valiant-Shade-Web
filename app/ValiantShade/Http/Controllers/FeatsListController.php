@@ -24,7 +24,7 @@ class FeatsListController extends Controller
      */
     public function index(Request $request)
     {
-        $this->featsService->ensureInitialized();
+        $featsInitialized = $this->featsService->ensureInitialized();
 
         $sortBy = $request->query('sort', 'name_asc');
         $characters = $this->featsService->getCharactersList($sortBy);
@@ -32,7 +32,7 @@ class FeatsListController extends Controller
 
         // Check if selected character exists, otherwise pick first
         if (empty($selectedChar) || !$characters->contains('character_name', $selectedChar)) {
-            $selectedChar = $characters->first()?->character_name ?? 'Caspian Thunderblade';
+            $selectedChar = $characters->first()?->character_name ?? '';
         }
 
         $dossier = $this->featsService->getCharacterDossier($selectedChar);
@@ -43,6 +43,7 @@ class FeatsListController extends Controller
 
         return view('valiant-shade.content.pages.pages-feats-list', compact(
             'characters',
+            'featsInitialized',
             'selectedChar',
             'dossier',
             'traitsProgression',

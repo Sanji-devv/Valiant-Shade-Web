@@ -9,6 +9,7 @@ use App\Models\PathfinderTrait;
 use App\Models\Rank;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
@@ -36,6 +37,26 @@ class FeatsListTest extends TestCase
             'character_name' => 'Aeris Spellborn',
             'feat_name' => 'Weapon Focus(Scimitar)',
         ]);
+    }
+
+    public function test_feats_page_reports_missing_initial_data_without_creating_a_demo_character(): void
+    {
+        $originalStoragePath = $this->app->storagePath();
+        $this->app->useStoragePath($originalStoragePath.DIRECTORY_SEPARATOR.'missing-feat-source-'.uniqid());
+
+        try {
+            Log::shouldReceive('warning')->once();
+
+            $this->actingAs($this->user)
+                ->get('/valiant-shade/pages/featntrait')
+                ->assertOk()
+                ->assertSee('Feat başlangıç dosyası bulunamadı')
+                ->assertDontSee('Caspian Thunderblade');
+
+            $this->assertDatabaseCount('character_profiles', 0);
+        } finally {
+            $this->app->useStoragePath($originalStoragePath);
+        }
     }
 
     public function test_custom_feat_names_can_be_saved_without_a_catalog_entry(): void

@@ -27,13 +27,13 @@ class QuestReportService
     }
 
     /**
-     * Ensure the storage file is initialized with the 32 master sheet reports.
+     * Initialize the report archive without modifying quest database records.
      */
     public function ensureInitialized(): void
     {
         $path = $this->getStoragePath();
         if (! file_exists($path)) {
-            $this->resetToDefaults();
+            $this->saveReportsData($this->getRawReportsData());
         }
     }
 

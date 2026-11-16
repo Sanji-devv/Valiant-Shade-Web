@@ -10,18 +10,28 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use JsonException;
 use RuntimeException;
 
 class PathfinderFeatsService
 {
-    public function ensureInitialized(): void
+    public function ensureInitialized(): bool
     {
         if (CharacterProfile::query()->exists()) {
-            return;
+            return true;
+        }
+
+        $path = storage_path('app/feats_list.json');
+        if (! is_file($path)) {
+            Log::warning('Feat başlangıç verileri bulunamadı.', ['path' => $path]);
+
+            return false;
         }
 
         DB::transaction(fn () => $this->importRows($this->readDefaultRows()));
+
+        return true;
     }
 
     public function getCharactersList(string $sortBy = 'name_asc'): EloquentCollection
