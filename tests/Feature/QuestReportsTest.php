@@ -4,18 +4,21 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\ValiantShade\Services\QuestReportService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class QuestReportsTest extends TestCase
 {
+    use RefreshDatabase;
+
     protected User $user;
+
     protected QuestReportService $service;
 
     protected function setUp(): void
     {
         parent::setUp();
-        // Create user without requiring DB refresh if sqlite is in memory
-        $this->user = new User(['id' => 1, 'name' => 'Admin', 'role' => 'admin', 'email' => 'admin@valiantshade.com']);
+        $this->user = User::factory()->create(['role' => 'ADMIN']);
         $this->service = app(QuestReportService::class);
         $this->service->resetToExcelDefaults();
         $this->service->resetGuildPoolDefaults();

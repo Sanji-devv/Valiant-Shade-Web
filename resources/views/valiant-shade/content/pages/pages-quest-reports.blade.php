@@ -684,10 +684,15 @@
           <i class="icon-base ti tabler-refresh me-1"></i> {{ __('Reset Sheet') }}
         </button>
 
+        <input type="file" id="questReportsJsonFile" accept=".json,application/json" class="d-none">
+        <button type="button" class="btn btn-outline-info btn-sm" id="btnImportQuestReports">
+          <i class="icon-base ti tabler-database-import me-1"></i> Veri Ekle
+        </button>
+
         <!-- New Quest Report Button (Primary) -->
         <button type="button" class="btn btn-add-quest-report btn-add-report-trigger shadow-md" id="btnOpenAddReportModal" data-bs-toggle="modal" data-bs-target="#modalAddQuestReport">
           <i class="icon-base ti tabler-calculator fs-5"></i>
-          <span>{{ __('Yeni Rapor Ekle & Ortalama Hesapla') }}</span>
+          <span>{{ __('Rapor Ekle & Ortalama Hesapla') }}</span>
         </button>
 
         <a href="{{ route('valiant-shade.pages-xp-tracker') }}" class="btn btn-outline-secondary btn-sm waves-effect">
@@ -1054,7 +1059,7 @@
                   </button>
 
                   <!-- Sil -->
-                  <button type="button" class="btn btn-icon btn-sm btn-outline-danger" onclick="deleteReportItem({{ $q['id'] }})" title="{{ __('Sil') }}">
+                  <button type="button" class="btn btn-icon btn-sm btn-outline-danger" onclick="deleteReportItem({{ $q['id'] }})" title="Rapor Sil" aria-label="Rapor Sil">
                     <i class="icon-base ti tabler-trash fs-6"></i>
                   </button>
                 </div>
@@ -2669,6 +2674,64 @@ document.addEventListener('DOMContentLoaded', function () {
   const btnResetFilters = document.getElementById('btnResetReportsFilters');
   const btnEmptyResetFilters = document.getElementById('btnEmptyResetFilters');
   const btnResetToMasterDefaults = document.getElementById('btnResetToMasterDefaults');
+  const btnImportQuestReports = document.getElementById('btnImportQuestReports');
+  const questReportsJsonFile = document.getElementById('questReportsJsonFile');
+
+  if (btnImportQuestReports && questReportsJsonFile) {
+    btnImportQuestReports.addEventListener('click', () => questReportsJsonFile.click());
+    questReportsJsonFile.addEventListener('change', function () {
+      const file = this.files && this.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+      btnImportQuestReports.disabled = true;
+
+      fetch('{{ route("valiant-shade.pages-quest-reports.import") }}', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')?.value || ''
+        },
+        body: formData
+      })
+      .then(async response => {
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || 'Veri eklenemedi.');
+        }
+        return data;
+      })
+      .then(data => {
+        if (window.Swal) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Veri Eklendi',
+            text: data.message,
+            confirmButtonText: '{{ __("OK") }}'
+          }).then(() => window.location.reload());
+        } else {
+          alert(data.message);
+          window.location.reload();
+        }
+      })
+      .catch(error => {
+        if (window.Swal) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Veri ekleme başarısız',
+            text: error.message
+          });
+        } else {
+          alert(error.message);
+        }
+      })
+      .finally(() => {
+        btnImportQuestReports.disabled = false;
+        questReportsJsonFile.value = '';
+      });
+    });
+  }
 
   // Table Body & Counter
   const tableBody = document.getElementById('reportsTableBody');
@@ -4251,7 +4314,7 @@ document.addEventListener('DOMContentLoaded', function () {
               <button type="button" class="btn btn-icon btn-sm btn-outline-success" onclick="distributeReportXp(${q.id})" title="{{ __('Distribute XP to Adventurers') }}">
                 <i class="icon-base ti tabler-bolt fs-6"></i>
               </button>
-              <button type="button" class="btn btn-icon btn-sm btn-outline-danger" onclick="deleteReportItem(${q.id})" title="{{ __('Sil') }}">
+              <button type="button" class="btn btn-icon btn-sm btn-outline-danger" onclick="deleteReportItem(${q.id})" title="Rapor Sil" aria-label="Rapor Sil">
                 <i class="icon-base ti tabler-trash fs-6"></i>
               </button>
             </div>

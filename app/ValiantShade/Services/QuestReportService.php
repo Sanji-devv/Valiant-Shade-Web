@@ -6,7 +6,11 @@ use App\Models\Character;
 use App\Models\PlayerXp;
 use App\Models\Quest;
 use App\Models\QuestParticipant;
+use Carbon\Carbon;
+use Database\Seeders\QuestReportsSeeder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class QuestReportService
 {
@@ -18,6 +22,7 @@ class QuestReportService
         if (app()->runningUnitTests()) {
             return storage_path('app/quest_reports_testing.json');
         }
+
         return storage_path('app/quest_reports.json');
     }
 
@@ -27,7 +32,7 @@ class QuestReportService
     public function ensureInitialized(): void
     {
         $path = $this->getStoragePath();
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             $this->resetToDefaults();
         }
     }
@@ -41,20 +46,21 @@ class QuestReportService
             $raw = $this->getRawReportsData();
             $path = $this->getStoragePath();
             $dir = dirname($path);
-            if (!is_dir($dir)) {
+            if (! is_dir($dir)) {
                 mkdir($dir, 0755, true);
             }
             file_put_contents($path, json_encode($raw, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
             return $raw;
         }
 
         try {
-            $seeder = new \Database\Seeders\QuestReportsSeeder();
+            $seeder = new QuestReportsSeeder;
             $seeder->run();
             $path = $this->getStoragePath();
             if (file_exists($path)) {
                 $decoded = json_decode(file_get_contents($path), true);
-                if (is_array($decoded) && !empty($decoded)) {
+                if (is_array($decoded) && ! empty($decoded)) {
                     return $decoded;
                 }
             }
@@ -65,10 +71,11 @@ class QuestReportService
         $raw = $this->getRawReportsData();
         $path = $this->getStoragePath();
         $dir = dirname($path);
-        if (!is_dir($dir)) {
+        if (! is_dir($dir)) {
             mkdir($dir, 0755, true);
         }
         file_put_contents($path, json_encode($raw, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
         return $raw;
     }
 
@@ -87,10 +94,11 @@ class QuestReportService
         if (file_exists($path)) {
             $json = file_get_contents($path);
             $decoded = json_decode($json, true);
-            if (is_array($decoded) && !empty($decoded)) {
+            if (is_array($decoded) && ! empty($decoded)) {
                 return $decoded;
             }
         }
+
         return $this->getRawReportsData();
     }
 
@@ -101,10 +109,279 @@ class QuestReportService
     {
         $path = $this->getStoragePath();
         $dir = dirname($path);
-        if (!is_dir($dir)) {
+        if (! is_dir($dir)) {
             mkdir($dir, 0755, true);
         }
-        file_put_contents($path, json_encode(array_values($reports), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        $json = json_encode(array_values($reports), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+        if (file_put_contents($path, $json, LOCK_EX) === false) {
+            throw new \RuntimeException('Görev raporları dosyası kaydedilemedi.');
+        }
+    }
+
+    /**
+     * Import master-sheet rows into the quest tables and the report archive.
+     *
+     * @return array{imported: int, skipped: int}
+     */
+    public function importReports(array $rows): array
+    {
+        if (! Schema::hasTable('quests') || ! Schema::hasTable('quest_participants')) {
+            throw new \RuntimeException('Görev raporları tabloları bulunamadı. Önce veritabanı migration işlemlerini çalıştırın.');
+        }
+
+        $allReports = $this->getAllReportsData();
+        $canonicalKeys = [];
+        $nextId = 1;
+        foreach ($allReports as $report) {
+            $key = $this->reportIdentity((string) ($report['title'] ?? ''), (string) ($report['date'] ?? ''));
+            if ($key !== '|') {
+                $canonicalKeys[$key] = (int) ($report['id'] ?? 0);
+            }
+            $nextId = max($nextId, ((int) ($report['id'] ?? 0)) + 1);
+        }
+
+        $existingQuestKeys = [];
+        foreach (Quest::query()->get(['title', 'quest_date']) as $quest) {
+            $questDate = $quest->quest_date instanceof \DateTimeInterface
+                ? $quest->quest_date->format('Y-m-d')
+                : (string) ($quest->quest_date ?? '');
+            $existingQuestKeys[$this->reportIdentity($quest->title, $questDate)] = true;
+        }
+
+        $characterNames = [];
+        foreach ($rows as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $characterNames[] = trim((string) ($row['GM'] ?? ''));
+            $characterNames[] = trim((string) ($row['Raporlayan'] ?? ''));
+            foreach ($this->importParticipantNames($row) as $name) {
+                $characterNames[] = $name;
+            }
+        }
+        $characters = Character::whereIn('name', array_values(array_unique(array_filter($characterNames))))
+            ->get()
+            ->keyBy('name');
+
+        $imported = 0;
+        $skipped = 0;
+        $newReports = [];
+
+        DB::transaction(function () use (
+            $rows,
+            &$allReports,
+            &$canonicalKeys,
+            &$existingQuestKeys,
+            &$nextId,
+            &$imported,
+            &$skipped,
+            &$newReports,
+            $characters
+        ): void {
+            foreach ($rows as $row) {
+                if (! is_array($row) || trim((string) ($row['Görev adı'] ?? '')) === '') {
+                    $skipped++;
+
+                    continue;
+                }
+
+                $title = trim((string) $row['Görev adı']);
+                [$displayDate, $databaseDate] = $this->parseImportDate($row['Tarih'] ?? '');
+                $identityDate = $databaseDate ?? trim((string) ($row['Tarih'] ?? ''));
+                $key = $this->reportIdentity($title, $identityDate);
+
+                $mqValue = trim((string) ($row['MQ'] ?? ''));
+                $isEpic = in_array($mqValue, ['✓✓', '🗸🗸'], true);
+                $isMain = $isEpic || in_array(mb_strtolower($mqValue), ['✓', '🗸', '1', 'yes', 'true'], true);
+                $mq = $isEpic ? 'epic' : ($isMain ? 'main' : 'none');
+
+                $depoValue = $row['column_F'] ?? null;
+                $depoStatus = $depoValue === null
+                    ? (float) ($row['Depo'] ?? 0) === 0.0
+                    : in_array(mb_strtolower(trim((string) $depoValue)), ['✓', '🗸', '1', 'true', 'yes'], true);
+                $reporter = trim((string) ($row['Raporlayan'] ?? '')) ?: 'Tolrun';
+                $otherPlayers = $this->importParticipantNames($row);
+                $level = max(1, (int) ($row['Level'] ?? 1));
+                $totalXp = is_numeric($row['XP'] ?? null) ? (float) $row['XP'] : 0.0;
+                $guildCut = is_numeric($row['Lonca'] ?? null) ? (float) $row['Lonca'] : 0.0;
+                $depoCut = is_numeric($row['Depo'] ?? null) ? (float) $row['Depo'] : 0.0;
+                $raporCut = is_numeric($row['Rapor'] ?? null) ? (float) $row['Rapor'] : 0.0;
+                $extraReward = is_numeric($row['Ek'] ?? null) ? (float) $row['Ek'] : 0.0;
+                $playerCount = is_numeric($row['Oyuncu'] ?? null)
+                    ? max(1, (int) $row['Oyuncu'])
+                    : 1 + count($otherPlayers);
+                $avgReward = is_numeric($row['Ortalama'] ?? null)
+                    ? (float) $row['Ortalama']
+                    : round(($totalXp - $guildCut - $depoCut - $raporCut + $extraReward) / $playerCount, 2);
+
+                $computed = $this->calculateReportValues([
+                    'mq' => $mq,
+                    'level' => $level,
+                    'total_xp' => $totalXp,
+                    'depo_status' => $depoStatus,
+                    'rapor_cut' => $raporCut,
+                    'extra_reward' => $extraReward,
+                    'reporter' => $reporter,
+                    'other_players' => $otherPlayers,
+                    'player_count' => $playerCount,
+                ]);
+                $computed['guild_cut'] = $guildCut;
+                $computed['depo_cut'] = $depoCut;
+                $computed['avg_reward'] = $avgReward;
+                $computed['player_count'] = $playerCount;
+                foreach ($computed['party'] as &$member) {
+                    $member['xp'] = (int) round($avgReward);
+                }
+                unset($member);
+
+                $report = array_merge([
+                    'id' => $canonicalKeys[$key] ?? $nextId++,
+                    'title' => $title,
+                    'date' => $displayDate,
+                    'status' => $depoStatus ? 'success' : 'failed',
+                    'gm' => trim((string) ($row['GM'] ?? '')) ?: 'Shalvaz',
+                    'location' => 'Siwion',
+                    'enemies' => 'Canavarlar ve Eşkıyalar',
+                    'report_summary' => "{$title} görevi tamamlandı. Toplam {$totalXp} XP dağıtıldı.",
+                    'full_report' => "{$title} görevi için kaynak rapor verileri içe aktarıldı.",
+                ], $computed);
+
+                if (! array_key_exists($key, $canonicalKeys)) {
+                    $newReports[] = $report;
+                    $canonicalKeys[$key] = $report['id'];
+                }
+
+                if (isset($existingQuestKeys[$key])) {
+                    $skipped++;
+
+                    continue;
+                }
+
+                $gmName = trim((string) ($row['GM'] ?? ''));
+                $gmCharacter = $characters->get($gmName);
+                $reporterCharacter = $characters->get($reporter);
+                $quest = Quest::create([
+                    'title' => $title,
+                    'quest_date' => $databaseDate,
+                    'is_main_quest' => $isMain,
+                    'level' => $level,
+                    'base_xp' => $totalXp,
+                    'depo_fee_xp' => $depoCut,
+                    'guild_cut_xp' => $guildCut,
+                    'report_reward_xp' => $raporCut,
+                    'bonus_pool_xp' => $extraReward,
+                    'net_pool_xp' => $totalXp - $guildCut - $depoCut - $raporCut + $extraReward,
+                    'per_player_xp' => $avgReward,
+                    'gm_character_id' => $gmCharacter?->id,
+                    'reporter_character_id' => $reporterCharacter?->id,
+                    'status' => 'APPROVED',
+                    'report_summary' => $report['report_summary'],
+                    'full_report' => $report['full_report'],
+                ]);
+
+                $participants = [];
+                foreach (array_unique(array_merge([$reporter], $otherPlayers)) as $name) {
+                    $character = $characters->get($name);
+                    if (! $character) {
+                        continue;
+                    }
+                    $isReporter = $name === $reporter;
+                    $participants[$character->id] = [
+                        'quest_id' => $quest->id,
+                        'character_id' => $character->id,
+                        'earned_quest_xp' => $avgReward,
+                        'earned_report_xp' => $isReporter ? $raporCut : 0,
+                        'is_kia' => false,
+                        'is_mia' => false,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+                if ($participants) {
+                    QuestParticipant::insert(array_values($participants));
+                }
+
+                $existingQuestKeys[$key] = true;
+                $imported++;
+            }
+
+            if ($newReports) {
+                $allReports = array_merge($newReports, $allReports);
+                $this->saveReportsData($allReports);
+            }
+        });
+
+        if ($imported === 0 && $skipped === 0) {
+            throw new \InvalidArgumentException('JSON dosyasında içe aktarılabilir görev raporu bulunamadı.');
+        }
+
+        return ['imported' => $imported, 'skipped' => $skipped];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function importParticipantNames(array $row): array
+    {
+        $names = $row['Diğer Oyuncular'] ?? [];
+        if (is_string($names)) {
+            $names = explode(',', $names);
+        }
+        if (! is_array($names)) {
+            $names = [];
+        }
+
+        foreach ([
+            'AP', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AV', 'AW',
+            'AX', 'AY', 'AZ', 'BA', 'BB', 'BC', 'BD', 'BE',
+        ] as $column) {
+            $key = 'column_'.$column;
+            if (isset($row[$key]) && ! is_array($row[$key])) {
+                $names[] = $row[$key];
+            }
+        }
+
+        return array_values(array_unique(array_filter(array_map(
+            static fn ($name) => trim((string) $name),
+            $names
+        ), static fn ($name) => $name !== '' && ! in_array($name, ['-', 'Yok'], true))));
+    }
+
+    /**
+     * @return array{0: string, 1: ?string}
+     */
+    private function parseImportDate(mixed $date): array
+    {
+        $rawDate = trim((string) $date);
+        if ($rawDate === '') {
+            return ['', null];
+        }
+
+        try {
+            $parsed = Carbon::parse($rawDate);
+
+            return [$parsed->format('d/m/Y'), $parsed->toDateString()];
+        } catch (\Exception) {
+            return [$rawDate, null];
+        }
+    }
+
+    private function reportIdentity(string $title, string $date): string
+    {
+        $date = trim($date);
+        if ($date !== '') {
+            try {
+                if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $date, $matches)) {
+                    $date = Carbon::createFromFormat('!d/m/Y', "{$matches[1]}/{$matches[2]}/{$matches[3]}")->toDateString();
+                } else {
+                    $date = Carbon::parse($date)->toDateString();
+                }
+            } catch (\Exception) {
+                $date = mb_strtolower($date);
+            }
+        }
+
+        return mb_strtolower(trim($title)).'|'.$date;
     }
 
     /**
@@ -122,7 +399,7 @@ class QuestReportService
         // Normalize MQ
         $mqInput = (string) ($data['mq'] ?? $data['tier_type'] ?? 'none');
         $isEpic = ($mqInput === 'epic' || $mqInput === '✓✓' || $mqInput === '🗸🗸');
-        $isMain = ($mqInput === 'main' || $mqInput === '✓' || $mqInput === '🗸' || !empty($data['is_main']));
+        $isMain = ($mqInput === 'main' || $mqInput === '✓' || $mqInput === '🗸' || ! empty($data['is_main']));
 
         if ($isEpic) {
             $mq = 'epic';
@@ -143,7 +420,7 @@ class QuestReportService
 
         // XP Formula: =(D2*250+500)*IF(C2="🗸🗸",3,1)*COUNTA(D2)
         $totalXp = ($level * 250 + 500) * $multiplier;
-        if (isset($data['total_xp']) && is_numeric($data['total_xp']) && (int)$data['total_xp'] > 0 && empty($data['auto_calc_xp'])) {
+        if (isset($data['total_xp']) && is_numeric($data['total_xp']) && (int) $data['total_xp'] > 0 && empty($data['auto_calc_xp'])) {
             // Allow manual override only if explicitly specified
             $totalXp = (int) $data['total_xp'];
         }
@@ -180,7 +457,7 @@ class QuestReportService
         }
 
         $otherPlayers = $data['other_players'] ?? [];
-        if (!is_array($otherPlayers)) {
+        if (! is_array($otherPlayers)) {
             if (is_string($otherPlayers)) {
                 $otherPlayers = array_filter(array_map('trim', explode(',', $otherPlayers)));
             } else {
@@ -191,7 +468,7 @@ class QuestReportService
 
         // Total Players Formula: =COUNTA(AN2:BG2) (Raporlayan + Diğer Oyuncular)
         $playerCount = 1 + count($otherPlayers);
-        if (isset($data['player_count']) && (int)$data['player_count'] > $playerCount) {
+        if (isset($data['player_count']) && (int) $data['player_count'] > $playerCount) {
             $playerCount = (int) $data['player_count'];
         }
 
@@ -253,9 +530,9 @@ class QuestReportService
         $rawDate = trim($data['date'] ?? date('d/m/Y'));
         try {
             if (preg_match('/^(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{4})$/', $rawDate, $m)) {
-                $parsedDate = \Carbon\Carbon::createFromDate((int)$m[3], (int)$m[2], (int)$m[1]);
+                $parsedDate = Carbon::createFromDate((int) $m[3], (int) $m[2], (int) $m[1]);
             } else {
-                $parsedDate = \Carbon\Carbon::parse($rawDate);
+                $parsedDate = Carbon::parse($rawDate);
             }
             $displayDate = $parsedDate->format('d/m/Y');
             $dbQuestDate = $parsedDate->toDateString();
@@ -282,14 +559,14 @@ class QuestReportService
 
         // Sync to database Quests & QuestParticipants if available
         try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('quests')) {
+            if (Schema::hasTable('quests')) {
                 $gmChar = Character::where('name', $newReport['gm'])->first();
                 $reporterChar = Character::where('name', $newReport['reporter'])->first();
 
                 $quest = Quest::create([
                     'title' => $newReport['title'],
                     'quest_date' => $dbQuestDate,
-                    'is_main_quest' => !empty($newReport['is_main']),
+                    'is_main_quest' => ! empty($newReport['is_main']),
                     'level' => (int) $newReport['level'],
                     'base_xp' => (float) $newReport['total_xp'],
                     'depo_fee_xp' => (float) $newReport['depo_cut'],
@@ -303,7 +580,7 @@ class QuestReportService
                     'status' => 'APPROVED',
                 ]);
 
-                if ($reporterChar && \Illuminate\Support\Facades\Schema::hasTable('quest_participants')) {
+                if ($reporterChar && Schema::hasTable('quest_participants')) {
                     QuestParticipant::create([
                         'quest_id' => $quest->id,
                         'character_id' => $reporterChar->id,
@@ -314,7 +591,7 @@ class QuestReportService
                     ]);
                 }
 
-                if (\Illuminate\Support\Facades\Schema::hasTable('quest_participants')) {
+                if (Schema::hasTable('quest_participants')) {
                     foreach ($newReport['other_players'] ?? [] as $pName) {
                         $pChar = Character::where('name', $pName)->first();
                         if ($pChar) {
@@ -347,7 +624,7 @@ class QuestReportService
         $foundIndex = -1;
 
         foreach ($all as $idx => $r) {
-            if ((int)$r['id'] === $id) {
+            if ((int) $r['id'] === $id) {
                 $foundIndex = $idx;
                 break;
             }
@@ -363,9 +640,9 @@ class QuestReportService
         $rawDate = trim($data['date'] ?? $existing['date']);
         try {
             if (preg_match('/^(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{4})$/', $rawDate, $m)) {
-                $parsedDate = \Carbon\Carbon::createFromDate((int)$m[3], (int)$m[2], (int)$m[1]);
+                $parsedDate = Carbon::createFromDate((int) $m[3], (int) $m[2], (int) $m[1]);
             } else {
-                $parsedDate = \Carbon\Carbon::parse($rawDate);
+                $parsedDate = Carbon::parse($rawDate);
             }
             $displayDate = $parsedDate->format('d/m/Y');
             $dbQuestDate = $parsedDate->toDateString();
@@ -390,7 +667,7 @@ class QuestReportService
 
         // Update database quest if present
         try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('quests')) {
+            if (Schema::hasTable('quests')) {
                 $qRecord = Quest::where('title', $existing['title'])->first();
                 if ($qRecord) {
                     $qRecord->update([
@@ -423,16 +700,16 @@ class QuestReportService
         $originalCount = count($all);
 
         $toDelete = collect($all)->firstWhere('id', $id);
-        $filtered = array_filter($all, fn($r) => (int)$r['id'] !== $id);
+        $filtered = array_filter($all, fn ($r) => (int) $r['id'] !== $id);
 
         if (count($filtered) !== $originalCount) {
             $this->saveReportsData($filtered);
 
             try {
-                if ($toDelete && \Illuminate\Support\Facades\Schema::hasTable('quests')) {
+                if ($toDelete && Schema::hasTable('quests')) {
                     $qRecord = Quest::where('title', $toDelete['title'])->first();
                     if ($qRecord) {
-                        if (\Illuminate\Support\Facades\Schema::hasTable('quest_participants')) {
+                        if (Schema::hasTable('quest_participants')) {
                             QuestParticipant::where('quest_id', $qRecord->id)->delete();
                         }
                         $qRecord->delete();
@@ -454,7 +731,7 @@ class QuestReportService
     public function distributeXpToPlayers(int|string $id): array
     {
         $report = $this->getReportById($id);
-        if (!$report) {
+        if (! $report) {
             throw new \InvalidArgumentException("Görev raporu (#{$id}) bulunamadı.");
         }
 
@@ -485,9 +762,9 @@ class QuestReportService
                     $adv->total_xp = $adv->calculateComputedTotalXp();
                     $adv->level = PlayerXp::calculateLevelFromXp($adv->total_xp);
 
-                    $existingNotes = $adv->notes ? $adv->notes . "\n" : '';
+                    $existingNotes = $adv->notes ? $adv->notes."\n" : '';
                     $reportXpNote = $awardedReportXp > 0 ? " (+{$awardedReportXp} Rapor XP)" : '';
-                    $adv->notes = $existingNotes . "[" . now()->format('Y-m-d H:i') . "] +{$xpPerPlayer} Sefer XP{$reportXpNote} (Görev Raporu #{$report['id']}: {$report['title']})";
+                    $adv->notes = $existingNotes.'['.now()->format('Y-m-d H:i')."] +{$xpPerPlayer} Sefer XP{$reportXpNote} (Görev Raporu #{$report['id']}: {$report['title']})";
                     $adv->save();
                     $playerXpUpdated = true;
                 }
@@ -547,45 +824,60 @@ class QuestReportService
         $reports = collect($this->getAllReportsData());
 
         // Filter by Type (Tümü, Ana Görevler, Yan Görevler, Epik)
-        if (!empty($filters['type']) && $filters['type'] !== 'all') {
+        if (! empty($filters['type']) && $filters['type'] !== 'all') {
             if ($filters['type'] === 'main') {
-                $reports = $reports->filter(fn($q) => ($q['mq'] ?? '') === 'main' || (($q['is_main'] ?? false) && ($q['mq'] ?? '') !== 'epic'));
+                $reports = $reports->filter(fn ($q) => ($q['mq'] ?? '') === 'main' || (($q['is_main'] ?? false) && ($q['mq'] ?? '') !== 'epic'));
             } elseif ($filters['type'] === 'side') {
-                $reports = $reports->filter(fn($q) => ($q['mq'] ?? '') === 'none' || !($q['is_main'] ?? false));
+                $reports = $reports->filter(fn ($q) => ($q['mq'] ?? '') === 'none' || ! ($q['is_main'] ?? false));
             } elseif ($filters['type'] === 'epic') {
-                $reports = $reports->filter(fn($q) => ($q['mq'] ?? '') === 'epic');
+                $reports = $reports->filter(fn ($q) => ($q['mq'] ?? '') === 'epic');
             }
         }
 
         // Filter by GM
-        if (!empty($filters['gm']) && $filters['gm'] !== 'all') {
+        if (! empty($filters['gm']) && $filters['gm'] !== 'all') {
             $gm = mb_strtolower($filters['gm']);
-            $reports = $reports->filter(fn($q) => mb_strtolower($q['gm'] ?? '') === $gm);
+            $reports = $reports->filter(fn ($q) => mb_strtolower($q['gm'] ?? '') === $gm);
         }
 
         // Filter by Level
-        if (!empty($filters['level']) && $filters['level'] !== 'all') {
+        if (! empty($filters['level']) && $filters['level'] !== 'all') {
             $lvl = (int) $filters['level'];
-            $reports = $reports->filter(fn($q) => (int) ($q['level'] ?? 1) === $lvl);
+            $reports = $reports->filter(fn ($q) => (int) ($q['level'] ?? 1) === $lvl);
         }
 
         // Search term
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $term = mb_strtolower($filters['search']);
             $reports = $reports->filter(function ($q) use ($term) {
-                if (str_contains(mb_strtolower($q['title']), $term)) return true;
-                if (str_contains(mb_strtolower($q['gm'] ?? ''), $term)) return true;
-                if (str_contains(mb_strtolower($q['reporter'] ?? ''), $term)) return true;
-                if (str_contains(mb_strtolower($q['location'] ?? ''), $term)) return true;
-                if (str_contains(mb_strtolower($q['report_summary'] ?? ''), $term)) return true;
+                if (str_contains(mb_strtolower($q['title']), $term)) {
+                    return true;
+                }
+                if (str_contains(mb_strtolower($q['gm'] ?? ''), $term)) {
+                    return true;
+                }
+                if (str_contains(mb_strtolower($q['reporter'] ?? ''), $term)) {
+                    return true;
+                }
+                if (str_contains(mb_strtolower($q['location'] ?? ''), $term)) {
+                    return true;
+                }
+                if (str_contains(mb_strtolower($q['report_summary'] ?? ''), $term)) {
+                    return true;
+                }
 
                 // Check other players
                 foreach ($q['other_players'] ?? [] as $other) {
-                    if (str_contains(mb_strtolower($other), $term)) return true;
+                    if (str_contains(mb_strtolower($other), $term)) {
+                        return true;
+                    }
                 }
                 foreach ($q['party'] ?? [] as $member) {
-                    if (str_contains(mb_strtolower($member['name'] ?? ''), $term)) return true;
+                    if (str_contains(mb_strtolower($member['name'] ?? ''), $term)) {
+                        return true;
+                    }
                 }
+
                 return false;
             });
         }
@@ -599,6 +891,7 @@ class QuestReportService
     public function getReportById(int|string $id): ?array
     {
         $id = (int) $id;
+
         return collect($this->getAllReportsData())->firstWhere('id', $id);
     }
 
@@ -611,8 +904,8 @@ class QuestReportService
 
         $totalQuests = $all->count();
         $epicQuests = $all->where('mq', 'epic')->count();
-        $mainQuests = $all->filter(fn($q) => ($q['mq'] ?? '') === 'main' || (($q['is_main'] ?? false) && ($q['mq'] ?? '') !== 'epic'))->count();
-        $sideQuests = $all->filter(fn($q) => ($q['mq'] ?? '') === 'none' || !($q['is_main'] ?? false))->count();
+        $mainQuests = $all->filter(fn ($q) => ($q['mq'] ?? '') === 'main' || (($q['is_main'] ?? false) && ($q['mq'] ?? '') !== 'epic'))->count();
+        $sideQuests = $all->filter(fn ($q) => ($q['mq'] ?? '') === 'none' || ! ($q['is_main'] ?? false))->count();
 
         $totalXp = (float) $all->sum('total_xp');
         $totalGuildCut = (float) $all->sum('guild_cut');
@@ -620,7 +913,7 @@ class QuestReportService
         $totalRaporCut = (float) $all->sum('rapor_cut');
         $totalExtraReward = (float) $all->sum('extra_reward');
 
-        $levels = $all->pluck('level')->map(fn($l) => (float)$l)->filter();
+        $levels = $all->pluck('level')->map(fn ($l) => (float) $l)->filter();
         $avgLevel = $levels->count() > 0 ? round($levels->avg(), 2) : 1.0;
 
         // GM Distribution
@@ -664,7 +957,7 @@ class QuestReportService
     {
         try {
             $dbNames = PlayerXp::orderBy('character_name')->pluck('character_name')->filter()->toArray();
-            if (!empty($dbNames)) {
+            if (! empty($dbNames)) {
                 return $dbNames;
             }
         } catch (\Throwable $e) {
@@ -681,7 +974,7 @@ class QuestReportService
             'Ethelrinda', 'Fangor', 'Hall', 'Lagnard', 'Leothar', 'Lyra', 'Marcus', 'Nedasp', 'Nicholas',
             'Nyreen', 'Ogden', 'Ran', 'Richard', 'Rindark', "Rock'naar", 'Rufus', 'Samih', 'Shalvaz',
             'Shantar', 'Skadmir', 'Tamokul', 'Tolrun', 'Ugly', 'Ulrich', 'Vain', 'Valen', 'Veigar',
-            'Viktor', 'Vostea', 'Will', 'Willhard'
+            'Viktor', 'Vostea', 'Will', 'Willhard',
         ];
     }
 
@@ -715,7 +1008,7 @@ class QuestReportService
                 'location' => 'Siwion Ticaret Bölgesi',
                 'enemies' => 'Şehir Hırsızları, Rüşvetçi Muhafızlar',
                 'report_summary' => 'Lonca finans ambarına sızmaya çalışan yerel şebekenin kasayı soyma girişimi engellendi. Kaçırılmak üzere olan 10 SP lonca kasasına iade edildi.',
-                'full_report' => "Operasyon Özeti: Gece yarısı saatlerinde Siwion alt ticaret mahallesinde şüpheli hareketlilik raporlandı. Tolrun önderliğindeki ekip, eski lonca deposunun arka girişine kurulan pusuyu fark etti. Kısa bir arbedenin ardından hırsız çetesi etkisiz hale getirildi. Kasada bulunan değerli senetler ve 10 SP tutarındaki fon kurtarılarak lonca kasasına teslim edildi.",
+                'full_report' => 'Operasyon Özeti: Gece yarısı saatlerinde Siwion alt ticaret mahallesinde şüpheli hareketlilik raporlandı. Tolrun önderliğindeki ekip, eski lonca deposunun arka girişine kurulan pusuyu fark etti. Kısa bir arbedenin ardından hırsız çetesi etkisiz hale getirildi. Kasada bulunan değerli senetler ve 10 SP tutarındaki fon kurtarılarak lonca kasasına teslim edildi.',
                 'party' => [
                     ['name' => 'Tolrun', 'role' => 'Reporter', 'class' => 'Fighter', 'level' => 1, 'xp' => 176],
                     ['name' => 'Allerion', 'role' => 'Member', 'class' => 'Ranger', 'level' => 1, 'xp' => 176],
@@ -812,7 +1105,7 @@ class QuestReportService
                 'location' => 'Harken Vadisi Girişi',
                 'enemies' => 'İsyancı Paralı Askerler, Kuşatma Birlikleri',
                 'report_summary' => 'Harken Dükalığı genelinde başlayan isyanın ilk cephesi bastırıldı, köprü kontrol altına alındı.',
-                'full_report' => "Destansı Harekât Raporu (Bölüm 1): Harken bölgesindeki genel isyan bayrağı çekildiğinde Valiant Shade acil seferberlik ilan etti. Averon Felt kumandasındaki 6 kahraman vadi köprüsünü tutarak isyancı takviye birliklerini püskürttü.",
+                'full_report' => 'Destansı Harekât Raporu (Bölüm 1): Harken bölgesindeki genel isyan bayrağı çekildiğinde Valiant Shade acil seferberlik ilan etti. Averon Felt kumandasındaki 6 kahraman vadi köprüsünü tutarak isyancı takviye birliklerini püskürttü.',
                 'party' => [
                     ['name' => 'Averon Felt', 'role' => 'Reporter', 'class' => 'Paladin', 'level' => 1, 'xp' => 356],
                     ['name' => 'Buskall', 'role' => 'Member', 'class' => 'Fighter', 'level' => 1, 'xp' => 356],
@@ -846,7 +1139,7 @@ class QuestReportService
                 'location' => 'Harken Kale Meydanı',
                 'enemies' => 'İsyancı Süvariler, Ağır Zırhlı Şövalyeler',
                 'report_summary' => 'Harken garnizonu kurtarıldı ve kale kapıları isyancı kuşatmasından temizlendi.',
-                'full_report' => "Destansı Harekât Raporu (Bölüm 2): İkinci tabur kale surlarına yönelik koçbaşı taarruzunu durdurmak üzere kalabalık isyancı kanadına girdi. Rindark, Rufus, Tamokul, Ugly, Veigar ve Vostea ortak manevrayla isyancı bayraktarını düşürdü.",
+                'full_report' => 'Destansı Harekât Raporu (Bölüm 2): İkinci tabur kale surlarına yönelik koçbaşı taarruzunu durdurmak üzere kalabalık isyancı kanadına girdi. Rindark, Rufus, Tamokul, Ugly, Veigar ve Vostea ortak manevrayla isyancı bayraktarını düşürdü.',
                 'party' => [
                     ['name' => 'Rindark', 'role' => 'Reporter', 'class' => 'Fighter', 'level' => 1, 'xp' => 356],
                     ['name' => 'Rufus', 'role' => 'Member', 'class' => 'Cleric', 'level' => 1, 'xp' => 356],
@@ -880,7 +1173,7 @@ class QuestReportService
                 'location' => 'Igor Harken Sığınağı',
                 'enemies' => 'İsyancı Elebaşı Igor Harken, Gölge Muhafızlar',
                 'report_summary' => 'İsyanın beyni Igor Harken kıstırıldı ve teslim alındı. İsyanın arkasındaki finansal kaynaklar ele geçirildi.',
-                'full_report' => "Destansı Harekât Raporu (Bölüm 3): Willhard komutasındaki üçüncü darbe timi sığınağa baskın düzenledi. Igor Harken ağır yaralanarak canlı ele geçirildi ve yargılanmak üzere Siwion Lonca Zindanlarına sevk edildi.",
+                'full_report' => 'Destansı Harekât Raporu (Bölüm 3): Willhard komutasındaki üçüncü darbe timi sığınağa baskın düzenledi. Igor Harken ağır yaralanarak canlı ele geçirildi ve yargılanmak üzere Siwion Lonca Zindanlarına sevk edildi.',
                 'party' => [
                     ['name' => 'Willhard', 'role' => 'Reporter', 'class' => 'Barbarian', 'level' => 1, 'xp' => 356],
                     ['name' => 'Allerion', 'role' => 'Member', 'class' => 'Ranger', 'level' => 1, 'xp' => 356],
@@ -914,7 +1207,7 @@ class QuestReportService
                 'location' => 'Büyükelçilik Konutu',
                 'enemies' => 'Suikastçılar, Hırsız Loncası Casusları',
                 'report_summary' => 'Kraliyet temsilcisinden çalınan büyü korumalı kolye kurtarıldı. Lonca kasasına 50 SP aktarıldı.',
-                'full_report' => "Görev Raporu: Diplomatik kriz yaratabilecek hırsızlık vakasında Elindel ve arkadaşları ipuçlarını takip ederek liman depolarındaki kaçakçı teknesine baskın yaptı. Kolye sağlam olarak geri getirildi.",
+                'full_report' => 'Görev Raporu: Diplomatik kriz yaratabilecek hırsızlık vakasında Elindel ve arkadaşları ipuçlarını takip ederek liman depolarındaki kaçakçı teknesine baskın yaptı. Kolye sağlam olarak geri getirildi.',
                 'party' => [
                     ['name' => 'Elindel', 'role' => 'Reporter', 'class' => 'Wizard', 'level' => 1, 'xp' => 166],
                     ['name' => 'Tamokul', 'role' => 'Member', 'class' => 'Barbarian', 'level' => 1, 'xp' => 166],
@@ -946,7 +1239,7 @@ class QuestReportService
                 'location' => 'Bernard Vefalı Konağı',
                 'enemies' => 'Şantajcılar, Zehirbazlar',
                 'report_summary' => 'Şehir tüccarı Bernard Vefalı’ya kurulan zehirleme komplosu önlendi.',
-                'full_report' => "Operasyon Detayı: Nicholas liderliğindeki ekip tüccarın konağında nöbet tuttu. Aşçı kılığına giren suikastçı yemek servisi sırasında yakalandı.",
+                'full_report' => 'Operasyon Detayı: Nicholas liderliğindeki ekip tüccarın konağında nöbet tuttu. Aşçı kılığına giren suikastçı yemek servisi sırasında yakalandı.',
                 'party' => [
                     ['name' => 'Nicholas', 'role' => 'Reporter', 'class' => 'Rogue', 'level' => 1, 'xp' => 133],
                     ['name' => 'Marcus', 'role' => 'Member', 'class' => 'Paladin', 'level' => 1, 'xp' => 133],
@@ -979,7 +1272,7 @@ class QuestReportService
                 'location' => 'Yüksek Adalet Divanı',
                 'enemies' => 'İsyancı İntikam Timi, Kaçırma Girişimi',
                 'report_summary' => 'Mahkeme binası korundu, Igor Harken’ın infaz kararı onaylandı.',
-                'full_report' => "Duruşma Güvenlik Raporu: Mahkeme salonuna patlayıcılarla girmeye çalışan isyancı artıkları salon kapısında Hall ve ekibi tarafından durduruldu. Mahkeme güven içinde tamamlandı.",
+                'full_report' => 'Duruşma Güvenlik Raporu: Mahkeme salonuna patlayıcılarla girmeye çalışan isyancı artıkları salon kapısında Hall ve ekibi tarafından durduruldu. Mahkeme güven içinde tamamlandı.',
                 'party' => [
                     ['name' => 'Hall', 'role' => 'Reporter', 'class' => 'Cleric', 'level' => 1, 'xp' => 119],
                     ['name' => 'Rindark', 'role' => 'Member', 'class' => 'Fighter', 'level' => 1, 'xp' => 119],
@@ -1077,7 +1370,7 @@ class QuestReportService
                 'location' => 'Wellowburn Hanı',
                 'enemies' => 'Karanlık Tüccarlar, Yasadışı Bahisçiler',
                 'report_summary' => 'Handa yürütülen yasadışı bahis ve zehir ticareti basıldı. Depoya 150 malzeme aktarıldı, kasaya 50 SP kazandırıldı.',
-                'full_report' => "Baskın Raporu: Hanın gizli mahzeninde kurulan yasadışı bahis ve kaçak simya deposuna baskın yapıldı. %20 hammadde lonca deposuna çekildi.",
+                'full_report' => 'Baskın Raporu: Hanın gizli mahzeninde kurulan yasadışı bahis ve kaçak simya deposuna baskın yapıldı. %20 hammadde lonca deposuna çekildi.',
                 'party' => [
                     ['name' => 'Ran', 'role' => 'Reporter', 'class' => 'Ranger', 'level' => 1, 'xp' => 128],
                     ['name' => 'Vostea', 'role' => 'Member', 'class' => 'Druid', 'level' => 1, 'xp' => 128],
@@ -1109,7 +1402,7 @@ class QuestReportService
                 'location' => 'Siwion Batı Ormanları',
                 'enemies' => 'Vahşi Yaban Domuzları, Orman Eşkıyaları',
                 'report_summary' => 'Ticaret yolundaki eşkıya kampları temizlendi ve yol tüccarlar için tekrar güvenli kılındı.',
-                'full_report' => "Devriye Tutanağı: Buskall önderliğinde orman sınırında pusu kuran eşkıya grubu dağıtıldı, rehin alınan yük arabası kurtarıldı.",
+                'full_report' => 'Devriye Tutanağı: Buskall önderliğinde orman sınırında pusu kuran eşkıya grubu dağıtıldı, rehin alınan yük arabası kurtarıldı.',
                 'party' => [
                     ['name' => 'Buskall', 'role' => 'Reporter', 'class' => 'Fighter', 'level' => 1, 'xp' => 166],
                     ['name' => 'Samih', 'role' => 'Member', 'class' => 'Rogue', 'level' => 1, 'xp' => 166],
@@ -1141,7 +1434,7 @@ class QuestReportService
                 'location' => 'Harken Kırsalı',
                 'enemies' => 'Kaçak İsyancılar, Yağmacılar',
                 'report_summary' => 'İsyandan sonra köyleri basan firari çeteler yakalandı.',
-                'full_report' => "Saha Raporu: Firari askerlerin köylülerin erzak ambarlarına el koyduğu bilgisi üzerine Nicholas, Ran, Vostea, Will ve Tolrun köye yetişti. Çete etkisiz kılındı.",
+                'full_report' => 'Saha Raporu: Firari askerlerin köylülerin erzak ambarlarına el koyduğu bilgisi üzerine Nicholas, Ran, Vostea, Will ve Tolrun köye yetişti. Çete etkisiz kılındı.',
                 'party' => [
                     ['name' => 'Nicholas', 'role' => 'Reporter', 'class' => 'Rogue', 'level' => 1, 'xp' => 133],
                     ['name' => 'Ran', 'role' => 'Member', 'class' => 'Ranger', 'level' => 1, 'xp' => 133],
@@ -1205,7 +1498,7 @@ class QuestReportService
                 'location' => 'Aşağı Pazar Yeri',
                 'enemies' => 'Sahte İksir Tacirleri, Kumarbazlar',
                 'report_summary' => 'Halkı sahte şifa iksirleriyle kandıran dolandırıcı çetesi çökertildi.',
-                'full_report' => "Şehir Güvenlik Raporu: Elindel ve ekibi sahte iksir atölyesini bastı, zararlı karışımlar imha edildi ve 50 SP fon tahsil edildi.",
+                'full_report' => 'Şehir Güvenlik Raporu: Elindel ve ekibi sahte iksir atölyesini bastı, zararlı karışımlar imha edildi ve 50 SP fon tahsil edildi.',
                 'party' => [
                     ['name' => 'Elindel', 'role' => 'Reporter', 'class' => 'Wizard', 'level' => 1, 'xp' => 133],
                     ['name' => 'Tamokul', 'role' => 'Member', 'class' => 'Barbarian', 'level' => 1, 'xp' => 133],
@@ -1238,7 +1531,7 @@ class QuestReportService
                 'location' => 'Kuru Vadi Geçidi',
                 'enemies' => 'Gnoll Savaşçıları, Sırtlan Sürüleri',
                 'report_summary' => 'Vadiyi kesen Gnoll sürüsü mağlup edildi, kervan yolu kurtarıldı.',
-                'full_report' => "Muharebe Raporu: Leothar ve Willhard ön safta kalkan duvarı örerek Gnoll taarruzunu kırdı. Nyreen ve Rindark kanatlardan vurarak sürüyü dağıttı.",
+                'full_report' => 'Muharebe Raporu: Leothar ve Willhard ön safta kalkan duvarı örerek Gnoll taarruzunu kırdı. Nyreen ve Rindark kanatlardan vurarak sürüyü dağıttı.',
                 'party' => [
                     ['name' => 'Leothar', 'role' => 'Reporter', 'class' => 'Paladin', 'level' => 1, 'xp' => 133],
                     ['name' => 'Bart', 'role' => 'Member', 'class' => 'Fighter', 'level' => 1, 'xp' => 133],
@@ -1303,7 +1596,7 @@ class QuestReportService
                 'location' => 'Siwion Ana Limanı',
                 'enemies' => 'Kışkırtıcı Ajanlar, Liman Zorbaları',
                 'report_summary' => 'Liman işçilerini kışkırtarak isyana sürüklemek isteyen ajanlar yakalandı.',
-                'full_report' => "Arabuluculuk Raporu: Aelinor işçilerle diplomasi yürütürken provokatörler Allorion ve Leothar tarafından yakalandı. Liman tekrar çalışmaya başladı.",
+                'full_report' => 'Arabuluculuk Raporu: Aelinor işçilerle diplomasi yürütürken provokatörler Allorion ve Leothar tarafından yakalandı. Liman tekrar çalışmaya başladı.',
                 'party' => [
                     ['name' => 'Aelinor', 'role' => 'Reporter', 'class' => 'Sorcerer', 'level' => 1, 'xp' => 133],
                     ['name' => 'Shalvaz', 'role' => 'Member', 'class' => 'Cleric', 'level' => 1, 'xp' => 133],
@@ -1336,7 +1629,7 @@ class QuestReportService
                 'location' => 'Sisli Bataklık',
                 'enemies' => 'Zehirli Sarmaşıklar, Bataklık Yılanları',
                 'report_summary' => 'Veba tehlikesine karşı gereken Gümüş Çiçeği kökleri toplandı.',
-                'full_report' => "Doğa Keşif Raporu: Bataklığın derinliklerinde yetişen nadir kökler Elindel ve Buskall tarafından toplandı. Lonca revirine şifa stoku sağlandı.",
+                'full_report' => 'Doğa Keşif Raporu: Bataklığın derinliklerinde yetişen nadir kökler Elindel ve Buskall tarafından toplandı. Lonca revirine şifa stoku sağlandı.',
                 'party' => [
                     ['name' => 'Elindel', 'role' => 'Reporter', 'class' => 'Wizard', 'level' => 1, 'xp' => 166],
                     ['name' => 'Buskall', 'role' => 'Member', 'class' => 'Fighter', 'level' => 1, 'xp' => 166],
@@ -1465,7 +1758,7 @@ class QuestReportService
                 'location' => 'Batık Kervan Kalıntıları',
                 'enemies' => 'Bataklık Yaratıkları, Zehirli Sümüklüböcekler',
                 'report_summary' => 'Bataklığa gömülen simya kervanının sağlam kalan iksir kasaları kurtarıldı.',
-                'full_report' => "İntikal Raporu: Fangor ve Averon Felt sular altındaki enkazı kaldırdı. 12 şişe şifa ve kudret iksiri lonca deposuna kazandırıldı.",
+                'full_report' => 'İntikal Raporu: Fangor ve Averon Felt sular altındaki enkazı kaldırdı. 12 şişe şifa ve kudret iksiri lonca deposuna kazandırıldı.',
                 'party' => [
                     ['name' => 'Fangor', 'role' => 'Reporter', 'class' => 'Warlock', 'level' => 1, 'xp' => 166],
                     ['name' => 'Richard', 'role' => 'Member', 'class' => 'Fighter', 'level' => 1, 'xp' => 166],
@@ -1497,7 +1790,7 @@ class QuestReportService
                 'location' => 'Gölge İskele Bölgesi',
                 'enemies' => 'Gölge Çetesi Elebaşları, Bıçakçılar',
                 'report_summary' => 'Limanı haraca bağlayan çetenin ana hücresi çökertildi. Ekstra 150 XP kazanıldı.',
-                'full_report' => "Seviye 2 Harekât Raporu: Elindel ve Nedasp çetenin kumarhanesine baskın yaptı. Çete kasasından 150 XP ekstra ganimet ve 50 SP lonca fonu ele geçirildi.",
+                'full_report' => 'Seviye 2 Harekât Raporu: Elindel ve Nedasp çetenin kumarhanesine baskın yaptı. Çete kasasından 150 XP ekstra ganimet ve 50 SP lonca fonu ele geçirildi.',
                 'party' => [
                     ['name' => 'Elindel', 'role' => 'Reporter', 'class' => 'Wizard', 'level' => 2, 'xp' => 210],
                     ['name' => 'Nedasp', 'role' => 'Member', 'class' => 'Fighter', 'level' => 2, 'xp' => 210],
@@ -1530,7 +1823,7 @@ class QuestReportService
                 'location' => 'Batık Gemi Tersanesi',
                 'enemies' => 'Kaçak Silah Tüccarları, Çete Fedaileri',
                 'report_summary' => 'Çetenin deniz yoluyla kaçmaya çalışan ikinci hücresi kuşatıldı ve teslim alındı.',
-                'full_report' => "Seviye 2 Harekât Raporu (Kısım 2): Ran, Ulrich, Vostea ve Ugly tersanede demirli fırkateyne gizlice sızdı. Kaçak silah ve erzak dolu kargo lonca kontrolüne geçti.",
+                'full_report' => 'Seviye 2 Harekât Raporu (Kısım 2): Ran, Ulrich, Vostea ve Ugly tersanede demirli fırkateyne gizlice sızdı. Kaçak silah ve erzak dolu kargo lonca kontrolüne geçti.',
                 'party' => [
                     ['name' => 'Ran', 'role' => 'Reporter', 'class' => 'Ranger', 'level' => 2, 'xp' => 275],
                     ['name' => 'Ulrich', 'role' => 'Member', 'class' => 'Paladin', 'level' => 2, 'xp' => 275],
@@ -1562,7 +1855,7 @@ class QuestReportService
                 'location' => 'Lonca Atölyeleri',
                 'enemies' => 'Eğitim Golemleri, Test Mankeni Büyüleri',
                 'report_summary' => 'Şehir içi operasyonlarda kan dökülmeden şüphelileri yakalamak için bayıltıcı teçhizat geliştirildi.',
-                'full_report' => "Atölye Test Raporu: Buskall ve ekibi prototip bayıltıcı sopaları test etti. 20 adet öldürücü olmayan teçhizat lonca envanterine girdi.",
+                'full_report' => 'Atölye Test Raporu: Buskall ve ekibi prototip bayıltıcı sopaları test etti. 20 adet öldürücü olmayan teçhizat lonca envanterine girdi.',
                 'party' => [
                     ['name' => 'Buskall', 'role' => 'Reporter', 'class' => 'Fighter', 'level' => 1, 'xp' => 133],
                     ['name' => 'Bruk', 'role' => 'Member', 'class' => 'Monk', 'level' => 1, 'xp' => 133],
@@ -1595,7 +1888,7 @@ class QuestReportService
                 'location' => 'Kanalizasyon Labirentleri',
                 'enemies' => 'Kanal Ghoulları, Veba Sıçanları',
                 'report_summary' => 'Şehir altından kaybolan 3 masum vatandaş kurtarıldı. Kasaya 75 SP bağışlandı.',
-                'full_report' => "Arama Kurtarma Raporu: Leothar kutsal ışığıyla kanalizasyonu aydınlatırken, Shalvaz ve Nicholas yaralı vatandaşlara ilk müdahaleyi yaptı.",
+                'full_report' => 'Arama Kurtarma Raporu: Leothar kutsal ışığıyla kanalizasyonu aydınlatırken, Shalvaz ve Nicholas yaralı vatandaşlara ilk müdahaleyi yaptı.',
                 'party' => [
                     ['name' => 'Leothar', 'role' => 'Reporter', 'class' => 'Paladin', 'level' => 1, 'xp' => 213],
                     ['name' => 'Shalvaz', 'role' => 'Member', 'class' => 'Cleric', 'level' => 1, 'xp' => 213],
@@ -1626,7 +1919,7 @@ class QuestReportService
                 'location' => 'Doğu Patikası Harabe Kulesi',
                 'enemies' => 'Haydut Okçuları, Yaban Tazıları',
                 'report_summary' => 'Krallığın gizli sınır haritaları ve pusulaları haydut kampından geri alındı.',
-                'full_report' => "Geri Alma Harekâtı: Nedasp, Ran, Vostea, Ulrich, Vain ve Leothar haritacının kaçırılan belgelerini kuleye tırmanarak geri aldı.",
+                'full_report' => 'Geri Alma Harekâtı: Nedasp, Ran, Vostea, Ulrich, Vain ve Leothar haritacının kaçırılan belgelerini kuleye tırmanarak geri aldı.',
                 'party' => [
                     ['name' => 'Nedasp', 'role' => 'Reporter', 'class' => 'Fighter', 'level' => 1, 'xp' => 110],
                     ['name' => 'Ran', 'role' => 'Member', 'class' => 'Ranger', 'level' => 1, 'xp' => 110],
@@ -1660,7 +1953,7 @@ class QuestReportService
                 'location' => 'Eski Gümrük Binası',
                 'enemies' => 'Kaçak Mallar Muhafızları, Sahte Memurlar',
                 'report_summary' => 'Gümrükte mühür bozup sahte vergi toplayan şebeke ortaya çıkarıldı.',
-                'full_report' => "Denetim Tutanağı: Hall, Bart ve Drednar gümrük ambarına baskın yaptı. Sahte defterler delil olarak mahkemeye sunuldu.",
+                'full_report' => 'Denetim Tutanağı: Hall, Bart ve Drednar gümrük ambarına baskın yaptı. Sahte defterler delil olarak mahkemeye sunuldu.',
                 'party' => [
                     ['name' => 'Hall', 'role' => 'Reporter', 'class' => 'Cleric', 'level' => 1, 'xp' => 221],
                     ['name' => 'Bart', 'role' => 'Member', 'class' => 'Fighter', 'level' => 1, 'xp' => 221],
@@ -1724,7 +2017,7 @@ class QuestReportService
                 'location' => 'Siwion - Yüksek Hisar Yolu',
                 'enemies' => 'Mahkum Kurtarma Çetesi, Zehirli Okçular',
                 'report_summary' => 'Tehlikeli büyücü mahkum yüksek güvenlikli hisara teslim edildi.',
-                'full_report' => "Transfer Raporu: Tamokul, Rindark, Samih ve Lagnard mahkumu taşıyan demir kafesi korudu. Yolda düzenlenen kurtarma teşebbüsleri püskürtüldü.",
+                'full_report' => 'Transfer Raporu: Tamokul, Rindark, Samih ve Lagnard mahkumu taşıyan demir kafesi korudu. Yolda düzenlenen kurtarma teşebbüsleri püskürtüldü.',
                 'party' => [
                     ['name' => 'Tamokul', 'role' => 'Reporter', 'class' => 'Barbarian', 'level' => 1, 'xp' => 166],
                     ['name' => 'Rindark', 'role' => 'Member', 'class' => 'Fighter', 'level' => 1, 'xp' => 166],
@@ -1837,7 +2130,7 @@ class QuestReportService
                     'spent_xp' => 571308.01,
                     'formula_desc' => 'Olan = 230 Oyuncu | Harcanan XP = 571,308.01 XP | Kişi Başı Ortalama = 2,483.95 XP',
                 ],
-            ]
+            ],
         ];
     }
 
@@ -1848,18 +2141,18 @@ class QuestReportService
     {
         $defaults = $this->getGuildPoolDefaultData();
 
-        $wikiTotal = (float)($input['wiki_xp']['total'] ?? $defaults['wiki_xp']['total']);
-        $wikiDist = (float)($input['wiki_xp']['distributed'] ?? $defaults['wiki_xp']['distributed']);
+        $wikiTotal = (float) ($input['wiki_xp']['total'] ?? $defaults['wiki_xp']['total']);
+        $wikiDist = (float) ($input['wiki_xp']['distributed'] ?? $defaults['wiki_xp']['distributed']);
         $wikiRem = round($wikiTotal - $wikiDist, 2);
 
-        $guildTotal = (float)($input['guild_xp']['total'] ?? $defaults['guild_xp']['total']);
-        $guildBase = (float)($input['guild_xp']['base'] ?? $defaults['guild_xp']['base']);
-        $guildNext = (float)($input['guild_xp']['next_level_threshold'] ?? $defaults['guild_xp']['next_level_threshold']);
-        $guildLevel = (int)($input['guild_xp']['level'] ?? $defaults['guild_xp']['level']);
-        $guildRemaining = (int)($input['guild_xp']['remaining'] ?? $defaults['guild_xp']['remaining']);
+        $guildTotal = (float) ($input['guild_xp']['total'] ?? $defaults['guild_xp']['total']);
+        $guildBase = (float) ($input['guild_xp']['base'] ?? $defaults['guild_xp']['base']);
+        $guildNext = (float) ($input['guild_xp']['next_level_threshold'] ?? $defaults['guild_xp']['next_level_threshold']);
+        $guildLevel = (int) ($input['guild_xp']['level'] ?? $defaults['guild_xp']['level']);
+        $guildRemaining = (int) ($input['guild_xp']['remaining'] ?? $defaults['guild_xp']['remaining']);
 
-        $extraFund = (float)($input['extra_fund'] ?? $defaults['extra_fund']);
-        $poolTotal = (float)($input['pool_total'] ?? $defaults['pool_total']);
+        $extraFund = (float) ($input['extra_fund'] ?? $defaults['extra_fund']);
+        $poolTotal = (float) ($input['pool_total'] ?? $defaults['pool_total']);
 
         $ranks = $input['ranks'] ?? $defaults['ranks'];
 
@@ -1867,7 +2160,7 @@ class QuestReportService
         $uzmanCount = 21;
         foreach ($ranks as $r) {
             if ($r['rank'] === 'Uzman') {
-                $uzmanCount = max((int)($r['current_count'] ?? 21), 1);
+                $uzmanCount = max((int) ($r['current_count'] ?? 21), 1);
                 break;
             }
         }
@@ -1882,33 +2175,33 @@ class QuestReportService
         $totalNetXp = 0.0;
 
         foreach ($ranks as &$rk) {
-            $count = (int)($rk['current_count'] ?? 0);
-            $spent = (float)($rk['spent_xp'] ?? 0);
+            $count = (int) ($rk['current_count'] ?? 0);
+            $spent = (float) ($rk['spent_xp'] ?? 0);
 
             if ($rk['rank'] === 'Uzman') {
                 $rk['capacity'] = $rk['capacity'] ?? 168.78;
                 $rk['capacity_xp'] = round($guildTotal * 0.60, 2); // =BW3*0.6
                 $rk['current_xp'] = $rk['capacity_xp'];
                 $rk['net_xp'] = round($poolShareUzman, 2); // =BV5/BW10
-                $rk['formula_desc'] = 'Kapasite XP = Lonca XP * %60 (' . number_format($rk['capacity_xp'], 2) . ' XP) | Net Pay = Havuz / Uzman = ' . number_format($rk['net_xp'], 2) . ' XP';
+                $rk['formula_desc'] = 'Kapasite XP = Lonca XP * %60 ('.number_format($rk['capacity_xp'], 2).' XP) | Net Pay = Havuz / Uzman = '.number_format($rk['net_xp'], 2).' XP';
             } elseif ($rk['rank'] === 'Kıdemli') {
                 $rk['capacity'] = $rk['capacity'] ?? 759.50;
                 $rk['capacity_xp'] = $rk['capacity_xp'] ?? round($spent, 2);
                 $rk['current_xp'] = $rk['current_xp'] ?? round($spent, 2);
                 $rk['net_xp'] = $count > 0 ? round($spent / $count, 2) : 0.0; // =CA11/BW11
-                $rk['formula_desc'] = 'Kapasite = Üye / 2 = 759.50 | Net Pay = ' . number_format($spent, 2) . ' / ' . $count . ' = ' . number_format($rk['net_xp'], 2) . ' XP';
+                $rk['formula_desc'] = 'Kapasite = Üye / 2 = 759.50 | Net Pay = '.number_format($spent, 2).' / '.$count.' = '.number_format($rk['net_xp'], 2).' XP';
             } elseif ($rk['rank'] === 'Üye') {
                 $rk['capacity'] = $rk['capacity'] ?? 1519.00;
                 $rk['capacity_xp'] = $rk['capacity_xp'] ?? 3300.00;
                 $rk['current_xp'] = $rk['current_xp'] ?? 3300.00;
                 $rk['net_xp'] = $count > 0 ? round($spent / $count, 2) : 0.0; // =CA12/BW12
-                $rk['formula_desc'] = 'Kapasite = 1519 Sefer | Sabit Eşik = 3,300.00 XP | Net Pay = ' . number_format($spent, 2) . ' / ' . $count . ' = ' . number_format($rk['net_xp'], 2) . ' XP';
+                $rk['formula_desc'] = 'Kapasite = 1519 Sefer | Sabit Eşik = 3,300.00 XP | Net Pay = '.number_format($spent, 2).' / '.$count.' = '.number_format($rk['net_xp'], 2).' XP';
             } elseif ($rk['rank'] === 'Clerk') {
                 $rk['capacity'] = $rk['capacity'] ?? 168.78;
                 $rk['capacity_xp'] = $rk['capacity_xp'] ?? 15000.00;
                 $rk['current_xp'] = $rk['current_xp'] ?? 15000.00;
                 $rk['net_xp'] = $count > 0 ? round($spent / $count, 2) : 0.0; // =CA13/BW13
-                $rk['formula_desc'] = 'Kapasite = 168.78 | Sabit Fon = 15,000.00 XP | Net Pay = ' . number_format($spent, 2) . ' / ' . $count . ' = ' . number_format($rk['net_xp'], 2) . ' XP';
+                $rk['formula_desc'] = 'Kapasite = 168.78 | Sabit Fon = 15,000.00 XP | Net Pay = '.number_format($spent, 2).' / '.$count.' = '.number_format($rk['net_xp'], 2).' XP';
             } elseif ($rk['rank'] === 'Aday') {
                 $rk['capacity'] = $rk['capacity'] ?? 2616.06;
                 $rk['capacity_xp'] = $rk['capacity_xp'] ?? 1300.00;
@@ -1920,21 +2213,21 @@ class QuestReportService
                 $rk['capacity_xp'] = round($guildTotal * 0.40, 2);
                 $rk['current_xp'] = $count > 0 ? $rk['capacity_xp'] : 0.0;
                 $rk['net_xp'] = $count > 0 ? round($spent / $count, 2) : 0.0;
-                $rk['formula_desc'] = 'Kapasite = Sefer / 9 = 168.78 | Kapasite XP = Lonca XP * %40 = ' . number_format($rk['capacity_xp'], 2) . ' XP';
+                $rk['formula_desc'] = 'Kapasite = Sefer / 9 = 168.78 | Kapasite XP = Lonca XP * %40 = '.number_format($rk['capacity_xp'], 2).' XP';
             } elseif ($rk['rank'] === 'Inaktif / Gezgin') {
                 $rk['capacity'] = $rk['capacity'] ?? 500.00;
                 $rk['capacity_xp'] = $rk['capacity_xp'] ?? round($spent, 2);
                 $rk['current_xp'] = $rk['current_xp'] ?? round($spent, 2);
                 $rk['net_xp'] = $count > 0 ? round($spent / $count, 2) : 0.0;
-                $rk['formula_desc'] = 'Inaktif (' . $count . ' Oyuncu) | Harcanan XP = ' . number_format($spent, 2) . ' XP | Ortalama = ' . number_format($rk['net_xp'], 2) . ' XP';
+                $rk['formula_desc'] = 'Inaktif ('.$count.' Oyuncu) | Harcanan XP = '.number_format($spent, 2).' XP | Ortalama = '.number_format($rk['net_xp'], 2).' XP';
             }
 
             $totalSpent += $spent;
-            $totalCapacity += (float)($rk['capacity'] ?? 0);
+            $totalCapacity += (float) ($rk['capacity'] ?? 0);
             $totalCount += $count;
-            $totalCapacityXp += (float)($rk['capacity_xp'] ?? 0);
-            $totalCurrentXp += (float)($rk['current_xp'] ?? 0);
-            $totalNetXp += (float)($rk['net_xp'] ?? 0);
+            $totalCapacityXp += (float) ($rk['capacity_xp'] ?? 0);
+            $totalCurrentXp += (float) ($rk['current_xp'] ?? 0);
+            $totalNetXp += (float) ($rk['net_xp'] ?? 0);
         }
 
         $grandTotal = round($totalSpent + $extraFund, 2);
@@ -1975,10 +2268,11 @@ class QuestReportService
         if (file_exists($path)) {
             $json = file_get_contents($path);
             $decoded = json_decode($json, true);
-            if (is_array($decoded) && !empty($decoded)) {
+            if (is_array($decoded) && ! empty($decoded)) {
                 return $this->calculateGuildPoolData($decoded);
             }
         }
+
         return $this->calculateGuildPoolData($this->getGuildPoolDefaultData());
     }
 
@@ -1990,10 +2284,11 @@ class QuestReportService
         $calculated = $this->calculateGuildPoolData($data);
         $path = $this->getGuildPoolStoragePath();
         $dir = dirname($path);
-        if (!is_dir($dir)) {
+        if (! is_dir($dir)) {
             mkdir($dir, 0755, true);
         }
         file_put_contents($path, json_encode($calculated, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
         return $calculated;
     }
 
@@ -2003,7 +2298,7 @@ class QuestReportService
     public function resetGuildPoolDefaults(): array
     {
         $defaults = $this->getGuildPoolDefaultData();
+
         return $this->updateGuildPoolData($defaults);
     }
 }
-

@@ -2,10 +2,12 @@
 
 namespace App\ValiantShade\Http\Controllers;
 
-use App\ValiantShade\Http\Controllers\Controller;
+use App\Models\Character;
+use App\Models\PlayerXp;
 use App\ValiantShade\Services\QuestReportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class QuestReportsController extends Controller
@@ -34,10 +36,10 @@ class QuestReportsController extends Controller
 
         $characterLevels = [];
         try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('characters')) {
+            if (Schema::hasTable('characters')) {
                 $characterLevels = array_merge(
-                    \Illuminate\Support\Facades\Schema::hasTable('player_xp') ? \App\Models\PlayerXp::pluck('current_level', 'character_name')->toArray() : [],
-                    \App\Models\Character::pluck('current_level', 'name')->toArray()
+                    Schema::hasTable('player_xp') ? PlayerXp::pluck('current_level', 'character_name')->toArray() : [],
+                    Character::pluck('current_level', 'name')->toArray()
                 );
             }
         } catch (\Throwable $e) {
@@ -68,13 +70,56 @@ class QuestReportsController extends Controller
     }
 
     /**
+     * Import a master-sheet JSON file into the report archive and quest tables.
+     */
+    public function import(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'file' => 'required|file|max:20480',
+        ]);
+
+        try {
+            $rows = json_decode(
+                file_get_contents($validated['file']->getRealPath()),
+                true,
+                512,
+                JSON_THROW_ON_ERROR
+            );
+        } catch (\JsonException) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Seçilen dosya geçerli bir JSON değil.',
+            ], 422);
+        }
+
+        if (! is_array($rows) || ! array_is_list($rows) || ! collect($rows)->contains(
+            fn ($row) => is_array($row) && trim((string) ($row['Görev adı'] ?? '')) !== ''
+        )) {
+            return response()->json([
+                'success' => false,
+                'message' => 'JSON dosyasında görev raporu bulunamadı.',
+            ], 422);
+        }
+
+        $result = $this->service->importReports($rows);
+
+        return response()->json([
+            'success' => true,
+            'message' => "{$result['imported']} rapor veritabanına eklendi; {$result['skipped']} mevcut veya geçersiz satır atlandı.",
+            ...$result,
+            'stats' => $this->service->getStatistics(),
+            'gms' => $this->service->getDistinctGms(),
+        ]);
+    }
+
+    /**
      * Get a specific mission report by ID for detail/edit modal.
      */
     public function show(int|string $id): JsonResponse
     {
         $report = $this->service->getReportById($id);
 
-        if (!$report) {
+        if (! $report) {
             return response()->json([
                 'success' => false,
                 'message' => __('Quest report not found.'),
@@ -117,7 +162,7 @@ class QuestReportsController extends Controller
 
         // Optionally distribute XP directly on creation if requested
         $distributeResult = null;
-        if (!empty($validated['distribute_xp_auto'])) {
+        if (! empty($validated['distribute_xp_auto'])) {
             try {
                 $distributeResult = $this->service->distributeXpToPlayers($newReport['id']);
             } catch (\Throwable $e) {
@@ -162,7 +207,7 @@ class QuestReportsController extends Controller
 
         $updated = $this->service->updateReport($id, $validated);
 
-        if (!$updated) {
+        if (! $updated) {
             return response()->json([
                 'success' => false,
                 'message' => __('Quest report to update not found.'),
@@ -185,7 +230,7 @@ class QuestReportsController extends Controller
     {
         $deleted = $this->service->deleteReport($id);
 
-        if (!$deleted) {
+        if (! $deleted) {
             return response()->json([
                 'success' => false,
                 'message' => __('Quest report to delete not found.'),
@@ -234,7 +279,7 @@ class QuestReportsController extends Controller
                 'message' => __('Successfully awarded +:xp XP to :count adventurers under Report #:id.', [
                     'id' => $id,
                     'count' => $result['total_awarded_count'],
-                    'xp' => $result['xp_per_player']
+                    'xp' => $result['xp_per_player'],
                 ]),
                 'data' => $result,
             ]);
