@@ -1,187 +1,425 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\ValiantShade\Services;
 
-use App\ValiantShade\Services\PathfinderFeatsService;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use App\Models\CharacterFeat;
+use App\Models\CharacterProfile;
+use App\Models\CharacterTrait;
+use App\Models\Feat;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use JsonException;
+use RuntimeException;
 
-class PathfinderFeatsController extends Controller
+class PathfinderFeatsService
 {
-    public function __construct(private readonly PathfinderFeatsService $featsService)
+    public function ensureInitialized(): void
     {
-    }
-
-    public function index(Request $request)
-    {
-        $sortBy = $request->query('sort', 'name_asc');
-        $characters = $this->featsService->getCharactersList($sortBy);
-        $masterTable = $this->featsService->getMasterFeatsTable($sortBy);
-        $serverRules = $this->featsService->getServerFeatRules();
-        $featsLibrary = $this->featsService->getCommonFeatsLibrary();
-
-        if ($request->wantsJson()) {
-            return response()->json([
-                'characters' => $characters,
-                'master_table' => $masterTable,
-                'server_rules' => $serverRules,
-                'feats_library' => $featsLibrary,
-            ]);
+        if (CharacterProfile::query()->exists()) {
+            return;
         }
 
-        return view('pathfinder.feats.index', compact(
-            'characters',
-            'masterTable',
-            'serverRules',
-            'featsLibrary',
-            'sortBy'
-        ));
+        DB::transaction(fn () => $this->importRows($this->readDefaultRows()));
     }
 
-    public function show(Request $request, string $characterName)
+    public function getCharactersList(string $sortBy = 'name_asc'): EloquentCollection
     {
-        $dossier = $this->featsService->getCharacterDossier($characterName);
-        abort_if(!$dossier, 404, 'Karakter bulunamadı.');
+        $query = CharacterProfile::query()->withCount('feats');
 
-        $featsLibrary = $this->featsService->getCommonFeatsLibrary();
-        $serverRules = $this->featsService->getServerFeatRules();
+        match ($sortBy) {
+            'name_desc' => $query->orderByDesc('character_name'),
+            'level_asc' => $query->orderBy('level')->orderBy('character_name'),
+            'level_desc' => $query->orderByDesc('level')->orderBy('character_name'),
+            'feats_asc' => $query->orderBy('feats_count')->orderBy('character_name'),
+            'feats_desc' => $query->orderByDesc('feats_count')->orderBy('character_name'),
+            default => $query->orderBy('character_name'),
+        };
 
-        if ($request->wantsJson()) {
-            return response()->json([
-                'dossier' => $dossier,
-                'feats_library' => $featsLibrary,
-                'server_rules' => $serverRules,
-            ]);
+        return $query->get();
+    }
+
+    public function getCharacterDossier(string $characterName): ?array
+    {
+        $profile = CharacterProfile::query()
+            ->where('character_name', $characterName)
+            ->first();
+
+        if (! $profile) {
+            return null;
         }
 
-        return view('pathfinder.feats.dossier', compact('dossier', 'featsLibrary', 'serverRules'));
+        $feats = CharacterFeat::query()
+            ->where('character_name', $characterName)
+            ->orderBy('level')
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        $progression = [];
+        for ($level = 1; $level <= 20; $level++) {
+            $levelFeats = $feats->where('level', $level)->values();
+            $slotDefinitions = [];
+
+            if ($level % 2 === 1) {
+                $slotDefinitions[] = $this->slotDefinition($level, 'standard');
+            }
+
+            $hasRacialSlot = $level === 1
+                && (stripos((string) $profile->race, 'human') !== false
+                    || $levelFeats->contains('slot_type', 'racial_bonus'));
+            if ($hasRacialSlot) {
+                $slotDefinitions[] = $this->slotDefinition($level, 'racial_bonus');
+            }
+
+            $hasClassBonusSlot = $this->hasClassBonusSlot($profile, $level)
+                || $levelFeats->contains('slot_type', 'class_bonus');
+            if ($hasClassBonusSlot) {
+                $slotDefinitions[] = $this->slotDefinition($level, 'class_bonus');
+            }
+
+            $assignedIds = [];
+            $slots = array_map(function (array $slot) use ($levelFeats, &$assignedIds): array {
+                $feat = $levelFeats->first(
+                    fn (CharacterFeat $candidate) => $candidate->slot_type === $slot['type']
+                        && ! in_array($candidate->id, $assignedIds, true)
+                );
+
+                if ($feat) {
+                    $assignedIds[] = $feat->id;
+                }
+
+                $slot['feat'] = $feat;
+                $slot['is_empty'] = ! $feat;
+
+                return $slot;
+            }, $slotDefinitions);
+
+            $progression[$level] = [
+                'slots' => $slots,
+                'all_feats' => $levelFeats,
+                'class_feats' => $levelFeats->whereIn('slot_type', ['class_bonus', 'class_talent'])->values(),
+                'extra_feats' => $levelFeats->reject(
+                    fn (CharacterFeat $feat) => in_array($feat->id, $assignedIds, true)
+                )->values(),
+                'has_class_talent_slot' => $levelFeats->contains('slot_type', 'class_talent'),
+                'has_class_bonus_slot' => $hasClassBonusSlot,
+                'is_racial_slot' => $hasRacialSlot,
+            ];
+        }
+
+        return [
+            'profile' => $profile,
+            'progression' => $progression,
+            'total_feats_count' => $feats->count(),
+            'class_count' => $feats->whereIn('slot_type', ['class_bonus', 'class_talent'])->count(),
+            'standard_count' => $feats->where('slot_type', 'standard')->count(),
+            'racial_count' => $feats->where('slot_type', 'racial_bonus')->count(),
+            'calculated_bab' => $profile->bab ?: '—',
+            'calculated_fort' => $profile->fort_save ?: '—',
+            'calculated_ref' => $profile->ref_save ?: '—',
+            'calculated_will' => $profile->will_save ?: '—',
+            'hit_die' => $profile->hit_die,
+        ];
     }
 
-    public function validateSelection(Request $request): JsonResponse
+    public function getMasterFeatsTable(string $sortBy = 'name_asc'): array
     {
-        $validated = $request->validate([
-            'feat_name' => 'required|string|max:255',
-            'character_name' => 'required|string|max:255',
-        ]);
+        $characters = $this->getCharactersList($sortBy);
+        $featsByCharacter = CharacterFeat::query()
+            ->whereIn('character_name', $characters->pluck('character_name'))
+            ->get()
+            ->groupBy('character_name');
 
-        return response()->json(
-            $this->featsService->validateFeatSelection($validated['feat_name'], $validated['character_name'])
+        return $characters
+            ->map(function (CharacterProfile $profile) use ($featsByCharacter): array {
+                $feats = $featsByCharacter->get($profile->character_name, collect());
+
+                return [
+                    'rank' => $profile->rank ?: 'Üye',
+                    'character_name' => $profile->character_name,
+                    'player_name' => $profile->player_name ?: '—',
+                    'race' => $profile->race ?: '—',
+                    'class' => trim($profile->class_name.($profile->archetype ? ' ('.$profile->archetype.')' : '')),
+                    'level' => $profile->level,
+                    'lvl_1_standard' => $this->featNames($feats, 1, 'standard'),
+                    'lvl_1_class_bonus' => $this->featNames($feats, 1, 'class_bonus'),
+                    'lvl_1_racial_bonus' => $this->featNames($feats, 1, 'racial_bonus'),
+                    'lvl_2_class_bonus' => $this->featNames($feats, 2, 'class_bonus'),
+                    'lvl_3_standard' => $this->featNames($feats, 3, 'standard'),
+                ];
+            })
+            ->all();
+    }
+
+    public function getCommonFeatsLibrary(): array
+    {
+        return Feat::query()
+            ->select(['name', 'category', 'prerequisites'])
+            ->orderBy('name')
+            ->limit(1000)
+            ->get()
+            ->map(fn (Feat $feat): array => [
+                'name' => $feat->name,
+                'category' => $feat->category ?: '',
+                'preq' => $feat->prerequisites ?: '',
+            ])
+            ->all();
+    }
+
+    public function storeFeat(array $data): CharacterFeat
+    {
+        $characterName = trim($data['character_name']);
+        $level = (int) $data['level'];
+
+        CharacterProfile::query()->firstOrCreate(
+            ['character_name' => $characterName],
+            [
+                'user_id' => Auth::id(),
+                'class_name' => 'Adventurer',
+                'level' => $level,
+                'rank' => 'Üye',
+            ]
         );
+
+        $featName = trim($data['feat_name']);
+        $slotType = $data['slot_type'];
+
+        return CharacterFeat::query()->create([
+            'character_name' => $characterName,
+            'level' => $level,
+            'acquired_at_level' => $level,
+            'slot_type' => $slotType,
+            'feat_name' => $featName,
+            'custom_feat_name' => $featName,
+            'class_feat_name' => $data['class_feat_name'] ?? null,
+            'category' => $data['category'] ?? null,
+            'prerequisites' => $data['prerequisites'] ?? null,
+            'notes' => $data['notes'] ?? null,
+            'is_class_feat' => (bool) ($data['is_class_feat'] ?? in_array($slotType, ['class_bonus', 'class_talent'], true)),
+        ]);
     }
 
-    public function storeFeat(Request $request): JsonResponse
+    public function updateFeat(int $id, array $data): CharacterFeat
     {
-        $validated = $request->validate([
-            'character_name'  => 'required|string|max:255',
-            'level'           => 'required|integer|min:1|max:20',
-            'slot_type'       => 'required|string|max:50',
-            'feat_name'       => 'required|string|max:255',
-            'class_feat_name' => 'nullable|string|max:255',
-            'category'        => 'nullable|string|max:100',
-            'prerequisites'   => 'nullable|string|max:500',
-            'notes'           => 'nullable|string|max:1000',
-            'is_class_feat'   => 'nullable|boolean',
-            'force'           => 'nullable|boolean',
-        ]);
+        $feat = CharacterFeat::query()->findOrFail($id);
+        $feat->fill($data);
 
-        if (empty($validated['force'])) {
-            $check = $this->featsService->validateFeatSelection($validated['feat_name'], $validated['character_name']);
-            if (!$check['allowed']) {
-                return response()->json([
-                    'status' => 'conflict',
-                    'validation' => $check,
-                ], 422);
+        if (array_key_exists('feat_name', $data)) {
+            $feat->custom_feat_name = trim($data['feat_name']);
+        }
+        if (array_key_exists('level', $data)) {
+            $feat->acquired_at_level = (int) $data['level'];
+        }
+
+        $feat->save();
+
+        return $feat;
+    }
+
+    public function deleteFeat(int $id): bool
+    {
+        $feat = CharacterFeat::query()->find($id);
+
+        return $feat ? (bool) $feat->forceDelete() : false;
+    }
+
+    public function updateProfileStats(string $characterName, array $data): CharacterProfile
+    {
+        $profile = CharacterProfile::query()->firstOrCreate(
+            ['character_name' => $characterName],
+            [
+                'user_id' => Auth::id(),
+                'class_name' => 'Adventurer',
+                'rank' => 'Üye',
+            ]
+        );
+
+        $profile->fill($data)->save();
+
+        return $profile->fresh();
+    }
+
+    public function deleteCharacter(string $characterName): bool
+    {
+        $profile = CharacterProfile::query()->where('character_name', $characterName)->first();
+        if (! $profile) {
+            return false;
+        }
+
+        DB::transaction(function () use ($profile, $characterName): void {
+            CharacterFeat::withTrashed()->where('character_name', $characterName)->forceDelete();
+            CharacterTrait::withTrashed()->where('character_name', $characterName)->forceDelete();
+            $profile->forceDelete();
+        });
+
+        return true;
+    }
+
+    public function seedDefaults(): void
+    {
+        DB::transaction(function (): void {
+            CharacterFeat::withTrashed()->forceDelete();
+            CharacterProfile::withTrashed()->forceDelete();
+            $this->importRows($this->readDefaultRows());
+        });
+    }
+
+    public function getServerFeatRules(): array
+    {
+        return [
+            'standard' => 'Standard feats are available at odd-numbered levels.',
+            'racial_bonus' => 'Racial bonus feats depend on the character ancestry.',
+            'class_bonus' => 'Class bonus feats depend on the character class.',
+            'custom_feats_allowed' => true,
+        ];
+    }
+
+    public function validateFeatSelection(string $featName, string $characterName): array
+    {
+        return [
+            'allowed' => true,
+            'message' => __('Custom feat names can be entered without a catalog match.'),
+            'feat_name' => $featName,
+            'character_name' => $characterName,
+        ];
+    }
+
+    private function slotDefinition(int $level, string $type): array
+    {
+        $labels = [
+            'standard' => ['name' => $level.'. Level', 'badge' => 'bg-label-primary'],
+            'racial_bonus' => ['name' => $level.'. Level Racial Bonus Feat', 'badge' => 'bg-label-info'],
+            'class_bonus' => ['name' => $level.'. Level Class Bonus Feat', 'badge' => 'bg-label-warning'],
+        ];
+
+        return [
+            'name' => $labels[$type]['name'],
+            'badge' => $labels[$type]['badge'],
+            'type' => $type,
+        ];
+    }
+
+    private function hasClassBonusSlot(CharacterProfile $profile, int $level): bool
+    {
+        $className = strtolower((string) $profile->class_name);
+
+        if (str_contains($className, 'fighter')) {
+            return $level === 1 || ($level % 2 === 0);
+        }
+        if (str_contains($className, 'magus')) {
+            return in_array($level, [5, 11, 17], true);
+        }
+        if (str_contains($className, 'wizard')) {
+            return in_array($level, [1, 5, 10, 15, 20], true);
+        }
+        if (str_contains($className, 'warpriest')) {
+            return in_array($level, [3, 6, 9, 12, 15, 18], true);
+        }
+
+        return false;
+    }
+
+    private function featNames(Collection $feats, int $level, string $slotType): string
+    {
+        return $feats
+            ->where('level', $level)
+            ->where('slot_type', $slotType)
+            ->pluck('feat_name')
+            ->filter()
+            ->implode(', ');
+    }
+
+    private function readDefaultRows(): array
+    {
+        $path = storage_path('app/feats_list.json');
+        if (! is_file($path)) {
+            throw new RuntimeException("Feat list JSON not found at {$path}.");
+        }
+
+        try {
+            $rows = json_decode(file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException $exception) {
+            throw new RuntimeException('Feat list JSON is invalid: '.$exception->getMessage(), previous: $exception);
+        }
+
+        if (! is_array($rows)) {
+            throw new RuntimeException('Feat list JSON must contain a list of character records.');
+        }
+
+        return $rows;
+    }
+
+    private function importRows(array $rows): void
+    {
+        foreach ($rows as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+
+            $characterName = trim((string) ($row['Character Name'] ?? ''));
+            if ($characterName === '' || $characterName === 'Character Name') {
+                continue;
+            }
+
+            $classAndArchetype = trim((string) ($row['Class (Archetype)'] ?? ''));
+            $className = $classAndArchetype;
+            $archetype = null;
+            if (preg_match('/^\s*(.*?)\s*\((.*?)\)\s*$/u', $classAndArchetype, $matches)) {
+                $className = trim($matches[1]);
+                $archetype = trim($matches[2]);
+            }
+
+            $profile = CharacterProfile::query()->firstOrCreate(
+                ['character_name' => $characterName],
+                [
+                    'player_name' => trim((string) ($row['Player Name'] ?? '')) ?: null,
+                    'race' => trim((string) ($row['Race'] ?? '')) ?: 'Human',
+                    'class_name' => $className ?: 'Adventurer',
+                    'archetype' => $archetype,
+                    'level' => max(1, (int) ($row['Level'] ?? 1)),
+                    'rank' => trim((string) ($row['Rank'] ?? '')) ?: 'Üye',
+                ]
+            );
+
+            $sortOrder = 0;
+            foreach ($row as $column => $value) {
+                if (! preg_match('/^\s*(\d+)\s*\.?\s*level\b/i', (string) $column, $matches)) {
+                    continue;
+                }
+
+                $featName = trim((string) $value);
+                if ($featName === '' || $featName === '-' || is_numeric($value)) {
+                    continue;
+                }
+
+                $columnName = strtolower((string) $column);
+                $slotType = match (true) {
+                    str_contains($columnName, 'racial') => 'racial_bonus',
+                    str_contains($columnName, 'bonus') => 'class_bonus',
+                    str_contains($columnName, 'ability'), str_contains($columnName, 'talent') => 'class_talent',
+                    default => 'standard',
+                };
+                $level = (int) $matches[1];
+
+                CharacterFeat::query()->firstOrCreate(
+                    [
+                        'character_name' => $characterName,
+                        'level' => $level,
+                        'feat_name' => $featName,
+                        'class_feat_name' => (string) $column,
+                    ],
+                    [
+                        'custom_feat_name' => $featName,
+                        'acquired_at_level' => $level,
+                        'slot_type' => $slotType,
+                        'notes' => 'Imported from column: '.$column,
+                        'sort_order' => $sortOrder++,
+                        'is_class_feat' => in_array($slotType, ['class_bonus', 'class_talent'], true),
+                    ]
+                );
             }
         }
-
-        $feat = $this->featsService->storeFeat($validated);
-
-        return response()->json([
-            'status' => 'ok',
-            'feat' => $feat,
-        ], 201);
-    }
-
-    public function updateFeat(Request $request, int $id): JsonResponse
-    {
-        $validated = $request->validate([
-            'level'           => 'sometimes|integer|min:1|max:20',
-            'slot_type'       => 'sometimes|string|max:50',
-            'feat_name'       => 'sometimes|string|max:255',
-            'class_feat_name' => 'nullable|string|max:255',
-            'category'        => 'nullable|string|max:100',
-            'prerequisites'   => 'nullable|string|max:500',
-            'notes'           => 'nullable|string|max:1000',
-            'is_class_feat'   => 'nullable|boolean',
-        ]);
-
-        $feat = $this->featsService->updateFeat($id, $validated);
-
-        return response()->json([
-            'status' => 'ok',
-            'feat' => $feat,
-        ]);
-    }
-
-    public function destroyFeat(int $id): JsonResponse
-    {
-        $this->featsService->deleteFeat($id);
-
-        return response()->json(['status' => 'deleted']);
-    }
-
-    public function updateStats(Request $request, string $characterName): JsonResponse
-    {
-        $validated = $request->validate([
-            'race'       => 'sometimes|string|max:100',
-            'class_name' => 'sometimes|string|max:150',
-            'archetype'  => 'nullable|string|max:255',
-            'level'      => 'sometimes|integer|min:1|max:20',
-            'rank'       => 'sometimes|string|max:50',
-            'str'        => 'sometimes|integer|min:1|max:50',
-            'dex'        => 'sometimes|integer|min:1|max:50',
-            'con'        => 'sometimes|integer|min:1|max:50',
-            'int'        => 'sometimes|integer|min:1|max:50',
-            'wis'        => 'sometimes|integer|min:1|max:50',
-            'cha'        => 'sometimes|integer|min:1|max:50',
-            'hp'         => 'sometimes|integer|min:1|max:2000',
-            'hit_die'    => 'nullable|string|max:10',
-            'bab'        => 'nullable|string|max:30',
-            'fort_save'  => 'nullable|string|max:10',
-            'ref_save'   => 'nullable|string|max:10',
-            'will_save'  => 'nullable|string|max:10',
-            'notes'      => 'nullable|string',
-        ]);
-
-        $profile = $this->featsService->updateProfileStats($characterName, $validated);
-
-        return response()->json([
-            'status' => 'ok',
-            'profile' => $profile,
-        ]);
-    }
-
-    public function importJson(Request $request): JsonResponse
-    {
-        $request->validate([
-            'file'  => 'nullable|file|mimes:json,txt',
-            'fresh' => 'nullable|boolean',
-        ]);
-
-        $path = $request->hasFile('file')
-            ? $request->file('file')->getRealPath()
-            : null;
-
-        $summary = $this->featsService->importFromJson(
-            $path,
-            (bool) $request->boolean('fresh', false),
-            Auth::id()
-        );
-
-        return response()->json([
-            'status' => 'ok',
-            'summary' => $summary,
-        ]);
     }
 }
