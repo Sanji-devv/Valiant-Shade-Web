@@ -198,7 +198,7 @@ class QuestReportsRequirementsTest extends TestCase
         $this->assertSoftDeleted('quests', ['title' => 'Güncellenmiş Test Görevi']);
     }
 
-    public function test_import_requires_full_dates_and_treats_different_years_as_distinct(): void
+    public function test_import_requires_full_dates_and_keeps_repeated_rows(): void
     {
         $admin = User::factory()->create(['role' => 'ADMIN']);
         $rows = [
@@ -212,14 +212,14 @@ class QuestReportsRequirementsTest extends TestCase
 
         $this->actingAs($admin)->postJson('/valiant-shade/pages/quest-reports/import', [
             'file' => UploadedFile::fake()->createWithContent('reports.json', $json),
-        ])->assertOk()->assertJsonPath('imported', 2)->assertJsonPath('skipped', 3);
+        ])->assertOk()->assertJsonPath('imported', 3)->assertJsonPath('skipped', 2);
 
         $dates = Quest::where('title', 'Yıl İçe Aktarma Testi')
             ->orderBy('quest_date')
             ->get()
             ->map(fn (Quest $quest) => $quest->quest_date->toDateString())
             ->all();
-        $this->assertSame(['2021-08-08', '2022-08-08'], $dates);
+        $this->assertSame(['2021-08-08', '2021-08-08', '2022-08-08'], $dates);
     }
 
     public function test_import_and_edit_distinguish_same_day_reports_by_player_roster(): void
@@ -248,13 +248,13 @@ class QuestReportsRequirementsTest extends TestCase
 
         $this->actingAs($admin)->postJson('/valiant-shade/pages/quest-reports/import', [
             'file' => $upload([$first, $second, $reordered]),
-        ])->assertOk()->assertJsonPath('imported', 1)->assertJsonPath('skipped', 2);
+        ])->assertOk()->assertJsonPath('imported', 2)->assertJsonPath('skipped', 1);
         $this->actingAs($admin)->postJson('/valiant-shade/pages/quest-reports/import', [
             'file' => $upload([$first, $second, $reordered]),
         ])->assertOk()->assertJsonPath('imported', 0)->assertJsonPath('skipped', 3);
 
         $reports = collect($this->service->getAllReportsData())->where('title', 'Castello Operasyonu');
-        $this->assertCount(2, $reports);
+        $this->assertCount(3, $reports);
         $this->assertSame($originalQuestId, $reports->firstWhere('reporter', 'Aelinor')['quest_id']);
         $secondReport = $reports->firstWhere('reporter', 'Dobby');
         $this->assertNotSame($originalQuestId, $secondReport['quest_id']);
@@ -267,6 +267,27 @@ class QuestReportsRequirementsTest extends TestCase
         $this->actingAs($admin)->deleteJson("/valiant-shade/pages/quest-reports/{$secondReport['id']}")->assertOk();
         $this->assertDatabaseHas('quests', ['id' => $originalQuestId, 'deleted_at' => null]);
         $this->assertSoftDeleted('quests', ['id' => $secondReport['quest_id']]);
+    }
+
+    public function test_import_preserves_identical_row_counts_without_readding_them(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        $row = [
+            'Görev adı' => 'Tekrarlanan Görev', 'Tarih' => '2021-10-31',
+            'Raporlayan' => 'Aelinor', 'Diğer Oyuncular' => ['Bismuth'],
+        ];
+        $upload = fn (array $rows) => UploadedFile::fake()->createWithContent('reports.json', json_encode($rows, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+
+        $this->actingAs($admin)->postJson('/valiant-shade/pages/quest-reports/import', [
+            'file' => $upload([$row, $row]),
+        ])->assertOk()->assertJsonPath('imported', 2)->assertJsonPath('skipped', 0);
+        $this->actingAs($admin)->postJson('/valiant-shade/pages/quest-reports/import', [
+            'file' => $upload([$row, $row]),
+        ])->assertOk()->assertJsonPath('imported', 0)->assertJsonPath('skipped', 2);
+        $this->actingAs($admin)->postJson('/valiant-shade/pages/quest-reports/import', [
+            'file' => $upload([$row, $row, $row]),
+        ])->assertOk()->assertJsonPath('imported', 1)->assertJsonPath('skipped', 2);
+        $this->assertCount(3, collect($this->service->getAllReportsData())->where('title', 'Tekrarlanan Görev'));
     }
 
     public function test_admin_can_clear_all_reports_and_reset_player_xp(): void

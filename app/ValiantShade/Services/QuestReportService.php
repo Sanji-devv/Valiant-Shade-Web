@@ -227,7 +227,7 @@ class QuestReportService
         $nextId = 1;
         foreach ($allReports as $index => $report) {
             $baseKey = $this->reportIdentity((string) ($report['title'] ?? ''), (string) ($report['date'] ?? ''));
-            $canonicalKeys[$this->reportPartyIdentity($baseKey, $report['reporter'] ?? '', $report['other_players'] ?? [])] = $index;
+            $canonicalKeys[$this->reportPartyIdentity($baseKey, $report['reporter'] ?? '', $report['other_players'] ?? [])][] = $index;
             $archiveGroups[$baseKey][] = $index;
             $nextId = max($nextId, ((int) ($report['id'] ?? 0)) + 1);
         }
@@ -266,6 +266,7 @@ class QuestReportService
 
         $imported = 0;
         $skipped = 0;
+        $seenIncoming = [];
         DB::transaction(function () use (
             $rows,
             &$allReports,
@@ -274,6 +275,7 @@ class QuestReportService
             &$nextId,
             &$imported,
             &$skipped,
+            &$seenIncoming,
             &$archiveChanged,
             $characters
         ): void {
@@ -295,7 +297,9 @@ class QuestReportService
                 $otherPlayers = $this->importParticipantNames($row);
                 $baseKey = $this->reportIdentity($title, $databaseDate);
                 $key = $this->reportPartyIdentity($baseKey, $reporter, $otherPlayers);
-                $existingIndex = $canonicalKeys[$key] ?? null;
+                $occurrence = $seenIncoming[$key] ?? 0;
+                $seenIncoming[$key] = $occurrence + 1;
+                $existingIndex = $canonicalKeys[$key][$occurrence] ?? null;
                 if ($existingIndex !== null && (! empty($allReports[$existingIndex]['quest_id']) || ! empty($questGroups[$baseKey]))) {
                     $skipped++;
 
@@ -405,7 +409,7 @@ class QuestReportService
                     $allReports[$existingIndex]['quest_id'] = $quest->id;
                 } else {
                     $report['quest_id'] = $quest->id;
-                    $canonicalKeys[$key] = count($allReports);
+                    $canonicalKeys[$key][] = count($allReports);
                     $allReports[] = $report;
                 }
                 $archiveChanged = true;
