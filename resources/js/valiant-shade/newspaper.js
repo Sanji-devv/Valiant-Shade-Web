@@ -2028,7 +2028,6 @@ function closeHotExtraModal() {
     els.flashAnonymousInput.checked = false;
     syncFlashAnonymousToggle();
   }
-  revokeFlashImageObjectUrl();
   updateFlashImagePreview();
 }
 
@@ -2041,13 +2040,7 @@ function syncFlashAnonymousToggle() {
 }
 
 let flashImageObjectUrl = null;
-
-function revokeFlashImageObjectUrl() {
-  if (flashImageObjectUrl) {
-    URL.revokeObjectURL(flashImageObjectUrl);
-    flashImageObjectUrl = null;
-  }
-}
+let rumorImageObjectUrl = null;
 
 function flashPresetAssetUrl(path) {
   const clean = String(path || '').replace(/^\//, '');
@@ -2057,45 +2050,68 @@ function flashPresetAssetUrl(path) {
   return `/${clean}`;
 }
 
-function updateFlashImagePreview() {
-  if (!els.flashImagePreviewWrap || !els.flashImagePreview) {
-    return;
+function updateSubmissionImagePreview(fileInput, presetInput, previewWrap, previewImage, previewHint, objectUrl) {
+  if (objectUrl) {
+    URL.revokeObjectURL(objectUrl);
+  }
+  if (!previewWrap || !previewImage) {
+    return null;
   }
 
-  const fileInput = els.flashCustomImageInput;
   const file = fileInput?.files?.[0];
-  const preset = els.hotExtraImagePreset?.value || '__gazette_auto__';
-
-  revokeFlashImageObjectUrl();
+  const preset = presetInput?.value || '__gazette_auto__';
 
   if (file && file.type.startsWith('image/')) {
-    flashImageObjectUrl = URL.createObjectURL(file);
-    els.flashImagePreview.src = flashImageObjectUrl;
-    els.flashImagePreviewWrap.hidden = false;
-    if (els.flashImagePreviewHint) {
-      els.flashImagePreviewHint.textContent = 'Yüklediğiniz dosya';
-      els.flashImagePreviewHint.hidden = false;
+    const nextObjectUrl = URL.createObjectURL(file);
+    previewImage.src = nextObjectUrl;
+    previewWrap.hidden = false;
+    if (previewHint) {
+      previewHint.textContent = 'Yüklediğiniz özel görsel';
+      previewHint.hidden = false;
     }
-    return;
+    return nextObjectUrl;
   }
 
   if (preset && preset !== '__gazette_auto__') {
-    els.flashImagePreview.src = flashPresetAssetUrl(preset);
-    els.flashImagePreviewWrap.hidden = false;
-    if (els.flashImagePreviewHint) {
-      const label = els.hotExtraImagePreset?.selectedOptions?.[0]?.textContent?.trim() || '';
-      els.flashImagePreviewHint.textContent = label || 'Seçilen woodcut';
-      els.flashImagePreviewHint.hidden = !label;
+    previewImage.src = flashPresetAssetUrl(preset);
+    previewWrap.hidden = false;
+    if (previewHint) {
+      const label = presetInput?.selectedOptions?.[0]?.textContent?.trim() || '';
+      previewHint.textContent = label || 'Seçilen görsel';
+      previewHint.hidden = !label;
     }
-    return;
+    return null;
   }
 
-  els.flashImagePreview.removeAttribute('src');
-  els.flashImagePreviewWrap.hidden = true;
-  if (els.flashImagePreviewHint) {
-    els.flashImagePreviewHint.textContent = '';
-    els.flashImagePreviewHint.hidden = true;
+  previewImage.removeAttribute('src');
+  previewWrap.hidden = true;
+  if (previewHint) {
+    previewHint.textContent = '';
+    previewHint.hidden = true;
   }
+  return null;
+}
+
+function updateFlashImagePreview() {
+  flashImageObjectUrl = updateSubmissionImagePreview(
+    els.flashCustomImageInput,
+    els.hotExtraImagePreset,
+    els.flashImagePreviewWrap,
+    els.flashImagePreview,
+    els.flashImagePreviewHint,
+    flashImageObjectUrl,
+  );
+}
+
+function updateRumorImagePreview() {
+  rumorImageObjectUrl = updateSubmissionImagePreview(
+    els.rumorCustomImageInput,
+    els.rumorImagePreset,
+    els.rumorImagePreviewWrap,
+    els.rumorImagePreview,
+    els.rumorImagePreviewHint,
+    rumorImageObjectUrl,
+  );
 }
 
 async function submitRumor(formData) {
@@ -2512,6 +2528,7 @@ function closeRumorModal() {
   if (els.rumorForm) {
     els.rumorForm.reset();
   }
+  updateRumorImagePreview();
   resetNewsTypePicker(els.rumorTypePicker, els.rumorNewsType);
   applyRumorSlotUI({ kind: 'general' });
   syncRumorAnonymousToggle();
@@ -2864,11 +2881,13 @@ function bindEvents() {
   if (els.rumorImagePreset && els.rumorCustomImageInput) {
     els.rumorImagePreset.addEventListener('change', () => {
       els.rumorCustomImageInput.value = '';
+      updateRumorImagePreview();
     });
     els.rumorCustomImageInput.addEventListener('change', () => {
       if (els.rumorCustomImageInput.files?.length) {
         els.rumorImagePreset.value = '__gazette_auto__';
       }
+      updateRumorImagePreview();
     });
   }
 
@@ -3056,6 +3075,9 @@ document.addEventListener('DOMContentLoaded', () => {
   els.rumorBodyInput = qs('rumorBodyInput');
   els.rumorImagePreset = qs('rumorImagePreset');
   els.rumorCustomImageInput = qs('rumorCustomImageInput');
+  els.rumorImagePreviewWrap = qs('rumorImagePreviewWrap');
+  els.rumorImagePreview = qs('rumorImagePreview');
+  els.rumorImagePreviewHint = qs('rumorImagePreviewHint');
   els.rumorRumuzWrap = qs('rumorRumuzWrap');
   els.rumorMetaGrid = qs('rumorMetaGrid');
   els.rumorRumuzInput = qs('rumorRumuzInput');

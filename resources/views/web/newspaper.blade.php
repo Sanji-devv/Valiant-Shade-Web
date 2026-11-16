@@ -310,6 +310,13 @@
                             @endforeach
                         </select>
                     </label>
+                    <div class="vs-submission-image-preview-wrap vs-rumor-form__span" id="rumorImagePreviewWrap" hidden>
+                        <span class="vs-submission-image-preview__label">Görsel önizleme</span>
+                        <div class="vs-submission-image-preview">
+                            <img id="rumorImagePreview" alt="Seçilen görsel önizlemesi" width="200" height="120">
+                        </div>
+                        <p class="vs-submission-image-preview__hint" id="rumorImagePreviewHint"></p>
+                    </div>
                     <label class="vs-rumor-form__span">
                         Veya dosya yükle
                         <input type="file" name="custom_image" id="rumorCustomImageInput" accept="image/jpeg,image/png,image/webp">
@@ -378,12 +385,12 @@
                             @endforeach
                         </select>
                     </label>
-                    <div class="vs-flash-image-preview-wrap" id="flashImagePreviewWrap" hidden>
-                        <span class="vs-flash-image-preview__label">Woodcut önizleme</span>
-                        <div class="vs-flash-image-preview">
-                            <img id="flashImagePreview" src="" alt="" width="200" height="120">
+                    <div class="vs-submission-image-preview-wrap" id="flashImagePreviewWrap" hidden>
+                        <span class="vs-submission-image-preview__label">Görsel önizleme</span>
+                        <div class="vs-submission-image-preview">
+                            <img id="flashImagePreview" alt="" width="200" height="120">
                         </div>
-                        <p class="vs-flash-image-preview__hint" id="flashImagePreviewHint"></p>
+                        <p class="vs-submission-image-preview__hint" id="flashImagePreviewHint"></p>
                     </div>
                     <label class="vs-rumor-form__span">
                         Veya dosya yükle

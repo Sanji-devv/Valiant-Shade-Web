@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\News;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
 class NewsTest extends TestCase
@@ -81,6 +82,54 @@ class NewsTest extends TestCase
         $response->assertSee('confirmDeleteNews', false);
         $response->assertSee('tabler-edit', false);
         $response->assertSee('tabler-trash', false);
+    }
+
+    public function test_only_admins_see_the_publish_action_for_pending_news(): void
+    {
+        $pending = News::create([
+            'title' => 'Bekleyen haber için onay görünürlüğü başlığı',
+            'category' => 'Lonca Söylentisi',
+            'status' => 'pending',
+            'description' => 'Bekleyen haber gönderileri yalnızca yönetici için yayınla düğmesi göstermelidir.',
+            'image_url' => 'static/valiant-shade/assets/img/news/guild_tavern_whispers.jpg',
+            'is_active' => false,
+        ]);
+        $publishUrl = route('valiant-shade.pages-news.approve', $pending->id);
+
+        $this->actingAs($this->user)
+            ->get('/valiant-shade/pages/news')
+            ->assertOk()
+            ->assertSee($publishUrl, false);
+
+        $member = User::factory()->create(['role' => 'PLAYER']);
+        $this->actingAs($member)
+            ->get('/valiant-shade/pages/news')
+            ->assertOk()
+            ->assertDontSee($publishUrl, false);
+    }
+
+    public function test_non_admin_with_archive_read_permission_cannot_publish_news(): void
+    {
+        $pending = News::create([
+            'title' => 'Arşiv izniyle yayınlanmaması gereken haber',
+            'category' => 'Lonca Söylentisi',
+            'status' => 'pending',
+            'description' => 'Arşiv okuma izni yayın onaylama yetkisi vermemelidir.',
+            'image_url' => 'static/valiant-shade/assets/img/news/guild_tavern_whispers.jpg',
+            'is_active' => false,
+        ]);
+        $member = User::factory()->create(['role' => 'PLAYER']);
+        $member->givePermissionTo(Permission::findOrCreate('archives.read', 'web'));
+
+        $this->actingAs($member)
+            ->post(route('valiant-shade.pages-news.approve', $pending->id))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('news', [
+            'id' => $pending->id,
+            'status' => 'pending',
+            'is_active' => false,
+        ]);
     }
 
     public function test_dashboard_displays_news_from_news_table(): void

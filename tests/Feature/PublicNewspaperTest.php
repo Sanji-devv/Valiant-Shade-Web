@@ -102,6 +102,17 @@ class PublicNewspaperTest extends TestCase
             ->assertDontSee('id="downloadGazettePngBtn" hidden', false);
     }
 
+    public function test_gazette_image_previews_do_not_request_the_current_page_on_load(): void
+    {
+        $host = config('gazette.domain');
+
+        $this->withServerVariables(['HTTP_HOST' => $host])
+            ->get('http://'.$host.'/?gorunum=gazette')
+            ->assertOk()
+            ->assertDontSee('id="rumorImagePreview" src=""', false)
+            ->assertDontSee('id="flashImagePreview" src=""', false);
+    }
+
     public function test_main_domain_newspaper_path_redirects_to_gazette_subdomain(): void
     {
         $this->get('/newspaper')

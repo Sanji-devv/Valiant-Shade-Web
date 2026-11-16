@@ -768,7 +768,7 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
     }
 
     /**
-     * @return array{canManageNews: bool, canUpdateNews: bool, canDeleteNews: bool}
+     * @return array{canManageNews: bool, canUpdateNews: bool, canDeleteNews: bool, canApproveNews: bool}
      */
     protected function newsManagementFlags(): array
     {
@@ -778,6 +778,7 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
                 'canManageNews' => false,
                 'canUpdateNews' => false,
                 'canDeleteNews' => false,
+                'canApproveNews' => false,
             ];
         }
 
@@ -786,6 +787,7 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
                 'canManageNews' => true,
                 'canUpdateNews' => true,
                 'canDeleteNews' => true,
+                'canApproveNews' => $user->isAdmin(),
             ];
         }
 
@@ -796,6 +798,7 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
             'canManageNews' => $canUpdate || $canDelete,
             'canUpdateNews' => $canUpdate,
             'canDeleteNews' => $canDelete,
+            'canApproveNews' => false,
         ];
     }
 
@@ -1094,6 +1097,8 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
      */
     public function approve(int $id, Request $request): RedirectResponse|JsonResponse
     {
+        abort_unless(auth()->user()?->isAdmin(), 403, __('Only administrators can publish news.'));
+
         $news = News::findOrFail($id);
         if ($blocked = $this->blockedIfGazetteIssueLocked($news, $request)) {
             return $blocked;

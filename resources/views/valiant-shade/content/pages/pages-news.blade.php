@@ -301,12 +301,14 @@
             <p class="mb-0 text-body-secondary small">{{ \Illuminate\Support\Str::limit($pending->description, 180) }}</p>
           </div>
           <div class="d-flex gap-2 flex-shrink-0">
+            @if($canApproveNews ?? false)
             <form method="post" action="{{ route('valiant-shade.pages-news.approve', $pending->id) }}">
               @csrf
               <button type="submit" class="btn btn-sm btn-success">
                 <i class="icon-base ti tabler-check me-1"></i> {{ __('Publish') }}
               </button>
             </form>
+            @endif
             <form method="post" action="{{ route('valiant-shade.pages-news.reject', $pending->id) }}">
               @csrf
               <button type="submit" class="btn btn-sm btn-outline-danger">
