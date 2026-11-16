@@ -16,8 +16,10 @@
         'type' => 'website',
         'image_alt' => $gazetteTitle,
     ];
+    $onGazetteHost = PublicSiteUrls::isGazetteSubdomainRequest();
     $isGazetteView = request()->query('gorunum') === 'gazette'
-        || request()->hasAny(['yaprak', 'sayi', 'haber']);
+        || request()->hasAny(['yaprak', 'sayi', 'haber'])
+        || ($onGazetteHost && request()->query('gorunum') !== 'web');
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -43,6 +45,7 @@
 </head>
 <body
     class="vs-newspaper-page{{ $isGazetteView ? ' vs-layout-gazette' : '' }}"
+    data-gazette-subdomain="{{ $onGazetteHost ? '1' : '0' }}"
     data-gazette-logo="{{ $gazetteCrest }}"
     data-gazette-name="{{ $gazetteTitle }}"
     data-gazette-motto="{{ $gazetteMotto }}"

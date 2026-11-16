@@ -75,4 +75,11 @@ class PublicSiteUrls
 
         return in_array($host, self::publicSubdomainHosts(), true);
     }
+
+    public static function isGazetteSubdomainRequest(): bool
+    {
+        $host = request()->getHost();
+
+        return in_array($host, (array) config('gazette.domains', []), true);
+    }
 }

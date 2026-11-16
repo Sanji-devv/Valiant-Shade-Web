@@ -3115,14 +3115,26 @@ document.addEventListener('DOMContentLoaded', () => {
   if (els.searchInput && state.search) {
     els.searchInput.value = state.search;
   }
+  const urlParams = new URLSearchParams(window.location.search);
   const urlHasGazetteHints =
-    new URLSearchParams(window.location.search).has('gorunum') ||
-    new URLSearchParams(window.location.search).has('yaprak') ||
-    new URLSearchParams(window.location.search).has('sayi') ||
-    new URLSearchParams(window.location.search).has('haber');
+    urlParams.has('gorunum') ||
+    urlParams.has('yaprak') ||
+    urlParams.has('sayi') ||
+    urlParams.has('haber');
+  const onGazetteHost = document.body?.dataset?.gazetteSubdomain === '1';
+  const layoutParam = urlParams.get('gorunum');
+  if (onGazetteHost && layoutParam !== 'web') {
+    state.layoutMode = 'gazette';
+  } else if (layoutParam === 'web') {
+    state.layoutMode = 'web';
+  }
   try {
     const savedLayout = localStorage.getItem('vs.gazette.layoutMode');
-    if (!urlHasGazetteHints && (savedLayout === 'gazette' || savedLayout === 'web')) {
+    if (
+      !onGazetteHost &&
+      !urlHasGazetteHints &&
+      (savedLayout === 'gazette' || savedLayout === 'web')
+    ) {
       state.layoutMode = savedLayout;
     }
     if (isMobileGazetteLayout()) {
