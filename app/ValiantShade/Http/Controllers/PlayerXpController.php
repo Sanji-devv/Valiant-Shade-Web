@@ -3,6 +3,7 @@
 namespace App\ValiantShade\Http\Controllers;
 
 use App\Models\PlayerXp;
+use App\ValiantShade\Exceptions\PlayerXpImportException;
 use App\ValiantShade\Http\Controllers\Controller;
 use App\ValiantShade\Services\PlayerXpService;
 use App\ValiantShade\Services\QuestReportService;
@@ -10,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\View\View;
+use JsonException;
 
 class PlayerXpController extends Controller
 {
@@ -213,6 +215,28 @@ class PlayerXpController extends Controller
         return response()->json([
             'success' => true,
             'message' => __(':count XP records deleted.', ['count' => $count]),
+        ]);
+    }
+
+    public function import(Request $request, QuestReportService $reports): JsonResponse
+    {
+        $validated = $request->validate(['file' => 'required|file|max:20480']);
+
+        try {
+            $result = $reports->importPlayerXpRecords($validated['file']->getRealPath());
+        } catch (JsonException) {
+            return response()->json(['success' => false, 'message' => __('The selected file is not valid JSON.')], 422);
+        } catch (PlayerXpImportException $exception) {
+            return response()->json(['success' => false, 'message' => $exception->getMessage()], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => __(':count XP records imported; :unmatched could not be matched to a user.', [
+                'count' => $result['imported'],
+                'unmatched' => count($result['unmatched']),
+            ]),
+            ...$result,
         ]);
     }
 

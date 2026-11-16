@@ -104,6 +104,7 @@ Route::post('/pages/news/{id}/reject', [NewsController::class, 'reject'])->name(
 // Player XP Tracker Routes
 Route::get('/pages/xp-tracker', [PlayerXpController::class, 'index'])->name('valiant-shade.pages-xp-tracker');
 Route::post('/pages/xp-tracker', [PlayerXpController::class, 'store'])->name('valiant-shade.pages-xp-tracker.store');
+Route::post('/pages/xp-tracker/import', [PlayerXpController::class, 'import'])->middleware(EnsureUserIsAdmin::class)->name('valiant-shade.pages-xp-tracker.import');
 Route::delete('/pages/xp-tracker', [PlayerXpController::class, 'clear'])->middleware(EnsureUserIsAdmin::class)->name('valiant-shade.pages-xp-tracker.clear');
 Route::put('/pages/xp-tracker/{id}', [PlayerXpController::class, 'update'])->name('valiant-shade.pages-xp-tracker.update');
 Route::delete('/pages/xp-tracker/{id}', [PlayerXpController::class, 'destroy'])->name('valiant-shade.pages-xp-tracker.destroy');

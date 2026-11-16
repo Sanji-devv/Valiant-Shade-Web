@@ -7,6 +7,7 @@ use App\Models\Character;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class PlayerXpTest extends TestCase
@@ -285,6 +286,45 @@ class PlayerXpTest extends TestCase
             ->assertSee('Tüm XP Kayıtlarını Sil');
         $this->actingAs($admin)->withSession(['locale' => 'tr'])->deleteJson('/valiant-shade/pages/xp-tracker')
             ->assertUnprocessable()->assertJsonPath('message', 'XP dağıtımı yapılmış görev raporlarına bağlı XP kayıtları silinemez.');
+    }
+
+    public function test_clear_reports_missing_distribution_table_without_deleting_records(): void
+    {
+        $admin = User::factory()->create(['role' => 'Admin']);
+        $xp = PlayerXp::create(['character_name' => 'Hero']);
+        Schema::drop('quest_report_xp_distributions');
+
+        $this->actingAs($admin)->withSession(['locale' => 'en'])->deleteJson('/valiant-shade/pages/xp-tracker')
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'The quest XP distribution table is missing. Run database migrations before modifying XP records.');
+        $this->assertDatabaseHas('player_xps', ['id' => $xp->id, 'deleted_at' => null]);
+    }
+
+    public function test_clear_reports_missing_settings_table_without_deleting_records(): void
+    {
+        $admin = User::factory()->create(['role' => 'Admin']);
+        $xp = PlayerXp::create(['character_name' => 'Hero']);
+        Schema::drop('guild_settings');
+
+        $this->actingAs($admin)->withSession(['locale' => 'en'])->deleteJson('/valiant-shade/pages/xp-tracker')
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'The guild settings table is missing. Run database migrations before clearing XP records.');
+        $this->assertDatabaseHas('player_xps', ['id' => $xp->id, 'deleted_at' => null]);
+    }
+
+    public function test_clear_reports_invalid_distribution_without_deleting_records(): void
+    {
+        $admin = User::factory()->create(['role' => 'Admin']);
+        $xp = PlayerXp::create(['character_name' => 'Hero']);
+        $questId = DB::table('quests')->insertGetId(['title' => 'Invalid distribution']);
+        DB::table('quest_report_xp_distributions')->insert([
+            'quest_id' => $questId,
+            'awards' => '[{"player_xp_id":"bad"}]',
+        ]);
+
+        $this->actingAs($admin)->withSession(['locale' => 'en'])->deleteJson('/valiant-shade/pages/xp-tracker')
+            ->assertUnprocessable()->assertJsonPath('message', 'The quest XP distribution record is invalid.');
+        $this->assertDatabaseHas('player_xps', ['id' => $xp->id, 'deleted_at' => null]);
     }
 
     public function test_admin_can_reset_to_original_data(): void

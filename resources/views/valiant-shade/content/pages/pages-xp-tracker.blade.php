@@ -160,6 +160,10 @@
       </button>
 
       @if(auth()->user()?->isAdmin())
+        <input type="file" id="xpTrackerJsonFile" accept=".json,application/json" class="d-none">
+        <button type="button" class="btn btn-label-info btn-sm rounded-pill waves-effect shadow-xs" id="btnImportXp">
+          <i class="icon-base ti tabler-database-import me-1"></i> {{ __('Import Data') }}
+        </button>
         <button type="button" class="btn btn-label-danger btn-sm rounded-pill waves-effect shadow-xs" id="btnClearXp">
           <i class="icon-base ti tabler-trash me-1"></i> {{ __('Delete All XP Records') }}
         </button>
@@ -1135,6 +1139,11 @@ document.addEventListener('DOMContentLoaded', function() {
     resetSuccessTitle: @json(__('Reset Successful!')),
     clearTitle: @json(__('Delete all XP records?')),
     clearText: @json(__('All XP Tracker records will be removed, including records hidden by filters. Characters and quest reports will not be deleted. Records linked to distributed quest XP cannot be deleted.')),
+    importTitle: @json(__('Import XP data?')),
+    importText: @json(__('Matching XP records will be updated. Other records, characters and quest reports will not be deleted.')),
+    importSuccess: @json(__('Data Imported')),
+    importFailure: @json(__('Data import failed')),
+    serverError: @json(__('The server could not process the request. Check the application logs.')),
     deletedTitle: @json(__('Deleted!')),
     levelPrefix: @json(__('Level ')),
     maximum: @json(__('Maximum')),
@@ -2041,6 +2050,59 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
+  async function readXpResponse(response) {
+    if (!(response.headers.get('content-type') || '').includes('application/json')) {
+      throw new Error(i18n.serverError);
+    }
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      throw new Error(response.status >= 500 ? i18n.serverError : (data.message || i18n.serverError));
+    }
+    return data;
+  }
+
+  const btnImportXp = document.getElementById('btnImportXp');
+  const xpTrackerJsonFile = document.getElementById('xpTrackerJsonFile');
+  if (btnImportXp && xpTrackerJsonFile) {
+    btnImportXp.addEventListener('click', async function() {
+      const result = await Swal.fire({
+        title: i18n.importTitle,
+        text: i18n.importText,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: i18n.confirm,
+        cancelButtonText: i18n.cancel
+      });
+      if (result.isConfirmed) xpTrackerJsonFile.click();
+    });
+
+    xpTrackerJsonFile.addEventListener('change', async function() {
+      const file = this.files && this.files[0];
+      if (!file) return;
+      const formData = new FormData();
+      formData.append('file', file);
+      btnImportXp.disabled = true;
+      try {
+        const response = await fetch("{{ route('valiant-shade.pages-xp-tracker.import') }}", {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+          },
+          body: formData
+        });
+        const data = await readXpResponse(response);
+        await Swal.fire({ icon: data.unmatched.length ? 'warning' : 'success', title: i18n.importSuccess, text: data.message });
+        location.reload();
+      } catch (error) {
+        await Swal.fire({ icon: 'error', title: i18n.importFailure, text: error.message || i18n.networkError });
+      } finally {
+        btnImportXp.disabled = false;
+        xpTrackerJsonFile.value = '';
+      }
+    });
+  }
+
   const btnClearXp = document.getElementById('btnClearXp');
   if (btnClearXp) {
     btnClearXp.addEventListener('click', function() {
@@ -2066,16 +2128,12 @@ document.addEventListener('DOMContentLoaded', function() {
             'Accept': 'application/json'
           }
         })
-        .then(res => res.json())
+        .then(readXpResponse)
         .then(data => {
-          if (data.success) {
-            Swal.fire({ icon: 'success', title: i18n.deletedTitle, text: data.message })
-              .then(() => location.reload());
-          } else {
-            Swal.fire({ icon: 'error', title: i18n.errorTitle, text: data.message });
-          }
+          Swal.fire({ icon: 'success', title: i18n.deletedTitle, text: data.message })
+            .then(() => location.reload());
         })
-        .catch(() => Swal.fire({ icon: 'error', title: i18n.errorTitle, text: i18n.networkError }));
+        .catch(error => Swal.fire({ icon: 'error', title: i18n.errorTitle, text: error.message || i18n.networkError }));
       });
     });
   }

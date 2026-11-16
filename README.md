@@ -20,9 +20,11 @@ Laravel is a web application framework with expressive, elegant syntax. We belie
 
 ## Player XP Tracker import
 
-Run `php artisan xp:import "C:\path\to\Player XP Tracker.json"` to import both tables. Existing characters and users are matched by name; unmatched records, including Unknown entries, remain visible and are listed in the command output. The command does not create users or characters or change existing character XP. Re-running it updates imported tracker values; the transaction rolls back if a record has distributed quest-report XP. Run the import while quest reports are not being edited. XP values are rounded to the nearest integer for tracker fields. Resetting the tracker to defaults replaces imported records with sample data.
+Administrators can upload the JSON using **Import Data** on the XP Tracker, or run `php artisan xp:import "C:\path\to\Player XP Tracker.json"` to import both tables. Existing characters and users are matched by name; unmatched records, including Unknown entries, remain visible. The page shows their count, and the command lists them. The import does not create users or characters or change existing character XP. Re-running it updates imported tracker values; the transaction rolls back if a record has distributed quest-report XP. XP values are rounded to the nearest integer for tracker fields. Resetting the tracker to defaults replaces imported records with sample data.
 
 Administrators can use **Delete All XP Records** to clear the tracker without deleting characters or quest reports. Deletion is blocked if records are linked to distributed quest XP. Records are soft-deleted, and an empty tracker is not automatically repopulated with sample data.
+
+The quest XP distribution and guild settings tables must be present before importing or clearing XP records. Run the application's database migrations as part of deployment.
 - [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.

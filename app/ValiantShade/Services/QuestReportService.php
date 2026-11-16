@@ -184,18 +184,39 @@ class QuestReportService
     public function clearPlayerXpRecords(): int
     {
         return $this->withArchiveLock(fn () => DB::transaction(function (): int {
+            if (! Schema::hasTable('quest_report_xp_distributions')) {
+                throw ValidationException::withMessages([
+                    'xp' => __('The quest XP distribution table is missing. Run database migrations before modifying XP records.'),
+                ]);
+            }
+            if (! Schema::hasTable('guild_settings')) {
+                throw ValidationException::withMessages([
+                    'xp' => __('The guild settings table is missing. Run database migrations before clearing XP records.'),
+                ]);
+            }
             $ids = PlayerXp::query()->lockForUpdate()->pluck('id')->all();
             $idSet = array_fill_keys($ids, true);
             foreach (DB::table('quest_report_xp_distributions')->lockForUpdate()->pluck('awards') as $json) {
-                $awards = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+                try {
+                    $awards = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+                } catch (\JsonException) {
+                    throw ValidationException::withMessages([
+                        'xp' => __('The quest XP distribution record is invalid.'),
+                    ]);
+                }
                 if (! is_array($awards) || ! array_is_list($awards)) {
-                    throw new \RuntimeException(__('The quest XP distribution record is invalid.'));
+                    throw ValidationException::withMessages([
+                        'xp' => __('The quest XP distribution record is invalid.'),
+                    ]);
                 }
                 foreach ($awards as $award) {
-                    if (! is_array($award) || ! isset($award['player_xp_id'])) {
-                        throw new \RuntimeException(__('The quest XP distribution record is invalid.'));
+                    if (! is_array($award) || ! isset($award['player_xp_id'])
+                        || filter_var($award['player_xp_id'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
+                        throw ValidationException::withMessages([
+                            'xp' => __('The quest XP distribution record is invalid.'),
+                        ]);
                     }
-                    if (isset($idSet[$award['player_xp_id']])) {
+                    if (isset($idSet[(int) $award['player_xp_id']])) {
                         throw ValidationException::withMessages([
                             'xp' => __('XP records linked to distributed quest reports cannot be deleted.'),
                         ]);
@@ -208,6 +229,11 @@ class QuestReportService
 
             return $count;
         }));
+    }
+
+    public function importPlayerXpRecords(string $path): array
+    {
+        return $this->withArchiveLock(fn () => app(PlayerXpImportService::class)->import($path));
     }
 
     public function clearReportsAndPlayerXp(): void

@@ -8,7 +8,9 @@ use App\Models\Quest;
 use App\Models\User;
 use App\ValiantShade\Services\PlayerXpImportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class PlayerXpImportTest extends TestCase
@@ -78,6 +80,74 @@ class PlayerXpImportTest extends TestCase
 
         $this->artisan('xp:import', ['path' => $this->path])->assertFailed();
         $this->assertDatabaseCount('player_xps', 0);
+    }
+
+    public function test_admin_can_upload_json_and_match_existing_and_unknown_characters(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        $owner = User::factory()->create(['name' => 'Unknown 2026 1']);
+        Character::create(['user_id' => $owner->id, 'name' => 'Hero', 'status' => 'PENDING']);
+        $row = ['İsim' => 'Hero', 'Oyuncu' => 'Unknown 9', 'Rütbe' => 'Aday', 'XP' => 213, 'İsim_2' => 'Lost', 'Oyuncu_2' => 'Unknown 10', 'Sebep' => 'MIA', 'XP_2' => 100];
+        $json = json_encode([$row], JSON_THROW_ON_ERROR);
+
+        $this->actingAs($admin)->get('/valiant-shade/pages/xp-tracker')->assertSee('id="btnImportXp"', false);
+        foreach (range(1, 2) as $attempt) {
+            $this->actingAs($admin)->postJson('/valiant-shade/pages/xp-tracker/import', [
+                'file' => UploadedFile::fake()->createWithContent('tracker.json', $json),
+            ])->assertOk()->assertJsonPath('imported', 2)->assertJsonCount(1, 'unmatched');
+        }
+
+        $this->assertDatabaseHas('player_xps', ['character_name' => 'Hero', 'user_id' => $owner->id, 'total_xp' => 213]);
+        $this->assertDatabaseHas('player_xps', ['character_name' => 'Lost', 'user_id' => null, 'status' => 'mia']);
+        $this->assertSame(1, PlayerXp::where('character_name', 'Hero')->count());
+        $this->assertSame(1, PlayerXp::where('character_name', 'Lost')->count());
+    }
+
+    public function test_upload_requires_admin_and_rejects_invalid_json(): void
+    {
+        $user = User::factory()->create(['role' => 'User']);
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        $this->actingAs($user)->get('/valiant-shade/pages/xp-tracker')->assertDontSee('id="btnImportXp"', false);
+        $this->actingAs($user)->postJson('/valiant-shade/pages/xp-tracker/import', [
+            'file' => UploadedFile::fake()->createWithContent('tracker.json', '{}'),
+        ])->assertForbidden();
+        $this->actingAs($admin)->withSession(['locale' => 'en'])->postJson('/valiant-shade/pages/xp-tracker/import', [
+            'file' => UploadedFile::fake()->createWithContent('tracker.json', '{'),
+        ])->assertUnprocessable()->assertJsonPath('message', 'The selected file is not valid JSON.');
+    }
+
+    public function test_upload_reports_missing_distribution_table_without_changing_records(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        PlayerXp::create(['character_name' => 'Existing']);
+        Schema::drop('quest_report_xp_distributions');
+        $json = json_encode([['İsim' => 'Hero', 'İsim_2' => null]], JSON_THROW_ON_ERROR);
+
+        $this->actingAs($admin)->withSession(['locale' => 'en'])->postJson('/valiant-shade/pages/xp-tracker/import', [
+            'file' => UploadedFile::fake()->createWithContent('tracker.json', $json),
+        ])->assertUnprocessable()->assertJsonPath('message', 'The quest XP distribution table is missing. Run database migrations before modifying XP records.');
+        $this->assertSame(1, PlayerXp::count());
+    }
+
+    public function test_upload_reports_distributed_xp_conflicts_and_rolls_back(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        $xp = PlayerXp::create(['character_name' => 'Hero', 'player_name' => 'Player', 'total_xp' => 10]);
+        $quest = Quest::create(['title' => 'Report']);
+        DB::table('quest_report_xp_distributions')->insert([
+            'quest_id' => $quest->id,
+            'awards' => json_encode([['player_xp_id' => $xp->id]], JSON_THROW_ON_ERROR),
+        ]);
+        $json = json_encode([
+            ['İsim' => 'New', 'Oyuncu' => 'Player', 'İsim_2' => null],
+            ['İsim' => 'Hero', 'Oyuncu' => 'Player', 'XP' => 100, 'İsim_2' => null],
+        ], JSON_THROW_ON_ERROR);
+
+        $this->actingAs($admin)->withSession(['locale' => 'en'])->postJson('/valiant-shade/pages/xp-tracker/import', [
+            'file' => UploadedFile::fake()->createWithContent('tracker.json', $json),
+        ])->assertUnprocessable()->assertJsonPath('message', 'Hero: quest report XP has been distributed; the import cannot proceed safely.');
+        $this->assertSame(1, PlayerXp::count());
+        $this->assertDatabaseHas('player_xps', ['id' => $xp->id, 'total_xp' => 10]);
     }
 
     public function test_import_errors_follow_the_selected_locale(): void

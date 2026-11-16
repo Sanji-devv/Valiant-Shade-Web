@@ -5,26 +5,31 @@ namespace App\ValiantShade\Services;
 use App\Models\Character;
 use App\Models\PlayerXp;
 use App\Models\User;
+use App\ValiantShade\Exceptions\PlayerXpImportException;
 use Illuminate\Support\Facades\DB;
-use RuntimeException;
+use Illuminate\Support\Facades\Schema;
 
 class PlayerXpImportService
 {
     public function import(string $path): array
     {
         if (! is_file($path) || ! is_readable($path)) {
-            throw new RuntimeException(__('The XP file could not be read: :path', ['path' => $path]));
+            throw new PlayerXpImportException(__('The XP file could not be read: :path', ['path' => $path]));
         }
 
-        $rows = json_decode(file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
+        $json = file_get_contents($path);
+        if ($json === false) {
+            throw new PlayerXpImportException(__('The XP file could not be read: :path', ['path' => $path]));
+        }
+        $rows = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
         if (! is_array($rows) || ! array_is_list($rows) || $rows === []) {
-            throw new RuntimeException(__('The XP file is empty or is not a valid list of records.'));
+            throw new PlayerXpImportException(__('The XP file is empty or is not a valid list of records.'));
         }
 
         $records = [];
         foreach ($rows as $index => $row) {
             if (! is_array($row) || ! array_key_exists('İsim', $row) || ! array_key_exists('İsim_2', $row)) {
-                throw new RuntimeException(__('Invalid row in the XP file: :row.', ['row' => $index + 1]));
+                throw new PlayerXpImportException(__('Invalid row in the XP file: :row.', ['row' => $index + 1]));
             }
             foreach ([false, true] as $fallen) {
                 $name = trim((string) ($row[$fallen ? 'İsim_2' : 'İsim'] ?? ''));
@@ -34,7 +39,7 @@ class PlayerXpImportService
                 $player = trim((string) ($row[$fallen ? 'Oyuncu_2' : 'Oyuncu'] ?? ''));
                 $cause = strtoupper(trim((string) ($row['Sebep'] ?? '')));
                 if ($fallen && ! in_array($cause, ['KIA', 'MIA'], true)) {
-                    throw new RuntimeException(__(':name: invalid KIA/MIA reason.', ['name' => $name]));
+                    throw new PlayerXpImportException(__(':name: invalid KIA/MIA reason.', ['name' => $name]));
                 }
                 $rank = trim((string) ($row['Rütbe'] ?? '')) ?: 'Aday';
                 $total = $this->number($row, $fallen ? 'XP_2' : 'XP', $index);
@@ -62,13 +67,17 @@ class PlayerXpImportService
                 ];
                 $key = $this->key($name)."\0".$this->key($player)."\0".($fallen ? 'fallen' : 'roster');
                 if (isset($records[$key]) && $records[$key] !== $data) {
-                    throw new RuntimeException(__(':name: duplicate records have conflicting values.', ['name' => $name]));
+                    throw new PlayerXpImportException(__(':name: duplicate records have conflicting values.', ['name' => $name]));
                 }
                 $records[$key] = $data;
             }
         }
         if ($records === []) {
-            throw new RuntimeException(__('No characters to import were found in the XP file.'));
+            throw new PlayerXpImportException(__('No characters to import were found in the XP file.'));
+        }
+
+        if (! Schema::hasTable('quest_report_xp_distributions')) {
+            throw new PlayerXpImportException(__('The quest XP distribution table is missing. Run database migrations before modifying XP records.'));
         }
 
         return DB::transaction(function () use ($records) {
@@ -78,8 +87,20 @@ class PlayerXpImportService
             $sourceNames = collect($records)->groupBy(fn ($record) => $this->key($record['character_name']));
             $awardedIds = [];
             foreach (DB::table('quest_report_xp_distributions')->lockForUpdate()->pluck('awards') as $json) {
-                foreach (json_decode($json, true, 512, JSON_THROW_ON_ERROR) as $award) {
-                    $awardedIds[$award['player_xp_id']] = true;
+                try {
+                    $awards = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+                } catch (\JsonException) {
+                    throw new PlayerXpImportException(__('The quest XP distribution record is invalid.'));
+                }
+                if (! is_array($awards) || ! array_is_list($awards)) {
+                    throw new PlayerXpImportException(__('The quest XP distribution record is invalid.'));
+                }
+                foreach ($awards as $award) {
+                    if (! is_array($award) || ! isset($award['player_xp_id'])
+                        || filter_var($award['player_xp_id'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
+                        throw new PlayerXpImportException(__('The quest XP distribution record is invalid.'));
+                    }
+                    $awardedIds[(int) $award['player_xp_id']] = true;
                 }
             }
 
@@ -111,14 +132,14 @@ class PlayerXpImportService
                     $matches = $candidates;
                 }
                 if ($matches->count() > 1) {
-                    throw new RuntimeException(__(':name: more than one XP record matches.', ['name' => $data['character_name']]));
+                    throw new PlayerXpImportException(__(':name: more than one XP record matches.', ['name' => $data['character_name']]));
                 }
                 $xp = $matches->first();
                 if ($xp && isset($awardedIds[$xp->id])) {
-                    throw new RuntimeException(__(':name: quest report XP has been distributed; the import cannot proceed safely.', ['name' => $data['character_name']]));
+                    throw new PlayerXpImportException(__(':name: quest report XP has been distributed; the import cannot proceed safely.', ['name' => $data['character_name']]));
                 }
                 if ($xp && $xp->user_id && $owner && (int) $xp->user_id !== (int) $owner->id) {
-                    throw new RuntimeException(__(':name: the XP record and character belong to different users.', ['name' => $data['character_name']]));
+                    throw new PlayerXpImportException(__(':name: the XP record and character belong to different users.', ['name' => $data['character_name']]));
                 }
                 $data['user_id'] = $owner?->id ?? $xp?->user_id;
                 if (! $data['user_id']) {
@@ -143,7 +164,7 @@ class PlayerXpImportService
             return 0;
         }
         if (! is_numeric($value) || (float) $value < 0) {
-            throw new RuntimeException(__('Invalid value in the XP file: row :row, :column.', ['row' => $index + 1, 'column' => $key]));
+            throw new PlayerXpImportException(__('Invalid value in the XP file: row :row, :column.', ['row' => $index + 1, 'column' => $key]));
         }
 
         return (int) round((float) $value);

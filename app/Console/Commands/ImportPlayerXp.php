@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\ValiantShade\Services\PlayerXpImportService;
+use App\ValiantShade\Services\QuestReportService;
 use Illuminate\Console\Command;
 use JsonException;
 use RuntimeException;
@@ -13,10 +13,10 @@ class ImportPlayerXp extends Command
 
     protected $description = 'Import Player XP Tracker JSON records and match existing players.';
 
-    public function handle(PlayerXpImportService $importer): int
+    public function handle(QuestReportService $reports): int
     {
         try {
-            $result = $importer->import($this->argument('path'));
+            $result = $reports->importPlayerXpRecords($this->argument('path'));
         } catch (RuntimeException|JsonException $exception) {
             $this->error($exception->getMessage());
 
