@@ -1055,7 +1055,13 @@
           <!-- Character Name -->
           <div class="mb-3">
             <label class="form-label fw-semibold" for="featInputCharName">Karakter <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="featInputCharName" value="{{ $selectedChar }}" readonly />
+            <input type="text" class="form-control" id="featInputCharName" value="{{ $selectedChar }}" list="knownCharacterNames" maxlength="100" required />
+            <datalist id="knownCharacterNames">
+              @foreach($characters as $character)
+                <option value="{{ $character->character_name }}">
+              @endforeach
+            </datalist>
+            <small class="form-text text-body-secondary">Listede olmayan yeni bir karakter adını da yazabilirsiniz.</small>
           </div>
 
           <!-- Level & Slot Type -->
@@ -1098,6 +1104,7 @@
           <div class="mb-3">
             <label class="form-label fw-semibold" for="featInputName">{{ __('Feat Name') }} <span class="text-danger">*</span></label>
             <input type="text" class="form-control" id="featInputName" placeholder="{{ __("e.g., Power Attack, Weapon Focus (Rapier)...") }}" list="commonFeatsList" required />
+            <small class="form-text text-body-secondary">Katalog önerileri isteğe bağlıdır; özel feat adını doğrudan yazabilirsiniz.</small>
             <datalist id="commonFeatsList">
               @foreach($library as $lf)
                 <option value="{{ $lf['name'] }}">{{ $lf['category'] }} &bull; {{ $lf['preq'] }}</option>
@@ -1519,6 +1526,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (btnOpenAddFeat) {
     btnOpenAddFeat.addEventListener('click', function () {
       document.getElementById('editFeatId').value = '';
+      document.getElementById('featInputCharName').readOnly = false;
       document.getElementById('featInputClassSlot').value = '';
       document.getElementById('featModalModeText').textContent = "{{ __('Add Feat') }}";
       document.getElementById('featInputName').value = '';
@@ -1534,6 +1542,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Quick Add for specific level
   window.quickAddFeatToLevel = function(level) {
     document.getElementById('editFeatId').value = '';
+    document.getElementById('featInputCharName').readOnly = false;
     document.getElementById('featInputClassSlot').value = '';
     document.getElementById('featModalModeText').textContent = `{{ __("Add Feat for Level") }} ${level}`;
     document.getElementById('featInputLevel').value = level;
@@ -1555,6 +1564,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Open Edit Feat Modal
   window.openEditFeatModal = function(id, name, level, slotType, category, preq, notes, isClassFeat) {
     document.getElementById('editFeatId').value = id;
+    document.getElementById('featInputCharName').readOnly = true;
     document.getElementById('featInputClassSlot').value = '';
     document.getElementById('featModalModeText').textContent = "{{ __('Edit Feat') }}";
     document.getElementById('featInputLevel').value = level;
@@ -1579,6 +1589,11 @@ document.addEventListener('DOMContentLoaded', function () {
       const category = document.getElementById('featInputCategory').value;
       const preq = document.getElementById('featInputPreq').value.trim();
       const notes = document.getElementById('featInputNotes').value.trim();
+
+      if (!charName.trim()) {
+        Swal.fire({ icon: 'warning', title: '{{ __('Warning') }}', text: 'Lütfen karakter adını girin.' });
+        return;
+      }
 
       if (!featName) {
         Swal.fire({ icon: 'warning', title: '{{ __('Warning') }}', text: '{{ __('Please enter a Feat name.') }}' });

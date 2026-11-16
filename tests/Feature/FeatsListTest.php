@@ -9,6 +9,7 @@ use App\Models\PathfinderTrait;
 use App\Models\Rank;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
 class FeatsListTest extends TestCase
@@ -21,6 +22,7 @@ class FeatsListTest extends TestCase
     {
         parent::setUp();
         $this->user = User::factory()->create(['role' => 'User']);
+        $this->user->givePermissionTo(Permission::findOrCreate('hr.all', 'web'));
     }
 
     public function test_feats_page_renders_successfully(): void
@@ -28,7 +30,51 @@ class FeatsListTest extends TestCase
         $response = $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait');
         $response->assertStatus(200);
         $response->assertSee(__('Feats List'));
-        $response->assertSee('Magus Buckler');
+        $response->assertSee('Aeris Spellborn');
+        $response->assertSee('Katalog önerileri isteğe bağlıdır');
+        $this->assertDatabaseHas('character_feats', [
+            'character_name' => 'Aeris Spellborn',
+            'feat_name' => 'Weapon Focus(Scimitar)',
+        ]);
+    }
+
+    public function test_custom_feat_names_can_be_saved_without_a_catalog_entry(): void
+    {
+        $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait');
+
+        $response = $this->actingAs($this->user)->postJson('/valiant-shade/pages/featntrait', [
+            'character_name' => 'Aeris Spellborn',
+            'level' => 9,
+            'slot_type' => 'standard',
+            'feat_name' => 'Custom Feat Without Catalog Entry',
+        ]);
+
+        $response->assertOk()->assertJson(['success' => true]);
+        $this->assertDatabaseHas('character_feats', [
+            'character_name' => 'Aeris Spellborn',
+            'feat_name' => 'Custom Feat Without Catalog Entry',
+            'custom_feat_name' => 'Custom Feat Without Catalog Entry',
+        ]);
+        $this->assertDatabaseMissing('feats', [
+            'name' => 'Custom Feat Without Catalog Entry',
+        ]);
+    }
+
+    public function test_users_without_hr_write_permission_cannot_add_feats(): void
+    {
+        $userWithoutPermission = User::factory()->create(['role' => 'User']);
+
+        $response = $this->actingAs($userWithoutPermission)->postJson('/valiant-shade/pages/featntrait', [
+            'character_name' => 'Aeris Spellborn',
+            'level' => 9,
+            'slot_type' => 'standard',
+            'feat_name' => 'Unauthorized Feat',
+        ]);
+
+        $response->assertForbidden();
+        $this->assertDatabaseMissing('character_feats', [
+            'feat_name' => 'Unauthorized Feat',
+        ]);
     }
 
     public function test_legacy_feats_page_redirects_to_featntrait(): void
@@ -36,8 +82,8 @@ class FeatsListTest extends TestCase
         $response = $this->actingAs($this->user)->get('/valiant-shade/pages/feats');
         $response->assertRedirect('/valiant-shade/pages/featntrait');
 
-        $responseQuery = $this->actingAs($this->user)->get('/valiant-shade/pages/feats?character=Magus%20Buckler');
-        $responseQuery->assertRedirect('/valiant-shade/pages/featntrait?character=Magus%20Buckler');
+        $responseQuery = $this->actingAs($this->user)->get('/valiant-shade/pages/feats?character=Aeris%20Spellborn');
+        $responseQuery->assertRedirect('/valiant-shade/pages/featntrait?character=Aeris%20Spellborn');
     }
 
     public function test_feats_page_turkish_route_alias_redirects(): void
@@ -46,30 +92,23 @@ class FeatsListTest extends TestCase
         $response->assertRedirect('/valiant-shade/pages/featntrait');
     }
 
-    public function test_magus_buckler_dossier_loads_reference_feats(): void
+    public function test_dossier_loads_feats_from_the_current_character_list(): void
     {
-        $response = $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait?character=Magus Buckler');
+        $response = $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait?character=Aeris Spellborn');
         $response->assertStatus(200);
 
-        // Check reference feats from Image 2
-        $response->assertSee('Magus Buckler');
-        $response->assertSee('Focused Mind');
-        $response->assertSee('Magical Knack');
-        $response->assertSee('Weapon Focus (Rapier)');
-        $response->assertSee('Weapon Finesse (Rapier)');
-        $response->assertSee('Improved Critical (Rapier)');
-        $response->assertSee('Magus Arcana (Concentrate)');
-        $response->assertSee('Weapon Specialization (Rapier)');
-        $response->assertSee('Magus Arcana (Close Range)');
-        $response->assertSee('Spell Specialization (Shocking Grasp)');
-        $response->assertSee('Intensified Spell');
-        $response->assertSee('Sınıf Yeteneği');
+        $response->assertSee('Aeris Spellborn');
+        $response->assertSee('Weapon Focus(Scimitar)');
+        $response->assertSee('Extra Panache');
+        $response->assertSee('Weapon Specialization (Scimitar)');
+        $response->assertSee('Piranha Strike');
+        $response->assertSee('Greater Weapon Focus(Scimitar)');
         $response->assertSee('Sınıf Bonusu');
     }
 
-    public function test_class_talents_and_bonus_feats_rendered_in_feat_name_column(): void
+    public function test_class_bonus_feats_render_in_the_progression_column(): void
     {
-        $response = $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait?character=Magus Buckler');
+        $response = $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait?character=Aeris Spellborn');
         $response->assertStatus(200);
 
         // Header includes clean simplified columns
@@ -80,12 +119,8 @@ class FeatsListTest extends TestCase
         // Active level radiance styling
         $response->assertSee('row-active-level');
 
-        // Class talents and bonus feats rendered with badges
-        $response->assertSee('Magus Arcana (Concentrate)');
-        $response->assertSee('Magus Arcana (Close Range)');
-        $response->assertSee('Advanced Weapon Training (Warrior Spirit)');
-        $response->assertSee('Weapon Focus (Rapier)');
-        $response->assertSee('Quick Draw');
+        $response->assertSee('Weapon Specialization (Scimitar)');
+        $response->assertSee('Sınıf Bonusu');
     }
 
     public function test_empty_progression_slots_are_displayed_with_slot_specific_add_actions(): void
@@ -145,38 +180,28 @@ class FeatsListTest extends TestCase
 
     public function test_level_cell_shows_only_bonus_feat_and_human_badges_without_normal_labels(): void
     {
-        // 1. Check Balmond (Half-Orc Magus Level 8)
-        $responseBalmond = $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait?character=Balmond');
-        $responseBalmond->assertStatus(200);
+        $responseElf = $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait?character=Aeris Spellborn');
+        $responseElf->assertStatus(200);
 
-        // "Normal + Sınıf" must NOT appear anywhere
-        $responseBalmond->assertDontSee('Normal + Sınıf');
-        $responseBalmond->assertDontSee('Magus Arcana / Bonus Feat');
+        $responseElf->assertDontSee('Normal + Sınıf');
+        $responseElf->assertDontSee('Magus Arcana / Bonus Feat');
+        $responseElf->assertSee('+Bonus Feat');
+        $responseElf->assertDontSee('+Human');
 
-        // Magus gets Bonus Feat at level 5 & 11
-        $responseBalmond->assertSee('+Bonus Feat');
-
-        // Balmond is Half-Orc, so +Human is NOT rendered
-        $responseBalmond->assertDontSee('+Human');
-
-        // 2. Check Magus Buckler (Human Magus)
-        $responseHuman = $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait?character=Magus Buckler');
+        $responseHuman = $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait?character=Arin');
         $responseHuman->assertStatus(200);
-
-        // Magus Buckler is Human, gets +Human badge at level 1
         $responseHuman->assertSee('+Human');
-        $responseHuman->assertSee('+Bonus Feat');
         $responseHuman->assertDontSee('Normal + Sınıf');
         $responseHuman->assertDontSee('Magus Arcana / Bonus Feat');
     }
 
     public function test_can_switch_to_another_character_from_master_sheet(): void
     {
-        $response = $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait?character=Arelion Vane');
+        $response = $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait?character=Arin');
         $response->assertStatus(200);
-        $response->assertSee('Arelion Vane');
-        $response->assertSee('Weapon Focus (Dagger)');
-        $response->assertSee('Weapon Finesse (Dagger)');
+        $response->assertSee('Arin');
+        $response->assertSee('Skill Focus(Diplomacy)');
+        $response->assertSee('Persuasive');
     }
 
     public function test_master_feats_table_view_renders(): void
@@ -184,15 +209,17 @@ class FeatsListTest extends TestCase
         $response = $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait?view=table');
         $response->assertStatus(200);
         $response->assertSee(__('Master Feats Archive Table'));
-        $response->assertSee('Arelion Vane');
-        $response->assertSee('Argon Ranfer');
-        $response->assertSee('Balmond');
+        $response->assertSee('Aeris Spellborn');
+        $response->assertSee('Arin');
+        $response->assertSee('Azariah');
     }
 
     public function test_can_store_new_feat(): void
     {
+        $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait');
+
         $response = $this->actingAs($this->user)->postJson('/valiant-shade/pages/featntrait', [
-            'character_name' => 'Magus Buckler',
+            'character_name' => 'Aeris Spellborn',
             'level'          => 13,
             'slot_type'      => 'standard',
             'feat_name'      => 'Quicken Spell',
@@ -206,7 +233,7 @@ class FeatsListTest extends TestCase
         $response->assertJson(['success' => true]);
 
         $this->assertDatabaseHas('character_feats', [
-            'character_name' => 'Magus Buckler',
+            'character_name' => 'Aeris Spellborn',
             'level'          => 13,
             'feat_name'      => 'Quicken Spell',
         ]);
@@ -214,8 +241,10 @@ class FeatsListTest extends TestCase
 
     public function test_can_store_class_talent(): void
     {
+        $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait');
+
         $response = $this->actingAs($this->user)->postJson('/valiant-shade/pages/featntrait', [
-            'character_name' => 'Arelion Vane',
+            'character_name' => 'Aeris Spellborn',
             'level'          => 4,
             'slot_type'      => 'class_talent',
             'feat_name'      => 'Rogue Talent (Combat Trick - Combat Reflexes)',
@@ -227,7 +256,7 @@ class FeatsListTest extends TestCase
         $response->assertJson(['success' => true]);
 
         $this->assertDatabaseHas('character_feats', [
-            'character_name' => 'Arelion Vane',
+            'character_name' => 'Aeris Spellborn',
             'level'          => 4,
             'slot_type'      => 'class_talent',
             'feat_name'      => 'Rogue Talent (Combat Trick - Combat Reflexes)',
@@ -238,7 +267,7 @@ class FeatsListTest extends TestCase
     {
         $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait'); // triggers initialization
 
-        $feat = CharacterFeat::where('character_name', 'Magus Buckler')->first();
+        $feat = CharacterFeat::where('character_name', 'Aeris Spellborn')->first();
         $this->assertNotNull($feat);
 
         $response = $this->actingAs($this->user)->putJson("/valiant-shade/pages/featntrait/{$feat->id}", [
@@ -257,8 +286,10 @@ class FeatsListTest extends TestCase
 
     public function test_can_delete_feat(): void
     {
+        $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait');
+
         $feat = CharacterFeat::create([
-            'character_name' => 'Magus Buckler',
+            'character_name' => 'Aeris Spellborn',
             'level'          => 20,
             'slot_type'      => 'reserve',
             'feat_name'      => 'Temporary Feat to Delete',
@@ -278,7 +309,7 @@ class FeatsListTest extends TestCase
         $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait'); // triggers initialization
 
         $response = $this->actingAs($this->user)->postJson('/valiant-shade/pages/featntrait/stats', [
-            'character_name' => 'Magus Buckler',
+            'character_name' => 'Aeris Spellborn',
             'race'           => 'Human',
             'class_name'     => 'Magus',
             'archetype'      => 'Bladebound + Kensai',
@@ -296,11 +327,11 @@ class FeatsListTest extends TestCase
         $response->assertJson(['success' => true]);
 
         $this->assertDatabaseHas('character_profiles', [
-            'character_name' => 'Magus Buckler',
+            'character_name' => 'Aeris Spellborn',
             'level'          => 13,
         ]);
 
-        $profile = CharacterProfile::where('character_name', 'Magus Buckler')->first();
+        $profile = CharacterProfile::where('character_name', 'Aeris Spellborn')->first();
         $this->assertNotNull($profile);
         $this->assertEquals(20, $profile->dex);
         $this->assertEquals(95, $profile->hp);
@@ -322,8 +353,8 @@ class FeatsListTest extends TestCase
         // Feats restored
         $this->assertGreaterThan(50, CharacterFeat::count());
         $this->assertDatabaseHas('character_feats', [
-            'character_name' => 'Magus Buckler',
-            'feat_name'      => 'Intensified Spell',
+            'character_name' => 'Aeris Spellborn',
+            'feat_name'      => 'Weapon Focus(Scimitar)',
         ]);
     }
 
@@ -331,18 +362,18 @@ class FeatsListTest extends TestCase
     {
         $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait'); // initialize
 
-        $this->assertDatabaseHas('character_profiles', ['character_name' => 'Magus Buckler']);
-        $this->assertGreaterThan(0, CharacterFeat::where('character_name', 'Magus Buckler')->count());
+        $this->assertDatabaseHas('character_profiles', ['character_name' => 'Aeris Spellborn']);
+        $this->assertGreaterThan(0, CharacterFeat::where('character_name', 'Aeris Spellborn')->count());
 
         $response = $this->actingAs($this->user)->deleteJson('/valiant-shade/pages/featntrait/character/delete', [
-            'character_name' => 'Magus Buckler',
+            'character_name' => 'Aeris Spellborn',
         ]);
 
         $response->assertStatus(200);
         $response->assertJson(['success' => true]);
 
-        $this->assertDatabaseMissing('character_profiles', ['character_name' => 'Magus Buckler']);
-        $this->assertEquals(0, CharacterFeat::where('character_name', 'Magus Buckler')->count());
+        $this->assertDatabaseMissing('character_profiles', ['character_name' => 'Aeris Spellborn']);
+        $this->assertEquals(0, CharacterFeat::where('character_name', 'Aeris Spellborn')->count());
     }
 
     public function test_character_sorting_by_name_and_level(): void
@@ -389,15 +420,15 @@ class FeatsListTest extends TestCase
     {
         $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait'); // initialize
 
-        // 1. Üye rank character (e.g. Magus Buckler with rank 'Üye')
-        $profileUye = CharacterProfile::where('character_name', 'Magus Buckler')->first();
+        // 1. Üye rank character from the imported list
+        $profileUye = CharacterProfile::where('character_name', 'Aeris Spellborn')->first();
         $profileUye->update(['rank' => 'Üye']);
 
-        $resUye = $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait?character=Magus Buckler');
+        $resUye = $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait?character=Aeris Spellborn');
         $resUye->assertStatus(200);
 
         $traitsService = app(\App\ValiantShade\Services\CharacterTraitsService::class);
-        $progUye = $traitsService->getCharacterTraitsProgression('Magus Buckler', $profileUye);
+        $progUye = $traitsService->getCharacterTraitsProgression('Aeris Spellborn', $profileUye);
 
         $this->assertTrue($progUye['uye']['is_unlocked'], 'Üye slot must be unlocked for Üye rank');
         $this->assertFalse($progUye['kidemli']['is_unlocked'], 'Kıdemli slot must be locked for Üye rank');
@@ -405,7 +436,7 @@ class FeatsListTest extends TestCase
 
         // 2. Kıdemli rank character
         $profileUye->update(['rank' => 'Kıdemli']);
-        $progKidemli = $traitsService->getCharacterTraitsProgression('Magus Buckler', $profileUye->fresh());
+        $progKidemli = $traitsService->getCharacterTraitsProgression('Aeris Spellborn', $profileUye->fresh());
 
         $this->assertTrue($progKidemli['uye']['is_unlocked'], 'Üye slot must be unlocked for Kıdemli rank');
         $this->assertTrue($progKidemli['kidemli']['is_unlocked'], 'Kıdemli slot must be unlocked for Kıdemli rank');
@@ -413,7 +444,7 @@ class FeatsListTest extends TestCase
 
         // 3. Uzman rank character
         $profileUye->update(['rank' => 'Uzman']);
-        $progUzman = $traitsService->getCharacterTraitsProgression('Magus Buckler', $profileUye->fresh());
+        $progUzman = $traitsService->getCharacterTraitsProgression('Aeris Spellborn', $profileUye->fresh());
 
         $this->assertTrue($progUzman['uye']['is_unlocked'], 'Üye slot must be unlocked for Uzman rank');
         $this->assertTrue($progUzman['kidemli']['is_unlocked'], 'Kıdemli slot must be unlocked for Uzman rank');
@@ -421,7 +452,7 @@ class FeatsListTest extends TestCase
 
         // 4. Aday rank character (hierarchy 1)
         $profileUye->update(['rank' => 'Aday']);
-        $progAday = $traitsService->getCharacterTraitsProgression('Magus Buckler', $profileUye->fresh());
+        $progAday = $traitsService->getCharacterTraitsProgression('Aeris Spellborn', $profileUye->fresh());
 
         $this->assertFalse($progAday['uye']['is_unlocked'], 'Üye slot must be locked for Aday rank');
         $this->assertFalse($progAday['kidemli']['is_unlocked'], 'Kıdemli slot must be locked for Aday rank');
@@ -432,12 +463,12 @@ class FeatsListTest extends TestCase
     {
         $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait'); // initialize
 
-        $profile = CharacterProfile::where('character_name', 'Magus Buckler')->first();
+        $profile = CharacterProfile::where('character_name', 'Aeris Spellborn')->first();
         $profile->update(['rank' => 'Üye']); // Only 'uye' slot is unlocked
 
         // Attempt to save to 'uye' slot -> should succeed (200)
         $resOk = $this->actingAs($this->user)->postJson('/valiant-shade/pages/traits/save', [
-            'character_name' => 'Magus Buckler',
+            'character_name' => 'Aeris Spellborn',
             'slot_key'       => 'uye',
             'trait_name'     => 'Reactionary',
             'category'       => 'Combat',
@@ -449,14 +480,14 @@ class FeatsListTest extends TestCase
         $resOk->assertJson(['success' => true]);
 
         $this->assertDatabaseHas('character_traits', [
-            'character_name' => 'Magus Buckler',
+            'character_name' => 'Aeris Spellborn',
             'slot_key'       => 'uye',
             'trait_name'     => 'Reactionary',
         ]);
 
         // Attempt to save to 'kidemli' slot -> should fail with 422 because rank is Üye
         $resKidemliFail = $this->actingAs($this->user)->postJson('/valiant-shade/pages/traits/save', [
-            'character_name' => 'Magus Buckler',
+            'character_name' => 'Aeris Spellborn',
             'slot_key'       => 'kidemli',
             'trait_name'     => 'Carefully Hidden',
             'category'       => 'Regional',
@@ -470,7 +501,7 @@ class FeatsListTest extends TestCase
 
         // Now saving to 'kidemli' and 'uzman' should succeed
         $resUzmanOk = $this->actingAs($this->user)->postJson('/valiant-shade/pages/traits/save', [
-            'character_name' => 'Magus Buckler',
+            'character_name' => 'Aeris Spellborn',
             'slot_key'       => 'uzman',
             'trait_name'     => 'Magical Lineage',
             'category'       => 'Magic',
@@ -478,7 +509,7 @@ class FeatsListTest extends TestCase
 
         $resUzmanOk->assertStatus(200);
         $this->assertDatabaseHas('character_traits', [
-            'character_name' => 'Magus Buckler',
+            'character_name' => 'Aeris Spellborn',
             'slot_key'       => 'uzman',
             'trait_name'     => 'Magical Lineage',
         ]);
@@ -488,26 +519,26 @@ class FeatsListTest extends TestCase
     {
         $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait'); // initialize
 
-        $profile = CharacterProfile::where('character_name', 'Magus Buckler')->first();
+        $profile = CharacterProfile::where('character_name', 'Aeris Spellborn')->first();
         $profile->update(['rank' => 'Üye']);
 
         // Assign first
         $this->actingAs($this->user)->postJson('/valiant-shade/pages/traits/save', [
-            'character_name' => 'Magus Buckler',
+            'character_name' => 'Aeris Spellborn',
             'slot_key'       => 'uye',
             'trait_name'     => 'Reactionary',
         ]);
 
         // Clear it
         $resClear = $this->actingAs($this->user)->postJson('/valiant-shade/pages/traits/clear', [
-            'character_name' => 'Magus Buckler',
+            'character_name' => 'Aeris Spellborn',
             'slot_key'       => 'uye',
         ]);
 
         $resClear->assertStatus(200);
         $resClear->assertJson(['success' => true]);
 
-        $dbTrait = CharacterTrait::where('character_name', 'Magus Buckler')
+        $dbTrait = CharacterTrait::where('character_name', 'Aeris Spellborn')
             ->where('slot_key', 'uye')
             ->first();
 
@@ -712,7 +743,7 @@ class FeatsListTest extends TestCase
     {
         // Test legacy POST /valiant-shade/pages/feats
         $postRes = $this->actingAs($this->user)->postJson('/valiant-shade/pages/feats', [
-            'character_name' => 'Magus Buckler',
+            'character_name' => 'Aeris Spellborn',
             'level'          => 15,
             'slot_type'      => 'reserve',
             'feat_name'      => 'Legacy Endpoint Feat',
