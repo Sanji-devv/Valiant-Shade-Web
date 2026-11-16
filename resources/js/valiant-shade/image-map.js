@@ -1139,7 +1139,11 @@ function initMapLightbox() {
     window.openMapLightbox = open;
 
     document.querySelectorAll('[data-map-lightbox-open]').forEach((button) => {
-        button.addEventListener('click', open);
+        button.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            open();
+        });
     });
 
     lightbox.querySelectorAll('[data-map-lightbox-close]').forEach((element) => {

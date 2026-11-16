@@ -31,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->configureProductionHttps();
         $this->configurePublicPortalUrlRoot();
         $this->configureLocalSessionForGazetteSubdomain();
 
@@ -128,6 +129,23 @@ class AppServiceProvider extends ServiceProvider
         ]);
     }
 
+    protected function configureProductionHttps(): void
+    {
+        if ($this->app->runningInConsole()) {
+            return;
+        }
+
+        if (! app()->environment('production')) {
+            return;
+        }
+
+        URL::forceScheme('https');
+    }
+
+    /**
+     * Alt alanlarda asset/vite aynı hosttan yüklensin (mixed content / çapraz köken sorunları).
+     * Ana site linkleri PublicSiteUrls::main() ile kalır.
+     */
     protected function configurePublicPortalUrlRoot(): void
     {
         if ($this->app->runningInConsole()) {
@@ -138,7 +156,13 @@ class AppServiceProvider extends ServiceProvider
             return;
         }
 
-        URL::forceRootUrl(rtrim((string) config('app.url'), '/'));
+        $request = request();
+        $scheme = app()->environment('production') || $request->isSecure()
+            ? 'https'
+            : $request->getScheme();
+
+        URL::forceRootUrl("{$scheme}://".$request->getHost());
+        URL::forceScheme($scheme);
     }
 
     protected function configureLocalSessionForGazetteSubdomain(): void
