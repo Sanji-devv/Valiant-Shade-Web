@@ -1340,6 +1340,39 @@ class CharacterProfileTest extends TestCase
         $response->assertJsonPath('success', true);
     }
 
+    public function test_claiming_report_character_transfers_tracker_and_preserves_legacy_xp(): void
+    {
+        $user = $this->createTestUser();
+        $placeholder = User::factory()->create(['status' => 0, 'name' => 'Unknown 16.11.2026 1']);
+        $character = new \App\Models\Character([
+            'user_id' => $placeholder->id, 'name' => 'Report Hero', 'character_type' => 'MAIN',
+            'status' => 'PENDING', 'current_level' => 3, 'quest_xp' => 1000,
+            'report_xp' => 300, 'total_xp' => 5000,
+        ]);
+        $character->saveQuietly();
+        \App\Models\PlayerXp::create([
+            'user_id' => $placeholder->id, 'character_name' => $character->name,
+            'player_name' => $placeholder->name, 'level' => 3,
+            'mission_xp' => 1000, 'report_xp' => 300, 'total_xp' => 5000,
+        ]);
+
+        $this->actingAs($user)->postJson('/valiant-shade/character/claim', [
+            'character_id' => $character->id, 'race' => 'Human', 'class_name' => 'Alchemist',
+            'str' => 14, 'dex' => 16, 'con' => 14, 'int' => 18, 'wis' => 12, 'cha' => 10,
+        ])->assertOk();
+
+        $this->assertDatabaseHas('characters', [
+            'id' => $character->id, 'user_id' => $user->id, 'status' => 'ACTIVE', 'total_xp' => 5000,
+        ]);
+        $this->assertDatabaseHas('player_xps', [
+            'character_name' => 'Report Hero', 'user_id' => $user->id,
+            'player_name' => $user->display_name, 'total_xp' => 5000,
+        ]);
+        $this->assertDatabaseHas('character_profiles', [
+            'character_name' => 'Report Hero', 'user_id' => $user->id, 'level' => 3,
+        ]);
+    }
+
     public function test_claim_character_succeeds_with_empty_or_three_trait_names(): void
     {
         $initialOwner = $this->createTestUser('initial@valiantshade.com', 'Initial Owner');

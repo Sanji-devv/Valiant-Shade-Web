@@ -3,9 +3,12 @@
 namespace App\ValiantShade\Services;
 
 use App\Models\Character;
+use App\Models\LevelThreshold;
 use App\Models\PlayerXp;
 use App\Models\Quest;
 use App\Models\QuestParticipant;
+use App\Models\Rank;
+use App\Models\User;
 use Carbon\Carbon;
 use Database\Seeders\QuestReportsSeeder;
 use Illuminate\Support\Collection;
@@ -43,6 +46,11 @@ class QuestReportService
      * Reset quest reports dataset to the original 32 master reports.
      */
     public function resetToDefaults(): array
+    {
+        return $this->withArchiveLock(fn () => $this->resetToDefaultsLocked());
+    }
+
+    private function resetToDefaultsLocked(): array
     {
         if (app()->runningUnitTests()) {
             $raw = $this->getRawReportsData();
@@ -131,7 +139,53 @@ class QuestReportService
         }
     }
 
+    private function withArchiveLock(callable $callback): mixed
+    {
+        $file = fopen($this->getStoragePath().'.lock', 'c');
+        if ($file === false) {
+            throw new \RuntimeException('Görev raporları işlem kilidi açılamadı.');
+        }
+        try {
+            if (! flock($file, LOCK_EX)) {
+                throw new \RuntimeException('Görev raporları işlem kilidi alınamadı.');
+            }
+            return $callback();
+        } finally {
+            flock($file, LOCK_UN);
+            fclose($file);
+        }
+    }
+
+    private function transactionWithArchive(callable $callback): mixed
+    {
+        $path = $this->getStoragePath();
+        $original = file_get_contents($path);
+        if ($original === false) {
+            throw new \RuntimeException('Görev raporları arşivi okunamadı.');
+        }
+
+        $writeAttempted = false;
+        try {
+            return DB::transaction(function () use ($callback, &$writeAttempted) {
+                return $callback(function (array $reports) use (&$writeAttempted): void {
+                    $writeAttempted = true;
+                    $this->saveReportsData($reports);
+                });
+            });
+        } catch (\Throwable $e) {
+            if ($writeAttempted && file_put_contents($path, $original, LOCK_EX) === false) {
+                throw new \RuntimeException('İşlem başarısız oldu ve rapor arşivi geri yüklenemedi.', 0, $e);
+            }
+            throw $e;
+        }
+    }
+
     public function clearReportsAndPlayerXp(): void
+    {
+        $this->withArchiveLock(fn () => $this->clearReportsAndPlayerXpLocked());
+    }
+
+    private function clearReportsAndPlayerXpLocked(): void
     {
         $this->ensureInitialized();
         $path = $this->getStoragePath();
@@ -216,6 +270,11 @@ class QuestReportService
      * @return array{imported: int, skipped: int}
      */
     public function importReports(array $rows): array
+    {
+        return $this->withArchiveLock(fn () => $this->importReportsLocked($rows));
+    }
+
+    private function importReportsLocked(array $rows): array
     {
         if (! Schema::hasTable('quests') || ! Schema::hasTable('quest_participants')) {
             throw new \RuntimeException('Görev raporları tabloları bulunamadı. Önce veritabanı migration işlemlerini çalıştırın.');
@@ -585,7 +644,9 @@ class QuestReportService
             $depoStatus = ((float) $data['depot_cut'] == 0);
         }
 
-        $depoCut = $depoStatus ? 0.0 : round($totalXp * 0.20, 2);
+        $depoCut = isset($data['depo_cut_override'])
+            ? round((float) $data['depo_cut_override'], 2)
+            : ($depoStatus ? 0.0 : round($totalXp * 0.20, 2));
 
         // Rapor (Column I): Fix XP * 0.10 (Master Sheet Column I formula: =E2*0.1)
         $raporCut = isset($data['rapor_cut']) && is_numeric($data['rapor_cut'])
@@ -617,6 +678,11 @@ class QuestReportService
 
         // Ortalama Formula: =(E2-G2-H2-I2+J2)/AL2
         $netPool = $totalXp - $guildCut - $depoCut - $raporCut + $extraReward;
+        if ($netPool < 0) {
+            throw ValidationException::withMessages([
+                'depo_cut_override' => 'Kesintiler dağıtılabilir toplam XP’yi aşamaz.',
+            ]);
+        }
         $avgReward = round($netPool / max($playerCount, 1), 2);
 
         // Build party list for dossier modal
@@ -649,6 +715,7 @@ class QuestReportService
             'depo_status' => $depoStatus,
             'guild_cut' => $guildCut,
             'depo_cut' => $depoCut,
+            'depo_cut_override' => $data['depo_cut_override'] ?? null,
             'rapor_cut' => $raporCut,
             'vault_cut' => $raporCut,
             'extra_reward' => $extraReward,
@@ -663,11 +730,24 @@ class QuestReportService
     /**
      * Store a newly created quest report.
      */
-    public function createReport(array $data): array
+    public function createReport(array $data, ?array &$distribution = null): array
     {
+        return $this->withArchiveLock(function () use ($data, &$distribution): array {
+            return $this->createReportLocked($data, $distribution);
+        });
+    }
+
+    private function createReportLocked(array $data, ?array &$distribution): array
+    {
+        if (! Schema::hasTable('quests') || ! Schema::hasTable('quest_participants') ||
+            ! Schema::hasTable('quest_report_xp_distributions')) {
+            throw new \RuntimeException('Görev ve XP dağıtım tabloları bulunamadı. Veritabanı migration işlemlerini çalıştırın.');
+        }
+
         $all = $this->getAllReportsData();
         $nextId = count($all) > 0 ? max(array_column($all, 'id')) + 1 : 1;
 
+        $data = $this->prepareAutomaticCalculation($data);
         $computed = $this->calculateReportValues($data);
 
         [$displayDate, $dbQuestDate] = $this->validateReportIdentity(
@@ -680,16 +760,15 @@ class QuestReportService
             'date' => $displayDate,
             'status' => $data['status'] ?? 'success',
             'gm' => trim($data['gm'] ?? 'Shalvaz'),
-            'location' => trim($data['location'] ?? 'Siwion Ticaret Bölgesi'),
-            'enemies' => trim($data['enemies'] ?? 'Şehir Eşkıyaları'),
-            'report_summary' => trim($data['report_summary'] ?? 'Görev başarıyla icra edildi.'),
-            'full_report' => trim($data['full_report'] ?? ($data['report_summary'] ?? 'Görev detayları kaydedildi.')),
+            'location' => trim($data['location'] ?? ''),
+            'enemies' => trim($data['enemies'] ?? ''),
+            'report_summary' => trim($data['report_summary'] ?? ''),
+            'full_report' => trim($data['full_report'] ?? ''),
         ], $computed);
 
-        DB::transaction(function () use (&$newReport, $dbQuestDate, $all): void {
+        $this->transactionWithArchive(function (callable $saveReports) use (&$newReport, &$distribution, $data, $dbQuestDate, $all): void {
             if (Schema::hasTable('quests')) {
                 $gmChar = Character::where('name', $newReport['gm'])->first();
-                $reporterChar = Character::where('name', $newReport['reporter'])->first();
 
                 $quest = Quest::create([
                     'title' => $newReport['title'],
@@ -704,41 +783,26 @@ class QuestReportService
                     'net_pool_xp' => (float) ($newReport['total_xp'] - $newReport['guild_cut'] - $newReport['depo_cut'] - $newReport['rapor_cut'] + $newReport['extra_reward']),
                     'per_player_xp' => (float) $newReport['avg_reward'],
                     'gm_character_id' => $gmChar?->id,
-                    'reporter_character_id' => $reporterChar?->id,
                     'status' => 'APPROVED',
                 ]);
                 $newReport['quest_id'] = $quest->id;
 
-                if ($reporterChar && Schema::hasTable('quest_participants')) {
-                    QuestParticipant::create([
-                        'quest_id' => $quest->id,
-                        'character_id' => $reporterChar->id,
-                        'earned_quest_xp' => (float) $newReport['avg_reward'],
-                        'earned_report_xp' => (float) $newReport['rapor_cut'],
-                        'is_kia' => false,
-                        'is_mia' => false,
-                    ]);
-                }
-
-                if (Schema::hasTable('quest_participants')) {
-                    foreach ($newReport['other_players'] ?? [] as $pName) {
-                        $pChar = Character::where('name', $pName)->first();
-                        if ($pChar) {
-                            QuestParticipant::create([
-                                'quest_id' => $quest->id,
-                                'character_id' => $pChar->id,
-                                'earned_quest_xp' => (float) $newReport['avg_reward'],
-                                'earned_report_xp' => 0.00,
-                                'is_kia' => false,
-                                'is_mia' => false,
-                            ]);
-                        }
-                    }
+                DB::table('quest_report_xp_distributions')->insert([
+                    'quest_id' => $quest->id,
+                    'awards' => '[]',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                if (! empty($data['distribute_xp_auto'])) {
+                    $distribution = $this->applyReportAwards($quest, $newReport);
+                } else {
+                    $participants = $this->ensureReportParticipants($quest, $newReport);
+                    $this->syncReportParticipants($quest, $newReport, $participants);
                 }
             }
 
             array_unshift($all, $newReport);
-            $this->saveReportsData($all);
+            $saveReports($all);
         });
 
         return $newReport;
@@ -748,6 +812,11 @@ class QuestReportService
      * Update an existing quest report.
      */
     public function updateReport(int|string $id, array $data): ?array
+    {
+        return $this->withArchiveLock(fn () => $this->updateReportLocked($id, $data));
+    }
+
+    private function updateReportLocked(int|string $id, array $data): ?array
     {
         $all = $this->getAllReportsData();
         $id = (int) $id;
@@ -765,7 +834,8 @@ class QuestReportService
         }
 
         $existing = $all[$foundIndex];
-        $computed = $this->calculateReportValues(array_merge($existing, $data));
+        $calculationData = $this->prepareAutomaticCalculation(array_merge($existing, $data));
+        $computed = $this->calculateReportValues($calculationData);
 
         [$displayDate, $dbQuestDate] = $this->validateReportIdentity(
             $all,
@@ -781,18 +851,22 @@ class QuestReportService
             'date' => $displayDate,
             'status' => $data['status'] ?? ($existing['status'] ?? 'success'),
             'gm' => trim($data['gm'] ?? ($existing['gm'] ?? 'Shalvaz')),
-            'location' => trim($data['location'] ?? ($existing['location'] ?? 'Siwion')),
-            'enemies' => trim($data['enemies'] ?? ($existing['enemies'] ?? 'Düşmanlar')),
-            'report_summary' => trim($data['report_summary'] ?? ($existing['report_summary'] ?? '')),
-            'full_report' => trim($data['full_report'] ?? ($existing['full_report'] ?? '')),
+            'location' => trim(array_key_exists('location', $data) ? ($data['location'] ?? '') : ($existing['location'] ?? '')),
+            'enemies' => trim(array_key_exists('enemies', $data) ? ($data['enemies'] ?? '') : ($existing['enemies'] ?? '')),
+            'report_summary' => trim(array_key_exists('report_summary', $data) ? ($data['report_summary'] ?? '') : ($existing['report_summary'] ?? '')),
+            'full_report' => trim(array_key_exists('full_report', $data) ? ($data['full_report'] ?? '') : ($existing['full_report'] ?? '')),
         ], $computed);
 
         $qRecord = $this->findReportQuest($existing);
-        DB::transaction(function () use ($qRecord, $updated, $dbQuestDate, $foundIndex, $all): void {
+        $xpWarning = null;
+        $unlinkedPlayers = [];
+        $this->transactionWithArchive(function (callable $saveReports) use ($qRecord, &$updated, &$xpWarning, &$unlinkedPlayers, $dbQuestDate, $foundIndex, $all): void {
             if ($qRecord) {
+                $qRecord = Quest::whereKey($qRecord->id)->lockForUpdate()->firstOrFail();
                 $qRecord->update([
                     'title' => $updated['title'],
                     'quest_date' => $dbQuestDate,
+                    'is_main_quest' => $updated['is_main'],
                     'level' => (int) $updated['level'],
                     'base_xp' => (float) $updated['total_xp'],
                     'depo_fee_xp' => (float) $updated['depo_cut'],
@@ -801,18 +875,77 @@ class QuestReportService
                     'bonus_pool_xp' => (float) $updated['extra_reward'],
                     'per_player_xp' => (float) $updated['avg_reward'],
                 ]);
+                $distribution = DB::table('quest_report_xp_distributions')->where('quest_id', $qRecord->id)->first();
+                if ($distribution) {
+                    $awards = json_decode($distribution->awards, true, 512, JSON_THROW_ON_ERROR);
+                    if ($awards !== []) {
+                        $this->reverseReportAwards($awards);
+                        $result = $this->applyReportAwards($qRecord, $updated);
+                        $unlinkedPlayers = array_column(array_filter(
+                            $result['players_awarded'], fn ($award) => $award['character_id'] === null
+                        ), 'name');
+                    } else {
+                        $participants = $this->ensureReportParticipants($qRecord, $updated);
+                        $this->syncReportParticipants($qRecord, $updated, $participants);
+                    }
+                } else {
+                    $xpWarning = 'Bu eski raporun XP dağıtımı doğrulanamadığı için karakter XP’leri değiştirilmedi.';
+                }
+            } else {
+                $xpWarning = 'Bu eski raporun XP dağıtımı doğrulanamadığı için karakter XP’leri değiştirilmedi.';
             }
+
             $all[$foundIndex] = $updated;
-            $this->saveReportsData($all);
+            $saveReports($all);
         });
 
-        return $updated;
+        return array_merge($updated, ['xp_warning' => $xpWarning, 'xp_unlinked' => $unlinkedPlayers]);
+    }
+
+    public function getCharacterLevels(): array
+    {
+        return array_merge(
+            PlayerXp::pluck('level', 'character_name')->toArray(),
+            Character::pluck('current_level', 'name')->toArray()
+        );
+    }
+
+    private function prepareAutomaticCalculation(array $data): array
+    {
+        if (empty($data['auto_party_level'])) {
+            return $data;
+        }
+
+        $names = array_merge([$data['reporter'] ?? ''], $data['other_players'] ?? []);
+        $normalized = array_map(fn ($name) => mb_strtolower(trim((string) $name)), $names);
+        if (in_array('', $normalized, true) || count($normalized) !== count(array_unique($normalized))) {
+            throw ValidationException::withMessages(['reporter' => 'Kadroda boş veya tekrarlanan karakter adı olamaz.']);
+        }
+
+        $levels = [];
+        foreach ($this->getCharacterLevels() as $name => $level) {
+            $levels[mb_strtolower(trim($name))] = max(1, (int) $level);
+        }
+        $data['level'] = min(20, (int) round(array_sum(array_map(
+            fn ($name) => $levels[$name] ?? 1, $normalized
+        )) / count($normalized)));
+        $data['auto_calc_xp'] = true;
+        unset($data['rapor_cut'], $data['vault_cut']);
+
+        return $data;
     }
 
     /**
      * Delete a quest report by ID.
      */
-    public function deleteReport(int|string $id): bool
+    public function deleteReport(int|string $id, ?string &$xpWarning = null): bool
+    {
+        return $this->withArchiveLock(function () use ($id, &$xpWarning): bool {
+            return $this->deleteReportLocked($id, $xpWarning);
+        });
+    }
+
+    private function deleteReportLocked(int|string $id, ?string &$xpWarning): bool
     {
         $all = $this->getAllReportsData();
         $id = (int) $id;
@@ -823,14 +956,24 @@ class QuestReportService
 
         if (count($filtered) !== $originalCount) {
             $qRecord = $this->findReportQuest($toDelete);
-            DB::transaction(function () use ($qRecord, $filtered): void {
+            $this->transactionWithArchive(function (callable $saveReports) use ($qRecord, $filtered, &$xpWarning): void {
                 if ($qRecord) {
+                    $qRecord = Quest::whereKey($qRecord->id)->lockForUpdate()->firstOrFail();
+                    $distribution = DB::table('quest_report_xp_distributions')->where('quest_id', $qRecord->id)->first();
+                    if ($distribution) {
+                        $this->reverseReportAwards(json_decode($distribution->awards, true, 512, JSON_THROW_ON_ERROR));
+                        DB::table('quest_report_xp_distributions')->where('quest_id', $qRecord->id)->delete();
+                    } else {
+                        $xpWarning = 'Eski raporun XP dağıtımı doğrulanamadığı için karakter XP’leri değiştirilmedi.';
+                    }
                     if (Schema::hasTable('quest_participants')) {
                         QuestParticipant::where('quest_id', $qRecord->id)->delete();
                     }
                     $qRecord->delete();
+                } else {
+                    $xpWarning = 'Eski raporun XP dağıtımı doğrulanamadığı için karakter XP’leri değiştirilmedi.';
                 }
-                $this->saveReportsData($filtered);
+                $saveReports($filtered);
             });
 
             return true;
@@ -867,90 +1010,236 @@ class QuestReportService
      */
     public function distributeXpToPlayers(int|string $id): array
     {
+        return $this->withArchiveLock(fn () => $this->distributeXpToPlayersLocked($id));
+    }
+
+    private function distributeXpToPlayersLocked(int|string $id): array
+    {
         $report = $this->getReportById($id);
         if (! $report) {
             throw new \InvalidArgumentException("Görev raporu (#{$id}) bulunamadı.");
         }
 
-        $awarded = [];
-        $xpPerPlayer = (int) round($report['avg_reward']);
-        $raporCut = (float) ($report['rapor_cut'] ?? $report['vault_cut'] ?? 0);
-        $reporter = $report['reporter'];
-        $allNames = array_unique(array_merge([$reporter], $report['other_players'] ?? []));
-
-        try {
-            foreach ($allNames as $name) {
-                $isReporter = ($name === $reporter);
-                $awardedReportXp = ($isReporter && $raporCut > 0) ? (int) round($raporCut) : 0;
-                $playerXpUpdated = false;
-                $charUpdated = false;
-
-                // 1. Update PlayerXp model (XP Tracker)
-                $adv = PlayerXp::where('character_name', $name)
-                    ->orWhere('character_name', 'LIKE', "%{$name}%")
-                    ->first();
-
-                if ($adv) {
-                    $adv->mission_xp += $xpPerPlayer;
-                    if ($awardedReportXp > 0) {
-                        $adv->report_xp = ($adv->report_xp ?? 0) + $awardedReportXp;
-                    }
-                    $adv->sessions_count += 1;
-                    $adv->total_xp = $adv->calculateComputedTotalXp();
-                    $adv->level = PlayerXp::calculateLevelFromXp($adv->total_xp);
-
-                    $existingNotes = $adv->notes ? $adv->notes."\n" : '';
-                    $reportXpNote = $awardedReportXp > 0 ? " (+{$awardedReportXp} Rapor XP)" : '';
-                    $adv->notes = $existingNotes.'['.now()->format('Y-m-d H:i')."] +{$xpPerPlayer} Sefer XP{$reportXpNote} (Görev Raporu #{$report['id']}: {$report['title']})";
-                    $adv->save();
-                    $playerXpUpdated = true;
-                }
-
-                // 2. Update Character model (Adventurer Info & Database)
-                $char = Character::where('name', $name)
-                    ->orWhere('name', 'LIKE', "%{$name}%")
-                    ->first();
-
-                if ($char) {
-                    $char->quest_xp = ($char->quest_xp ?? 0) + $xpPerPlayer;
-                    if ($awardedReportXp > 0) {
-                        $char->report_xp = ($char->report_xp ?? 0) + $awardedReportXp;
-                    }
-                    $char->total_xp = round(
-                        (float) ($char->rank_floor_xp ?? 0) +
-                        (float) ($char->quest_xp ?? 0) +
-                        (float) ($char->report_xp ?? 0) +
-                        (float) ($char->bailiff_xp ?? 0) +
-                        (float) ($char->ex_char_xp ?? 0) +
-                        (float) ($char->wiki_xp ?? 0),
-                        2
-                    );
-                    $char->current_level = PlayerXp::calculateLevelFromXp((int) $char->total_xp);
-                    $char->save();
-                    $charUpdated = true;
-                }
-
-                $awarded[] = [
-                    'name' => $name,
-                    'role' => $isReporter ? 'Reporter' : 'Member',
-                    'awarded_quest_xp' => $xpPerPlayer,
-                    'awarded_report_xp' => $awardedReportXp,
-                    'total_awarded' => $xpPerPlayer + $awardedReportXp,
-                    'player_xp_updated' => $playerXpUpdated,
-                    'character_updated' => $charUpdated,
-                ];
-            }
-        } catch (\Throwable $e) {
-            // DB connection or query error fallback
+        $quest = $this->findReportQuest($report);
+        if (! $quest) {
+            throw new \InvalidArgumentException('Raporun görev kaydı bulunamadı; XP dağıtımı doğrulanamıyor.');
         }
 
+        return DB::transaction(function () use ($quest, $report): array {
+            $quest = Quest::whereKey($quest->id)->lockForUpdate()->firstOrFail();
+            $distribution = DB::table('quest_report_xp_distributions')->where('quest_id', $quest->id)->first();
+            if (! $distribution) {
+                throw new \InvalidArgumentException('Eski raporun XP dağıtım durumu doğrulanamadığı için tekrar dağıtım yapılamaz.');
+            }
+            if (json_decode($distribution->awards, true, 512, JSON_THROW_ON_ERROR) !== []) {
+                throw new \InvalidArgumentException('Bu raporun XP’si zaten dağıtılmış.');
+            }
+
+            return $this->applyReportAwards($quest, $report);
+        });
+    }
+
+    private function ensureReportParticipants(Quest $quest, array $report): array
+    {
+        $names = array_merge([$report['reporter']], $report['other_players'] ?? []);
+        $normalized = array_map(fn ($name) => mb_strtolower(trim((string) $name)), $names);
+        if (in_array('', $normalized, true) || count($normalized) !== count(array_unique($normalized))) {
+            throw ValidationException::withMessages(['reporter' => 'Kadroda boş veya tekrarlanan karakter adı olamaz.']);
+        }
+        $charactersByName = Character::get(['id', 'name'])->groupBy(fn ($character) => mb_strtolower(trim($character->name)));
+        $playersByName = PlayerXp::get(['id', 'character_name'])->groupBy(fn ($player) => mb_strtolower(trim($player->character_name)));
+        $participants = [];
+
+        foreach ($names as $name) {
+            $name = trim($name);
+            $characters = $charactersByName->get(mb_strtolower($name), collect());
+            $players = $playersByName->get(mb_strtolower($name), collect());
+            if ($characters->count() > 1 || $players->count() > 1) {
+                throw ValidationException::withMessages(['reporter' => "{$name} için birden fazla karakter kaydı bulundu."]);
+            }
+            $character = $characters->isEmpty() ? null : Character::whereKey($characters->first()->id)->lockForUpdate()->firstOrFail();
+            $player = $players->isEmpty() ? null : PlayerXp::whereKey($players->first()->id)->lockForUpdate()->firstOrFail();
+
+            if ($character && $player && $player->user_id && (int) $player->user_id !== (int) $character->user_id) {
+                throw ValidationException::withMessages(['reporter' => "{$name} için karakter ve XP kayıtlarının kullanıcıları farklı."]);
+            }
+
+            if (! $character) {
+                $owner = $player?->user_id ? User::find($player->user_id) : null;
+                if ($player?->user_id && ! $owner) {
+                    throw ValidationException::withMessages(['reporter' => "{$name} için XP kaydının kullanıcısı bulunamadı."]);
+                }
+                if (! $owner) {
+                    $owner = $this->createUnknownReportOwner($quest);
+                }
+
+                $character = new Character([
+                    'user_id' => $owner->id,
+                    'name' => $player?->character_name ?? $name,
+                    'character_type' => 'MAIN',
+                    'status' => 'PENDING',
+                    'current_level' => $player?->level ?? 1,
+                    'total_xp' => $player?->total_xp ?? 0,
+                    'rank_floor_xp' => $player?->rank_xp ?? 0,
+                    'quest_xp' => $player?->mission_xp ?? 0,
+                    'report_xp' => $player?->report_xp ?? 0,
+                    'bailiff_xp' => $player?->bailiff_xp ?? 0,
+                    'ex_char_xp' => ($player?->extra_xp ?? 0) + ($player?->bonus_xp ?? 0),
+                ]);
+                $components = (float) $character->rank_floor_xp + (float) $character->quest_xp
+                    + (float) $character->report_xp + (float) $character->bailiff_xp
+                    + (float) $character->ex_char_xp + (float) $character->wiki_xp;
+                if (($components > 0 && abs($components - (float) $character->total_xp) > 0.001)
+                    || ($character->total_xp > 0 && LevelThreshold::calculateLevelFromXp($character->total_xp) !== $character->current_level)) {
+                    $rank = Character::calculateRankFromLevelAndSessions($character->current_level, $player?->sessions_count ?? 0);
+                    $character->rank_id = Rank::where('name', $rank)->value('id');
+                    $character->saveQuietly();
+                } else {
+                    $character->save();
+                }
+            }
+
+            if (! $player) {
+                $player = PlayerXp::create([
+                    'user_id' => $character->user_id,
+                    'character_name' => $character->name,
+                    'player_name' => $character->user?->display_name,
+                    'level' => $character->current_level,
+                    'sessions_count' => 0,
+                    'rank_xp' => (int) round($character->rank_floor_xp ?? 0),
+                    'mission_xp' => (int) round($character->quest_xp ?? 0),
+                    'report_xp' => (int) round($character->report_xp ?? 0),
+                    'bailiff_xp' => (int) round($character->bailiff_xp ?? 0),
+                    'extra_xp' => (int) round(($character->ex_char_xp ?? 0) + ($character->wiki_xp ?? 0)),
+                    'total_xp' => (int) round($character->total_xp ?? 0),
+                ]);
+            } elseif (! $player->user_id) {
+                $player->user_id = $character->user_id;
+                $player->player_name = $player->player_name ?: $character->user?->display_name;
+                $player->save();
+            }
+
+            $participants[] = ['name' => $name, 'character' => $character, 'player' => $player];
+        }
+
+        return $participants;
+    }
+
+    private function createUnknownReportOwner(Quest $quest): User
+    {
+        $date = $quest->quest_date->format('d.m.Y');
+        $number = 1;
+        do {
+            $name = "Unknown {$date} {$number}";
+            $username = 'unknown_'.$quest->quest_date->format('Ymd').'_'.$number;
+            $email = $username.'@example.invalid';
+            $number++;
+        } while (PlayerXp::withTrashed()->where('player_name', $name)->exists()
+            || User::withTrashed()->where('username', $username)->orWhere('email', $email)
+                ->orWhere('name', $name)->orWhere('display_name', $name)->exists());
+
+        return User::create([
+            'username' => $username,
+            'email' => $email,
+            'name' => $name,
+            'role' => 'PLAYER',
+            'status' => 0,
+        ]);
+    }
+
+    private function syncReportParticipants(Quest $quest, array $report, array $participants, bool $distributed = false): void
+    {
+        $quest->participants()->delete();
+        foreach ($participants as $index => $participant) {
+            QuestParticipant::create([
+                'quest_id' => $quest->id,
+                'character_id' => $participant['character']->id,
+                'earned_quest_xp' => $distributed ? (int) round($report['avg_reward']) : (float) $report['avg_reward'],
+                'earned_report_xp' => $index === 0
+                    ? ($distributed ? (int) round($report['rapor_cut']) : (float) $report['rapor_cut'])
+                    : 0,
+                'is_kia' => false,
+                'is_mia' => false,
+            ]);
+        }
+        $quest->reporter_character_id = $participants[0]['character']->id;
+        $quest->save();
+    }
+
+    private function applyReportAwards(Quest $quest, array $report): array
+    {
+        $questXp = (int) round($report['avg_reward']);
+        $reportXp = (int) round($report['rapor_cut'] ?? 0);
+        $participants = $this->ensureReportParticipants($quest, $report);
+        $awards = [];
+
+        foreach ($participants as $index => $participant) {
+            $award = [
+                'name' => $participant['name'],
+                'player_xp_id' => $participant['player']->id,
+                'character_id' => $participant['character']->id,
+                'quest_xp' => $questXp,
+                'report_xp' => $index === 0 ? $reportXp : 0,
+            ];
+            $this->adjustAward($award, 1);
+            $awards[] = $award;
+        }
+
+        $this->syncReportParticipants($quest, $report, $participants, true);
+        DB::table('quest_report_xp_distributions')->where('quest_id', $quest->id)->update([
+            'awards' => json_encode($awards, JSON_THROW_ON_ERROR),
+            'updated_at' => now(),
+        ]);
         return [
             'report_id' => $report['id'],
             'report_title' => $report['title'],
-            'xp_per_player' => $xpPerPlayer,
-            'players_awarded' => $awarded,
-            'total_awarded_count' => count($awarded),
+            'xp_per_player' => $questXp,
+            'players_awarded' => $awards,
+            'total_awarded_count' => count($awards),
         ];
+    }
+
+    private function reverseReportAwards(array $awards): void
+    {
+        foreach ($awards as $award) {
+            $this->adjustAward($award, -1);
+        }
+    }
+
+    private function adjustAward(array $award, int $direction): void
+    {
+        $player = PlayerXp::whereKey($award['player_xp_id'])->lockForUpdate()->first();
+        $character = $award['character_id'] ? Character::whereKey($award['character_id'])->lockForUpdate()->first() : null;
+        if (! $player || ($award['character_id'] && ! $character)) {
+            throw ValidationException::withMessages(['reporter' => "{$award['name']} için önceki XP kaydı bulunamadı."]);
+        }
+
+        $questXp = $direction * $award['quest_xp'];
+        $reportXp = $direction * $award['report_xp'];
+        if ($player->mission_xp + $questXp < 0 || $player->report_xp + $reportXp < 0 ||
+            $player->total_xp + $questXp + $reportXp < 0 ||
+            ($character && ($character->quest_xp + $questXp < 0 || $character->report_xp + $reportXp < 0 ||
+                $character->total_xp + $questXp + $reportXp < 0))) {
+            throw ValidationException::withMessages(['reporter' => "{$award['name']} için önceki XP güvenle geri alınamıyor."]);
+        }
+
+        $player->mission_xp += $questXp;
+        $player->report_xp += $reportXp;
+        $player->total_xp += $questXp + $reportXp;
+        $player->sessions_count = max(0, $player->sessions_count + $direction);
+        $player->level = PlayerXp::calculateLevelFromXp($player->total_xp);
+        $player->save();
+
+        if ($character) {
+            $character->quest_xp += $questXp;
+            $character->report_xp += $reportXp;
+            $character->total_xp += $questXp + $reportXp;
+            $character->current_level = LevelThreshold::calculateLevelFromXp($character->total_xp);
+            $character->saveQuietly();
+        }
+
+        DB::table('character_profiles')->where('character_name', $character?->name ?? $player->character_name)
+            ->update(['level' => $character?->current_level ?? $player->level]);
     }
 
     /**

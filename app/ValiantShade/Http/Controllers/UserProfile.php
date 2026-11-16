@@ -1027,14 +1027,27 @@ class UserProfile extends Controller
       ]
     );
 
-    // Connect Character to User and make active
-    $character->user_id = $user->id;
-    $character->status = 'ACTIVE';
-    $character->save();
+    \Illuminate\Support\Facades\DB::transaction(function () use ($character, $user) {
+      $previousOwnerId = $character->user_id;
+      $character->user_id = $user->id;
+      $character->status = 'ACTIVE';
+      $components = (float) $character->rank_floor_xp + (float) $character->quest_xp
+        + (float) $character->report_xp + (float) $character->bailiff_xp
+        + (float) $character->ex_char_xp + (float) $character->wiki_xp;
+      if (($components > 0 && abs($components - (float) $character->total_xp) > 0.001)
+        || ($character->total_xp > 0 && \App\Models\LevelThreshold::calculateLevelFromXp($character->total_xp) !== $character->current_level)) {
+        $character->saveQuietly();
+      } else {
+        $character->save();
+      }
 
-    // Set current active character on user
-    $user->current_character = $character->name;
-    $user->save();
+      \App\Models\PlayerXp::where('character_name', $character->name)
+        ->where('user_id', $previousOwnerId)
+        ->update(['user_id' => $user->id, 'player_name' => $user->display_name]);
+
+      $user->current_character = $character->name;
+      $user->save();
+    });
 
     return response()->json([
       'success' => true,

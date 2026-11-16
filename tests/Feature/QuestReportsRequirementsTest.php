@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Models\Quest;
+use App\Models\Character;
+use App\Models\PlayerXp;
 use App\ValiantShade\Services\QuestReportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -121,6 +123,324 @@ class QuestReportsRequirementsTest extends TestCase
         $responseFailed->assertJsonPath('report.rapor_cut', 100);
         // Net pool = 1000 - 50 - 200 - 100 = 650. Avg = 650 / 2 = 325
         $responseFailed->assertJsonPath('report.avg_reward', 325);
+    }
+
+    public function test_new_report_briefing_fields_start_empty(): void
+    {
+        $html = $this->actingAs($this->user)->get('/valiant-shade/pages/quest-reports')
+            ->assertOk()->getContent();
+
+        $document = new \DOMDocument;
+        @$document->loadHTML($html);
+
+        $this->assertSame('', $document->getElementById('addReportLocation')->getAttribute('value'));
+        $this->assertSame('', $document->getElementById('addReportEnemies')->getAttribute('value'));
+        $this->assertSame('', $document->getElementById('addReportFullText')->textContent);
+    }
+
+    public function test_report_briefing_can_be_saved_preserved_and_cleared(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        $payload = [
+            'title' => 'Briefing Test',
+            'date' => '2026-09-28',
+            'level' => 2,
+            'gm' => 'Shalvaz',
+            'reporter' => 'Tolrun',
+        ];
+
+        $created = $this->actingAs($admin)->postJson('/valiant-shade/pages/quest-reports', $payload)
+            ->assertOk()
+            ->assertJsonPath('report.location', '')
+            ->assertJsonPath('report.enemies', '')
+            ->assertJsonPath('report.report_summary', '')
+            ->assertJsonPath('report.full_report', '');
+
+        $url = '/valiant-shade/pages/quest-reports/'.$created->json('report.id');
+        $briefing = [
+            'location' => 'Harken',
+            'enemies' => 'Bandits',
+            'report_summary' => 'Summary',
+            'full_report' => 'Expedition notes',
+        ];
+        $this->actingAs($admin)->putJson($url, array_merge($payload, $briefing))->assertOk();
+        $this->actingAs($admin)->putJson($url, $payload)
+            ->assertOk()
+            ->assertJsonPath('report.location', 'Harken')
+            ->assertJsonPath('report.enemies', 'Bandits')
+            ->assertJsonPath('report.report_summary', 'Summary')
+            ->assertJsonPath('report.full_report', 'Expedition notes');
+
+        $this->actingAs($admin)->putJson($url, array_merge($payload, array_fill_keys(array_keys($briefing), '')))
+            ->assertOk()
+            ->assertJsonPath('report.location', '')
+            ->assertJsonPath('report.enemies', '')
+            ->assertJsonPath('report.report_summary', '')
+            ->assertJsonPath('report.full_report', '');
+
+        $this->actingAs($admin)->getJson($url)
+            ->assertOk()
+            ->assertJsonPath('report.location', '')
+            ->assertJsonPath('report.enemies', '')
+            ->assertJsonPath('report.report_summary', '')
+            ->assertJsonPath('report.full_report', '');
+    }
+
+    public function test_party_level_rounds_up_and_awards_are_reconciled_without_double_distribution(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        foreach (['Level Ten' => 71000, 'Level Eleven' => 105000] as $name => $xp) {
+            $level = $xp === 71000 ? 10 : 11;
+            DB::table('characters')->insert([
+                'user_id' => $admin->id, 'name' => $name, 'current_level' => $level,
+                'quest_xp' => $xp, 'total_xp' => $xp,
+            ]);
+            DB::table('player_xps')->insert([
+                'character_name' => $name, 'level' => $level, 'sessions_count' => 3,
+                'mission_xp' => $xp, 'total_xp' => $xp,
+            ]);
+        }
+
+        $payload = [
+            'title' => 'Automatic Party Level', 'date' => '2026-11-16', 'mq' => 'none',
+            'level' => 1, 'auto_party_level' => true, 'gm' => 'GM',
+            'reporter' => 'Level Ten', 'other_players' => ['Level Eleven'],
+            'distribute_xp_auto' => true,
+        ];
+        $created = $this->actingAs($admin)->postJson('/valiant-shade/pages/quest-reports', $payload)
+            ->assertOk()->assertJsonPath('report.level', 11)->assertJsonPath('report.total_xp', 3250)
+            ->assertJsonPath('distribution.xp_per_player', 1381);
+        $id = $created->json('report.id');
+
+        $this->assertDatabaseHas('player_xps', ['character_name' => 'Level Ten', 'mission_xp' => 72381, 'report_xp' => 325, 'total_xp' => 72706]);
+        $this->assertDatabaseHas('characters', ['name' => 'Level Eleven', 'quest_xp' => 106381, 'total_xp' => 106381]);
+        $this->actingAs($admin)->postJson("/valiant-shade/pages/quest-reports/{$id}/distribute-xp")->assertStatus(400);
+
+        $this->actingAs($admin)->putJson("/valiant-shade/pages/quest-reports/{$id}", $payload)
+            ->assertOk()->assertJsonPath('report.level', 11);
+        $this->assertDatabaseHas('player_xps', ['character_name' => 'Level Ten', 'mission_xp' => 72381, 'report_xp' => 325, 'total_xp' => 72706]);
+        $this->assertDatabaseHas('characters', ['name' => 'Level Eleven', 'quest_xp' => 106381, 'total_xp' => 106381]);
+
+        $payload['other_players'] = ['New Adventurer'];
+        $this->actingAs($admin)->putJson("/valiant-shade/pages/quest-reports/{$id}", $payload)
+            ->assertOk()->assertJsonPath('report.level', 6)->assertJsonPath('report.total_xp', 2000);
+        $this->assertDatabaseHas('player_xps', ['character_name' => 'Level Eleven', 'mission_xp' => 105000, 'total_xp' => 105000]);
+        $this->assertDatabaseHas('characters', ['name' => 'Level Eleven', 'quest_xp' => 105000, 'total_xp' => 105000]);
+        $this->assertDatabaseHas('player_xps', ['character_name' => 'Level Ten', 'mission_xp' => 71850, 'report_xp' => 200, 'total_xp' => 72050]);
+        $this->assertDatabaseHas('player_xps', ['character_name' => 'New Adventurer', 'player_name' => 'Unknown 16.11.2026 1', 'mission_xp' => 850]);
+
+        $this->actingAs($admin)->deleteJson("/valiant-shade/pages/quest-reports/{$id}")->assertOk();
+        $this->assertDatabaseMissing('quest_report_xp_distributions', ['quest_id' => $created->json('report.quest_id')]);
+        $this->assertDatabaseHas('player_xps', ['character_name' => 'Level Ten', 'mission_xp' => 71000, 'report_xp' => 0, 'total_xp' => 71000]);
+        $this->assertDatabaseHas('player_xps', ['character_name' => 'New Adventurer', 'mission_xp' => 0, 'total_xp' => 0]);
+    }
+
+    public function test_unknown_players_are_created_once_and_receive_distinct_placeholder_names(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        $payload = [
+            'title' => 'Unknown Party', 'date' => '2026-11-16', 'mq' => 'none',
+            'level' => 1, 'auto_party_level' => true, 'gm' => 'GM',
+            'reporter' => 'Lorenzo', 'other_players' => ['Another'],
+            'distribute_xp_auto' => true,
+        ];
+        $created = $this->actingAs($admin)->postJson('/valiant-shade/pages/quest-reports', $payload)
+            ->assertOk()->assertJsonPath('distribution.total_awarded_count', 2);
+
+        $this->assertDatabaseHas('player_xps', ['character_name' => 'Lorenzo', 'player_name' => 'Unknown 16.11.2026 1', 'mission_xp' => 319, 'report_xp' => 75]);
+        $this->assertDatabaseHas('player_xps', ['character_name' => 'Another', 'player_name' => 'Unknown 16.11.2026 2', 'mission_xp' => 319]);
+        $owners = [];
+        foreach (['Lorenzo' => 'Unknown 16.11.2026 1', 'Another' => 'Unknown 16.11.2026 2'] as $name => $ownerName) {
+            $character = Character::where('name', $name)->firstOrFail();
+            $player = PlayerXp::where('character_name', $name)->firstOrFail();
+            $owner = $character->user;
+            $owners[] = $owner->id;
+            $this->assertSame($owner->id, $player->user_id);
+            $this->assertSame($ownerName, $owner->display_name);
+            $this->assertSame(0, $owner->status);
+            $this->assertNull($owner->password);
+            $this->assertNull($owner->password_hash);
+            $this->assertSame((float) $player->total_xp, $character->total_xp);
+            $this->assertDatabaseHas('quest_participants', [
+                'quest_id' => $created->json('report.quest_id'), 'character_id' => $character->id,
+            ]);
+        }
+        $this->assertNotSame($owners[0], $owners[1]);
+        $this->assertDatabaseHas('quests', [
+            'id' => $created->json('report.quest_id'),
+            'reporter_character_id' => Character::where('name', 'Lorenzo')->value('id'),
+        ]);
+        $payload['title'] = 'Another Unknown Party';
+        $payload['date'] = '2026-11-17';
+        $this->actingAs($admin)->postJson('/valiant-shade/pages/quest-reports', $payload)->assertOk();
+        $this->assertSame(2, DB::table('player_xps')->count());
+        $this->assertDatabaseCount('characters', 2);
+        $this->assertSame($owners, Character::whereIn('name', ['Lorenzo', 'Another'])->orderBy('id')->pluck('user_id')->all());
+
+        auth()->logout();
+        $this->post('/valiant-shade/auth/login-basic', [
+            'email-username' => User::findOrFail($owners[0])->username, 'password' => 'password123',
+        ])->assertSessionHasErrors('email-username');
+        $this->assertGuest();
+    }
+
+    public function test_unknown_owner_names_do_not_collide_with_existing_user_names(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        User::factory()->create(['name' => 'Unknown 16.11.2026 1']);
+        $this->actingAs($admin)->postJson('/valiant-shade/pages/quest-reports', [
+            'title' => 'Name Collision', 'date' => '2026-11-16', 'level' => 1,
+            'gm' => 'GM', 'reporter' => 'New Hero', 'distribute_xp_auto' => true,
+        ])->assertOk();
+
+        $character = Character::where('name', 'New Hero')->firstOrFail();
+        $this->assertSame('Unknown 16.11.2026 2', $character->user->display_name);
+    }
+
+    public function test_future_report_links_existing_tracker_without_losing_xp_and_leaves_other_orphans_alone(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        $owner = User::factory()->create();
+        DB::table('player_xps')->insert([
+            'character_name' => 'Prior Orphan', 'player_name' => 'Earlier', 'level' => 3,
+            'sessions_count' => 4, 'mission_xp' => 1000, 'report_xp' => 300, 'total_xp' => 5000,
+        ]);
+        DB::table('player_xps')->insert([
+            'character_name' => 'Known Owner', 'user_id' => $owner->id, 'level' => 1,
+            'mission_xp' => 100, 'total_xp' => 100,
+        ]);
+        DB::table('player_xps')->insert([
+            'character_name' => 'Unchanged Orphan', 'mission_xp' => 100, 'total_xp' => 100,
+        ]);
+        $payload = [
+            'title' => 'Existing Tracker', 'date' => '2026-11-16', 'level' => 1,
+            'gm' => 'GM', 'reporter' => 'Prior Orphan', 'other_players' => ['Known Owner'],
+            'distribute_xp_auto' => false,
+        ];
+        $created = $this->actingAs($admin)->postJson('/valiant-shade/pages/quest-reports', $payload)->assertOk();
+        $character = Character::where('name', 'Prior Orphan')->firstOrFail();
+        $player = PlayerXp::where('character_name', 'Prior Orphan')->firstOrFail();
+        $this->assertSame($character->user_id, $player->user_id);
+        $this->assertSame('Earlier', $player->player_name);
+        $this->assertSame(5000.0, $character->total_xp);
+        $this->assertSame(3, $character->current_level);
+        $this->assertSame(4, $player->sessions_count);
+        $this->assertDatabaseHas('characters', ['name' => 'Known Owner', 'user_id' => $owner->id, 'total_xp' => 100]);
+        $this->assertDatabaseMissing('characters', ['name' => 'Unchanged Orphan']);
+        $this->assertDatabaseHas('player_xps', ['character_name' => 'Unchanged Orphan', 'user_id' => null]);
+
+        $url = '/valiant-shade/pages/quest-reports/'.$created->json('report.id');
+        $this->actingAs($admin)->postJson($url.'/distribute-xp')->assertOk();
+        $this->assertDatabaseHas('characters', ['id' => $character->id, 'total_xp' => 5394]);
+        $this->actingAs($admin)->deleteJson($url)->assertOk();
+        $this->assertDatabaseHas('characters', ['id' => $character->id, 'total_xp' => 5000, 'quest_xp' => 1000, 'report_xp' => 300]);
+        $this->assertDatabaseHas('player_xps', ['id' => $player->id, 'total_xp' => 5000, 'sessions_count' => 4]);
+    }
+
+    public function test_manual_depot_cut_changes_award_and_cannot_exceed_pool(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        $payload = [
+            'title' => 'Manual Depot', 'date' => '2026-11-16', 'mq' => 'none',
+            'level' => 1, 'auto_party_level' => true, 'gm' => 'GM',
+            'reporter' => 'Lorenzo', 'depo_cut_override' => 100,
+            'distribute_xp_auto' => true,
+        ];
+        $this->actingAs($admin)->postJson('/valiant-shade/pages/quest-reports', $payload)
+            ->assertOk()->assertJsonPath('report.depo_cut', 100)
+            ->assertJsonPath('distribution.xp_per_player', 538);
+        $this->assertDatabaseHas('player_xps', ['character_name' => 'Lorenzo', 'mission_xp' => 538]);
+
+        $payload['title'] = 'Invalid Depot';
+        $payload['depo_cut_override'] = 10000;
+        $this->actingAs($admin)->postJson('/valiant-shade/pages/quest-reports', $payload)
+            ->assertUnprocessable()->assertJsonValidationErrors('depo_cut_override');
+    }
+
+    public function test_untracked_legacy_report_warns_and_does_not_change_xp(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        DB::table('player_xps')->insert([
+            'character_name' => 'Tolrun', 'mission_xp' => 4000, 'total_xp' => 4000, 'level' => 3,
+        ]);
+        $report = $this->service->getReportById(1);
+        $this->actingAs($admin)->putJson('/valiant-shade/pages/quest-reports/1', [
+            'title' => $report['title'], 'date' => '2026-11-16', 'level' => 1,
+            'gm' => 'GM', 'reporter' => 'Tolrun',
+        ])->assertOk()->assertJsonPath(
+            'xp_warning', 'Bu eski raporun XP dağıtımı doğrulanamadığı için karakter XP’leri değiştirilmedi.'
+        );
+        $this->assertDatabaseHas('player_xps', ['character_name' => 'Tolrun', 'mission_xp' => 4000, 'total_xp' => 4000]);
+    }
+
+    public function test_duplicate_names_and_award_failures_do_not_partially_save_a_report(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        $payload = [
+            'title' => 'Invalid Party', 'date' => '2026-11-16', 'mq' => 'none',
+            'level' => 1, 'auto_party_level' => true, 'gm' => 'GM',
+            'reporter' => 'Lorenzo', 'other_players' => ['lorenzo'],
+            'distribute_xp_auto' => true,
+        ];
+        $this->actingAs($admin)->postJson('/valiant-shade/pages/quest-reports', $payload)
+            ->assertUnprocessable()->assertJsonValidationErrors('reporter');
+        $this->assertDatabaseCount('quests', 0);
+        $this->assertDatabaseCount('player_xps', 0);
+        $this->assertCount(32, $this->service->getAllReportsData());
+
+        DB::table('player_xps')->insert([
+            ['character_name' => 'Repeated'],
+            ['character_name' => 'Repeated'],
+        ]);
+        $payload['other_players'] = ['Repeated'];
+        $this->actingAs($admin)->postJson('/valiant-shade/pages/quest-reports', $payload)
+            ->assertUnprocessable()->assertJsonValidationErrors('reporter');
+        $this->assertDatabaseCount('quests', 0);
+        $this->assertDatabaseMissing('player_xps', ['character_name' => 'Lorenzo']);
+        $this->assertCount(32, $this->service->getAllReportsData());
+    }
+
+    public function test_failed_archive_write_rolls_back_automatic_xp_distribution(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'quest-report-');
+        $this->assertNotFalse($path);
+        file_put_contents($path, '[]');
+        $service = new class($path) extends QuestReportService
+        {
+            public function __construct(private string $path) {}
+
+            protected function getStoragePath(): string
+            {
+                return $this->path;
+            }
+
+            protected function saveReportsData(array $reports): void
+            {
+                file_put_contents($this->path, 'partial write');
+                throw new \RuntimeException('Archive write failed');
+            }
+        };
+
+        try {
+            try {
+                $service->createReport([
+                    'title' => 'Rollback', 'date' => '2026-11-16', 'level' => 1,
+                    'gm' => 'GM', 'reporter' => 'Lorenzo', 'distribute_xp_auto' => true,
+                ]);
+                $this->fail('The failed archive write must be reported.');
+            } catch (\RuntimeException $e) {
+                $this->assertSame('Archive write failed', $e->getMessage());
+            }
+            $this->assertSame('[]', file_get_contents($path));
+            $this->assertDatabaseCount('quests', 0);
+            $this->assertDatabaseCount('player_xps', 0);
+            $this->assertDatabaseCount('characters', 0);
+            $this->assertDatabaseMissing('users', ['name' => 'Unknown 16.11.2026 1']);
+            $this->assertDatabaseCount('quest_report_xp_distributions', 0);
+        } finally {
+            unlink($path);
+            unlink($path.'.lock');
+        }
     }
 
     public function test_json_import_persists_reports_and_delete_button_route_works(): void
@@ -390,6 +710,7 @@ class QuestReportsRequirementsTest extends TestCase
             $this->assertSame($original, file_get_contents($path));
         } finally {
             unlink($path);
+            unlink($path.'.lock');
         }
     }
 }

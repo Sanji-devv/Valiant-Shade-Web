@@ -2,12 +2,9 @@
 
 namespace App\ValiantShade\Http\Controllers;
 
-use App\Models\Character;
-use App\Models\PlayerXp;
 use App\ValiantShade\Services\QuestReportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class QuestReportsController extends Controller
@@ -34,17 +31,7 @@ class QuestReportsController extends Controller
         $adventurers = $this->service->getAvailableAdventurers();
         $guildPoolData = $this->service->getGuildPoolData();
 
-        $characterLevels = [];
-        try {
-            if (Schema::hasTable('characters')) {
-                $characterLevels = array_merge(
-                    Schema::hasTable('player_xp') ? PlayerXp::pluck('current_level', 'character_name')->toArray() : [],
-                    Character::pluck('current_level', 'name')->toArray()
-                );
-            }
-        } catch (\Throwable $e) {
-            $characterLevels = [];
-        }
+        $characterLevels = $this->service->getCharacterLevels();
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -156,19 +143,13 @@ class QuestReportsController extends Controller
             'full_report' => 'nullable|string',
             'status' => 'nullable|string|in:success,failed',
             'distribute_xp_auto' => 'nullable|boolean',
+            'auto_party_level' => 'nullable|boolean',
+            'depo_cut_override' => 'nullable|numeric|min:0',
+            'other_players.*' => 'required|string|max:100|distinct:ignore_case',
         ]);
 
-        $newReport = $this->service->createReport($validated);
-
-        // Optionally distribute XP directly on creation if requested
         $distributeResult = null;
-        if (! empty($validated['distribute_xp_auto'])) {
-            try {
-                $distributeResult = $this->service->distributeXpToPlayers($newReport['id']);
-            } catch (\Throwable $e) {
-                // Ignore distribution error, report is already saved
-            }
-        }
+        $newReport = $this->service->createReport($validated, $distributeResult);
 
         return response()->json([
             'success' => true,
@@ -177,6 +158,7 @@ class QuestReportsController extends Controller
             'stats' => $this->service->getStatistics(),
             'gms' => $this->service->getDistinctGms(),
             'distribution' => $distributeResult,
+            'characterLevels' => $this->service->getCharacterLevels(),
         ]);
     }
 
@@ -203,6 +185,9 @@ class QuestReportsController extends Controller
             'report_summary' => 'nullable|string',
             'full_report' => 'nullable|string',
             'status' => 'nullable|string|in:success,failed',
+            'auto_party_level' => 'nullable|boolean',
+            'depo_cut_override' => 'nullable|numeric|min:0',
+            'other_players.*' => 'required|string|max:100|distinct:ignore_case',
         ]);
 
         $updated = $this->service->updateReport($id, $validated);
@@ -220,6 +205,9 @@ class QuestReportsController extends Controller
             'report' => $updated,
             'stats' => $this->service->getStatistics(),
             'gms' => $this->service->getDistinctGms(),
+            'xp_warning' => $updated['xp_warning'] ?? null,
+            'xp_unlinked' => $updated['xp_unlinked'] ?? [],
+            'characterLevels' => $this->service->getCharacterLevels(),
         ]);
     }
 
@@ -228,7 +216,8 @@ class QuestReportsController extends Controller
      */
     public function destroy(int|string $id): JsonResponse
     {
-        $deleted = $this->service->deleteReport($id);
+        $xpWarning = null;
+        $deleted = $this->service->deleteReport($id, $xpWarning);
 
         if (! $deleted) {
             return response()->json([
@@ -242,6 +231,8 @@ class QuestReportsController extends Controller
             'message' => __('Quest report deleted successfully.'),
             'stats' => $this->service->getStatistics(),
             'gms' => $this->service->getDistinctGms(),
+            'xp_warning' => $xpWarning,
+            'characterLevels' => $this->service->getCharacterLevels(),
         ]);
     }
 
@@ -292,6 +283,7 @@ class QuestReportsController extends Controller
                     'xp' => $result['xp_per_player'],
                 ]),
                 'data' => $result,
+                'characterLevels' => $this->service->getCharacterLevels(),
             ]);
         } catch (\Exception $e) {
             return response()->json([
