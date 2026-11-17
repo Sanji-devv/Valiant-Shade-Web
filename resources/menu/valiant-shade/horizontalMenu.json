@@ -47,6 +47,11 @@
                     "slug": "pages-news"
                 },
                 {
+                    "url": "/valiant-shade/gods",
+                    "name": "Tanrılar",
+                    "slug": "gods"
+                },
+                {
                     "url": "/valiant-shade/pages/xp-tracker",
                     "name": "Player XP Tracker",
                     "slug": "pages-xp-tracker"

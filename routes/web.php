@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Web\PublicSeoController;
 use App\Support\PublicSiteUrls;
+use App\ValiantShade\Http\Controllers\authentications\LogoutController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -31,6 +32,11 @@ Route::get('/login', function () {
     return redirect()->route('valiant-shade.auth-login-basic');
 })->name('login');
 
-Route::post('/logout', [\App\ValiantShade\Http\Controllers\authentications\LogoutController::class, 'logout'])->name('logout.root');
+Route::post('/logout', [LogoutController::class, 'logout'])->name('logout.root');
+
+Route::get('/gods', fn () => redirect()->route('valiant-shade.gods.index', [], 301))->name('web.gods.index');
+Route::get('/gods/{slug}', fn (string $slug) => redirect()->route('valiant-shade.gods.show', ['slug' => $slug], 301))
+    ->where('slug', '[a-z0-9-]+')
+    ->name('web.gods.show');
 
 require __DIR__.'/world-maps.php';

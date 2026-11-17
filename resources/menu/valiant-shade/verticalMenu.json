@@ -52,6 +52,12 @@
             "url": "/valiant-shade/pages/news"
         },
         {
+            "name": "Tanrılar",
+            "icon": "menu-icon icon-base ti tabler-sparkles",
+            "slug": "gods",
+            "url": "/valiant-shade/gods"
+        },
+        {
             "name": "Player XP Tracker",
             "icon": "menu-icon icon-base ti tabler-award",
             "slug": "pages-xp-tracker",

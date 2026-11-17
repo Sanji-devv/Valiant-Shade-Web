@@ -11,6 +11,7 @@
     $imgRecords = asset('static/valiant-shade/assets/img/news/guild_treasury_vault.jpg');
     $imgMineria = asset('static/valiant-shade/assets/img/news/guild_mystic_forest.jpg');
     $imgRules = asset('static/valiant-shade/assets/img/news/guild_arcane_academy.jpg');
+    $imgGods = asset('static/valiant-shade/assets/img/news/guild_celestial_sanctuary.jpg');
 
     $mineriaUrl = 'https://mineria.fandom.com/tr/wiki/Mineria_Wiki';
     $rulesUrl = 'https://www.d20pfsrd.com/';
@@ -97,8 +98,8 @@
             width: 100%;
             height: 100vh;
             height: 100dvh;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: repeat(3, 1fr);
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-rows: repeat(3, minmax(0, 1fr));
             gap: 3px;
             background: #1a1520;
         }
@@ -185,6 +186,7 @@
         .vs-quad__cell--rules .vs-quad__title { color: #e8dcc8; }
         .vs-quad__cell--monster .vs-quad__title { color: #ffd4d4; }
         .vs-quad__cell--records .vs-quad__title { color: #d4e8d0; }
+        .vs-quad__cell--gods .vs-quad__title { color: #e7d0ff; }
 
         .vs-quad__title--long {
             font-size: clamp(1.35rem, 4.2vw, 2.65rem);
@@ -394,6 +396,18 @@
             <span class="vs-quad__corner vs-quad__corner--br" aria-hidden="true"></span>
             <h2 class="vs-quad__title">{{ __('Guild Records') }}</h2>
         </a>
+
+        <a href="{{ route('valiant-shade.gods.index') }}" class="vs-quad__cell vs-quad__cell--gods">
+            <div class="vs-quad__bg" style="background-image: url('{{ $imgGods }}');" aria-hidden="true"></div>
+            <span class="vs-quad__corner vs-quad__corner--tl" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--tr" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--bl" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--br" aria-hidden="true"></span>
+            <h1 class="vs-quad__title">{{ __('Tanrılar') }}</h1>
+        </a>
+
+        <div class="vs-quad__cell vs-quad__cell--locked" aria-hidden="true"></div>
+        <div class="vs-quad__cell vs-quad__cell--locked" aria-hidden="true"></div>
     </main>
 </body>
 </html>

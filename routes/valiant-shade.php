@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Web\GodsPageController;
 use App\ValiantShade\Http\Controllers\AccountSettingsAccount;
 use App\ValiantShade\Http\Controllers\AdventurerInfoController;
 use App\ValiantShade\Http\Controllers\apps\AuditLogController;
@@ -53,6 +54,13 @@ Route::get('/dashboard/crm', [Crm::class, 'index'])->name('valiant-shade.dashboa
 Route::get('/lang/{locale}', [LanguageController::class, 'swap']);
 
 // Pages
+
+Route::get('/gods', [GodsPageController::class, 'index'])
+    ->name('valiant-shade.gods.index');
+
+Route::get('/gods/{slug}', [GodsPageController::class, 'show'])
+    ->where('slug', '[a-z0-9-]+')
+    ->name('valiant-shade.gods.show');
 
 Route::get('/pages/profile-user', [UserProfile::class, 'index'])->name('valiant-shade.pages-profile-user');
 Route::post('/pages/profile-user/vault-transfer', [UserProfile::class, 'vaultTransfer'])->name('valiant-shade.pages-profile-user.vault-transfer');
