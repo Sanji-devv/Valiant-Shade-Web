@@ -2197,9 +2197,6 @@ async function downloadArticleModalPng() {
       backgroundColor: null,
       scale: Math.min(2, window.devicePixelRatio || 1.5),
       useCORS: true,
-      onclone: (clonedDocument) => {
-        clonedDocument.getElementById('newsDetailModal')?.style.setProperty('background-color', 'transparent', 'important');
-      },
     });
     const blob = await new Promise((resolve, reject) => {
       canvas.toBlob((result) => (result ? resolve(result) : reject(new Error('PNG oluşturulamadı'))), 'image/png');
