@@ -502,11 +502,8 @@ class PublicNewsService
 
     protected function publishedShowCandidate(News $model): ?News
     {
-        if ($model->is_active) {
-            return $model;
-        }
-
-        return $this->isGazetteCornerArticle($model) ? $model : null;
+        // Akış / kart listesi ile doğrudan okuma aynı kaydı hedeflemeli; is_active yalnızca feed’de gizler.
+        return $model;
     }
 
     public function findPublished(int $id): ?array

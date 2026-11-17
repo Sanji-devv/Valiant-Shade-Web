@@ -541,12 +541,27 @@ function prefersGazetteArticleModal() {
   return isGazetteLayout();
 }
 
-function openArticleFromUi(id) {
-  if (!id) {
+function streamItemById(id) {
+  return state.streamItems.find((row) => Number(row.id) === Number(id));
+}
+
+function feedItemById(id) {
+  return state.lastFeedItems.find((row) => Number(row.id) === Number(id));
+}
+
+function articleSlugForOpen(id, explicitSlug = '') {
+  const slug = String(explicitSlug || feedItemById(id)?.slug || streamItemById(id)?.slug || '')
+    .trim()
+    .toLowerCase();
+  return slug;
+}
+
+function openArticleFromUi(id, slug = '') {
+  if (!id && !slug) {
     return Promise.resolve();
   }
 
-  return openArticle(id, { gazetteReader: prefersGazetteArticleModal() });
+  return openArticle(id, { gazetteReader: prefersGazetteArticleModal(), slug });
 }
 
 function gazetteBranding() {
@@ -1522,7 +1537,7 @@ function renderGrid(items) {
     els.newsGrid.innerHTML = items
       .map(
         (item) => `
-        <article class="vs-news-list__item vs-news-list__item--open" data-open-id="${item.id}" role="button" tabindex="0">
+        <article class="vs-news-list__item vs-news-list__item--open" data-open-id="${item.id}" data-article-slug="${escapeHtml(item.slug || '')}" role="button" tabindex="0">
           <span class="vs-news-list__type">${escapeHtml(item.news_type_label || item.category || '')}</span>
           <h3 class="vs-news-list__title">${escapeHtml(item.title || '')}</h3>
           <span class="vs-news-list__meta">${escapeHtml(displayDateText(item))}</span>
@@ -1536,7 +1551,7 @@ function renderGrid(items) {
   els.newsGrid.innerHTML = items
     .map(
       (item) => `
-      <article class="vs-news-card vs-news-card--open" data-open-id="${item.id}" role="button" tabindex="0">
+      <article class="vs-news-card vs-news-card--open" data-open-id="${item.id}" data-article-slug="${escapeHtml(item.slug || '')}" role="button" tabindex="0">
         <div class="vs-news-card__thumb" data-image-url="${escapeHtml(item.image_asset || '')}" style="background-image:url('${escapeHtml(item.image_asset || '')}')"></div>
         <div class="vs-news-card__body">
           <span class="vs-badge">${escapeHtml(item.news_type_label || item.category || '')}</span>
@@ -1606,7 +1621,7 @@ function renderStreamCard(item) {
       <div class="vs-stream-card__reactions" data-stream-reactions="${item.id}">
         ${renderStreamReactionButtons(item)}
       </div>
-      <button type="button" class="vs-stream-card__open" data-open-id="${item.id}">Tam metin</button>
+      <button type="button" class="vs-stream-card__open" data-open-id="${item.id}" data-article-slug="${escapeHtml(item.slug || '')}">Tam metin</button>
     </footer>
   </article>`;
 }
@@ -2472,10 +2487,24 @@ async function sendArticleReaction(articleId, reaction, itemSnapshot = {}) {
 async function openArticle(id, options = {}) {
   const gazetteReader =
     typeof options.gazetteReader === 'boolean' ? options.gazetteReader : isGazetteLayout();
-  const response = await fetch(`/api/public/news/${id}`, {
-    headers: { Accept: 'application/json' },
-    cache: 'no-store',
-  });
+  const slug = String(options.slug || articleSlugForOpen(id)).trim().toLowerCase();
+  const slugOk = slug !== '' && /^[a-z0-9][a-z0-9-]*$/.test(slug);
+  const fetchOpts = { headers: { Accept: 'application/json' }, cache: 'no-store' };
+  let response = await fetch(
+    slugOk ? apiUrl(`/api/public/news/by-slug/${encodeURIComponent(slug)}`) : apiUrl(`/api/public/news/${id}`),
+    fetchOpts,
+  );
+  if (!response.ok && slugOk) {
+    response = await fetch(apiUrl(`/api/public/news/${id}`), fetchOpts);
+  } else if (!response.ok && !slugOk) {
+    const fallbackSlug = articleSlugForOpen(id);
+    if (fallbackSlug !== '') {
+      response = await fetch(
+        apiUrl(`/api/public/news/by-slug/${encodeURIComponent(fallbackSlug)}`),
+        fetchOpts,
+      );
+    }
+  }
   if (!response.ok) {
     showToast('Haber yüklenemedi.', 'error');
     return;
@@ -3206,7 +3235,7 @@ function bindEvents() {
       const openBtn = event.target.closest('[data-open-id]');
       if (openBtn?.dataset.openId) {
         event.preventDefault();
-        openArticleFromUi(openBtn.dataset.openId).catch(console.error);
+        openArticleFromUi(openBtn.dataset.openId, openBtn.dataset.articleSlug).catch(console.error);
       }
     });
   }
@@ -3373,7 +3402,7 @@ function bindEvents() {
     }
     if (isStreamLayout() && els.newsStream?.contains(openBtn)) {
       event.preventDefault();
-      openArticleFromUi(openBtn.dataset.openId).catch(console.error);
+      openArticleFromUi(openBtn.dataset.openId, openBtn.dataset.articleSlug).catch(console.error);
       return;
     }
     const inGazette = isGazetteLayout();
@@ -3390,7 +3419,7 @@ function bindEvents() {
       }
     }
     event.preventDefault();
-    openArticleFromUi(openBtn.dataset.openId).catch(console.error);
+    openArticleFromUi(openBtn.dataset.openId, openBtn.dataset.articleSlug).catch(console.error);
   });
 
   document.body.addEventListener('keydown', (event) => {
