@@ -8,6 +8,7 @@ use App\Models\News;
 use App\ValiantShade\Support\GazetteEditorGate;
 use App\ValiantShade\Support\GazetteNewsImage;
 use App\ValiantShade\Support\GazetteSubmissionImageStore;
+use App\ValiantShade\Support\NewsEngagement;
 use App\ValiantShade\Services\GazetteIssueService;
 use App\ValiantShade\Services\PublicNewsService;
 use App\ValiantShade\Support\WorldCalendar;
@@ -95,23 +96,62 @@ class PublicNewsController extends Controller
 
     public function show(int $id): JsonResponse
     {
-        $item = $this->news->findPublished($id);
-        if (! $item) {
-            return response()->json(['success' => false, 'message' => __('News not found.')], 404);
+        $model = News::query()
+            ->where('id', $id)
+            ->where('status', 'published')
+            ->where('is_active', true)
+            ->first();
+
+        if (! $model) {
+            return response()->json(['success' => false, 'message' => 'Haber bulunamadı.'], 404);
         }
 
-        return $this->cachedJson([
+        NewsEngagement::bump($model, NewsEngagement::METRIC_VIEWS);
+
+        return response()->json([
             'success' => true,
-            'news' => $item,
+            'news' => $this->news->transformItem($model->fresh()),
+        ], 200)->header('Cache-Control', 'private, no-cache, must-revalidate');
+    }
+
+    public function recordEngagement(Request $request, int $id): JsonResponse
+    {
+        $metric = (string) $request->input('metric', '');
+        $allowed = [NewsEngagement::METRIC_SHARES, NewsEngagement::METRIC_PNG_DOWNLOADS];
+        if (! in_array($metric, $allowed, true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Geçersiz işlem türü.',
+            ], 422);
+        }
+
+        $model = News::query()
+            ->where('id', $id)
+            ->where('status', 'published')
+            ->where('is_active', true)
+            ->first();
+
+        if (! $model) {
+            return response()->json(['success' => false, 'message' => 'Haber bulunamadı.'], 404);
+        }
+
+        NewsEngagement::bump($model, $metric);
+
+        $fresh = $model->fresh();
+
+        return response()->json([
+            'success' => true,
+            'engagement' => NewsEngagement::metrics(is_array($fresh->stats) ? $fresh->stats : null),
         ]);
     }
 
     public function submit(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
+        $slotKind = (string) $request->input('gazette_slot_kind', '');
+        $typeKeys = implode(',', array_keys(config('news.types', [])));
+
+        $rules = [
             'title' => 'required|string|min:8|max:255',
-            'news_type' => 'required|string|in:'.implode(',', array_keys(config('news.types', []))),
-            'description' => 'required|string|min:30|max:5000',
             'location_badge' => 'nullable|string|max:150',
             'author' => 'nullable|string|max:120',
             'anonymous' => 'nullable|boolean',
@@ -122,18 +162,47 @@ class PublicNewsController extends Controller
             'gazette_issue_id' => 'nullable|integer|exists:gazette_issues,id',
             'image_preset' => 'nullable|string|max:255',
             'custom_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+        ];
+
+        if ($slotKind === 'lead') {
+            $rules['description'] = 'required|string|min:20|max:1200';
+            $rules['news_type'] = 'nullable|string|in:'.$typeKeys;
+            $rules['gazette_issue_id'] = 'required|integer|exists:gazette_issues,id';
+        } elseif ($slotKind === 'corner') {
+            $rules['description'] = 'required|string|min:30|max:5000';
+            $rules['news_type'] = 'required|string|in:'.$typeKeys;
+            $rules['gazette_issue_id'] = 'required|integer|exists:gazette_issues,id';
+            $rules['gazette_slot_key'] = 'required|string|max:64';
+            $rules['rumuz'] = 'required|string|min:1|max:80';
+        } else {
+            $rules['description'] = 'required|string|min:30|max:5000';
+            $rules['news_type'] = 'required|string|in:'.$typeKeys;
+            $rules['gazette_issue_id'] = 'required|integer|exists:gazette_issues,id';
+        }
+
+        $validator = Validator::make($request->all(), $rules, [
+            'gazette_issue_id.required' => 'Lütfen mevcut veya gelecek sayıyı seçin.',
+            'news_type.required' => 'Lütfen haber türünü seçin.',
+            'rumuz.required' => 'Lütfen köşe rumuzunu girin.',
+            'custom_image.image' => 'Yüklenen dosya geçerli bir görsel değil.',
+            'custom_image.max' => 'Görsel en fazla 5 MB olabilir.',
+            'custom_image.mimes' => 'Görsel yalnızca JPEG, PNG veya WebP olabilir.',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => __('Please check the rumor form fields.'),
+                'message' => 'Lütfen eksik veya hatalı alanları düzeltin.',
                 'errors' => $validator->errors(),
             ], 422);
         }
 
         $data = $validator->validated();
-        $typeConfig = config('news.types.'.$data['news_type']);
+        $newsType = $data['news_type'] ?? 'guild_rumor';
+        if ($slotKind === 'lead') {
+            $newsType = $data['news_type'] ?? 'guild_news';
+        }
+        $typeConfig = config('news.types.'.$newsType, config('news.types.guild_rumor'));
 
         $requestedIssueId = isset($data['gazette_issue_id']) ? (int) $data['gazette_issue_id'] : null;
         $targetIssue = $this->gazetteIssues->currentEditableIssue();
@@ -160,10 +229,11 @@ class PublicNewsController extends Controller
         $slotKind = $data['gazette_slot_kind'] ?? null;
         $rumuz = isset($data['rumuz']) ? trim((string) $data['rumuz']) : '';
 
-        $anonymous = $request->boolean('anonymous');
-        $author = $anonymous ? 'Anonim Gözcü' : ($data['author'] ?? 'Sokak Muhabiri');
-        if ($slotKind === 'corner' && ! $anonymous && $rumuz !== '') {
-            $author = trim((string) ($data['author'] ?? '')) !== '' ? trim((string) $data['author']) : $rumuz;
+        $anonymous = $slotKind === 'corner' ? false : $request->boolean('anonymous');
+        if ($slotKind === 'corner') {
+            $author = $rumuz !== '' ? $rumuz : 'Köşe Yazarı';
+        } else {
+            $author = $anonymous ? 'Anonim Gözcü' : (trim((string) ($data['author'] ?? '')) !== '' ? trim((string) $data['author']) : 'Sokak Muhabiri');
         }
 
         $submissionTags = [
@@ -186,9 +256,9 @@ class PublicNewsController extends Controller
             'gazette_slot_key' => $data['gazette_slot_key'] ?? null,
             'gazette_slot_label' => $slotLabel !== '' ? $slotLabel : null,
             'gazette_issue_id' => $targetIssue->id,
-            'rumuz' => ! $anonymous && $rumuz !== '' ? $rumuz : null,
+            'rumuz' => $slotKind === 'corner' && $rumuz !== '' ? $rumuz : (! $anonymous && $rumuz !== '' ? $rumuz : null),
         ], static fn ($value) => $value !== null && $value !== '');
-        if ($anonymous) {
+        if ($anonymous && $slotKind !== 'corner') {
             $submission['anonymous'] = true;
         }
         $stats = [
@@ -203,29 +273,34 @@ class PublicNewsController extends Controller
             default => 'rumor',
         };
 
-        try {
-            GazetteSubmissionImageStore::ensureDirectoryExists();
-            $imageUrl = GazetteSubmissionImageStore::resolveUploadedOrPreset(
-                $request->file('custom_image'),
-                $data['image_preset'] ?? null,
-                'static/valiant-shade/assets/img/news/guild_tavern_whispers.jpg',
-                $imagePrefix,
-            );
-        } catch (\Throwable $e) {
-            report($e);
+        $imageUrl = 'static/valiant-shade/assets/img/news/guild_tavern_whispers.jpg';
+        if ($slotKind === 'corner') {
+            $useAutoImage = false;
+        } elseif ($slotKind !== 'lead') {
+            try {
+                GazetteSubmissionImageStore::ensureDirectoryExists();
+                $imageUrl = GazetteSubmissionImageStore::resolveUploadedOrPreset(
+                    $request->file('custom_image'),
+                    $data['image_preset'] ?? null,
+                    'static/valiant-shade/assets/img/news/guild_tavern_whispers.jpg',
+                    $imagePrefix,
+                );
+            } catch (\Throwable $e) {
+                report($e);
 
-            return response()->json([
-                'success' => false,
-                'message' => $e instanceof \RuntimeException
-                    ? $e->getMessage()
-                    : 'Görsel yüklenemedi.',
-            ], 500);
+                return response()->json([
+                    'success' => false,
+                    'message' => $e instanceof \RuntimeException
+                        ? $e->getMessage()
+                        : 'Görsel yüklenemedi.',
+                ], 500);
+            }
         }
 
         $news = News::create([
             'title' => $data['title'],
             'category' => $typeConfig['label'],
-            'news_type' => $data['news_type'],
+            'news_type' => $newsType,
             'gazette_issue_id' => $targetIssue->id,
             'badge_color' => $typeConfig['badge_color'],
             'category_icon' => $typeConfig['category_icon'],
@@ -248,30 +323,46 @@ class PublicNewsController extends Controller
             $news->saveQuietly();
         }
 
+        $successMessage = match ($slotKind) {
+            'lead' => 'Manşet editöre ulaştı. Onaylanınca yalnızca üst slaytta döner; haber listesine girmez.',
+            'corner' => 'Köşe yazınız editöre ulaştı. Onaydan sonra seçtiğiniz köşede basılır.',
+            default => 'Gönderiniz editöre ulaştı. Onaydan sonra gazetede yer alır.',
+        };
+
         return response()->json([
             'success' => true,
-            'message' => __('Your rumor was delivered to the editors. It will appear after review.'),
+            'message' => $successMessage,
             'submission_id' => $news->id,
         ], 201);
     }
 
     public function submitFlash(Request $request): JsonResponse
     {
+        $typeKeys = implode(',', array_keys(config('news.types', [])));
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|min:8|max:255',
-            'news_type' => 'required|string|in:'.implode(',', array_keys(config('news.types', []))),
+            'news_type' => 'required|string|in:'.$typeKeys,
             'description' => 'required|string|min:80|max:12000',
             'location_badge' => 'nullable|string|max:150',
             'author' => 'nullable|string|max:120',
             'anonymous' => 'nullable|boolean',
             'image_preset' => 'nullable|string|max:255',
             'custom_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+        ], [
+            'title.required' => 'Başlık zorunludur.',
+            'title.min' => 'Başlık en az 8 karakter olmalıdır.',
+            'news_type.required' => 'Lütfen haber türünü seçin.',
+            'description.required' => 'Haber metni zorunludur.',
+            'description.min' => 'Sıcak haber metni en az 80 karakter olmalıdır.',
+            'custom_image.image' => 'Yüklenen dosya geçerli bir görsel değil.',
+            'custom_image.max' => 'Görsel en fazla 5 MB olabilir.',
+            'custom_image.mimes' => 'Görsel yalnızca JPEG, PNG veya WebP olabilir.',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Lütfen flash haber alanlarını kontrol edin.',
+                'message' => 'Lütfen sıcak haber alanlarını kontrol edin.',
                 'errors' => $validator->errors(),
             ], 422);
         }
@@ -279,7 +370,7 @@ class PublicNewsController extends Controller
         $data = $validator->validated();
         $typeConfig = config('news.types.'.$data['news_type']);
         $anonymous = $request->boolean('anonymous');
-        $author = $anonymous ? 'Anonim Muhabir' : ($data['author'] ?? 'Sokak Muhabiri');
+        $author = $anonymous ? 'Anonim Gözcü' : (trim((string) ($data['author'] ?? '')) !== '' ? trim((string) $data['author']) : 'Sokak Muhabiri');
 
         $useAutoImage = ! $request->hasFile('custom_image')
             && (empty($data['image_preset']) || $data['image_preset'] === '__gazette_auto__');

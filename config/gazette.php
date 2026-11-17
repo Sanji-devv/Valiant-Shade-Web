@@ -52,28 +52,29 @@ return [
     'submission_slots' => [
         'lead' => [
             'modal_title' => 'Manşet gönder',
-            'modal_intro' => 'Onaydan sonra bu sayının kapak manşetinde yer alır.',
+            'modal_intro' => 'Onaydan sonra yalnızca üst slaytta döner; haber listesine girmez.',
             'title_placeholder' => 'Manşet başlığı…',
             'body_label' => 'Manşet metni',
-            'body_placeholder' => 'Haftanın ana haberini yazın. Giriş ve özet paragrafı…',
-            'default_news_type' => 'guild_news',
+            'body_placeholder' => 'Kısa ve net manşet metni…',
+        ],
+        'flash' => [
+            'modal_title' => 'Sıcak haber gönder',
+            'modal_intro' => 'Onaydan sonra günlük ek sayı olarak basılır (ör. 3.2).',
         ],
         'corner' => [
             'modal_title' => 'Köşe yazısı gönder',
-            'modal_intro' => 'Onaydan sonra seçtiğiniz köşe sütununda, rumuzunuzla basılır.',
+            'modal_intro' => 'Onaydan sonra seçtiğiniz köşe sütununda basılır; aynı köşeye birden fazla yazı eklenebilir.',
             'title_placeholder' => 'Köşe başlığı (isteğe bağlı)…',
             'body_label' => 'Köşe metni',
             'body_placeholder' => 'Kısa köşe yazısı. Sesinizi koruyun, abartmayın…',
-            'default_news_type' => 'guild_rumor',
             'show_rumuz' => true,
         ],
         'general' => [
-            'modal_title' => 'Söylenti gönder',
-            'modal_intro' => 'Editör onayından sonra gazetede yayınlanır. Kayıt gerekmez.',
+            'modal_title' => 'Haftalık haber gönder',
+            'modal_intro' => 'Seçtiğiniz sayıya işlenen tam haber. Editör onayı gerekir.',
             'title_placeholder' => 'Örn. Kızıl Han\'da gizli buluşma…',
-            'body_label' => 'Söylenti / ihbar metni',
+            'body_label' => 'Haber metni',
             'body_placeholder' => 'Gördüklerinizi veya duyduklarınızı yazın…',
-            'default_news_type' => 'guild_rumor',
         ],
     ],
 

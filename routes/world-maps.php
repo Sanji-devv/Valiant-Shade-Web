@@ -55,6 +55,10 @@ Route::prefix('api')->group(function () {
         Route::get('/featured', [PublicNewsController::class, 'featured'])->name('api.public.news.featured');
         Route::get('/', [PublicNewsController::class, 'index'])->name('api.public.news.index');
         Route::get('/{id}', [PublicNewsController::class, 'show'])->whereNumber('id')->name('api.public.news.show');
+        Route::post('/{id}/engagement', [PublicNewsController::class, 'recordEngagement'])
+            ->whereNumber('id')
+            ->middleware('throttle:60,1')
+            ->name('api.public.news.engagement');
         Route::post('/submissions', [PublicNewsController::class, 'submit'])
             ->middleware('throttle:public.news.submissions')
             ->name('api.public.news.submit');

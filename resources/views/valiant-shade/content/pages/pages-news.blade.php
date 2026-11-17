@@ -1018,9 +1018,14 @@
 
     // Stats Grid
     const statsGrid = document.getElementById('modalStatsGrid');
-    const statPills = Array.isArray(item.stats)
-      ? item.stats.filter(st => st && typeof st === 'object' && 'value' in st && 'label' in st)
-      : [];
+    const statPills = Array.isArray(item.stats?.pills)
+      ? item.stats.pills
+      : Array.isArray(item.stats)
+        ? item.stats.filter(st => st && typeof st === 'object' && 'value' in st && 'label' in st)
+        : [];
+    if (typeof item.views_count === 'number' && item.views_count > 0) {
+      statPills.unshift({ value: item.views_count, label: 'okunma', color: 'text-secondary' });
+    }
     if (statPills.length > 0) {
       statsGrid.innerHTML = statPills.map(st => `
         <div class="col-sm-3 col-6">
@@ -1034,37 +1039,26 @@
       statsGrid.innerHTML = '<div class="col-12 text-body-secondary small">{{ __("No special statistics available.") }}</div>';
     }
 
-    // Dynamic RPG Action Buttons in Modal
     const dynamicActions = document.getElementById('modalDynamicActions');
     const itemId = parseInt(item.id, 10);
-    if (itemId === 1 || itemId === 6) {
+    if (canUpdateNews && isManageableNewsItem(item)) {
       dynamicActions.innerHTML = `
-        <button type="button" class="btn btn-outline-danger d-inline-flex align-items-center gap-1" onclick="taziyeBirak('${item.title}')">
-          <i class="icon-base ti tabler-candle"></i>
-          <span>{{ __('Light Memorial Candle & Pay Respects') }}</span>
-        </button>
-      `;
-    } else if (itemId === 4) {
-      dynamicActions.innerHTML = `
-        <button type="button" class="btn btn-outline-warning d-inline-flex align-items-center gap-1" onclick="fisiltiYay('${item.title}')">
-          <i class="icon-base ti tabler-beer"></i>
-          <span>{{ __('Raise a Pint at Red Inn & Spread Rumor') }}</span>
-        </button>
-      `;
-    } else if (itemId === 2) {
-      dynamicActions.innerHTML = `
-        <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center gap-1" onclick="fermanKayit('${item.title}')">
-          <i class="icon-base ti tabler-file-text"></i>
-          <span>{{ __('Enlist for Bounty Hunt') }}</span>
-        </button>
-      `;
+        <div class="d-flex flex-wrap gap-2">
+          <button type="button" class="btn btn-outline-success d-inline-flex align-items-center gap-1" onclick="sendEditorialReaction(${itemId}, 'victory', '${String(item.title).replace(/'/g, "\\'")}')">
+            <i class="icon-base ti tabler-trophy"></i><span>Zafer kutla</span>
+          </button>
+          <button type="button" class="btn btn-outline-danger d-inline-flex align-items-center gap-1" onclick="sendEditorialReaction(${itemId}, 'mourning', '${String(item.title).replace(/'/g, "\\'")}')">
+            <i class="icon-base ti tabler-candle"></i><span>Yas tut</span>
+          </button>
+          <button type="button" class="btn btn-outline-warning d-inline-flex align-items-center gap-1" onclick="sendEditorialReaction(${itemId}, 'whisper', '${String(item.title).replace(/'/g, "\\'")}')">
+            <i class="icon-base ti tabler-beer"></i><span>Han fısıltısı</span>
+          </button>
+          <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center gap-1" onclick="sendEditorialReaction(${itemId}, 'bounty', '${String(item.title).replace(/'/g, "\\'")}')">
+            <i class="icon-base ti tabler-file-text"></i><span>Ferman kaydı</span>
+          </button>
+        </div>`;
     } else {
-      dynamicActions.innerHTML = `
-        <button type="button" class="btn btn-outline-success d-inline-flex align-items-center gap-1" onclick="zaferKutla('${item.title}')">
-          <i class="icon-base ti tabler-trophy"></i>
-          <span>{{ __('Celebrate Victory & Cheers') }}</span>
-        </button>
-      `;
+      dynamicActions.innerHTML = '';
     }
 
     const modalEditBtn = document.getElementById('modalEditNewsBtn');
@@ -1096,7 +1090,39 @@
     modal.show();
   }
 
-  // Interactive RPG Actions with SweetAlert
+  async function sendEditorialReaction(newsId, reaction, title) {
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    try {
+      const response = await fetch(`/pages/news/${newsId}/editorial-reaction`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': token || '',
+        },
+        body: JSON.stringify({ reaction }),
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.message || 'Tepki kaydedilemedi.');
+      }
+    } catch (error) {
+      if (typeof Swal !== 'undefined') {
+        Swal.fire({ title: 'Hata', text: error.message || 'Tepki kaydedilemedi.', icon: 'error' });
+      } else {
+        alert(error.message || 'Tepki kaydedilemedi.');
+      }
+      return;
+    }
+    const handlers = {
+      mourning: taziyeBirak,
+      whisper: fisiltiYay,
+      bounty: fermanKayit,
+      victory: zaferKutla,
+    };
+  (handlers[reaction] || zaferKutla)(title);
+  }
+
   function taziyeBirak(title) {
     if (typeof Swal !== 'undefined') {
       Swal.fire({

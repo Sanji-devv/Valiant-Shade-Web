@@ -100,6 +100,7 @@ Route::post('/pages/news/{id}/toggle', [NewsController::class, 'toggleActive'])-
 Route::post('/pages/guild-news/{id}/toggle', [NewsController::class, 'toggleActive'])->name('valiant-shade.pages-guild-news.toggle');
 Route::post('/pages/news/{id}/approve', [NewsController::class, 'approve'])->name('valiant-shade.pages-news.approve');
 Route::post('/pages/news/{id}/reject', [NewsController::class, 'reject'])->name('valiant-shade.pages-news.reject');
+Route::post('/pages/news/{id}/editorial-reaction', [NewsController::class, 'editorialReaction'])->name('valiant-shade.pages-news.editorial-reaction');
 
 // Player XP Tracker Routes
 Route::get('/pages/xp-tracker', [PlayerXpController::class, 'index'])->name('valiant-shade.pages-xp-tracker');

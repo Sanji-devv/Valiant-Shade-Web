@@ -101,20 +101,6 @@
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">PNG İndir</span>
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">PNG</span>
             </button>
-            <button
-                type="button"
-                class="vs-newspaper-nav__item vs-newspaper-nav__item--hot"
-                id="openHotExtraModal"
-                aria-label="Flaş haber gönder"
-                title="Flaş haber gönder"
-            >
-                <svg class="vs-newspaper-nav__icon vs-newspaper-nav__icon--flame" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M12 22c4.5 0 8-3.25 8-7.5 0-2.65-1.6-4.9-3.85-6.15C15.4 6.9 13.35 3.5 12 2c-1.35 1.5-3.4 4.9-4.15 6.35C5.6 9.6 4 11.85 4 14.5 4 18.75 7.5 22 12 22z"/>
-                    <path d="M12 22c-1.8 0-3.25-1.35-3.25-3.25S10.2 15.5 12 15.5s3.25 1.35 3.25 3.25S13.8 22 12 22z"/>
-                </svg>
-                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">Flaş haber</span>
-                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">Flaş</span>
-            </button>
             <button type="button" class="vs-newspaper-nav__item vs-newspaper-nav__item--primary" id="openRumorModal" aria-label="Söylenti Gönder">
                 <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8z"/></svg>
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">Söylenti Gönder</span>
@@ -238,6 +224,7 @@
                         <span class="vs-modal__meta-item" id="newsModalReadTime"></span>
                     </div>
                 </div>
+                <div class="vs-modal__engagement" id="newsModalEngagement" hidden aria-label="Okuma istatistikleri"></div>
                 <hr class="vs-modal__divider">
                 <div class="vs-modal-story" id="newsModalStory"></div>
                 <blockquote class="vs-modal-quote" id="newsModalQuote" hidden></blockquote>
@@ -247,167 +234,120 @@
 
     <div class="vs-modal-backdrop vs-modal-backdrop--rumor" id="rumorModal" role="dialog" aria-modal="true" aria-labelledby="rumorModalTitle">
         <section class="vs-modal vs-modal--rumor-gazette" id="rumorModalPanel">
-            <button type="button" class="vs-modal__close vs-modal__close--gazette" id="rumorModalClose" aria-label="Kapat">×</button>
+            <header class="vs-rumor-toolbar" aria-label="Söylenti gönder">
+                <button type="button" class="vs-rumor-toolbar__back" id="rumorWizardBack" hidden aria-label="Gönderi türüne dön">
+                    <span aria-hidden="true">←</span> Geri
+                </button>
+                <h2 class="vs-rumor-toolbar__title" id="rumorModalTitle">Söylenti gönder</h2>
+                <button type="button" class="vs-rumor-toolbar__close vs-modal__close vs-modal__close--gazette" id="rumorModalClose" aria-label="Kapat">×</button>
+            </header>
             <div class="vs-modal__body vs-modal__body--rumor">
-                <header class="vs-rumor-modal__head">
-                    <div class="vs-rumor-modal__title-row">
-                        <h2 id="rumorModalTitle">Söylenti gönder</h2>
-                        <div class="vs-rumor-issue-pick" id="rumorIssuePickWrap">
-                            <span class="vs-rumor-issue-pick__label" id="rumorIssuePickLabel">Sayı</span>
-                            <select class="vs-rumor-issue-pick__select" id="rumorIssueSelect" aria-labelledby="rumorModalTitle rumorIssuePickLabel"></select>
-                        </div>
-                    </div>
-                    <p id="rumorModalIntro" class="vs-rumor-modal__intro">Editör onayından sonra gazetede yayınlanır. Kayıt gerekmez.</p>
-                </header>
-                <div class="vs-rumor-placement" id="rumorPlacementWrap">
-                    <span class="vs-rumor-placement__label">Gazetede yeri</span>
-                    <div class="vs-rumor-placement__kinds" id="rumorPlacementKinds" role="radiogroup" aria-label="Gönderi yeri"></div>
-                    <div class="vs-rumor-corner-pick" id="rumorCornerPicker" hidden>
-                        <span class="vs-rumor-corner-pick__label">Hangi köşe?</span>
-                        <div class="vs-rumor-corner-pick__grid" id="rumorCornerPickerGrid"></div>
-                    </div>
-                </div>
-                <form id="rumorForm" class="vs-form-grid vs-form-grid--rumor" enctype="multipart/form-data">
-                    <input type="hidden" name="gazette_slot_kind" id="rumorGazetteSlotKind" value="">
-                    <input type="hidden" name="gazette_slot_key" id="rumorGazetteSlotKey" value="">
-                    <input type="hidden" name="gazette_slot_label" id="rumorGazetteSlotLabelHidden" value="">
-                    <input type="hidden" name="gazette_issue_id" id="rumorGazetteIssueId" value="">
-                    <div class="vs-form-field vs-rumor-form__span">
-                        <span class="vs-form-field__label">Tür</span>
-                        @include('web.partials.news-type-picker', [
-                            'variant' => 'public',
-                            'groupId' => 'rumorTypePicker',
-                            'inputId' => 'rumorNewsType',
-                            'inputName' => 'news_type',
-                        ])
-                    </div>
-                    <div class="vs-rumor-form__meta-grid vs-rumor-form__meta-grid--three vs-rumor-form__span" id="rumorMetaGrid">
-                        <label class="vs-rumor-form__meta-cell">
-                            Konum (isteğe bağlı)
-                            <input type="text" name="location_badge" maxlength="150" placeholder="Örn. Isonburg - Alt Şehir">
-                        </label>
-                        <label id="rumorRumuzWrap" class="vs-rumor-form__meta-cell" hidden>
-                            Rumuz (köşe imzası)
-                            <input type="text" name="rumuz" id="rumorRumuzInput" maxlength="80" placeholder="Basılacak rumuz, örn. G.T.">
-                        </label>
-                        <label id="rumorAuthorWrap" class="vs-rumor-form__meta-cell">
-                            Muhabir adı (isteğe bağlı)
-                            <input type="text" name="author" id="rumorAuthorInput" maxlength="120" placeholder="Anonim kalabilirsiniz">
-                        </label>
-                        <div class="vs-rumor-form__meta-cell vs-rumor-form__meta-cell--check">
-                            <input type="checkbox" name="anonymous" id="rumorAnonymousInput" class="vs-rumor-form__check-input" tabindex="-1" aria-hidden="true">
-                            <button type="button" class="vs-rumor-anon-toggle" id="rumorAnonymousToggle" aria-pressed="false">
-                                Kimliğimi gizli tut
-                            </button>
-                        </div>
-                    </div>
-                    <label class="vs-rumor-form__span">
-                        <span id="rumorTitleLabel">Başlık</span>
-                        <input type="text" name="title" id="rumorTitleInput" required minlength="8" maxlength="255" placeholder="Örn. Kızıl Han'da gizli buluşma…">
-                    </label>
-                    <label class="vs-rumor-form__span">
-                        Görsel
-                        <select name="image_preset" id="rumorImagePreset">
-                            <option value="__gazette_auto__">Metinden otomatik woodcut</option>
-                            @foreach (($gazetteImagePresets ?? []) as $presetPath => $presetLabel)
-                            <option value="{{ $presetPath }}">{{ $presetLabel }}</option>
-                            @endforeach
-                        </select>
-                    </label>
-                    <div class="vs-submission-image-preview-wrap vs-rumor-form__span" id="rumorImagePreviewWrap" hidden>
-                        <span class="vs-submission-image-preview__label">Görsel önizleme</span>
-                        <div class="vs-submission-image-preview">
-                            <img id="rumorImagePreview" alt="Seçilen görsel önizlemesi" width="200" height="120">
-                        </div>
-                        <p class="vs-submission-image-preview__hint" id="rumorImagePreviewHint"></p>
-                    </div>
-                    <label class="vs-rumor-form__span">
-                        Veya dosya yükle
-                        <input type="file" name="custom_image" id="rumorCustomImageInput" accept="image/jpeg,image/png,image/webp">
-                    </label>
-                    <label class="vs-rumor-form__span">
-                        <span id="rumorBodyLabel">Söylenti / ihbar metni</span>
-                        <textarea name="description" id="rumorBodyInput" rows="6" required minlength="30" maxlength="5000" placeholder="Gördüklerinizi veya duyduklarınızı yazın…"></textarea>
-                    </label>
-                    <div class="vs-rumor-form__actions vs-rumor-form__span">
-                        <button type="submit" class="vs-rumor-submit" id="rumorSubmit">Gönder</button>
-                    </div>
-                </form>
-            </div>
-        </section>
-    </div>
+                <p id="rumorModalIntro" class="vs-rumor-modal__intro">Ne göndermek istediğinizi seçin. Editör onayından sonra basılır; kayıt gerekmez.</p>
 
-    <div class="vs-modal-backdrop vs-modal-backdrop--rumor vs-modal-backdrop--gazette-form" id="hotExtraModal" role="dialog" aria-modal="true" aria-labelledby="hotExtraModalTitle">
-        <section class="vs-modal vs-modal--rumor-gazette vs-modal--rumor-gazette--active vs-modal--rumor-slot-flash" id="hotExtraModalPanel">
-            <button type="button" class="vs-modal__close vs-modal__close--gazette" id="hotExtraModalClose" aria-label="Kapat">×</button>
-            <div class="vs-modal__body vs-modal__body--rumor">
-                <header class="vs-rumor-modal__head">
-                    <h2 id="hotExtraModalTitle">Flash haber gönder</h2>
-                    <p class="vs-rumor-modal__intro">Tek haber, tek yaprak. Editör onayından sonra ek sayı olarak basılır (ör. 2.1). Günün takvim tarihi o yaprakta görünür. Köşe yazısı veya özet sütunu yoktur.</p>
-                </header>
-                <form id="hotExtraForm" class="vs-form-grid vs-form-grid--rumor" enctype="multipart/form-data">
-                    <div class="vs-rumor-slot-banner">
-                        <span class="vs-rumor-slot-banner__eyebrow">Fırlatma ek sayısı</span>
-                        <span class="vs-rumor-slot-banner__label">Sıcak haber · yazıyor yazıyor</span>
-                        <span class="vs-rumor-slot-banner__issue">Onay sonrası haftanın ek numarası otomatik verilir</span>
-                    </div>
-                    <div class="vs-form-field vs-rumor-form__span">
-                        <span class="vs-form-field__label">Tür</span>
-                        @include('web.partials.news-type-picker', [
-                            'variant' => 'public',
-                            'groupId' => 'hotExtraTypePicker',
-                            'inputId' => 'hotExtraNewsType',
-                            'inputName' => 'news_type',
-                        ])
-                    </div>
-                    <label class="vs-rumor-form__span">
-                        Manşet başlığı
-                        <input type="text" name="title" id="hotExtraTitleInput" required minlength="8" maxlength="255" placeholder="Örn. Limanda yangın: iskele kapatıldı">
-                    </label>
-                    <div class="vs-rumor-form__meta-grid vs-rumor-form__meta-grid--three vs-rumor-form__span">
-                        <label class="vs-rumor-form__meta-cell">
-                            Konum (isteğe bağlı)
-                            <input type="text" name="location_badge" maxlength="150" placeholder="Örn. Isonburg limanı">
-                        </label>
-                        <label class="vs-rumor-form__meta-cell">
-                            Muhabir imzası (isteğe bağlı)
-                            <input type="text" name="author" id="flashAuthorInput" maxlength="120" placeholder="Basılacak isim">
-                        </label>
-                        <div class="vs-rumor-form__meta-cell vs-rumor-form__meta-cell--check">
-                            <input type="checkbox" name="anonymous" id="flashAnonymousInput" class="vs-rumor-form__check-input" tabindex="-1" aria-hidden="true">
-                            <button type="button" class="vs-rumor-anon-toggle" id="flashAnonymousToggle" aria-pressed="false">
-                                Kimliğimi gizli tut
-                            </button>
-                        </div>
-                    </div>
-                    <label class="vs-rumor-form__span">
-                        Görsel
-                        <select name="image_preset" id="hotExtraImagePreset">
-                            <option value="__gazette_auto__">Metinden otomatik woodcut</option>
-                            @foreach (($gazetteImagePresets ?? []) as $presetPath => $presetLabel)
-                            <option value="{{ $presetPath }}">{{ $presetLabel }}</option>
-                            @endforeach
-                        </select>
-                    </label>
-                    <div class="vs-submission-image-preview-wrap" id="flashImagePreviewWrap" hidden>
-                        <span class="vs-submission-image-preview__label">Görsel önizleme</span>
-                        <div class="vs-submission-image-preview">
-                            <img id="flashImagePreview" alt="" width="200" height="120">
-                        </div>
-                        <p class="vs-submission-image-preview__hint" id="flashImagePreviewHint"></p>
-                    </div>
-                    <label class="vs-rumor-form__span">
-                        Veya dosya yükle
-                        <input type="file" name="custom_image" id="flashCustomImageInput" accept="image/jpeg,image/png,image/webp">
-                    </label>
-                    <label class="vs-rumor-form__span">
-                        Haber metni
-                        <textarea name="description" id="hotExtraBodyInput" rows="10" required minlength="80" maxlength="12000" placeholder="Tek sayfalık akıcı anlatım. Köşe yok, özet yok; yazıyor yazıyor."></textarea>
-                    </label>
-                    <div class="vs-rumor-form__actions vs-rumor-form__span">
-                        <button type="submit" class="vs-rumor-submit vs-rumor-submit--flash" id="hotExtraSubmit">Editöre gönder</button>
-                    </div>
-                </form>
+                <div class="vs-rumor-wizard__pick" id="rumorWizardPick">
+                    <p class="vs-rumor-wizard__pick-label">Gönderi türü</p>
+                    <div class="vs-rumor-wizard__kind-grid" id="rumorWizardKinds" role="listbox" aria-label="Gönderi türü seçimi"></div>
+                </div>
+
+                <div class="vs-rumor-wizard__form" id="rumorWizardForm" hidden>
+                    <aside class="vs-rumor-demo" id="rumorDemoPreview" aria-label="Gazetede nasıl görüneceğine dair önizleme"></aside>
+                    <form id="rumorForm" class="vs-form-grid vs-form-grid--rumor" enctype="multipart/form-data" novalidate>
+                            <input type="hidden" name="gazette_slot_kind" id="rumorGazetteSlotKind" value="">
+                            <input type="hidden" name="gazette_slot_key" id="rumorGazetteSlotKey" value="">
+                            <input type="hidden" name="gazette_slot_label" id="rumorGazetteSlotLabelHidden" value="">
+                            <input type="hidden" name="gazette_issue_id" id="rumorGazetteIssueId" value="">
+
+                            <div class="vs-rumor-issue-pick vs-rumor-form__span" id="rumorIssuePickWrap" hidden>
+                                <span class="vs-form-field__label" id="rumorIssuePickLabel">Hangi sayı? <span class="vs-form-field__req">*</span></span>
+                                <div class="vs-issue-picker" id="rumorIssuePicker" role="radiogroup" aria-labelledby="rumorIssuePickLabel"></div>
+                                <p class="vs-field-inline-error" id="rumorIssueFieldError" hidden role="alert"></p>
+                                <p class="vs-rumor-issue-pick__hint" id="rumorIssuePickHint">Yalnızca mevcut veya gelecek sayıya gönderebilirsiniz; geçmiş sayılar kapalıdır.</p>
+                            </div>
+
+                            <div class="vs-form-field vs-rumor-form__span" id="rumorTypeFieldWrap">
+                                <span class="vs-form-field__label">Haber türü <span class="vs-form-field__req">*</span></span>
+                                @include('web.partials.news-type-picker', [
+                                    'variant' => 'public',
+                                    'groupId' => 'rumorTypePicker',
+                                    'inputId' => 'rumorNewsType',
+                                    'inputName' => 'news_type',
+                                    'noDefault' => true,
+                                ])
+                                <p class="vs-field-inline-error" id="rumorTypeFieldError" hidden role="alert"></p>
+                            </div>
+
+                            <div class="vs-rumor-form__meta-grid vs-rumor-form__meta-grid--three vs-rumor-form__span" id="rumorMetaGrid">
+                                <label class="vs-rumor-form__meta-cell" id="rumorLocationWrap">
+                                    Konum (isteğe bağlı)
+                                    <input type="text" name="location_badge" id="rumorLocationInput" maxlength="150" placeholder="Örn. Isonburg - Alt Şehir">
+                                </label>
+                                <label id="rumorAuthorWrap" class="vs-rumor-form__meta-cell">
+                                    Muhabir imzası (isteğe bağlı)
+                                    <input type="text" name="author" id="rumorAuthorInput" maxlength="120" placeholder="Boş bırakılabilir">
+                                </label>
+                                <div class="vs-rumor-form__meta-cell vs-rumor-form__meta-cell--check" id="rumorAnonymousWrap">
+                                    <input type="checkbox" name="anonymous" id="rumorAnonymousInput" class="vs-rumor-form__check-input" tabindex="-1" aria-hidden="true">
+                                    <button type="button" class="vs-rumor-anon-toggle" id="rumorAnonymousToggle" aria-pressed="false">
+                                        Kimliğimi gizli tut
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="vs-rumor-corner-pick vs-rumor-form__span" id="rumorCornerPicker" hidden>
+                                <span class="vs-rumor-corner-pick__label">Köşe sütunu</span>
+                                <p class="vs-rumor-corner-pick__summary" id="rumorCornerCountSummary"></p>
+                                <div class="vs-rumor-corner-pick__grid" id="rumorCornerPickerGrid"></div>
+                                <p class="vs-field-inline-error" id="rumorCornerFieldError" hidden role="alert"></p>
+                            </div>
+
+                            <label class="vs-form-field vs-rumor-form__span" id="rumorRumuzFieldWrap" hidden>
+                                <span class="vs-form-field__label">Rumuz (köşe imzası) <span class="vs-form-field__req">*</span></span>
+                                <input type="text" name="rumuz" id="rumorRumuzInput" maxlength="80" placeholder="Basılacak rumuz, örn. G.T." required>
+                                <p class="vs-field-inline-error" id="rumorRumuzFieldError" hidden role="alert"></p>
+                            </label>
+
+                            <label class="vs-rumor-form__span" id="rumorTitleWrap">
+                                <span id="rumorTitleLabel">Başlık <span class="vs-form-field__req">*</span></span>
+                                <input type="text" name="title" id="rumorTitleInput" minlength="8" maxlength="255" placeholder="Örn. Kızıl Han'da gizli buluşma…">
+                                <p class="vs-field-inline-error" id="rumorTitleFieldError" hidden role="alert"></p>
+                            </label>
+
+                            <div class="vs-rumor-form__span" id="rumorImageSection">
+                                <label>
+                                    Görsel
+                                    <select name="image_preset" id="rumorImagePreset">
+                                        <option value="__gazette_auto__">Metinden otomatik woodcut</option>
+                                        @foreach (($gazetteImagePresets ?? []) as $presetPath => $presetLabel)
+                                        <option value="{{ $presetPath }}">{{ $presetLabel }}</option>
+                                        @endforeach
+                                    </select>
+                                </label>
+                                <div class="vs-submission-image-preview-wrap" id="rumorImagePreviewWrap" hidden>
+                                    <span class="vs-submission-image-preview__label">Görsel önizleme</span>
+                                    <div class="vs-submission-image-preview">
+                                        <img id="rumorImagePreview" alt="Seçilen görsel önizlemesi" width="200" height="120">
+                                    </div>
+                                    <p class="vs-submission-image-preview__hint" id="rumorImagePreviewHint"></p>
+                                    <button type="button" class="vs-rumor-remove-image" id="rumorRemoveImage">Görseli kaldır</button>
+                                </div>
+                                <label class="vs-rumor-upload-label">
+                                    Veya dosya yükle
+                                    <input type="file" name="custom_image" id="rumorCustomImageInput" accept="image/jpeg,image/png,image/webp">
+                                </label>
+                                <p class="vs-rumor-upload-hint" id="rumorUploadHint">JPEG, PNG veya WebP · en fazla 5 MB</p>
+                                <p class="vs-field-inline-error" id="rumorImageFieldError" hidden role="alert"></p>
+                            </div>
+
+                            <label class="vs-rumor-form__span" id="rumorBodyWrap">
+                                <span id="rumorBodyLabel">Haber metni <span class="vs-form-field__req">*</span></span>
+                                <textarea name="description" id="rumorBodyInput" rows="6" minlength="30" maxlength="12000" placeholder="Gördüklerinizi veya duyduklarınızı yazın…"></textarea>
+                                <p class="vs-field-inline-error" id="rumorBodyFieldError" hidden role="alert"></p>
+                            </label>
+                            <div class="vs-rumor-form__actions vs-rumor-form__span">
+                                <button type="submit" class="vs-rumor-submit" id="rumorSubmit">Editöre gönder</button>
+                            </div>
+                    </form>
+                </div>
             </div>
         </section>
     </div>

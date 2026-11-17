@@ -5,6 +5,7 @@ namespace App\ValiantShade\Services;
 use App\Models\News;
 use App\ValiantShade\Http\Controllers\NewsController;
 use App\ValiantShade\Support\GazetteTypography;
+use App\ValiantShade\Support\NewsEngagement;
 use App\ValiantShade\Support\NewsTypeResolver;
 use App\ValiantShade\Support\WorldCalendar;
 use Illuminate\Database\Eloquent\Builder;
@@ -166,6 +167,7 @@ class PublicNewsService
             'author_role' => GazetteTypography::scrub($item->author_role ?? 'Valiant Shade Basın Bürosu') ?? 'Valiant Shade Basın Bürosu',
             'is_breaking' => (bool) ($item->is_breaking ?? false),
             'views_count' => (int) ($item->views_count ?? 0),
+            'engagement' => NewsEngagement::metrics(is_array($item->stats ?? null) ? $item->stats : null),
             'order' => (int) ($item->order ?? 0),
             'gazette_issue_id' => isset($item->gazette_issue_id) ? (int) $item->gazette_issue_id : null,
         ];
@@ -177,11 +179,31 @@ class PublicNewsService
 
         return Cache::remember($this->cacheKey("featured.{$locale}.{$limit}"), $this->cacheTtl(), function () use ($limit) {
             return $this->publishedSource()
+                ->filter(fn ($item) => $this->isSliderMasthead($item))
                 ->take($limit)
                 ->map(fn ($item) => $this->transformItem($item))
                 ->values()
                 ->all();
         });
+    }
+
+    public function isSliderMasthead(mixed $item): bool
+    {
+        if ((bool) ($item->is_breaking ?? false)) {
+            return true;
+        }
+
+        $stats = is_array($item->stats ?? null) ? $item->stats : [];
+        $submission = is_array($stats['submission'] ?? null) ? $stats['submission'] : [];
+        if (($submission['gazette_slot_kind'] ?? null) === 'lead') {
+            return true;
+        }
+
+        if (in_array(($stats['gazette_placement'] ?? null), ['cover_lead', 'masthead_slider'], true)) {
+            return true;
+        }
+
+        return false;
     }
 
     public function paginate(int $page = 1, int $perPage = 9, ?string $newsType = null, ?string $search = null): array
@@ -198,15 +220,17 @@ class PublicNewsService
                 $listQuery->where('news_type', $newsType);
             }
 
-            $total = (clone $listQuery)->count();
-            $lastPage = max(1, (int) ceil($total / $perPage));
-            $page = min(max(1, $page), $lastPage);
-            $slice = (clone $listQuery)
+            $filtered = (clone $listQuery)
                 ->orderByDesc('created_at')
                 ->orderByDesc('id')
-                ->offset(($page - 1) * $perPage)
-                ->limit($perPage)
-                ->get();
+                ->get()
+                ->filter(fn (News $item) => ! $this->isSliderMasthead($item))
+                ->values();
+
+            $total = $filtered->count();
+            $lastPage = max(1, (int) ceil($total / $perPage));
+            $page = min(max(1, $page), $lastPage);
+            $slice = $filtered->slice(($page - 1) * $perPage, $perPage)->values();
 
             $countsQuery = $this->publishedQuery();
             $this->applyPublicSearch($countsQuery, $search);

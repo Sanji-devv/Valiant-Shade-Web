@@ -28,6 +28,9 @@ return function (bool $registerNames = true): void {
             Route::get('/featured', [PublicNewsController::class, 'featured']);
             Route::get('/', [PublicNewsController::class, 'index']);
             Route::get('/{id}', [PublicNewsController::class, 'show'])->whereNumber('id');
+            Route::post('/{id}/engagement', [PublicNewsController::class, 'recordEngagement'])
+                ->whereNumber('id')
+                ->middleware('throttle:60,1');
             Route::post('/submissions', [PublicNewsController::class, 'submit'])
                 ->middleware('throttle:public.news.submissions');
             Route::post('/flash-submissions', [PublicNewsController::class, 'submitFlash'])

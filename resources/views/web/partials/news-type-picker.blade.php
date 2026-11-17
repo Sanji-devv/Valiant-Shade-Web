@@ -1,6 +1,7 @@
 @php
     $types = config('news.types', []);
-    $defaultType = array_key_first($types);
+    $noDefault = $noDefault ?? false;
+    $defaultType = $noDefault ? '' : array_key_first($types);
     $variant = $variant ?? 'public';
     $groupId = $groupId ?? 'newsTypePicker';
     $inputId = $inputId ?? 'rumorNewsType';
@@ -17,10 +18,10 @@
     @foreach($types as $typeKey => $typeConfig)
         <button
             type="button"
-            class="vs-type-picker__btn{{ $loop->first ? ' is-selected' : '' }}"
+            class="vs-type-picker__btn{{ ! $noDefault && $loop->first ? ' is-selected' : '' }}"
             data-type="{{ $typeKey }}"
             role="radio"
-            aria-checked="{{ $loop->first ? 'true' : 'false' }}"
+            aria-checked="{{ ! $noDefault && $loop->first ? 'true' : 'false' }}"
             aria-label="{{ $typeConfig['label'] }}"
             title="{{ $typeConfig['label'] }}"
         >

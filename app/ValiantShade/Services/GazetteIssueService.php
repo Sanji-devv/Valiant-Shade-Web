@@ -333,7 +333,8 @@ class GazetteIssueService
         $this->assignNewsToIssueWeeks();
 
         $searchTerm = $search !== null ? trim($search) : '';
-        if ($searchTerm !== '') {
+        $hasTypeFilter = $newsType !== null && $newsType !== '';
+        if ($searchTerm !== '' || $hasTypeFilter) {
             return $this->gazetteBootstrapGlobalSearch($sheet, $issue, $newsType, $searchTerm);
         }
 
@@ -394,28 +395,15 @@ class GazetteIssueService
             ->map(fn ($item) => $item ? $this->publicNews->transformItem($item) : null)
             ->values()
             ->all();
-        $issuePayload['cover_mastheads'] = collect([$coverPayload['lead']])
-            ->merge($coverPayload['briefs'])
-            ->filter()
-            ->unique(fn ($item) => (int) $item->id)
-            ->sortByDesc(function ($item) {
-                if ($item->created_at instanceof \DateTimeInterface) {
-                    return $item->created_at->getTimestamp();
-                }
-
-                return (int) ($item->id ?? 0);
-            })
-            ->take(6)
-            ->map(fn ($item) => $this->publicNews->transformItem($item))
+        $issuePayload['cover_mastheads'] = collect($this->resolveMastheadArticles($issue, $allNews))
+            ->map(fn (News $item) => $this->publicNews->transformItem($item))
             ->values()
             ->all();
 
         return [
             'issue' => $issuePayload,
             'archive' => $this->archiveList(),
-            'featured' => $coverPayload['lead']
-                ? [$this->publicNews->transformItem($coverPayload['lead'])]
-                : array_slice($feedData, 0, 1),
+            'featured' => $issuePayload['cover_mastheads'],
             'types' => collect(config('news.types', []))->map(fn ($cfg, $key) => [
                 'key' => $key,
                 'label' => $cfg['label'],
@@ -773,28 +761,42 @@ class GazetteIssueService
                 continue;
             }
             $body = trim((string) ($news->full_story ?: $news->description));
-            $slot['body'] = $body;
-            $slot['teaser'] = mb_strlen($body) > 160 ? mb_substr($body, 0, 157).'…' : ($body !== '' ? $body : null);
             $anonymous = ! empty($submission['anonymous'])
                 || preg_match('/anonim\s*gözcü/i', (string) ($news->author ?? '')) === 1;
+            $rumuz = null;
             if ($anonymous) {
-                $slot['rumuz'] = null;
                 $slot['anonymous'] = true;
             } else {
                 unset($slot['anonymous']);
-                $rumuz = trim((string) ($submission['rumuz'] ?? ''));
-                if ($rumuz !== '') {
-                    $slot['rumuz'] = $rumuz;
+                $rumuzInput = trim((string) ($submission['rumuz'] ?? ''));
+                if ($rumuzInput !== '') {
+                    $rumuz = $rumuzInput;
                 } elseif (! empty($news->author) && ! preg_match('/anonim|gizli/i', (string) $news->author)) {
-                    $slot['rumuz'] = $news->author;
-                } else {
-                    $slot['rumuz'] = null;
+                    $rumuz = (string) $news->author;
                 }
             }
+
+            $teaser = $body !== ''
+                ? (mb_strlen($body) > 110 ? mb_substr($body, 0, 107).'…' : $body)
+                : null;
+            $piece = array_filter([
+                'news_id' => (int) $news->id,
+                'title' => (string) $news->title,
+                'body' => $body !== '' ? $body : null,
+                'teaser' => $teaser,
+                'rumuz' => $rumuz,
+                'anonymous' => $anonymous,
+                'created_at' => now()->toIso8601String(),
+            ], static fn ($v) => $v !== null && $v !== '');
+
+            $articles = is_array($slot['articles'] ?? null) ? $slot['articles'] : [];
+            $articles[] = $piece;
+            $slot['articles'] = array_slice($articles, -16);
+
+            $slot['body'] = $body;
+            $slot['teaser'] = $teaser;
             $slot['news_id'] = $news->id;
-            if (! empty($news->title)) {
-                $slot['title'] = $slot['title'] ?? $news->title;
-            }
+            $slot['rumuz'] = $rumuz;
             $updated = true;
             break;
         }
@@ -1061,6 +1063,33 @@ class GazetteIssueService
 
     /**
      * @param  Collection<int, News>  $allNews
+     * @return Collection<int, News>
+     */
+    protected function resolveMastheadArticles(GazetteIssue $issue, Collection $allNews): Collection
+    {
+        $layout = $issue->coverLayout();
+        $ids = collect($layout['masthead_news_ids'] ?? [])
+            ->prepend($layout['lead_news_id'] ?? null)
+            ->filter()
+            ->map(static fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        if ($ids->isNotEmpty()) {
+            return $ids
+                ->map(fn (int $id) => $allNews->firstWhere('id', $id))
+                ->filter(fn ($item) => $item instanceof News)
+                ->values();
+        }
+
+        return $allNews
+            ->filter(fn (News $item) => $this->publicNews->isSliderMasthead($item))
+            ->take(8)
+            ->values();
+    }
+
+    /**
+     * @param  Collection<int, News>  $allNews
      * @return array{lead: ?News, briefs: array<int, ?News>, inner: Collection<int, News>}
      */
     protected function resolveCoverArticles(GazetteIssue $issue, Collection $allNews): array
@@ -1082,8 +1111,18 @@ class GazetteIssueService
             $briefs[] = $item;
         }
 
+        $leadId = $lead instanceof News ? (int) $lead->id : null;
         $inner = $allNews
-            ->filter(fn (News $n) => ! $this->isCornerColumnNews($n))
+            ->filter(function (News $n) use ($leadId) {
+                if ($this->isCornerColumnNews($n)) {
+                    return false;
+                }
+                if ($leadId && (int) $n->id === $leadId) {
+                    return false;
+                }
+
+                return ! $this->publicNews->isSliderMasthead($n);
+            })
             ->values();
 
         return [
@@ -1316,6 +1355,30 @@ class GazetteIssueService
 
         $layout = $issue->coverLayout();
         if ($kind === 'lead') {
+            $previousLead = (int) ($layout['lead_news_id'] ?? 0);
+            if ($previousLead > 0 && $previousLead !== (int) $news->id) {
+                $mastheads = $layout['masthead_news_ids'] ?? [];
+                if (! in_array($previousLead, $mastheads, true)) {
+                    $mastheads[] = $previousLead;
+                }
+                $layout['masthead_news_ids'] = array_values(array_slice(array_unique($mastheads), -12));
+
+                $previous = News::query()->find($previousLead);
+                if ($previous) {
+                    $prevStats = is_array($previous->stats) ? $previous->stats : [];
+                    $prevStats['gazette_placement'] = 'masthead_slider';
+                    $previous->forceFill([
+                        'stats' => $prevStats,
+                        'is_breaking' => false,
+                    ])->saveQuietly();
+                }
+            }
+
+            $mastheads = $layout['masthead_news_ids'] ?? [];
+            if (! in_array((int) $news->id, $mastheads, true)) {
+                $mastheads[] = (int) $news->id;
+            }
+            $layout['masthead_news_ids'] = array_values(array_slice(array_unique($mastheads), -12));
             $layout['lead_news_id'] = $news->id;
         } elseif ($kind === 'brief') {
             $idx = max(0, min(4, (int) ($submission['gazette_slot_key'] ?? 0)));
@@ -1385,7 +1448,7 @@ class GazetteIssueService
                 'news as article_count' => fn ($q) => $q->where('status', 'published')->where('is_active', true),
             ]), ! $contextIssue->isExtra()),
             'archive' => $this->archiveList(),
-            'featured' => array_slice($list['data'], 0, 1),
+            'featured' => [],
             'types' => collect(config('news.types', []))->map(fn ($cfg, $key) => [
                 'key' => $key,
                 'label' => $cfg['label'],
@@ -1422,12 +1485,17 @@ class GazetteIssueService
         ]), false);
         $issuePayload['cover_lead'] = $lead ? $this->publicNews->transformItem($lead) : null;
         $issuePayload['cover_briefs'] = [];
-        $issuePayload['cover_mastheads'] = $lead ? [$this->publicNews->transformItem($lead)] : [];
+        $allForMast = $this->publicNews->publishedForIssue($issue->id, $newsType, $search);
+        $mastheads = collect($this->resolveMastheadArticles($issue, $allForMast))
+            ->map(fn (News $item) => $this->publicNews->transformItem($item))
+            ->values()
+            ->all();
+        $issuePayload['cover_mastheads'] = $mastheads;
 
         return [
             'issue' => $issuePayload,
             'archive' => $this->archiveList(),
-            'featured' => $lead ? [$this->publicNews->transformItem($lead)] : [],
+            'featured' => $mastheads,
             'types' => collect(config('news.types', []))->map(fn ($cfg, $key) => [
                 'key' => $key,
                 'label' => $cfg['label'],

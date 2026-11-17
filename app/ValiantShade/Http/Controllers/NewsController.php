@@ -1180,4 +1180,35 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
 
         return redirect()->route($redirectRoute)->with('error', $message);
     }
+
+    public function editorialReaction(Request $request, int $id): JsonResponse
+    {
+        $this->authorizeNewsManagement('update');
+
+        $validated = $request->validate([
+            'reaction' => 'required|string|in:victory,mourning,whisper,bounty',
+        ]);
+
+        $news = News::query()->findOrFail($id);
+        $labels = [
+            'victory' => 'Zafer kutlandı',
+            'mourning' => 'Yas tutuldu',
+            'whisper' => 'Han fısıltısı',
+            'bounty' => 'Ferman kaydı',
+        ];
+
+        \App\ValiantShade\Support\NewsEngagement::recordEditorialReaction(
+            $news,
+            $validated['reaction'],
+            $labels[$validated['reaction']],
+        );
+
+        app(\App\ValiantShade\Services\PublicNewsService::class)->invalidatePublicFeed();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Editör tepkisi kaydedildi.',
+            'stats' => $news->fresh()->stats,
+        ]);
+    }
 }

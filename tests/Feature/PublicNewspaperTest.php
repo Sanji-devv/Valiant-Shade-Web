@@ -64,13 +64,8 @@ class PublicNewspaperTest extends TestCase
             ->assertDontSee('id="printGazetteBtn" hidden', false)
             ->assertSee('id="downloadGazettePngBtn"', false)
             ->assertDontSee('id="downloadGazettePngBtn" hidden', false)
-            ->assertSee('id="openHotExtraModal"', false);
-
-        $content = $response->getContent();
-        $this->assertLessThan(
-            strpos($content, 'id="openHotExtraModal"'),
-            strpos($content, 'id="downloadGazettePngBtn"'),
-        );
+            ->assertSee('id="openRumorModal"', false)
+            ->assertDontSee('id="openHotExtraModal"', false);
     }
 
     public function test_whatsapp_preview_meta_for_shared_article_link(): void
@@ -381,6 +376,48 @@ class PublicNewspaperTest extends TestCase
         $emptyExtraBootstrap->assertOk()
             ->assertJsonPath('feed.meta.sheet_kind', 'search');
         $this->assertCount(2, $emptyExtraBootstrap->json('feed.data') ?? []);
+    }
+
+    public function test_lead_submission_does_not_require_news_type(): void
+    {
+        $service = app(\App\ValiantShade\Services\GazetteIssueService::class);
+        $service->syncWeeklyIssues();
+        $weekly = \App\Models\GazetteIssue::query()
+            ->where('issue_kind', 'weekly')
+            ->where('is_current', true)
+            ->first();
+        $this->assertNotNull($weekly);
+
+        $response = $this->postJson('/api/public/news/submissions', [
+            'title' => 'Manşet deneme başlığı uzun metin',
+            'description' => 'Bu kısa manşet metni slayt alanında dönecek.',
+            'gazette_slot_kind' => 'lead',
+            'gazette_issue_id' => $weekly->id,
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('success', true);
+    }
+
+    public function test_engagement_metrics_increment_on_show_and_share(): void
+    {
+        $news = News::create([
+            'title' => 'Ölçüm testi haber başlığı uzun',
+            'category' => 'Yerel Haberler',
+            'news_type' => 'local_news',
+            'status' => 'published',
+            'description' => 'Okunma ve paylaşım sayaçları artmalı.',
+            'image_url' => 'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg',
+            'is_active' => true,
+        ]);
+
+        $this->getJson('/api/public/news/'.$news->id)->assertOk();
+        $news->refresh();
+        $this->assertGreaterThanOrEqual(1, (int) $news->views_count);
+
+        $this->postJson('/api/public/news/'.$news->id.'/engagement', ['metric' => 'shares'])
+            ->assertOk()
+            ->assertJsonPath('success', true);
     }
 
     public function test_cache_version_bumps_after_news_change(): void
