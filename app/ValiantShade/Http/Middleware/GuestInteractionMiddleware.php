@@ -25,6 +25,7 @@ class GuestInteractionMiddleware
         'valiant-shade.pages-account-settings-account.deactivate',
         'valiant-shade.gods.index',
         'valiant-shade.gods.show',
+        'valiant-shade.gods.update',
         'login',
     ];
 
