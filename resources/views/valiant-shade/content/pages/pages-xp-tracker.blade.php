@@ -16,17 +16,6 @@
     transform: translateY(-3px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
   }
-  .floating-batch-bar {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%) translateY(120%);
-    z-index: 1060;
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .floating-batch-bar.show {
-    transform: translateX(-50%) translateY(0);
-  }
   .progress-bar-animated-smooth {
     transition: width 0.6s ease-in-out;
   }
@@ -82,6 +71,98 @@
   .table-responsive-xp::-webkit-scrollbar-thumb:hover {
     background: rgba(115, 103, 240, 0.65);
   }
+
+  .xp-toolbar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .xp-toolbar-btn {
+    display: inline-flex;
+    width: 9rem;
+    min-width: 9rem;
+    height: 2.25rem;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    padding-right: 0.5rem;
+    padding-left: 0.5rem;
+  }
+  .xp-view-toggle .xp-toolbar-btn {
+    width: 6.5rem;
+    min-width: 6.5rem;
+  }
+  .xp-toolbar-btn-icon {
+    width: 2.25rem;
+    min-width: 2.25rem;
+    padding: 0;
+  }
+  .xp-row-actions > .btn,
+  .xp-row-actions .dropdown > .btn {
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .xp-row-actions .btn-quick-xp {
+    width: 3.25rem;
+  }
+  .xp-row-actions > .btn-open-profile {
+    width: auto;
+    min-width: 4.5rem;
+    padding: 0 0.65rem;
+  }
+  .xp-filter-menu {
+    min-width: 13rem;
+    max-height: 18rem;
+    overflow-y: auto;
+  }
+  .xp-filter-controls .xp-toolbar-btn:not(.xp-toolbar-btn-icon) {
+    width: 8rem;
+    min-width: 8rem;
+  }
+  .xp-filter-controls .xp-toolbar-btn-icon {
+    flex: 0 0 2.25rem;
+  }
+  .xp-filter-controls .input-group {
+    width: 10rem;
+    min-width: 10rem !important;
+    max-width: 10rem !important;
+  }
+  .xp-fallen-highlight #tab-fallen-btn.active {
+    background-color: var(--bs-danger);
+    border-color: var(--bs-danger);
+    color: #fff !important;
+  }
+  .xp-fallen-highlight #tab-fallen-btn.active .badge {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    color: #fff !important;
+  }
+  .xp-fallen-highlight .fallen-row td:first-child {
+    box-shadow: inset 3px 0 0 var(--bs-danger);
+  }
+  .xp-fallen-highlight .fallen-row:hover {
+    background-color: rgba(234, 84, 85, 0.08) !important;
+  }
+  .xp-fallen-highlight .fallen-row .card {
+    border-color: rgba(234, 84, 85, 0.45) !important;
+  }
+  @media (max-width: 575.98px) {
+    .xp-toolbar-actions > * {
+      flex: 1 1 auto;
+    }
+    .xp-toolbar-btn {
+      width: 100%;
+      min-width: 0;
+    }
+    .xp-view-toggle .xp-toolbar-btn {
+      width: 50%;
+      min-width: 0;
+    }
+  }
 </style>
 @endsection
 
@@ -101,81 +182,35 @@
       </span>
       <span>Player XP Tracker</span>
     </h4>
-    <p class="text-body-secondary small mb-0">{{ __('Valiant Shade guild adventurer experience points, level progression and Hall of Fame.') }}</p>
+    <p class="text-body-secondary small mb-0">{{ __('Valiant Shade character experience points, levels and fallen / retired records.') }}</p>
   </div>
 
-  <div class="d-flex align-items-center gap-2 flex-wrap">
+  <div class="xp-toolbar-actions">
     <!-- View Mode Switcher: Table vs Cards -->
-    <div class="btn-group btn-group-sm p-1 bg-body border rounded-pill shadow-xs" role="group" aria-label="{{ __('Detailed Table View') }}">
-      <button type="button" class="btn btn-xs rounded-pill px-3 py-1_5 active fw-semibold" id="btnViewTable" title="{{ __('Detailed Table View') }}">
+    <div class="btn-group btn-group-sm p-0 bg-body border rounded-pill shadow-xs xp-view-toggle" role="group" aria-label="{{ __('Detailed Table View') }}">
+      <button type="button" class="btn btn-sm rounded-pill px-3 active fw-semibold xp-toolbar-btn" id="btnViewTable" title="{{ __('Detailed Table View') }}">
         <i class="icon-base ti tabler-table me-1"></i> {{ __('Table') }}
       </button>
-      <button type="button" class="btn btn-xs rounded-pill px-3 py-1_5 fw-semibold" id="btnViewCards" title="{{ __('RPG Character Cards View') }}">
+      <button type="button" class="btn btn-sm rounded-pill px-3 fw-semibold xp-toolbar-btn" id="btnViewCards" title="{{ __('RPG Character Cards View') }}">
         <i class="icon-base ti tabler-layout-grid me-1"></i> {{ __('Cards') }}
       </button>
     </div>
 
-    <!-- Export Dropdown (Demo-Vuexy Style) -->
-    <div class="dropdown">
-      <button type="button" class="btn btn-label-secondary btn-sm rounded-pill dropdown-toggle waves-effect shadow-xs" data-bs-toggle="dropdown" aria-expanded="false">
-        <i class="icon-base ti tabler-upload me-1"></i> {{ __('Export') }}
-      </button>
-      <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-        <li>
-          <a class="dropdown-item d-flex align-items-center" href="{{ route('valiant-shade.pages-xp-tracker', ['export' => 'csv']) }}">
-            <i class="icon-base ti tabler-file-text me-2 text-primary"></i> {{ __('Download CSV') }}
-          </a>
-        </li>
-        <li>
-          <a class="dropdown-item d-flex align-items-center" href="javascript:window.print();">
-            <i class="icon-base ti tabler-printer me-2 text-info"></i> {{ __('Print Page') }}
-          </a>
-        </li>
-      </ul>
-    </div>
-
-    <!-- Group Actions -->
     @if($isAdmin)
-      <div class="dropdown">
-        <button type="button" class="btn btn-label-primary btn-sm rounded-pill dropdown-toggle waves-effect shadow-xs" data-bs-toggle="dropdown" aria-expanded="false">
-          <i class="icon-base ti tabler-users-group me-1"></i> {{ __('Group / Batch') }}
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-          <li>
-            <a class="dropdown-item d-flex align-items-center" href="javascript:void(0);" id="btnTriggerPartyXp">
-              <i class="icon-base ti tabler-sparkles me-2 text-success"></i> {{ __('Distribute Party Quest XP') }}
-            </a>
-          </li>
-          <li>
-            <a class="dropdown-item d-flex align-items-center" href="javascript:void(0);" id="btnSelectAllRows">
-              <i class="icon-base ti tabler-checks me-2 text-primary"></i> {{ __('Select All Adventurers') }}
-            </a>
-          </li>
-        </ul>
-      </div>
-
-      <!-- Reset Defaults -->
-      <button type="button" class="btn btn-label-warning btn-sm rounded-pill waves-effect shadow-xs" id="btnResetDefaults" title="{{ __('Reset to Original Master Sheet Data') }}">
-        <i class="icon-base ti tabler-rotate-clockwise-2 me-1"></i> {{ __('Reset Defaults') }}
-      </button>
-
       @if(auth()->user()?->isAdmin())
         <input type="file" id="xpTrackerJsonFile" accept=".json,application/json" class="d-none">
-        <button type="button" class="btn btn-label-info btn-sm rounded-pill waves-effect shadow-xs" id="btnImportXp">
-          <i class="icon-base ti tabler-database-import me-1"></i> {{ __('Import Data') }}
-        </button>
-        <button type="button" class="btn btn-label-info btn-sm rounded-pill waves-effect shadow-xs" id="btnLinkReportXp">
-          <i class="icon-base ti tabler-link me-1"></i> {{ __('Link Report XP') }}
-        </button>
-        <button type="button" class="btn btn-label-danger btn-sm rounded-pill waves-effect shadow-xs" id="btnClearXp">
-          <i class="icon-base ti tabler-trash me-1"></i> {{ __('Delete All XP Records') }}
-        </button>
+        <div class="dropdown">
+          <button type="button" class="btn btn-label-secondary btn-sm rounded-pill dropdown-toggle xp-toolbar-btn" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="icon-base ti tabler-settings me-1"></i> {{ __('Data Tools') }}
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+            <li><button type="button" class="dropdown-item" id="btnImportXp"><i class="icon-base ti tabler-database-import me-2 text-info"></i>{{ __('Import Data') }}</button></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><button type="button" class="dropdown-item text-danger" id="btnClearXp"><i class="icon-base ti tabler-trash me-2"></i>{{ __('Delete All XP Records') }}</button></li>
+          </ul>
+        </div>
       @endif
 
-      <!-- Add Adventurer Button (Opens Offcanvas Drawer like Demo-Vuexy) -->
-      <button type="button" class="btn btn-primary btn-sm rounded-pill waves-effect waves-light shadow-xs" data-bs-toggle="offcanvas" data-bs-target="#offcanvasAddAdventurer">
-        <i class="icon-base ti tabler-plus me-1"></i> {{ __('Add New Adventurer') }}
-      </button>
     @else
       <span class="badge bg-label-secondary rounded-pill d-flex align-items-center gap-1 py-2 px-3 shadow-xs">
         <i class="icon-base ti tabler-lock fs-6 text-warning"></i>
@@ -186,19 +221,22 @@
 </div>
 
 <!-- Statistical Metric Cards (Vuexy KPI Cards) -->
+@php
+  $fallenCount = $allAdventurers->filter(fn ($adv) => in_array($adv->status, ['kia', 'mia', 'retired'], true))->count();
+@endphp
 <div class="row g-4 mb-4">
-  <!-- Card 1: Guild Members (Aktif Kadro) -->
+  <!-- Card 1: Character Roster -->
   <div class="col-12 col-sm-6 col-xl-3">
-    <div class="card h-100 shadow-none border cursor-pointer filter-card" data-filter="guild" title="{{ __('Filter Active Guild Roster') }}">
+    <div class="card h-100 shadow-none border cursor-pointer filter-card" data-filter="roster" title="{{ __('Filter Character Roster') }}">
       <div class="card-body p-4">
         <div class="d-flex align-items-start justify-content-between mb-2">
           <div class="content-left">
-            <span class="text-heading fw-semibold">{{ __('Active Guild Roster') }}</span>
+            <span class="text-heading fw-semibold">{{ __('Characters in Roster') }}</span>
             <div class="d-flex align-items-baseline gap-2 my-1">
-              <h3 class="mb-0 fw-bold text-heading font-monospace text-primary" id="statGuildCount">
-                {{ $statistics['guild_count'] ?? 0 }}
+              <h3 class="mb-0 fw-bold text-heading font-monospace text-primary" id="statRosterCount">
+                {{ $statistics['total_active_count'] ?? 0 }}
               </h3>
-              <span class="badge bg-label-primary font-monospace">{{ __('Members') }}</span>
+              <span class="badge bg-label-primary font-monospace">{{ __('Characters') }}</span>
             </div>
           </div>
           <div class="avatar">
@@ -208,34 +246,34 @@
           </div>
         </div>
         <div class="mt-2 pt-2 border-top">
-          <small class="text-body-secondary">{{ __('Active guild members excluding candidates and inactives') }}</small>
+          <small class="text-body-secondary">{{ __('Candidates and inactive characters are included') }}</small>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Card 2: Candidates (Adaylar) -->
+  <!-- Card 2: Total Characters -->
   <div class="col-12 col-sm-6 col-xl-3">
-    <div class="card h-100 shadow-none border cursor-pointer filter-card" data-filter="candidate" title="{{ __('Filter Candidate Adventurers') }}">
+    <div class="card h-100 shadow-none border">
       <div class="card-body p-4">
         <div class="d-flex align-items-start justify-content-between mb-2">
           <div class="content-left">
-            <span class="text-heading fw-semibold">{{ __('Candidates (New List)') }}</span>
+            <span class="text-heading fw-semibold">{{ __('Total Characters') }}</span>
             <div class="d-flex align-items-baseline gap-2 my-1">
-              <h3 class="mb-0 fw-bold text-heading font-monospace text-info" id="statCandidateCount">
-                {{ $statistics['candidate_count'] ?? 0 }}
+              <h3 class="mb-0 fw-bold text-heading font-monospace text-info" id="statTotalCharacters">
+                {{ $allAdventurers->count() }}
               </h3>
-              <span class="badge bg-label-info font-monospace">{{ __('Candidate') }}</span>
+              <span class="badge bg-label-info font-monospace">{{ __('Records') }}</span>
             </div>
           </div>
           <div class="avatar">
             <span class="avatar-initial rounded-3 bg-label-info">
-              <i class="icon-base ti tabler-user-plus icon-26px"></i>
+              <i class="icon-base ti tabler-users icon-26px"></i>
             </span>
           </div>
         </div>
         <div class="mt-2 pt-2 border-top">
-          <small class="text-body-secondary">{{ __('Candidates being evaluated for guild membership') }}</small>
+          <small class="text-body-secondary">{{ __('All tracked player characters') }}</small>
         </div>
       </div>
     </div>
@@ -270,23 +308,23 @@
     </div>
   </div>
 
-  <!-- Card 4: Hall of Fallen (KIA / MIA) -->
+  <!-- Card 4: Fallen and Retired -->
   <div class="col-12 col-sm-6 col-xl-3">
-    <div class="card h-100 shadow-none border cursor-pointer filter-card" data-filter="fallen" title="{{ __('Hall of Fame (KIA / MIA)') }}">
+    <div class="card h-100 shadow-none border cursor-pointer filter-card" data-filter="fallen" title="{{ __('Fallen / Retired') }}">
       <div class="card-body p-4">
         <div class="d-flex align-items-start justify-content-between mb-2">
           <div class="content-left">
-            <span class="text-heading fw-semibold">{{ __('Hall of Fame (KIA / MIA)') }}</span>
+            <span class="text-heading fw-semibold">{{ __('Fallen / Retired') }}</span>
             <div class="d-flex align-items-baseline gap-2 my-1">
               <h3 class="mb-0 fw-bold text-heading font-monospace text-danger" id="statFallenCount">
-                {{ $statistics['total_fallen_count'] ?? 0 }}
+                {{ $fallenCount }}
               </h3>
-              <span class="badge bg-label-danger font-monospace">Fallen</span>
+              <span class="badge bg-label-danger font-monospace">{{ __('Records') }}</span>
             </div>
           </div>
           <div class="avatar">
             <span class="avatar-initial rounded-3 bg-label-danger">
-              <i class="icon-base ti tabler-tombstone icon-26px"></i>
+              <i class="icon-base ti tabler-skull icon-26px"></i>
             </span>
           </div>
         </div>
@@ -298,149 +336,89 @@
   </div>
 </div>
 
-<!-- Pathfinder Fast Progression Interactive Reference Bar -->
-<div class="card mb-4 border-0 shadow-none" style="background: linear-gradient(72.47deg, rgba(115, 103, 240, 0.12) 0%, rgba(115, 103, 240, 0.03) 100%);">
-  <div class="card-body py-2 px-3">
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
-      <div class="d-flex align-items-center gap-2">
-        <span class="avatar avatar-xs rounded-2 bg-label-primary d-flex align-items-center justify-content-center">
-          <i class="icon-base ti tabler-chart-arrows fs-6"></i>
-        </span>
-        <span class="small fw-semibold text-heading">{{ __('Pathfinder 1e Fast Progression Level Chart:') }}</span>
-      </div>
-      <button class="btn btn-xs btn-label-primary rounded-pill" type="button" data-bs-toggle="collapse" data-bs-target="#collapseProgression" aria-expanded="false" aria-controls="collapseProgression">
-        <i class="icon-base ti tabler-eye me-1"></i> {{ __('Show Level Thresholds') }}
-      </button>
-    </div>
-
-    <div class="collapse mt-2 pt-2 border-top" id="collapseProgression">
-      <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
-        @foreach($fastThresholds as $lvl => $thresh)
-          @if($lvl >= 1 && $lvl <= 12)
-            <span class="badge bg-body border text-heading font-monospace px-2 py-1 shadow-xs">
-              <strong class="text-primary">Lv {{ $lvl }}:</strong> {{ number_format($thresh) }} XP
-            </span>
-          @endif
-        @endforeach
-        <span class="badge bg-body border text-body-secondary font-monospace px-2 py-1 shadow-xs">
-          Lv 13 - 20: 210k - 2.4M XP
-        </span>
-      </div>
-
-      <!-- Exact Level / XP / Failsafe Enum Table -->
-      <div class="table-responsive rounded border bg-body p-2" style="max-height: 280px; overflow-y: auto;">
-        <table class="table table-sm table-striped text-center font-monospace mb-0" style="font-size: 0.8rem;">
-          <thead class="table-light">
-            <tr>
-              <th class="fw-bold">{{ __('Level') }}</th>
-              <th class="fw-bold">{{ __('XP (Threshold)') }}</th>
-              <th class="fw-bold">{{ __('Failsafe') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @foreach($fastThresholds as $lvl => $thresh)
-              <tr>
-                <td class="fw-bold text-primary">{{ $lvl }}</td>
-                <td>{{ number_format($thresh) }}</td>
-                <td class="text-body-secondary">{{ $xpFailsafes[$lvl] ?? $lvl }}</td>
-              </tr>
-            @endforeach
-          </tbody>
-        </table>
-      </div>
-      <small class="text-body-secondary mt-1 d-block text-end" style="font-size: 0.72rem;">
-        <i class="icon-base ti tabler-file-code me-1"></i>{{ __('Source Enum:') }} <code>config/enums/xp_levels.php</code>
-      </small>
-    </div>
-  </div>
-</div>
-
 <!-- Main Content Area: Interactive Tabs & Filtering Bar -->
-<div class="card border shadow-none mb-4">
-  <!-- Card Header with Filters (Organized 2-Row Clean Layout) -->
-  <div class="card-header border-bottom p-0">
-    <!-- Top Row: Filter Pills Navigation -->
-    <div class="p-3 pb-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
+<div class="card border shadow-none mb-4" id="xpTrackerCard">
+  <div class="card-header border-bottom p-3">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
       <ul class="nav nav-pills card-header-pills flex-wrap gap-1" id="xpTrackerTabs" role="tablist">
         <li class="nav-item" role="presentation">
-          <button class="nav-link active d-flex align-items-center gap-2 rounded-pill px-3 py-2 tab-filter-btn" data-filter="guild" id="tab-guild-btn" type="button">
+          <button class="nav-link active d-flex align-items-center gap-2 rounded-pill px-3 py-2 tab-filter-btn" data-filter="roster" id="tab-guild-btn" type="button">
             <i class="icon-base ti tabler-shield-check fs-5"></i>
-            <span class="fw-semibold">{{ __('Active Roster (Guild Members)') }}</span>
-            <span class="badge rounded-pill bg-primary ms-1" id="badgeGuildCount">{{ $statistics['guild_count'] ?? 0 }}</span>
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link d-flex align-items-center gap-2 rounded-pill px-3 py-2 tab-filter-btn" data-filter="candidate" id="tab-candidates-btn" type="button">
-            <i class="icon-base ti tabler-user-plus fs-5"></i>
-            <span class="fw-semibold">{{ __('Candidates') }}</span>
-            <span class="badge rounded-pill bg-label-info ms-1" id="badgeCandidateCount">{{ $statistics['candidate_count'] ?? 0 }}</span>
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link d-flex align-items-center gap-2 rounded-pill px-3 py-2 tab-filter-btn" data-filter="inactive" id="tab-inactives-btn" type="button">
-            <i class="icon-base ti tabler-user-off fs-5"></i>
-            <span class="fw-semibold">{{ __('Inactives') }}</span>
-            <span class="badge rounded-pill bg-label-dark ms-1" id="badgeInactiveCount">{{ $statistics['inactive_count'] ?? 0 }}</span>
+            <span class="fw-semibold">{{ __('Characters') }}</span>
+            <span class="badge rounded-pill bg-primary ms-1" id="badgeGuildCount">{{ $statistics['total_active_count'] ?? 0 }}</span>
           </button>
         </li>
         <li class="nav-item" role="presentation">
           <button class="nav-link d-flex align-items-center gap-2 rounded-pill px-3 py-2 text-danger tab-filter-btn" data-filter="fallen" id="tab-fallen-btn" type="button">
-            <i class="icon-base ti tabler-tombstone fs-5"></i>
-            <span class="fw-semibold">{{ __('Hall of Fame (KIA / MIA)') }}</span>
-            <span class="badge rounded-pill bg-label-danger ms-1" id="badgeFallenCount">{{ $statistics['total_fallen_count'] ?? 0 }}</span>
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link d-flex align-items-center gap-2 rounded-pill px-3 py-2 tab-filter-btn" data-filter="all" id="tab-all-btn" type="button">
-            <i class="icon-base ti tabler-users fs-5"></i>
-            <span class="fw-semibold">{{ __('All Records') }}</span>
-            <span class="badge rounded-pill bg-label-secondary ms-1" id="badgeAllCount">{{ $allAdventurers->count() }}</span>
+            <i class="icon-base ti tabler-skull fs-5"></i>
+            <span class="fw-semibold">{{ __('Fallen / Retired') }}</span>
+            <span class="badge rounded-pill bg-label-danger ms-1" id="badgeFallenCount">{{ $fallenCount }}</span>
           </button>
         </li>
       </ul>
-    </div>
-
-    <!-- Bottom Row: Filter Controls Bar -->
-    <div class="px-3 py-2_5 border-top d-flex flex-wrap justify-content-between align-items-center gap-3 bg-label-secondary bg-opacity-10">
-      <!-- Left: Switches -->
-      <div class="d-flex align-items-center gap-3 flex-wrap">
-        <div class="form-check form-switch mb-0 d-flex align-items-center" title="{{ __('Hide Inactives') }}">
-          <input class="form-check-input me-1_5 cursor-pointer" type="checkbox" role="switch" id="chkHideInactive">
-          <label class="form-check-label small fw-semibold cursor-pointer user-select-none" for="chkHideInactive">{{ __('Hide Inactives') }}</label>
-        </div>
-        <div class="vr my-1 opacity-25 d-none d-sm-block"></div>
-        <div class="form-check form-switch mb-0 d-flex align-items-center" title="{{ __('Hide Candidates') }}">
-          <input class="form-check-input me-1_5 cursor-pointer" type="checkbox" role="switch" id="chkHideCandidates">
-          <label class="form-check-label small fw-semibold cursor-pointer user-select-none" for="chkHideCandidates">{{ __('Hide Candidates') }}</label>
-        </div>
-      </div>
-
-      <!-- Right: Search Input, Ranks, Levels, Clear -->
-      <div class="d-flex align-items-center gap-2 flex-wrap ms-auto">
+      @if($isAdmin)
+        <button type="button" class="btn btn-primary btn-sm rounded-pill waves-effect waves-light shadow-xs xp-toolbar-btn" id="btnAddPlayerCharacter" data-bs-toggle="offcanvas" data-bs-target="#offcanvasAddAdventurer">
+          <i class="icon-base ti tabler-plus me-1"></i> {{ __('Add Player / Character') }}
+        </button>
+      @endif
+      <div class="d-flex align-items-center gap-2 flex-wrap ms-auto xp-filter-controls">
         <!-- Search Input -->
         <div class="input-group input-group-merge input-group-sm" style="min-width: 170px; max-width: 220px;">
           <span class="input-group-text"><i class="icon-base ti tabler-search fs-6"></i></span>
           <input type="text" class="form-control" id="searchTable" placeholder="{{ __('Search character...') }}" value="{{ $filters['search'] ?? '' }}">
         </div>
 
-        <!-- Rank Filter -->
-        <select class="form-select form-select-sm w-auto" id="filterRank" aria-label="{{ __('Rank Filter') }}">
-          <option value="">{{ __('All Ranks') }}</option>
-          @foreach($ranks as $rk)
-            <option value="{{ $rk }}" {{ ($filters['rank'] ?? '') === $rk ? 'selected' : '' }}>{{ __($rk) }}</option>
-          @endforeach
-        </select>
+        <div class="dropdown">
+          <button type="button" class="btn btn-sm btn-label-secondary dropdown-toggle xp-toolbar-btn" id="btnRankFilter" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+            <i class="icon-base ti tabler-filter me-1"></i> <span id="rankFilterLabel">{{ __('All Ranks') }}</span>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end p-2 xp-filter-menu" aria-labelledby="btnRankFilter" id="rankFilterMenu">
+            @foreach($ranks as $rk)
+              <label class="dropdown-item rounded d-flex align-items-center gap-2 py-2">
+                <input class="form-check-input m-0 rank-filter-option" type="checkbox" value="{{ $rk }}">
+                <span>{{ __($rk) }}</span>
+              </label>
+            @endforeach
+            <div class="dropdown-divider"></div>
+            <button type="button" class="dropdown-item text-primary" id="btnClearRanks">{{ __('Clear Rank Filters') }}</button>
+          </div>
+        </div>
 
-        <!-- Level Filter -->
-        <select class="form-select form-select-sm w-auto" id="filterLevel" aria-label="{{ __('Level Filter') }}">
+        <select class="form-select form-select-sm w-auto xp-toolbar-btn" id="filterLevel" aria-label="{{ __('Level Filter') }}">
           <option value="">{{ __('All Levels') }}</option>
           @for($i = 1; $i <= 20; $i++)
             <option value="{{ $i }}" {{ ($filters['level'] ?? '') == $i ? 'selected' : '' }}>{{ __('Level') }} {{ $i }}</option>
           @endfor
         </select>
 
-        <!-- Clear Filters Button -->
-        <button type="button" class="btn btn-sm btn-icon btn-label-secondary rounded-pill" id="btnClearFilters" title="{{ __('Clear Filters') }}">
+        <div class="dropdown">
+          <button type="button" class="btn btn-sm btn-label-secondary dropdown-toggle xp-toolbar-btn" id="btnStatusFilter" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+            <i class="icon-base ti tabler-adjustments me-1"></i> <span id="statusFilterLabel">{{ __('All Statuses') }}</span>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end p-2 xp-filter-menu" aria-labelledby="btnStatusFilter" id="statusFilterMenu">
+            @foreach(['kia' => __('KIA'), 'mia' => __('MIA'), 'retired' => __('Retired')] as $statusValue => $statusLabel)
+              <label class="dropdown-item rounded d-flex align-items-center gap-2 py-2">
+                <input class="form-check-input m-0 status-filter-option" type="checkbox" value="{{ $statusValue }}" checked>
+                <span>{{ $statusLabel }}</span>
+              </label>
+            @endforeach
+          </div>
+        </div>
+
+        <div class="dropdown">
+          <button type="button" class="btn btn-sm btn-icon btn-label-secondary rounded-pill xp-toolbar-btn xp-toolbar-btn-icon" id="btnXpSettings" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" title="{{ __('Settings') }}">
+            <i class="icon-base ti tabler-settings fs-6"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 250px;">
+            <div class="fw-semibold text-heading mb-2">{{ __('Settings') }}</div>
+            <label class="form-check form-switch mb-0">
+              <input class="form-check-input" type="checkbox" role="switch" id="chkFallenRed">
+              <span class="form-check-label small">{{ __('Use red color for fallen / retired tab') }}</span>
+            </label>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-sm btn-icon btn-label-secondary rounded-pill xp-toolbar-btn xp-toolbar-btn-icon" id="btnClearFilters" title="{{ __('Clear Filters') }}">
           <i class="icon-base ti tabler-refresh fs-6"></i>
         </button>
       </div>
@@ -453,11 +431,8 @@
       <table class="table table-hover align-middle mb-0 xp-tracker-table" id="tableMainAdventurers">
         <thead class="table-light">
           <tr>
-            <th style="width: 44px; min-width: 44px;" class="text-center ps-3">
-              <input class="form-check-input cursor-pointer" type="checkbox" id="checkSelectAll" title="{{ __('Select All') }}">
-            </th>
-            <th style="min-width: 175px;">{{ __('Adventurer & Player') }}</th>
-            <th class="text-center" style="min-width: 170px; width: 185px;">{{ __('Level & Progress') }}</th>
+            <th style="min-width: 160px;">{{ __('Adventurer & Player') }}</th>
+            <th class="text-center" style="min-width: 150px; width: 165px;">{{ __('Level & Progress') }}</th>
             <th class="text-center" style="min-width: 100px; width: 110px;">{{ __('Rank / Status') }}</th>
             <th class="text-end" style="min-width: 105px; width: 115px;">{{ __('Total XP') }}</th>
             <th class="text-center" style="min-width: 85px; width: 95px;">{{ __('Quests') }}</th>
@@ -473,7 +448,7 @@
         <tbody class="table-border-bottom-0">
           @forelse($allAdventurers as $adv)
             @php
-              $isFallen = in_array($adv->status, ['kia', 'mia']);
+              $isFallen = in_array($adv->status, ['kia', 'mia', 'retired'], true);
               $isKia = $adv->status === 'kia' || strtoupper($adv->reason ?? '') === 'KIA';
               $isMia = $adv->status === 'mia' || strtoupper($adv->reason ?? '') === 'MIA';
               $effectiveLevel = $adv->effective_level;
@@ -489,6 +464,9 @@
               } elseif ($isMia) {
                 $rankColor = 'bg-label-warning';
                 $rankText = 'MIA';
+              } elseif ($adv->status === 'retired') {
+                $rankColor = 'bg-label-danger';
+                $rankText = __('Retired');
               } else {
                 $rankColor = match($adv->rank) {
                   'Clerk' => 'bg-label-info',
@@ -510,20 +488,15 @@
                 default => 'bg-label-secondary'
               };
             @endphp
-            <tr class="adventurer-row" 
+            <tr class="adventurer-row {{ $isFallen ? 'fallen-row' : '' }}" 
                 data-id="{{ $adv->id }}" 
-                data-category="{{ $adv->category }}"
+                data-category="{{ $isFallen ? 'fallen' : $adv->category }}"
                 data-name="{{ strtolower($adv->character_name) }}" 
                 data-player="{{ strtolower($adv->player_name ?? '') }}" 
                 data-rank="{{ $adv->rank }}" 
                 data-level="{{ $effectiveLevel }}"
                 data-status="{{ $adv->status }}">
               
-              <!-- Checkbox -->
-              <td class="text-center ps-3" style="width: 44px;">
-                <input class="form-check-input row-select-check cursor-pointer" type="checkbox" value="{{ $adv->id }}" data-name="{{ $adv->character_name }}">
-              </td>
-
               <!-- Character & Player -->
               <td style="min-width: 175px;">
                 <div class="d-flex align-items-center gap-2_5">
@@ -632,10 +605,10 @@
 
               <!-- Actions -->
               <td class="text-end pe-3" style="min-width: 135px; width: 140px;">
-                <div class="d-flex align-items-center justify-content-end gap-1">
+                <div class="d-flex align-items-center justify-content-end gap-1 xp-row-actions">
                   @if($isAdmin)
                     <!-- Quick XP Button -->
-                    <button type="button" class="btn btn-xs btn-label-success rounded-pill px-2 py-1 btn-quick-xp d-inline-flex align-items-center" 
+                    <button type="button" class="btn btn-xs btn-label-success rounded-pill btn-quick-xp d-inline-flex align-items-center xp-row-action" 
                             data-id="{{ $adv->id }}" 
                             data-name="{{ $adv->character_name }}" 
                             data-xp="{{ $adv->total_xp }}"
@@ -644,7 +617,7 @@
                     </button>
 
                     <!-- Edit Button (Opens Offcanvas) -->
-                    <button type="button" class="btn btn-xs btn-icon btn-label-primary rounded-circle btn-edit-adv" 
+                    <button type="button" class="btn btn-xs btn-icon btn-label-primary rounded-circle btn-edit-adv xp-row-action" 
                             data-id="{{ $adv->id }}"
                             title="{{ __('Edit') }}">
                       <i class="icon-base ti tabler-pencil fs-6"></i>
@@ -652,7 +625,7 @@
 
                     <!-- More Actions Dropdown -->
                     <div class="dropdown">
-                      <button class="btn btn-xs btn-icon btn-label-secondary rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="{{ __('More Actions') }}">
+                      <button class="btn btn-xs btn-icon btn-label-secondary rounded-circle xp-row-action" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="{{ __('More Actions') }}">
                         <i class="icon-base ti tabler-dots-vertical fs-6"></i>
                       </button>
                       <ul class="dropdown-menu dropdown-menu-end shadow-sm">
@@ -688,7 +661,7 @@
                       </ul>
                     </div>
                   @else
-                    <button type="button" class="btn btn-xs btn-label-secondary rounded-pill btn-open-profile" data-id="{{ $adv->id }}">
+                    <button type="button" class="btn btn-xs btn-label-secondary rounded-pill btn-open-profile xp-row-action" data-id="{{ $adv->id }}">
                       <i class="icon-base ti tabler-eye me-1"></i> {{ __('View') }}
                     </button>
                   @endif
@@ -697,7 +670,7 @@
             </tr>
           @empty
             <tr>
-              <td colspan="8" class="text-center py-4 text-body-secondary">
+              <td colspan="7" class="text-center py-4 text-body-secondary">
                 <i class="icon-base ti tabler-info-circle fs-3 d-block mb-1"></i>
                 {{ __('No records found.') }}
               </td>
@@ -719,26 +692,6 @@
   </div>
 </div>
 
-<!-- Floating Multi-Select Action Bar (Shows when 1+ adventurers are checked) -->
-<div class="floating-batch-bar card border shadow-lg px-4 py-2 bg-body" id="floatingBatchBar">
-  <div class="d-flex align-items-center gap-3">
-    <div class="d-flex align-items-center gap-2">
-      <span class="avatar avatar-xs rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" id="floatingSelectedCount">0</span>
-      <span class="text-heading fw-semibold small">{{ __('Adventurers Selected') }}</span>
-    </div>
-    <div class="vr my-1"></div>
-    <button type="button" class="btn btn-sm btn-success rounded-pill waves-effect shadow-xs" id="btnBatchAwardXpModal">
-      <i class="icon-base ti tabler-gift me-1"></i> {{ __('Distribute Batch XP') }}
-    </button>
-    <button type="button" class="btn btn-sm btn-label-danger rounded-pill waves-effect shadow-xs" id="btnBatchStatusChangeModal">
-      <i class="icon-base ti tabler-shield-x me-1"></i> {{ __('Update Status') }}
-    </button>
-    <button type="button" class="btn btn-sm btn-icon btn-label-secondary rounded-circle" id="btnFloatingCancelSelection" title="{{ __('Clear Selection') }}">
-      <i class="icon-base ti tabler-x fs-6"></i>
-    </button>
-  </div>
-</div>
-
 <!-- ================= OFFCANVAS DRAWERS (VUEXY DEMO ARCHITECTURE) ================= -->
 
 <!-- 1. Offcanvas: Add New Adventurer -->
@@ -754,13 +707,35 @@
     <form id="formAddAdventurer">
       @csrf
       <div class="mb-3">
-        <label class="form-label fw-semibold" for="addCharacterName">{{ __('Character Name') }} <span class="text-danger">*</span></label>
-        <input type="text" class="form-control" id="addCharacterName" name="character_name" placeholder="{{ __('e.g. Aki, Argus...') }}" required>
+        <label class="form-label fw-semibold d-block">{{ __('Player Entry') }}</label>
+        <div class="btn-group w-100" role="group" aria-label="{{ __('Player Entry') }}">
+          <input type="radio" class="btn-check" name="addPlayerMode" id="addPlayerModeNew" value="new" checked>
+          <label class="btn btn-outline-primary" for="addPlayerModeNew">{{ __('New Player') }}</label>
+          <input type="radio" class="btn-check" name="addPlayerMode" id="addPlayerModeExisting" value="existing" {{ $xpPlayers->isEmpty() ? 'disabled' : '' }}>
+          <label class="btn btn-outline-primary" for="addPlayerModeExisting">{{ __('Existing Player') }}</label>
+        </div>
+      </div>
+
+      <input type="hidden" id="addPlayerName" name="player_name">
+
+      <div class="mb-3" id="addNewPlayerField">
+        <label class="form-label fw-semibold" for="addNewPlayerName">{{ __('Player Name') }} <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" id="addNewPlayerName" placeholder="{{ __('e.g. Player Name...') }}" required>
+      </div>
+
+      <div class="mb-3 d-none" id="addExistingPlayerField">
+        <label class="form-label fw-semibold" for="addExistingPlayerName">{{ __('Select Player') }} <span class="text-danger">*</span></label>
+        <select class="form-select" id="addExistingPlayerName" disabled>
+          <option value="">{{ __('Select a player...') }}</option>
+          @foreach($xpPlayers as $xpPlayer)
+            <option value="{{ $xpPlayer }}">{{ $xpPlayer }}</option>
+          @endforeach
+        </select>
       </div>
 
       <div class="mb-3">
-        <label class="form-label fw-semibold" for="addPlayerName">{{ __('Player Name') }}</label>
-        <input type="text" class="form-control" id="addPlayerName" name="player_name" placeholder="{{ __('e.g. Player Name...') }}">
+        <label class="form-label fw-semibold" for="addCharacterName">{{ __('Character Name') }} <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" id="addCharacterName" name="character_name" placeholder="{{ __('e.g. Aki, Argus...') }}" required>
       </div>
 
       <div class="row g-2 mb-3">
@@ -1052,55 +1027,6 @@
   </div>
 </div>
 
-<!-- 5. Modal: Batch XP Award (Party Splitter / Multiple Adventurers) -->
-<div class="modal fade" id="modalBatchXp" tabindex="-1" aria-labelledby="modalBatchXpLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header border-bottom pb-3">
-        <h5 class="modal-title fw-bold text-heading d-flex align-items-center gap-2" id="modalBatchXpLabel">
-          <i class="icon-base ti tabler-users-group text-primary"></i>
-          <span>{{ __('Distribute Batch XP to Party / Selection') }}</span>
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('Close') }}"></button>
-      </div>
-      <form id="formBatchXp">
-        @csrf
-        <div class="modal-body py-4">
-          <div class="alert alert-primary d-flex align-items-center gap-2 py-2 px-3 mb-3">
-            <i class="icon-base ti tabler-info-circle fs-5"></i>
-            <span class="small" id="batchXpRecipientsSummary">{{ __('Selected adventurers will be listed...') }}</span>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label fw-semibold" for="batchXpAmount">{{ __('XP to Add Per Adventurer') }} <span class="text-danger">*</span></label>
-            <input type="number" class="form-control form-control-lg font-monospace text-primary fw-bold" id="batchXpAmount" name="amount" placeholder="{{ __('e.g. 750') }}" required min="1" max="500000">
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label fw-semibold" for="batchXpCategory">{{ __('XP Category') }}</label>
-            <select class="form-select" id="batchXpCategory" name="category">
-              <option value="mission" selected>{{ __('Quest XP (+1 Quest Count)') }}</option>
-              <option value="report">{{ __('Report / RP XP') }}</option>
-              <option value="rank">{{ __('Rank Bonus') }}</option>
-              <option value="extra">{{ __('Extra XP') }}</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="form-label small" for="batchXpNote">{{ __('Session / Quest Title') }}</label>
-            <input type="text" class="form-control" id="batchXpNote" name="note" placeholder="{{ __('e.g. Session #15 Goblin Dungeons') }}">
-          </div>
-        </div>
-
-        <div class="modal-footer border-top pt-3">
-          <button type="button" class="btn btn-label-secondary rounded-pill" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
-          <button type="submit" class="btn btn-primary rounded-pill" id="btnSubmitBatchXp">{{ __('Distribute XP to Party') }}</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
 @endsection
 
 @section('page-script')
@@ -1109,15 +1035,9 @@ document.addEventListener('DOMContentLoaded', function() {
   const fastXpThresholds = @json($fastThresholds);
   window.adventurersData = @json($adventurersData);
   window.isAdmin = {{ $isAdmin ? 'true' : 'false' }};
-  let activeTabFilter = 'guild'; // Default tab: Active Roster (Guild Members)
-  let selectedAdventurerIds = [];
+  let activeTabFilter = 'roster';
 
   const i18n = {
-    selectAdventurersTitle: @json(__('Select Adventurers')),
-    selectAdventurersText: @json(__('Please select the adventurers you want to award XP to using the checkboxes.')),
-    ok: @json(__('OK')),
-    recipientsSummary: @json(__(':count adventurers will receive equal XP.', ['count' => '__COUNT__'])),
-    batchXpSuccessTitle: @json(__('Batch XP Distributed!')),
     quickXpSuccessTitle: @json(__('XP Awarded!')),
     updatedTitle: @json(__('Updated!')),
     successTitle: @json(__('Success!')),
@@ -1136,10 +1056,6 @@ document.addEventListener('DOMContentLoaded', function() {
     deleteTitle: @json(__('Delete Adventurer?')),
     deleteText: @json(__('":name" will be permanently deleted. This action cannot be undone!')),
     deleteConfirm: @json(__('Yes, Delete')),
-    resetTitle: @json(__('Reset to Original Master Sheet?')),
-    resetText: @json(__('All current records will be deleted and the original 64 adventurers will be reloaded!')),
-    resetConfirm: @json(__('Yes, Reset')),
-    resetSuccessTitle: @json(__('Reset Successful!')),
     clearTitle: @json(__('Delete all XP records?')),
     clearText: @json(__('All XP Tracker records will be removed, including records hidden by filters. Characters and quest reports will not be deleted. Records linked to distributed quest XP cannot be deleted.')),
     importTitle: @json(__('Import XP data?')),
@@ -1147,10 +1063,6 @@ document.addEventListener('DOMContentLoaded', function() {
     importSuccess: @json(__('Data Imported')),
     importFailure: @json(__('Data import failed')),
     serverError: @json(__('The server could not process the request. Check the application logs.')),
-    linkTitle: @json(__('Link historical report XP?')),
-    linkText: @json(__('Report participants will be matched to unique existing character and XP records. Existing XP totals will not change; ambiguous matches require review.')),
-    linkUnresolved: @json(__('Unresolved participants:')),
-    linkSkipped: @json(__('Skipped report IDs:')),
     deletedTitle: @json(__('Deleted!')),
     levelPrefix: @json(__('Level ')),
     maximum: @json(__('Maximum')),
@@ -1170,6 +1082,10 @@ document.addEventListener('DOMContentLoaded', function() {
     awardXpBtn: @json(__('Award XP')),
     quickXpBtn: @json(__('Add Quick XP')),
     editBtn: @json(__('Edit')),
+    allRanks: @json(__('All Ranks')),
+    ranksSelected: @json(__(':count selected', ['count' => '__COUNT__'])),
+    allStatuses: @json(__('All Statuses')),
+    statusesSelected: @json(__(':count statuses', ['count' => '__COUNT__'])),
     noRecords: @json(__('No records found.')),
     historyNotes: @json(__('Adventurer History & Notes:')),
     xpDistribution: @json(__('XP Component Distribution')),
@@ -1228,16 +1144,10 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('.filter-card').forEach(card => {
     card.addEventListener('click', function() {
       const filter = this.dataset.filter;
-      if (filter === 'guild') {
+      if (filter === 'roster') {
         document.getElementById('tab-guild-btn').click();
-      } else if (filter === 'candidate') {
-        document.getElementById('tab-candidates-btn').click();
-      } else if (filter === 'inactive') {
-        document.getElementById('tab-inactives-btn').click();
       } else if (filter === 'fallen') {
         document.getElementById('tab-fallen-btn').click();
-      } else if (filter === 'all') {
-        document.getElementById('tab-all-btn').click();
       }
     });
   });
@@ -1248,24 +1158,62 @@ document.addEventListener('DOMContentLoaded', function() {
       document.querySelectorAll('.tab-filter-btn').forEach(b => b.classList.remove('active'));
       this.classList.add('active');
       activeTabFilter = this.dataset.filter;
+      updateStatusFilterVisibility();
       applyFilters();
     });
   });
 
   // Filtering Logic
   const searchInput = document.getElementById('searchTable');
-  const filterRank = document.getElementById('filterRank');
+  const rankFilterOptions = [...document.querySelectorAll('.rank-filter-option')];
+  const statusFilterOptions = [...document.querySelectorAll('.status-filter-option')];
+  const rankFilterLabel = document.getElementById('rankFilterLabel');
+  const statusFilterLabel = document.getElementById('statusFilterLabel');
+  const statusFilterDropdown = document.getElementById('btnStatusFilter').closest('.dropdown');
   const filterLevel = document.getElementById('filterLevel');
-  const chkHideInactive = document.getElementById('chkHideInactive');
-  const chkHideCandidates = document.getElementById('chkHideCandidates');
   const btnClear = document.getElementById('btnClearFilters');
+  const xpTrackerCard = document.getElementById('xpTrackerCard');
+  const chkFallenRed = document.getElementById('chkFallenRed');
+  const fallenRedSetting = 'xpTrackerFallenRed';
+
+  function updateStatusFilterVisibility() {
+    statusFilterDropdown.classList.toggle('d-none', activeTabFilter !== 'fallen');
+  }
+
+  function getSelectedRanks() {
+    return rankFilterOptions.filter(option => option.checked).map(option => option.value);
+  }
+
+  function getSelectedStatuses() {
+    return statusFilterOptions.filter(option => option.checked).map(option => option.value);
+  }
+
+  function updateFilterLabels() {
+    const selectedRanks = getSelectedRanks();
+    const selectedStatuses = getSelectedStatuses();
+    rankFilterLabel.textContent = selectedRanks.length
+      ? i18n.ranksSelected.replace('__COUNT__', selectedRanks.length)
+      : i18n.allRanks;
+    statusFilterLabel.textContent = selectedStatuses.length === statusFilterOptions.length
+      ? i18n.allStatuses
+      : i18n.statusesSelected.replace('__COUNT__', selectedStatuses.length);
+  }
+
+  if (localStorage.getItem(fallenRedSetting) === 'true') {
+    chkFallenRed.checked = true;
+    xpTrackerCard.classList.add('xp-fallen-highlight');
+  }
+  chkFallenRed.addEventListener('change', function() {
+    localStorage.setItem(fallenRedSetting, this.checked ? 'true' : 'false');
+    xpTrackerCard.classList.toggle('xp-fallen-highlight', this.checked);
+  });
 
   function applyFilters() {
     const term = searchInput.value.toLowerCase().trim();
-    const rankVal = filterRank.value;
+    const selectedRanks = getSelectedRanks();
+    const selectedStatuses = getSelectedStatuses();
     const levelVal = filterLevel.value;
-    const hideInactive = chkHideInactive ? chkHideInactive.checked : false;
-    const hideCandidates = chkHideCandidates ? chkHideCandidates.checked : false;
+    updateFilterLabels();
 
     // Filter Table Rows
     document.querySelectorAll('.adventurer-row').forEach(row => {
@@ -1274,30 +1222,13 @@ document.addEventListener('DOMContentLoaded', function() {
       const player = row.dataset.player || '';
       const rank = row.dataset.rank || '';
       const level = row.dataset.level || '';
-
-      let matchCategory = false;
-      if (activeTabFilter === 'all') {
-        matchCategory = true;
-      } else if (activeTabFilter === 'guild') {
-        matchCategory = (category === 'guild');
-      } else if (activeTabFilter === 'candidate') {
-        matchCategory = (category === 'candidate');
-      } else if (activeTabFilter === 'inactive') {
-        matchCategory = (category === 'inactive');
-      } else if (activeTabFilter === 'fallen') {
-        matchCategory = (category === 'fallen');
-      }
-
-      // Hide Inactive / Hide Candidates switches
-      if (hideInactive && category === 'inactive') {
-        matchCategory = false;
-      }
-      if (hideCandidates && category === 'candidate') {
-        matchCategory = false;
-      }
+      const status = row.dataset.status || '';
+      const matchCategory = activeTabFilter === 'fallen'
+        ? category === 'fallen' && selectedStatuses.includes(status)
+        : category !== 'fallen';
 
       const matchSearch = !term || name.includes(term) || player.includes(term);
-      const matchRank = !rankVal || rank === rankVal;
+      const matchRank = selectedRanks.length === 0 || selectedRanks.includes(rank);
       const matchLevel = !levelVal || level === levelVal;
 
       if (matchCategory && matchSearch && matchRank && matchLevel) {
@@ -1318,36 +1249,29 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!container) return;
 
     const term = searchInput ? searchInput.value.toLowerCase().trim() : '';
-    const rankVal = filterRank ? filterRank.value : '';
+    const selectedRanks = getSelectedRanks();
+    const selectedStatuses = getSelectedStatuses();
     const levelVal = filterLevel ? filterLevel.value : '';
-    const hideInactive = chkHideInactive ? chkHideInactive.checked : false;
-    const hideCandidates = chkHideCandidates ? chkHideCandidates.checked : false;
 
     let html = '';
     let count = 0;
 
     for (const [id, adv] of Object.entries(window.adventurersData)) {
-      const category = adv.category;
-      let matchCategory = false;
-      if (activeTabFilter === 'all') matchCategory = true;
-      else if (activeTabFilter === 'guild') matchCategory = (category === 'guild');
-      else if (activeTabFilter === 'candidate') matchCategory = (category === 'candidate');
-      else if (activeTabFilter === 'inactive') matchCategory = (category === 'inactive');
-      else if (activeTabFilter === 'fallen') matchCategory = (category === 'fallen');
-
-      if (hideInactive && category === 'inactive') matchCategory = false;
-      if (hideCandidates && category === 'candidate') matchCategory = false;
+      const category = ['kia', 'mia', 'retired'].includes(adv.status) ? 'fallen' : adv.category;
+      const matchCategory = activeTabFilter === 'fallen'
+        ? category === 'fallen' && selectedStatuses.includes(adv.status)
+        : category !== 'fallen';
 
       const name = (adv.character_name || '').toLowerCase();
       const player = (adv.player_name || '').toLowerCase();
       const matchSearch = !term || name.includes(term) || player.includes(term);
-      const matchRank = !rankVal || adv.rank === rankVal;
+      const matchRank = selectedRanks.length === 0 || selectedRanks.includes(adv.rank);
       const effLevel = calculateLevel(adv.total_xp);
       const matchLevel = !levelVal || String(effLevel) === levelVal;
 
       if (matchCategory && matchSearch && matchRank && matchLevel) {
         count++;
-        const isFallen = adv.status === 'kia' || adv.status === 'mia';
+        const isFallen = ['kia', 'mia', 'retired'].includes(adv.status);
         const isKia = adv.status === 'kia' || (adv.reason && adv.reason.toUpperCase() === 'KIA');
         const isMia = adv.status === 'mia' || (adv.reason && adv.reason.toUpperCase() === 'MIA');
 
@@ -1356,6 +1280,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let rankText = i18n.ranks[rawRank] || rawRank;
         if (isKia) { rankColor = 'bg-label-danger'; rankText = 'KIA'; }
         else if (isMia) { rankColor = 'bg-label-warning'; rankText = 'MIA'; }
+        else if (adv.status === 'retired') { rankColor = 'bg-label-danger'; rankText = 'Retired'; }
         else {
           rankColor = {
             'Clerk': 'bg-label-info',
@@ -1381,7 +1306,7 @@ document.addEventListener('DOMContentLoaded', function() {
           : `${adv.total_xp.toLocaleString()} / ${nextLevelXp.toLocaleString()} XP`;
 
         html += `
-          <div class="col-12 col-sm-6 col-lg-4 col-xl-3 adventurer-card-col" data-id="${adv.id}">
+          <div class="col-12 col-sm-6 col-lg-4 col-xl-3 adventurer-card-col ${isFallen ? 'fallen-row' : ''}" data-id="${adv.id}">
             <div class="card h-100 border shadow-xs adventurer-card">
               <div class="card-body p-4 d-flex flex-column justify-content-between">
                 <div>
@@ -1439,6 +1364,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             data-xp="${adv.total_xp}">
                       <i class="icon-base ti tabler-plus me-1"></i> ${i18n.awardXpBtn}
                     </button>
+                    <button type="button" class="btn btn-xs btn-icon btn-label-primary rounded-circle btn-edit-adv" data-id="${adv.id}" title="${i18n.editBtn}">
+                      <i class="icon-base ti tabler-pencil fs-6"></i>
+                    </button>
                   ` : ''}
                 </div>
               </div>
@@ -1456,143 +1384,27 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   if (searchInput) searchInput.addEventListener('input', applyFilters);
-  if (filterRank) filterRank.addEventListener('change', applyFilters);
+  rankFilterOptions.forEach(option => option.addEventListener('change', applyFilters));
+  statusFilterOptions.forEach(option => option.addEventListener('change', applyFilters));
   if (filterLevel) filterLevel.addEventListener('change', applyFilters);
-  if (chkHideInactive) chkHideInactive.addEventListener('change', applyFilters);
-  if (chkHideCandidates) chkHideCandidates.addEventListener('change', applyFilters);
 
   if (btnClear) {
     btnClear.addEventListener('click', function() {
       searchInput.value = '';
-      filterRank.value = '';
+      rankFilterOptions.forEach(option => option.checked = false);
+      statusFilterOptions.forEach(option => option.checked = true);
       filterLevel.value = '';
-      if (chkHideInactive) chkHideInactive.checked = false;
-      if (chkHideCandidates) chkHideCandidates.checked = false;
       document.getElementById('tab-guild-btn').click();
     });
   }
+  document.getElementById('btnClearRanks').addEventListener('click', function() {
+    rankFilterOptions.forEach(option => option.checked = false);
+    applyFilters();
+  });
 
   // Initialize initial filter (Guild active members tab)
+  updateStatusFilterVisibility();
   applyFilters();
-
-  // Multi-Select Checkboxes & Floating Batch Bar
-  const checkSelectAll = document.getElementById('checkSelectAll');
-  const floatingBatchBar = document.getElementById('floatingBatchBar');
-  const floatingSelectedCount = document.getElementById('floatingSelectedCount');
-
-  function updateBatchBar() {
-    selectedAdventurerIds = [];
-    document.querySelectorAll('.row-select-check:checked').forEach(chk => {
-      selectedAdventurerIds.push(chk.value);
-    });
-
-    const count = selectedAdventurerIds.length;
-    floatingSelectedCount.textContent = count;
-
-    if (count > 0) {
-      floatingBatchBar.classList.add('show');
-    } else {
-      floatingBatchBar.classList.remove('show');
-    }
-  }
-
-  document.querySelectorAll('.row-select-check').forEach(chk => {
-    chk.addEventListener('change', updateBatchBar);
-  });
-
-  if (checkSelectAll) {
-    checkSelectAll.addEventListener('change', function() {
-      const checked = this.checked;
-      document.querySelectorAll('.adventurer-row').forEach(row => {
-        if (row.style.display !== 'none') {
-          const chk = row.querySelector('.row-select-check');
-          if (chk) chk.checked = checked;
-        }
-      });
-      updateBatchBar();
-    });
-  }
-
-  document.getElementById('btnFloatingCancelSelection').addEventListener('click', function() {
-    document.querySelectorAll('.row-select-check').forEach(chk => chk.checked = false);
-    if (checkSelectAll) checkSelectAll.checked = false;
-    updateBatchBar();
-  });
-
-  // Group / Party XP Button trigger
-  const btnTriggerPartyXp = document.getElementById('btnTriggerPartyXp');
-  if (btnTriggerPartyXp) {
-    btnTriggerPartyXp.addEventListener('click', function() {
-      if (selectedAdventurerIds.length === 0) {
-        Swal.fire({
-          icon: 'info',
-          title: i18n.selectAdventurersTitle,
-          text: i18n.selectAdventurersText,
-          confirmButtonText: i18n.ok,
-          customClass: { confirmButton: 'btn btn-primary rounded-pill' },
-          buttonsStyling: false
-        });
-        return;
-      }
-      openBatchXpModal();
-    });
-  }
-
-  document.getElementById('btnBatchAwardXpModal').addEventListener('click', openBatchXpModal);
-
-  function openBatchXpModal() {
-    document.getElementById('batchXpRecipientsSummary').textContent = i18n.recipientsSummary.replace('__COUNT__', selectedAdventurerIds.length);
-    document.getElementById('batchXpAmount').value = '';
-    document.getElementById('batchXpNote').value = '';
-    const modal = new bootstrap.Modal(document.getElementById('modalBatchXp'));
-    modal.show();
-  }
-
-  // Submit Batch XP
-  const formBatchXp = document.getElementById('formBatchXp');
-  if (formBatchXp) {
-    formBatchXp.addEventListener('submit', function(e) {
-      e.preventDefault();
-      const btn = document.getElementById('btnSubmitBatchXp');
-      btn.disabled = true;
-
-      const payload = {
-        adventurer_ids: selectedAdventurerIds,
-        amount: parseInt(document.getElementById('batchXpAmount').value),
-        category: document.getElementById('batchXpCategory').value,
-        note: document.getElementById('batchXpNote').value || null
-      };
-
-      fetch("{{ route('valiant-shade.pages-xp-tracker.batch-xp') }}", {
-        method: 'POST',
-        headers: {
-          'X-CSRF-TOKEN': '{{ csrf_token() }}',
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      })
-      .then(res => res.json())
-      .then(data => {
-        btn.disabled = false;
-        if (data.success) {
-          Swal.fire({
-            icon: 'success',
-            title: i18n.batchXpSuccessTitle,
-            text: data.message,
-            timer: 2000,
-            showConfirmButton: false
-          }).then(() => location.reload());
-        } else {
-          Swal.fire({ icon: 'error', title: i18n.errorTitle, text: data.message });
-        }
-      })
-      .catch(() => {
-        btn.disabled = false;
-        Swal.fire({ icon: 'error', title: i18n.errorTitle, text: i18n.networkError });
-      });
-    });
-  }
 
   // Open Adventurer Profile & Edit Drawers via Event Delegation
   document.addEventListener('click', function(e) {
@@ -1831,12 +1643,41 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Form Submit: Add Adventurer (Offcanvas)
   const formAdd = document.getElementById('formAddAdventurer');
+  const addPlayerName = document.getElementById('addPlayerName');
+  const addNewPlayerName = document.getElementById('addNewPlayerName');
+  const addExistingPlayerName = document.getElementById('addExistingPlayerName');
+  const addNewPlayerField = document.getElementById('addNewPlayerField');
+  const addExistingPlayerField = document.getElementById('addExistingPlayerField');
+  const addPlayerModeOptions = document.querySelectorAll('input[name="addPlayerMode"]');
+  const updateAddPlayerMode = function() {
+    if (!addPlayerName || !addNewPlayerName || !addExistingPlayerName || !addNewPlayerField || !addExistingPlayerField) {
+      return;
+    }
+
+    const isExistingPlayer = document.getElementById('addPlayerModeExisting').checked;
+    addNewPlayerField.classList.toggle('d-none', isExistingPlayer);
+    addExistingPlayerField.classList.toggle('d-none', !isExistingPlayer);
+    addNewPlayerName.required = !isExistingPlayer;
+    addExistingPlayerName.required = isExistingPlayer;
+    addExistingPlayerName.disabled = !isExistingPlayer;
+    addPlayerName.value = isExistingPlayer ? addExistingPlayerName.value : addNewPlayerName.value;
+  };
+  addPlayerModeOptions.forEach(option => option.addEventListener('change', updateAddPlayerMode));
+  if (addNewPlayerName) {
+    addNewPlayerName.addEventListener('input', updateAddPlayerMode);
+  }
+  if (addExistingPlayerName) {
+    addExistingPlayerName.addEventListener('change', updateAddPlayerMode);
+  }
+  updateAddPlayerMode();
+
   if (formAdd) {
     formAdd.addEventListener('submit', function(e) {
       e.preventDefault();
       const btn = document.getElementById('btnSubmitAddAdventurer');
       btn.disabled = true;
 
+      updateAddPlayerMode();
       const formData = new FormData(formAdd);
       fetch("{{ route('valiant-shade.pages-xp-tracker.store') }}", {
         method: 'POST',
@@ -2110,54 +1951,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  const btnLinkReportXp = document.getElementById('btnLinkReportXp');
-  if (btnLinkReportXp) {
-    btnLinkReportXp.addEventListener('click', async function() {
-      const confirmation = await Swal.fire({
-        title: i18n.linkTitle,
-        text: i18n.linkText,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: i18n.confirm,
-        cancelButtonText: i18n.cancel
-      });
-      if (!confirmation.isConfirmed) return;
-      btnLinkReportXp.disabled = true;
-      try {
-        const response = await fetch("{{ route('valiant-shade.pages-xp-tracker.link-reports') }}", {
-          method: 'POST',
-          headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Accept': 'application/json'
-          }
-        });
-        const data = await readXpResponse(response);
-        const unresolved = data.unresolved.map(item => `#${item.report_id}: ${item.name}`);
-        const skipped = data.skipped.map(id => `#${id}`);
-        const details = [
-          data.message,
-          unresolved.length ? `${i18n.linkUnresolved}\n${unresolved.join('\n')}` : '',
-          skipped.length ? `${i18n.linkSkipped}\n${skipped.join(', ')}` : ''
-        ].filter(Boolean).join('\n\n');
-        await Swal.fire({
-          icon: data.unresolved.length || data.skipped.length ? 'warning' : 'success',
-          title: i18n.successTitle,
-          text: details,
-          didOpen: () => {
-            const content = Swal.getHtmlContainer();
-            content.style.whiteSpace = 'pre-line';
-            content.style.maxHeight = '50vh';
-            content.style.overflowY = 'auto';
-          }
-        });
-      } catch (error) {
-        await Swal.fire({ icon: 'error', title: i18n.errorTitle, text: error.message || i18n.networkError });
-      } finally {
-        btnLinkReportXp.disabled = false;
-      }
-    });
-  }
-
   const btnClearXp = document.getElementById('btnClearXp');
   if (btnClearXp) {
     btnClearXp.addEventListener('click', function() {
@@ -2193,49 +1986,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Reset to Defaults Button
-  const btnReset = document.getElementById('btnResetDefaults');
-  if (btnReset) {
-    btnReset.addEventListener('click', function() {
-      Swal.fire({
-        title: i18n.resetTitle,
-        text: i18n.resetText,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: i18n.resetConfirm,
-        cancelButtonText: i18n.cancel,
-        customClass: {
-          confirmButton: 'btn btn-warning rounded-pill me-2',
-          cancelButton: 'btn btn-label-secondary rounded-pill'
-        },
-        buttonsStyling: false
-      }).then(result => {
-        if (result.isConfirmed) {
-          fetch("{{ route('valiant-shade.pages-xp-tracker.reset-defaults') }}", {
-            method: 'POST',
-            headers: {
-              'X-CSRF-TOKEN': '{{ csrf_token() }}',
-              'Accept': 'application/json'
-            }
-          })
-          .then(res => res.json())
-          .then(data => {
-            if (data.success) {
-              Swal.fire({
-                icon: 'success',
-                title: i18n.resetSuccessTitle,
-                text: data.message,
-                timer: 1800,
-                showConfirmButton: false
-              }).then(() => location.reload());
-            } else {
-              Swal.fire({ icon: 'error', title: i18n.errorTitle, text: data.message });
-            }
-          });
-        }
-      });
-    });
-  }
 });
 </script>
 @endsection

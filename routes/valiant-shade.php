@@ -156,6 +156,9 @@ Route::middleware(LockQuestReportMutations::class)->group(function () {
     Route::post('/pages/quest-reports/import', [QuestReportsController::class, 'import'])
         ->middleware(EnsureUserIsAdmin::class)
         ->name('valiant-shade.pages-quest-reports.import');
+    Route::post('/pages/quest-reports/guild-pool/import', [QuestReportsController::class, 'importGuildPool'])
+        ->middleware(EnsureUserIsAdmin::class)
+        ->name('valiant-shade.pages-quest-reports.guild-pool.import');
     Route::post('/pages/quest-reports', [QuestReportsController::class, 'store'])->name('valiant-shade.pages-quest-reports.store');
     Route::delete('/pages/quest-reports', [QuestReportsController::class, 'clear'])
         ->middleware(EnsureUserIsAdmin::class)

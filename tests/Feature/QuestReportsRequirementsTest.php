@@ -748,6 +748,7 @@ class QuestReportsRequirementsTest extends TestCase
         $admin = User::factory()->create(['role' => 'ADMIN']);
         Schema::drop('quest_report_xp_entries');
         DB::table('migrations')->where('migration', '2026_11_16_000002_create_quest_report_xp_entries_table')->delete();
+        DB::table('migrations')->where('migration', '0001_01_01_000002_create_cache_table')->delete();
         $json = json_encode([[
             'Görev adı' => 'Migration Import', 'Tarih' => '2020-01-01',
             'Raporlayan' => 'Hero', 'XP' => 1000, 'column_F' => '✗',
@@ -759,6 +760,7 @@ class QuestReportsRequirementsTest extends TestCase
         ])->assertOk()->assertJsonPath('imported', 1);
         $this->assertTrue(Schema::hasTable('quest_report_xp_entries'));
         $this->assertDatabaseHas('migrations', ['migration' => '2026_11_16_000002_create_quest_report_xp_entries_table']);
+        $this->assertDatabaseMissing('migrations', ['migration' => '0001_01_01_000002_create_cache_table']);
         $this->assertDatabaseHas('quests', ['title' => 'Migration Import', 'depo_fee_xp' => 200]);
         $report = collect($this->service->getAllReportsData())->firstWhere('title', 'Migration Import');
         $this->assertEquals(200, $report['depo_cut']);
@@ -769,7 +771,15 @@ class QuestReportsRequirementsTest extends TestCase
         $json = json_encode([['Görev adı' => 'Migration Failure', 'Tarih' => '2020-01-01']], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         $member = User::factory()->create(['role' => 'PLAYER']);
         $member->givePermissionTo(\Spatie\Permission\Models\Permission::findOrCreate('quests.all', 'web'));
-        Artisan::shouldReceive('call')->once()->with('migrate', ['--force' => true, '--no-interaction' => true])->andReturn(1);
+        Artisan::shouldReceive('call')->once()->with('migrate', [
+            '--force' => true,
+            '--no-interaction' => true,
+            '--path' => [
+                'database/migrations/2026_11_16_000001_create_quest_report_xp_distributions_table.php',
+                'database/migrations/2026_11_16_000002_create_quest_report_xp_entries_table.php',
+            ],
+        ])->andReturn(1);
+        Artisan::shouldReceive('output')->once()->andReturn('');
 
         $this->actingAs($member)->postJson('/valiant-shade/pages/quest-reports/import', [
             'file' => UploadedFile::fake()->createWithContent('reports.json', $json),

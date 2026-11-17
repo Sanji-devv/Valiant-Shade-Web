@@ -31,6 +31,68 @@
     background: linear-gradient(90deg, transparent, #f59e0b 20%, #7367f0 80%, transparent);
   }
 
+  .guild-pool-hero {
+    background:
+      radial-gradient(ellipse at 92% 0%, rgba(245, 158, 11, 0.14), transparent 34%),
+      linear-gradient(135deg, rgba(20, 25, 43, 0.98), rgba(25, 29, 50, 0.96));
+    border-color: rgba(245, 158, 11, 0.28);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+  .guild-pool-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+  .guild-pool-heading-icon {
+    width: 46px;
+    height: 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    color: #ffc857;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.24);
+  }
+  .guild-pool-subtitle {
+    max-width: 680px;
+    line-height: 1.65;
+  }
+  .guild-pool-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+  }
+  .btn-guild-pool-import {
+    min-height: 40px;
+    padding: 0.55rem 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    color: #201707 !important;
+    font-weight: 750;
+    border: 1px solid rgba(255, 213, 128, 0.75) !important;
+    border-radius: 10px !important;
+    background: linear-gradient(135deg, #ffd36a, #f5a623) !important;
+    box-shadow: 0 6px 18px rgba(245, 158, 11, 0.2);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .btn-guild-pool-import:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 9px 22px rgba(245, 158, 11, 0.3);
+  }
+  .guild-pool-version-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #bbc1d9;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
   .kpi-stat-card {
     background: rgba(16, 18, 32, 0.75);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -1132,7 +1194,7 @@
                       {{ $q['title'] }}
                     </span>
                     <small class="text-body-secondary font-monospace" style="font-size: 0.75rem;">
-                      {{ $q['location'] ?? 'Siwion' }}
+                      {{ $q['location'] ?? '' }}
                     </small>
                   </div>
                 </div>
@@ -1327,27 +1389,42 @@
   <div id="tabViewGuildPool" class="tab-pane-view d-none">
     
     <!-- Hero Banner for Guild Pool -->
-    <div class="card reports-hero-banner p-3 p-md-4 mb-4">
+    <div class="card reports-hero-banner guild-pool-hero p-3 p-md-4 mb-4">
       <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
         <div>
-          <div class="d-flex align-items-center gap-2 mb-1">
-            <div class="avatar avatar-sm bg-label-warning rounded-circle d-flex align-items-center justify-content-center">
-              <i class="icon-base ti tabler-shield-dollar fs-4 text-warning"></i>
+          <div class="guild-pool-heading mb-2">
+            <div class="guild-pool-heading-icon">
+              <i class="icon-base ti tabler-shield-dollar fs-3"></i>
             </div>
-            <h3 class="mb-0 fw-bold text-heading" style="font-size: 1.45rem; letter-spacing: 0.3px;">
-              {{ __('Guild XP & Rank Pool') }}
-            </h3>
-            <span class="badge bg-warning text-dark font-monospace px-3 py-1 shadow-sm fs-6" id="poolLevelBadge">
-              {{ __('Guild Level :level', ['level' => $guildPoolData['guild_xp']['level'] ?? 12]) }}
-            </span>
+            <div>
+              <div class="text-uppercase text-warning fw-bold mb-1" style="font-size: 0.68rem; letter-spacing: 0.14em;">VALIANT SHADE · GUILD LEDGER</div>
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <h3 class="mb-0 fw-bold text-heading" style="font-size: 1.45rem; letter-spacing: 0.2px;">
+                  {{ __('Guild XP & Rank Pool') }}
+                </h3>
+                <span class="badge bg-warning text-dark font-monospace px-3 py-1 shadow-sm" id="poolLevelBadge">
+                  {{ __('Guild Level :level', ['level' => $guildPoolData['guild_xp']['level'] ?? 12]) }}
+                </span>
+              </div>
+            </div>
           </div>
-          <p class="text-body-secondary small mb-0">
+          <p class="text-body-secondary small guild-pool-subtitle mb-2">
             {{ __('Guild XP, expert pool and rank allocations.') }}
           </p>
+          <span class="guild-pool-version-note">
+            <i class="icon-base ti tabler-file-spreadsheet text-warning"></i>
+            Görev Raporları 2.0 · JSON içe aktarımı desteklenir
+          </span>
         </div>
 
-        <div class="d-flex align-items-center gap-2 flex-wrap">
-          <!-- Edit Guild Pool Data -->
+        <div class="guild-pool-actions">
+          @if(auth()->user()?->isAdmin())
+            <input type="file" id="guildPoolJsonFile" accept=".json,application/json" class="d-none">
+            <button type="button" class="btn btn-guild-pool-import" id="btnImportGuildPoolJson">
+              <i class="icon-base ti tabler-database-import fs-5"></i>
+              <span>Veri Ekle</span>
+            </button>
+          @endif
           <button type="button" class="btn btn-primary btn-sm reports-action" id="btnOpenEditGuildPoolModal">
             <i class="icon-base ti tabler-edit fs-5"></i>
             <span>{{ __('Edit Pool & Rank Data') }}</span>
@@ -2031,7 +2108,7 @@
               <div class="row g-2 mb-2">
                 <div class="col-12 col-sm-6">
                   <label class="form-label fw-semibold text-heading small mb-1" for="addReportLocation">{{ __('Lokasyon') }}</label>
-                  <input type="text" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading" name="location" id="addReportLocation" placeholder="{{ __("Siwion, Harken Valley...") }}" />
+                  <input type="text" class="form-control form-control-sm bg-dark border-secondary border-opacity-25 text-heading" name="location" id="addReportLocation" />
                 </div>
 
                 <div class="col-12 col-sm-6">
@@ -2503,7 +2580,7 @@
           <div class="col-6 col-md-3">
             <div class="p-2 rounded-3 bg-dark bg-opacity-50 border border-secondary border-opacity-10 text-center">
               <span class="text-body-secondary small d-block" style="font-size: 0.72rem;">{{ __('Lokasyon') }}</span>
-              <span class="fw-bold font-monospace text-heading" id="modalReportLocation" style="font-size: 0.85rem;">Siwion</span>
+              <span class="fw-bold font-monospace text-heading" id="modalReportLocation" style="font-size: 0.85rem;"></span>
             </div>
           </div>
           <div class="col-6 col-md-3">
@@ -4413,7 +4490,7 @@ document.addEventListener('DOMContentLoaded', function () {
                   ${escapeHtml(q.title || '')}
                 </span>
                 <small class="text-body-secondary font-monospace" style="font-size: 0.75rem;">
-                  ${escapeHtml(q.location || 'Siwion')}
+                  ${escapeHtml(q.location || '')}
                 </small>
               </div>
             </div>
@@ -4765,6 +4842,79 @@ document.addEventListener('DOMContentLoaded', function () {
     if (simUzmanInput) simUzmanInput.value = (data.ranks && data.ranks.find(r => r.rank === 'Uzman')) ? data.ranks.find(r => r.rank === 'Uzman').current_count : 21;
     if (simGuildXpInput) simGuildXpInput.value = data.guild_xp.total ?? 0;
     if (typeof updateSimulation === 'function') updateSimulation();
+  }
+
+  const guildPoolImportButton = document.getElementById('btnImportGuildPoolJson');
+  const guildPoolJsonFile = document.getElementById('guildPoolJsonFile');
+  if (guildPoolImportButton && guildPoolJsonFile) {
+    guildPoolImportButton.addEventListener('click', () => guildPoolJsonFile.click());
+    guildPoolJsonFile.addEventListener('change', async function () {
+      const file = this.files?.[0];
+      if (!file) return;
+
+      const confirmation = window.Swal
+        ? await Swal.fire({
+            title: 'Havuz verisi güncellensin mi?',
+            text: 'JSON dosyasındaki havuz ve rütbe verileri mevcut değerlerin yerine kaydedilecek.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'İçe aktar',
+            cancelButtonText: 'Vazgeç',
+            confirmButtonColor: '#f5a623'
+          })
+        : { isConfirmed: window.confirm('JSON dosyasındaki havuz ve rütbe verileri mevcut değerlerin yerine kaydedilecek. Devam edilsin mi?') };
+
+      if (!confirmation.isConfirmed) {
+        this.value = '';
+        return;
+      }
+
+      const originalLabel = guildPoolImportButton.innerHTML;
+      guildPoolImportButton.disabled = true;
+      guildPoolImportButton.innerHTML = '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span><span>Yükleniyor…</span>';
+
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+          || document.querySelector('input[name="_token"]')?.value
+          || '';
+        formData.append('_token', csrfToken);
+
+        const response = await fetch('{{ route("valiant-shade.pages-quest-reports.guild-pool.import") }}', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': csrfToken
+          },
+          body: formData
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          const validationMessage = data.errors ? Object.values(data.errors).flat().join('\n') : '';
+          throw new Error(data.message || validationMessage || 'JSON içe aktarılamadı.');
+        }
+
+        updateGuildPoolDom(data.guildPoolData);
+        if (window.Swal) {
+          await Swal.fire({ icon: 'success', title: 'Veriler eklendi', text: data.message, timer: 2400, showConfirmButton: false });
+        } else {
+          alert(data.message);
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Sunucu ile iletişim kurulamadı.';
+        if (window.Swal) {
+          await Swal.fire({ icon: 'error', title: 'İçe aktarma başarısız', text: message });
+        } else {
+          alert(message);
+        }
+      } finally {
+        guildPoolImportButton.disabled = false;
+        guildPoolImportButton.innerHTML = originalLabel;
+        this.value = '';
+      }
+    });
   }
 
   // Live Simulator Handlers

@@ -237,7 +237,7 @@ class QuestReportsSeeder extends Seeder
                 'gm' => $gmName ?: 'Shalvaz',
                 'reporter' => $reporterName ?: 'Tolrun',
                 'other_players' => $otherPlayers,
-                'location' => 'Siwion',
+                'location' => '',
                 'enemies' => 'Canavarlar ve Eşkıyalar',
                 'report_summary' => "{$title} görevi tamamlandı. Toplam {$baseXp} XP dağıtıldı.",
                 'full_report' => "Sefer Raporu: {$title}. GM {$gmName} önderliğinde {$reporterName} ve kadro tarafından icra edildi.",

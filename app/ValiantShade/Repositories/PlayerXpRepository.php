@@ -14,24 +14,24 @@ class PlayerXpRepository implements PlayerXpRepositoryInterface
 
         if (!empty($filters['category'])) {
             if ($filters['category'] === 'guild') {
-                $query->whereNotIn('status', [PlayerXp::STATUS_KIA, PlayerXp::STATUS_MIA, 'inactive'])
+                $query->whereNotIn('status', [PlayerXp::STATUS_KIA, PlayerXp::STATUS_MIA, PlayerXp::STATUS_RETIRED, 'inactive'])
                       ->whereNotIn('rank', ['Inaktif', 'Aday']);
             } elseif ($filters['category'] === 'candidate') {
-                $query->whereNotIn('status', [PlayerXp::STATUS_KIA, PlayerXp::STATUS_MIA])
+                $query->whereNotIn('status', [PlayerXp::STATUS_KIA, PlayerXp::STATUS_MIA, PlayerXp::STATUS_RETIRED])
                       ->where('rank', 'Aday');
             } elseif ($filters['category'] === 'inactive') {
-                $query->whereNotIn('status', [PlayerXp::STATUS_KIA, PlayerXp::STATUS_MIA])
+                $query->whereNotIn('status', [PlayerXp::STATUS_KIA, PlayerXp::STATUS_MIA, PlayerXp::STATUS_RETIRED])
                       ->where(function ($q) {
                           $q->where('rank', 'Inaktif')->orWhere('status', 'inactive');
                       });
             } elseif ($filters['category'] === 'fallen') {
-                $query->whereIn('status', [PlayerXp::STATUS_KIA, PlayerXp::STATUS_MIA]);
+                $query->whereIn('status', [PlayerXp::STATUS_KIA, PlayerXp::STATUS_MIA, PlayerXp::STATUS_RETIRED]);
             }
         } elseif (!empty($filters['status'])) {
             if ($filters['status'] === 'fallen') {
-                $query->whereIn('status', [PlayerXp::STATUS_KIA, PlayerXp::STATUS_MIA]);
+                $query->whereIn('status', [PlayerXp::STATUS_KIA, PlayerXp::STATUS_MIA, PlayerXp::STATUS_RETIRED]);
             } elseif ($filters['status'] === 'active_only') {
-                $query->whereNotIn('status', [PlayerXp::STATUS_KIA, PlayerXp::STATUS_MIA]);
+                $query->whereNotIn('status', [PlayerXp::STATUS_KIA, PlayerXp::STATUS_MIA, PlayerXp::STATUS_RETIRED]);
             } else {
                 $query->where('status', $filters['status']);
             }
@@ -108,9 +108,9 @@ class PlayerXpRepository implements PlayerXpRepositoryInterface
 
         if (!empty($filters['status'])) {
             if ($filters['status'] === 'fallen') {
-                $query->whereIn('status', [PlayerXp::STATUS_KIA, PlayerXp::STATUS_MIA]);
+                $query->whereIn('status', [PlayerXp::STATUS_KIA, PlayerXp::STATUS_MIA, PlayerXp::STATUS_RETIRED]);
             } elseif ($filters['status'] === 'active_only') {
-                $query->whereNotIn('status', [PlayerXp::STATUS_KIA, PlayerXp::STATUS_MIA]);
+                $query->whereNotIn('status', [PlayerXp::STATUS_KIA, PlayerXp::STATUS_MIA, PlayerXp::STATUS_RETIRED]);
             } else {
                 $query->where('status', $filters['status']);
             }
@@ -128,9 +128,10 @@ class PlayerXpRepository implements PlayerXpRepositoryInterface
     {
         $kiaCount = PlayerXp::where('status', PlayerXp::STATUS_KIA)->count();
         $miaCount = PlayerXp::where('status', PlayerXp::STATUS_MIA)->count();
-        $fallenCount = $kiaCount + $miaCount;
+        $retiredCount = PlayerXp::where('status', PlayerXp::STATUS_RETIRED)->count();
+        $fallenCount = $kiaCount + $miaCount + $retiredCount;
 
-        $activeQuery = PlayerXp::whereNotIn('status', [PlayerXp::STATUS_KIA, PlayerXp::STATUS_MIA]);
+        $activeQuery = PlayerXp::whereNotIn('status', [PlayerXp::STATUS_KIA, PlayerXp::STATUS_MIA, PlayerXp::STATUS_RETIRED]);
         $totalActiveCount = (clone $activeQuery)->count();
         $totalActiveXp = (int) (clone $activeQuery)->sum('total_xp');
 
@@ -155,6 +156,7 @@ class PlayerXpRepository implements PlayerXpRepositoryInterface
             'total_fallen_count' => $fallenCount,
             'kia_count' => $kiaCount,
             'mia_count' => $miaCount,
+            'retired_count' => $retiredCount,
             'total_active_xp' => $totalActiveXp,
             'total_guild_xp' => $totalGuildXp,
             'total_grand_xp' => $totalGrandXp,

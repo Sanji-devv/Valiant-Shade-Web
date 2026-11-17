@@ -28,8 +28,8 @@ class PlayerXpTest extends TestCase
         $response->assertSee('3. Balkabağı');
         $response->assertSee('Abraham');
         $response->assertSee('Alex');
-        $response->assertSee(__('Hall of Fame (KIA / MIA)'));
-        $response->assertSee(__('Active Roster (Guild Members)'));
+        $response->assertSee(__('Fallen / Retired'));
+        $response->assertSee(__('Characters'));
 
         // Verify that 64 adventurers were seeded automatically (32 active + 32 fallen)
         $this->assertEquals(64, PlayerXp::count());
@@ -428,20 +428,28 @@ class PlayerXpTest extends TestCase
         $this->assertEquals(15859, $arelion->getRemainingXpToNextLevel());
     }
 
-    public function test_dedicated_categories_and_tabs_for_candidates_and_inactives(): void
+    public function test_candidate_and_inactive_records_are_in_the_main_rank_filterable_roster(): void
     {
         $user = User::factory()->create(['role' => 'User']);
         $response = $this->actingAs($user)->get('/valiant-shade/pages/xp-tracker');
 
         $response->assertStatus(200);
 
-        // Verify dedicated tabs & switches exist in HTML
-        $response->assertSee(__('Active Roster (Guild Members)'));
-        $response->assertSee(__('Candidates'));
-        $response->assertSee(__('Inactives'));
-        $response->assertSee(__('Hall of Fame (KIA / MIA)'));
-        $response->assertSee(__('Hide Inactives'));
-        $response->assertSee(__('Hide Candidates'));
+        $content = $response->getContent();
+        $this->assertStringContainsString(__('Characters'), $content);
+        $this->assertStringContainsString(__('Fallen / Retired'), $content);
+        $this->assertStringContainsString('rank-filter-option', $content);
+        $this->assertStringNotContainsString('tab-candidates-btn', $content);
+        $this->assertStringNotContainsString('tab-inactives-btn', $content);
+        $this->assertStringNotContainsString('chkHideInactive', $content);
+        $this->assertStringNotContainsString('chkHideCandidates', $content);
+        $this->assertStringNotContainsString('Group / Batch', $content);
+        $this->assertStringNotContainsString('btnResetDefaults', $content);
+        $this->assertStringNotContainsString('btnLinkReportXp', $content);
+        $this->assertStringNotContainsString('Download CSV', $content);
+        $this->assertStringNotContainsString('Pathfinder 1e Fast Progression Level Chart:', $content);
+        $this->assertStringNotContainsString('tabler-tombstone', $content);
+        $this->assertStringContainsString('tabler-skull', $content);
 
         // Scopes test
         $guildMembers = PlayerXp::guildMembers()->get();
@@ -467,6 +475,85 @@ class PlayerXpTest extends TestCase
         // Ensure Inactive characters have category 'inactive'
         $aeglish = PlayerXp::where('character_name', 'Aeglish')->first();
         $this->assertEquals('inactive', $aeglish->category);
+    }
+
+    public function test_retired_adventurer_is_in_the_fallen_tab_and_red_setting_is_available(): void
+    {
+        $user = User::factory()->create(['role' => 'User']);
+        $this->actingAs($user)->get('/valiant-shade/pages/xp-tracker');
+
+        $adventurer = PlayerXp::where('character_name', 'Arelion Vane')->firstOrFail();
+        $adventurer->update(['status' => 'retired']);
+
+        $response = $this->actingAs($user)->get('/valiant-shade/pages/xp-tracker');
+        $content = $response->getContent();
+
+        $response->assertStatus(200);
+        $rowPattern = '/<tr class="adventurer-row fallen-row"\s+data-id="' . $adventurer->id . '"\s+data-category="fallen"[\s\S]*?data-status="retired">/';
+        $this->assertMatchesRegularExpression($rowPattern, $content);
+        $this->assertStringContainsString(__('Use red color for fallen / retired tab'), $content);
+        $this->assertSame('fallen', $adventurer->fresh()->category);
+        $this->assertTrue(PlayerXp::fallen()->whereKey($adventurer->id)->exists());
+        $this->assertFalse(PlayerXp::active()->whereKey($adventurer->id)->exists());
+        $statistics = app(\App\ValiantShade\Repositories\PlayerXpRepository::class)->getStatistics();
+        $this->assertSame(1, $statistics['retired_count']);
+        $this->assertSame(33, $statistics['total_fallen_count']);
+    }
+
+    public function test_add_player_character_action_and_existing_player_form_are_between_tabs_and_filters(): void
+    {
+        $admin = User::factory()->create(['role' => 'Admin']);
+        PlayerXp::create(['character_name' => 'First Hero', 'player_name' => 'Shared Player']);
+        PlayerXp::create(['character_name' => 'Second Hero', 'player_name' => 'Shared Player']);
+
+        $response = $this->actingAs($admin)->get('/valiant-shade/pages/xp-tracker');
+        $response->assertOk();
+
+        $content = $response->getContent();
+        $tabsPosition = strpos($content, 'id="xpTrackerTabs"');
+        $tabsEndPosition = strpos($content, '</ul>', $tabsPosition);
+        $addButtonPosition = strpos($content, 'id="btnAddPlayerCharacter"');
+        $filterPosition = strpos($content, 'class="d-flex align-items-center gap-2 flex-wrap ms-auto xp-filter-controls"');
+
+        $this->assertNotFalse($tabsPosition);
+        $this->assertNotFalse($tabsEndPosition);
+        $this->assertNotFalse($addButtonPosition);
+        $this->assertNotFalse($filterPosition);
+        $this->assertGreaterThan($tabsEndPosition, $addButtonPosition);
+        $this->assertLessThan($filterPosition, $addButtonPosition);
+        $this->assertStringContainsString('id="addPlayerModeNew"', $content);
+        $this->assertStringContainsString('id="addPlayerModeExisting"', $content);
+        $this->assertStringContainsString('id="addNewPlayerName"', $content);
+        $this->assertStringContainsString('id="addExistingPlayerName"', $content);
+
+        preg_match('/<select[^>]*id="addExistingPlayerName"[^>]*>[\s\S]*?<\/select>/', $content, $playerSelect);
+        $this->assertNotEmpty($playerSelect);
+        $this->assertSame(1, substr_count($playerSelect[0], 'value="Shared Player"'));
+        $this->assertStringContainsString('min-width: 160px', $content);
+        $this->assertStringContainsString('min-width: 150px; width: 165px', $content);
+    }
+
+    public function test_admin_can_add_a_character_to_an_existing_xp_player(): void
+    {
+        $admin = User::factory()->create(['role' => 'Admin']);
+        PlayerXp::create([
+            'character_name' => 'Existing Hero',
+            'player_name' => 'Existing Player',
+        ]);
+
+        $response = $this->actingAs($admin)->postJson('/valiant-shade/pages/xp-tracker', [
+            'character_name' => 'New Hero',
+            'player_name' => 'Existing Player',
+            'rank' => 'Aday',
+            'status' => 'active',
+        ]);
+
+        $response->assertCreated()->assertJson(['success' => true]);
+        $this->assertDatabaseHas('player_xps', [
+            'character_name' => 'New Hero',
+            'player_name' => 'Existing Player',
+        ]);
+        $this->assertSame(2, PlayerXp::where('player_name', 'Existing Player')->count());
     }
 
     public function test_rank_badges_rendered_without_emojis_or_icons(): void

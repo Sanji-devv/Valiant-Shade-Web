@@ -206,14 +206,14 @@ class PlayerXp extends BaseModel
 
     /**
      * Categorize adventurer into one of 4 dedicated lists:
-     * - 'fallen': KIA or MIA
+     * - 'fallen': KIA, MIA, or retired
      * - 'inactive': rank is 'Inaktif' or status is 'inactive'
      * - 'candidate': rank is 'Aday'
      * - 'guild': active full guild member
      */
     public function getCategoryAttribute(): string
     {
-        if (in_array($this->status, [self::STATUS_KIA, self::STATUS_MIA])) {
+        if (in_array($this->status, [self::STATUS_KIA, self::STATUS_MIA, self::STATUS_RETIRED], true)) {
             return 'fallen';
         }
         if ($this->rank === 'Inaktif' || $this->status === 'inactive') {
@@ -324,24 +324,24 @@ class PlayerXp extends BaseModel
      */
     public function scopeActive($query)
     {
-        return $query->whereNotIn('status', [self::STATUS_KIA, self::STATUS_MIA]);
+        return $query->whereNotIn('status', [self::STATUS_KIA, self::STATUS_MIA, self::STATUS_RETIRED]);
     }
 
     public function scopeGuildMembers($query)
     {
-        return $query->whereNotIn('status', [self::STATUS_KIA, self::STATUS_MIA, 'inactive'])
+        return $query->whereNotIn('status', [self::STATUS_KIA, self::STATUS_MIA, self::STATUS_RETIRED, 'inactive'])
                      ->whereNotIn('rank', ['Inaktif', 'Aday']);
     }
 
     public function scopeCandidates($query)
     {
-        return $query->whereNotIn('status', [self::STATUS_KIA, self::STATUS_MIA])
+        return $query->whereNotIn('status', [self::STATUS_KIA, self::STATUS_MIA, self::STATUS_RETIRED])
                      ->where('rank', 'Aday');
     }
 
     public function scopeInactives($query)
     {
-        return $query->whereNotIn('status', [self::STATUS_KIA, self::STATUS_MIA])
+        return $query->whereNotIn('status', [self::STATUS_KIA, self::STATUS_MIA, self::STATUS_RETIRED])
                      ->where(function ($q) {
                          $q->where('rank', 'Inaktif')->orWhere('status', 'inactive');
                      });
@@ -349,6 +349,6 @@ class PlayerXp extends BaseModel
 
     public function scopeFallen($query)
     {
-        return $query->whereIn('status', [self::STATUS_KIA, self::STATUS_MIA]);
+        return $query->whereIn('status', [self::STATUS_KIA, self::STATUS_MIA, self::STATUS_RETIRED]);
     }
 }

@@ -573,7 +573,7 @@ class QuestReportService
                     'date' => $displayDate,
                     'status' => $depoStatus ? 'success' : 'failed',
                     'gm' => trim((string) ($row['GM'] ?? '')) ?: 'Shalvaz',
-                    'location' => 'Siwion',
+                    'location' => '',
                     'enemies' => 'Canavarlar ve Eşkıyalar',
                     'report_summary' => "{$title} görevi tamamlandı. Toplam {$totalXp} XP dağıtıldı.",
                     'full_report' => "{$title} görevi için kaynak rapor verileri içe aktarıldı.",
@@ -2760,7 +2760,7 @@ class QuestReportService
         $guildBase = (float) ($input['guild_xp']['base'] ?? $defaults['guild_xp']['base']);
         $guildNext = (float) ($input['guild_xp']['next_level_threshold'] ?? $defaults['guild_xp']['next_level_threshold']);
         $guildLevel = (int) ($input['guild_xp']['level'] ?? $defaults['guild_xp']['level']);
-        $guildRemaining = (int) ($input['guild_xp']['remaining'] ?? $defaults['guild_xp']['remaining']);
+        $guildRemaining = (float) ($input['guild_xp']['remaining'] ?? $defaults['guild_xp']['remaining']);
 
         $extraFund = (float) ($input['extra_fund'] ?? $defaults['extra_fund']);
         $poolTotal = (float) ($input['pool_total'] ?? $defaults['pool_total']);
@@ -2901,6 +2901,109 @@ class QuestReportService
         file_put_contents($path, json_encode($calculated, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
         return $calculated;
+    }
+
+    /**
+     * Import the summary and rank rows from the Görev Raporları 2.0 sheet JSON.
+     */
+    public function importGuildPoolSheet(array $rows): array
+    {
+        $fail = static function (string $message): void {
+            throw ValidationException::withMessages(['file' => [$message]]);
+        };
+
+        if (! array_is_list($rows)) {
+            $fail(__('The selected file does not contain a valid guild pool table.'));
+        }
+
+        $rowsByNumber = [];
+        foreach ($rows as $row) {
+            if (! is_array($row) || ! is_numeric($row['Satır'] ?? null)) {
+                $fail(__('The selected file contains an invalid sheet row.'));
+            }
+
+            $rowNumber = (float) $row['Satır'];
+            if ($rowNumber < 1 || floor($rowNumber) !== $rowNumber || isset($rowsByNumber[(int) $rowNumber])) {
+                $fail(__('The selected file contains an invalid or duplicate sheet row number.'));
+            }
+
+            $rowsByNumber[(int) $rowNumber] = $row;
+        }
+
+        $readNumber = function (int $rowNumber, string $column, bool $required = true) use ($rowsByNumber, $fail): ?float {
+            $value = $rowsByNumber[$rowNumber][$column] ?? null;
+            if (is_array($value)) {
+                $value = $value['Değer'] ?? null;
+            }
+
+            if ($value === null && ! $required) {
+                return null;
+            }
+
+            if (! is_numeric($value) || ! is_finite((float) $value) || (float) $value < 0) {
+                $fail(__('Missing or invalid numeric value at sheet row :row, column :column.', [
+                    'row' => $rowNumber,
+                    'column' => $column,
+                ]));
+            }
+
+            return (float) $value;
+        };
+
+        $readRank = function (int $rowNumber, string $expectedRank) use ($rowsByNumber, $readNumber, $fail): array {
+            $row = $rowsByNumber[$rowNumber] ?? [];
+            if (($row['BU'] ?? null) !== $expectedRank) {
+                $fail(__('Expected rank :rank at sheet row :row.', [
+                    'rank' => $expectedRank,
+                    'row' => $rowNumber,
+                ]));
+            }
+
+            $count = $readNumber($rowNumber, 'BW');
+            if (floor($count) !== $count) {
+                $fail(__('Player count must be a whole number at sheet row :row.', ['row' => $rowNumber]));
+            }
+
+            return [
+                'rank' => $expectedRank,
+                'capacity' => $readNumber($rowNumber, 'BV', false),
+                'current_count' => (int) $count,
+                'capacity_xp' => $readNumber($rowNumber, 'BX', false),
+                'current_xp' => $readNumber($rowNumber, 'BY', false),
+                'net_xp' => $readNumber($rowNumber, 'BZ', false),
+                'spent_xp' => $readNumber($rowNumber, 'CA'),
+            ];
+        };
+
+        $level = $readNumber(4, 'BW');
+        if (floor($level) !== $level || $level < 1 || $level > 50) {
+            $fail(__('Guild level must be a whole number between 1 and 50.'));
+        }
+
+        return $this->updateGuildPoolData([
+            'wiki_xp' => [
+                'total' => $readNumber(2, 'BW'),
+                'distributed' => $readNumber(2, 'BX'),
+            ],
+            'guild_xp' => [
+                'base' => $readNumber(3, 'BV'),
+                'total' => $readNumber(3, 'BW'),
+                'next_level_threshold' => $readNumber(3, 'BX'),
+                'remaining' => $readNumber(3, 'BY'),
+                'level' => (int) $level,
+            ],
+            'pool_total' => $readNumber(5, 'BV'),
+            'extra_fund' => $readNumber(4, 'CA'),
+            'ranks' => [
+                $readRank(10, 'Bailiff'),
+                $readRank(11, 'Uzman'),
+                $readRank(12, 'Kıdemli'),
+                $readRank(13, 'Üye'),
+                $readRank(14, 'Clerk'),
+                $readRank(15, 'Aday'),
+                $readRank(16, 'Inaktif / Gezgin'),
+            ],
+        ]);
     }
 
     /**

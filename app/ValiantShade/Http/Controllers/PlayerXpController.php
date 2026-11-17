@@ -67,6 +67,12 @@ class PlayerXpController extends Controller
 
         // Fetch adventurers based on user search/sort filters
         $allAdventurers = $this->service->getAdventurers($filters);
+        $xpPlayers = PlayerXp::query()
+            ->whereNotNull('player_name')
+            ->whereRaw("TRIM(player_name) <> ''")
+            ->distinct()
+            ->orderBy('player_name')
+            ->pluck('player_name');
         $statistics = $this->service->getStatistics();
         $ranks = PlayerXp::RANKS;
         $fastThresholds = PlayerXp::getXpThresholds();
@@ -110,6 +116,7 @@ class PlayerXpController extends Controller
 
         return view('valiant-shade.content.pages.pages-xp-tracker', compact(
             'allAdventurers',
+            'xpPlayers',
             'adventurersData',
             'statistics',
             'ranks',

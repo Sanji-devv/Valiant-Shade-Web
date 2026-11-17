@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Quest;
 use App\ValiantShade\Services\QuestReportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 use Tests\Support\IsolatedQuestReportService;
 
@@ -52,6 +53,8 @@ class QuestReportsTest extends TestCase
         $response->assertSee('98,295.22');
         $response->assertSee('3,459,587.50');
         $response->assertSee('3,439,017.50');
+        $response->assertSee('Veri Ekle');
+        $response->assertSee('guildPoolJsonFile');
         $response->assertSee('Bailiff');
         $response->assertSee('Uzman');
         $response->assertSee('Kıdemli');
@@ -136,6 +139,7 @@ class QuestReportsTest extends TestCase
         $response->assertJsonPath('report.guild_cut', 150);
         $response->assertJsonPath('report.avg_reward', 725);
         $response->assertJsonPath('report.player_count', 4);
+        $response->assertJsonPath('report.location', '');
     }
 
     public function test_reset_to_defaults_api(): void
@@ -314,6 +318,60 @@ class QuestReportsTest extends TestCase
         $resReset->assertStatus(200);
         $resReset->assertJsonPath('success', true);
         $resReset->assertJsonPath('guildPoolData.grand_total_xp', 3459587.5);
+    }
+
+    public function test_guild_pool_json_import_maps_formula_values_and_preserves_quest_reports(): void
+    {
+        $reportsBefore = $this->service->getAllReportsData();
+        $rows = [
+            ['Satır' => 2, 'BW' => ['Formül' => '=SUM(BT:BT)', 'Değer' => 60900], 'BX' => ['Formül' => '=SUM(M:M)', 'Değer' => 57013]],
+            ['Satır' => 3, 'BU' => 'Lonca XP', 'BV' => 145000, 'BW' => ['Formül' => '=SUM(G:G)', 'Değer' => 170137.5], 'BX' => 210000, 'BY' => ['Formül' => '=...', 'Değer' => 398.625]],
+            ['Satır' => 4, 'BU' => 'Lonca Level', 'BW' => ['Formül' => '=VLOOKUP(...)', 'Değer' => 12], 'CA' => ['Formül' => '=SUM(J:J)', 'Değer' => 21840]],
+            ['Satır' => 5, 'BU' => 'Havuz:', 'BV' => ['Formül' => '=...', 'Değer' => 2323633.121]],
+            ['Satır' => 10, 'BU' => 'Bailiff', 'BV' => ['Değer' => 180.3333], 'BW' => ['Değer' => 0], 'BX' => ['Değer' => 68055], 'BY' => ['Değer' => 0], 'BZ' => ['Değer' => 0], 'CA' => ['Değer' => 173112.5]],
+            ['Satır' => 11, 'BU' => 'Uzman', 'BV' => ['Değer' => 180.3333], 'BW' => ['Değer' => 18], 'BX' => ['Değer' => 102082.5], 'BY' => ['Değer' => 102082.5], 'BZ' => ['Değer' => 129090.7289], 'CA' => ['Değer' => 2323633.121]],
+            ['Satır' => 12, 'BU' => 'Kıdemli', 'BV' => ['Değer' => 811.5], 'BW' => ['Değer' => 21], 'CA' => ['Değer' => 409426.8492]],
+            ['Satır' => 13, 'BU' => 'Üye', 'BV' => ['Değer' => 1623], 'BW' => ['Değer' => 17], 'BX' => 3300, 'BY' => ['Değer' => 3300], 'BZ' => ['Değer' => 955.2789], 'CA' => ['Değer' => 16239.7411]],
+            ['Satır' => 14, 'BU' => 'Clerk', 'BV' => ['Değer' => 180.3333], 'BW' => ['Değer' => 64], 'BX' => 15000, 'BY' => 15000, 'BZ' => ['Değer' => 3300], 'CA' => 211200],
+            ['Satır' => 15, 'BU' => 'Aday', 'BV' => ['Değer' => 2795.1667], 'BW' => ['Değer' => 287], 'BX' => 1300, 'BY' => 1300, 'BZ' => 0, 'CA' => ['Değer' => 0]],
+            ['Satır' => 16, 'BU' => 'Inaktif / Gezgin', 'BW' => ['Değer' => 242], 'CA' => ['Değer' => 601272.7892]],
+        ];
+
+        $response = $this->actingAs($this->user)->postJson('/valiant-shade/pages/quest-reports/guild-pool/import', [
+            'file' => UploadedFile::fake()->createWithContent('guild-pool.json', json_encode($rows, JSON_UNESCAPED_UNICODE)),
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('guildPoolData.wiki_xp.total', 60900)
+            ->assertJsonPath('guildPoolData.wiki_xp.distributed', 57013)
+            ->assertJsonPath('guildPoolData.wiki_xp.remaining', 3887)
+            ->assertJsonPath('guildPoolData.guild_xp.total', 170137.5)
+            ->assertJsonPath('guildPoolData.guild_xp.remaining', 398.625)
+            ->assertJsonPath('guildPoolData.pool_total', 2323633.121)
+            ->assertJsonPath('guildPoolData.extra_fund', 21840)
+            ->assertJsonPath('guildPoolData.ranks_total_spent', 3734885)
+            ->assertJsonPath('guildPoolData.grand_total_xp', 3756725);
+
+        $this->assertSame($reportsBefore, $this->service->getAllReportsData());
+    }
+
+    public function test_invalid_guild_pool_json_does_not_replace_current_values(): void
+    {
+        $currentPool = $this->service->getGuildPoolData();
+        $rows = [
+            ['Satır' => 2, 'BW' => 60900, 'BX' => 57013],
+            ['Satır' => 3, 'BV' => 145000, 'BW' => 170137.5, 'BX' => 210000, 'BY' => 398.625],
+            ['Satır' => 4, 'BW' => 12, 'CA' => 21840],
+            ['Satır' => 5, 'BV' => 2323633.121],
+        ];
+
+        $response = $this->actingAs($this->user)->postJson('/valiant-shade/pages/quest-reports/guild-pool/import', [
+            'file' => UploadedFile::fake()->createWithContent('incomplete-pool.json', json_encode($rows)),
+        ]);
+
+        $response->assertUnprocessable()->assertJsonValidationErrors('file');
+        $this->assertSame($currentPool, $this->service->getGuildPoolData());
     }
 
     public function test_guild_pool_zero_values_are_preserved_on_update_and_page(): void

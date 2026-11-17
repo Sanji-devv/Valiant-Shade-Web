@@ -91,7 +91,14 @@ class QuestReportsController extends Controller
         }
 
         try {
-            $exitCode = Artisan::call('migrate', ['--force' => true, '--no-interaction' => true]);
+            $exitCode = Artisan::call('migrate', [
+                '--force' => true,
+                '--no-interaction' => true,
+                '--path' => [
+                    'database/migrations/2026_11_16_000001_create_quest_report_xp_distributions_table.php',
+                    'database/migrations/2026_11_16_000002_create_quest_report_xp_entries_table.php',
+                ],
+            ]);
         } catch (\Throwable $exception) {
             report($exception);
 
@@ -102,7 +109,10 @@ class QuestReportsController extends Controller
         }
 
         if ($exitCode !== 0) {
-            Log::error('Quest report import migration failed.', ['exit_code' => $exitCode]);
+            Log::error('Quest report import migration failed.', [
+                'exit_code' => $exitCode,
+                'output' => Artisan::output(),
+            ]);
 
             return response()->json([
                 'success' => false,
@@ -348,6 +358,45 @@ class QuestReportsController extends Controller
             'success' => true,
             'message' => __('Guild XP Pool and Ranks data updated successfully.'),
             'guildPoolData' => $updated,
+        ]);
+    }
+
+    /**
+     * Import the Görev Raporları 2.0 JSON summary into the active guild pool.
+     */
+    public function importGuildPool(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'file' => 'required|file|max:5120',
+        ]);
+
+        try {
+            $rows = json_decode(
+                file_get_contents($validated['file']->getRealPath()),
+                true,
+                512,
+                JSON_THROW_ON_ERROR
+            );
+        } catch (\JsonException) {
+            return response()->json([
+                'success' => false,
+                'message' => __('The selected file is not valid JSON.'),
+            ], 422);
+        }
+
+        if (! is_array($rows) || ! array_is_list($rows)) {
+            return response()->json([
+                'success' => false,
+                'message' => __('The selected file does not contain a valid guild pool table.'),
+            ], 422);
+        }
+
+        $guildPoolData = $this->service->importGuildPoolSheet($rows);
+
+        return response()->json([
+            'success' => true,
+            'message' => __('Guild pool and rank data imported successfully.'),
+            'guildPoolData' => $guildPoolData,
         ]);
     }
 
