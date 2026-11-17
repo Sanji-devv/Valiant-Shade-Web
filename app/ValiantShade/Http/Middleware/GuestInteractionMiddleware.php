@@ -23,6 +23,8 @@ class GuestInteractionMiddleware
         'valiant-shade.auth-forgot-password-basic',
         'valiant-shade.pages-account-settings-account.update',
         'valiant-shade.pages-account-settings-account.deactivate',
+        'valiant-shade.gods.index',
+        'valiant-shade.gods.show',
         'login',
     ];
 
@@ -43,7 +45,7 @@ class GuestInteractionMiddleware
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
