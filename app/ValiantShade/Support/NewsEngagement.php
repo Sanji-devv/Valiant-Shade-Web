@@ -199,6 +199,14 @@ final class NewsEngagement
                 ->lockForUpdate()
                 ->first();
 
+            if ($readerRecord && ! in_array($readerRecord->reaction, self::allowedReactions(), true)) {
+                DB::table('news_reader_reactions')
+                    ->where('news_id', $lockedNews->getKey())
+                    ->where('reader_hash', $readerHash)
+                    ->delete();
+                $readerRecord = null;
+            }
+
             $stats = is_array($lockedNews->stats) ? $lockedNews->stats : [];
             $reactions = self::reactionMetrics($stats);
 
