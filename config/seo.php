@@ -12,10 +12,10 @@ return [
     'site_name' => env('SEO_SITE_NAME', 'Valiant Shade'),
 
     'home' => [
-        'title' => env('SEO_HOME_TITLE', 'Valiant Shade · Pathfinder lonca portali'),
+        'title' => env('SEO_HOME_TITLE', 'Valiant Shade | Pathfinder lonca portali'),
         'description' => env(
             'SEO_HOME_DESCRIPTION',
-            'Valiant Shade loncasının resmi giriş kapısı: Lağımdan Sesler gazetesi, canavar veritabanı, dünya haritası ve lonca kayıtları.',
+            'Pathfinder tabanlı Valiant Shade loncasının resmi sitesi: Lağımdan Sesler gazetesi, canavar veritabanı, interaktif dünya haritası ve lonca kayıtları.',
         ),
         'keywords' => env(
             'SEO_HOME_KEYWORDS',
@@ -33,4 +33,17 @@ return [
 
     'favicon_png' => 'static/valiant-shade/assets/img/favicon/favicon.png',
     'apple_touch_icon' => 'static/valiant-shade/assets/img/branding/valiant-shade-logo-small.png',
+
+    /*
+    |--------------------------------------------------------------------------
+    | llms.txt — yapay zeka ajanları için halka açık site özeti
+    |--------------------------------------------------------------------------
+    |
+    | /llms.txt (kısa) ve /llms-full.txt (haber listesi ile genişletilmiş)
+    |
+    */
+    'llms' => [
+        'contact' => env('SEO_LLMS_CONTACT', ''),
+        'full_article_limit' => (int) env('SEO_LLMS_FULL_ARTICLE_LIMIT', 40),
+    ],
 ];

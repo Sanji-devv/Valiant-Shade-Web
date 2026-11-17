@@ -19,8 +19,10 @@
 
     $pageTitle = (string) config('seo.home.title');
     $pageDescription = (string) config('seo.home.description');
-    $canonicalUrl = rtrim((string) config('app.url'), '/') . '/';
+    $canonicalUrl = PublicSiteUrls::main('/');
     $ogImage = asset((string) config('seo.home.og_image'));
+    $siteName = (string) config('seo.site_name');
+    $logoUrl = url(asset((string) config('seo.home.og_image')));
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -41,11 +43,27 @@
     <script type="application/ld+json">
         {!! json_encode([
             '@context' => 'https://schema.org',
-            '@type' => 'WebSite',
-            'name' => config('seo.site_name'),
-            'url' => $canonicalUrl,
-            'description' => $pageDescription,
-            'inLanguage' => 'tr-TR',
+            '@graph' => [
+                [
+                    '@type' => 'Organization',
+                    '@id' => $canonicalUrl.'#organization',
+                    'name' => $siteName,
+                    'url' => $canonicalUrl,
+                    'logo' => [
+                        '@type' => 'ImageObject',
+                        'url' => $logoUrl,
+                    ],
+                ],
+                [
+                    '@type' => 'WebSite',
+                    '@id' => $canonicalUrl.'#website',
+                    'name' => $siteName,
+                    'url' => $canonicalUrl,
+                    'description' => $pageDescription,
+                    'inLanguage' => 'tr-TR',
+                    'publisher' => ['@id' => $canonicalUrl.'#organization'],
+                ],
+            ],
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) !!}
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -298,9 +316,23 @@
         .vs-quad__corner--tr { top: 12px; right: 12px; border-width: 2px 2px 0 0; }
         .vs-quad__corner--bl { bottom: 12px; left: 12px; border-width: 0 0 2px 2px; }
         .vs-quad__corner--br { bottom: 12px; right: 12px; border-width: 0 2px 2px 0; }
+
+        .vs-sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
     </style>
 </head>
 <body>
+    <h1 class="vs-sr-only">{{ $pageTitle }}</h1>
+    <p class="vs-sr-only">{{ $pageDescription }}</p>
     <main class="vs-quad" role="navigation" aria-label="{{ __('Portals') }}">
         <a href="{{ $gazetteUrl }}" class="vs-quad__cell vs-quad__cell--gazette" rel="noopener">
             <div class="vs-quad__bg" style="background-image: url('{{ $imgGazette }}');" aria-hidden="true"></div>
@@ -308,7 +340,7 @@
             <span class="vs-quad__corner vs-quad__corner--tr" aria-hidden="true"></span>
             <span class="vs-quad__corner vs-quad__corner--bl" aria-hidden="true"></span>
             <span class="vs-quad__corner vs-quad__corner--br" aria-hidden="true"></span>
-            <h1 class="vs-quad__title">{{ __('Gazette') }}</h1>
+            <h2 class="vs-quad__title">{{ __('Gazette') }}</h2>
         </a>
 
         <a href="{{ $mapUrl }}" class="vs-quad__cell vs-quad__cell--map" rel="noopener">
@@ -317,7 +349,7 @@
             <span class="vs-quad__corner vs-quad__corner--tr" aria-hidden="true"></span>
             <span class="vs-quad__corner vs-quad__corner--bl" aria-hidden="true"></span>
             <span class="vs-quad__corner vs-quad__corner--br" aria-hidden="true"></span>
-            <h1 class="vs-quad__title">{{ __('Map') }}</h1>
+            <h2 class="vs-quad__title">{{ __('Map') }}</h2>
         </a>
 
         <a href="{{ $mineriaUrl }}" class="vs-quad__cell vs-quad__cell--mineria" rel="noopener noreferrer" target="_blank">
@@ -326,7 +358,7 @@
             <span class="vs-quad__corner vs-quad__corner--tr" aria-hidden="true"></span>
             <span class="vs-quad__corner vs-quad__corner--bl" aria-hidden="true"></span>
             <span class="vs-quad__corner vs-quad__corner--br" aria-hidden="true"></span>
-            <h1 class="vs-quad__title vs-quad__title--long">{{ __('Mineria Fandom') }}</h1>
+            <h2 class="vs-quad__title vs-quad__title--long">{{ __('Mineria Fandom') }}</h2>
         </a>
 
         <a href="{{ $rulesUrl }}" class="vs-quad__cell vs-quad__cell--rules" rel="noopener noreferrer" target="_blank">
@@ -335,7 +367,7 @@
             <span class="vs-quad__corner vs-quad__corner--tr" aria-hidden="true"></span>
             <span class="vs-quad__corner vs-quad__corner--bl" aria-hidden="true"></span>
             <span class="vs-quad__corner vs-quad__corner--br" aria-hidden="true"></span>
-            <h1 class="vs-quad__title">{{ __('Rulebook') }}</h1>
+            <h2 class="vs-quad__title">{{ __('Rulebook') }}</h2>
         </a>
 
         <a href="{{ $monsterDbUrl }}" class="vs-quad__cell vs-quad__cell--monster" rel="noopener">
@@ -344,12 +376,12 @@
             <span class="vs-quad__corner vs-quad__corner--tr" aria-hidden="true"></span>
             <span class="vs-quad__corner vs-quad__corner--bl" aria-hidden="true"></span>
             <span class="vs-quad__corner vs-quad__corner--br" aria-hidden="true"></span>
-            <h1 class="vs-quad__title vs-quad__title--stacked" aria-label="{{ __('Monster Database') }}">
+            <h2 class="vs-quad__title vs-quad__title--stacked" aria-label="{{ __('Monster Database') }}">
                 <span>{{ $monsterTitleParts[0] ?? __('Monster Database') }}</span>
                 @if (! empty($monsterTitleParts[1]))
                     <span>{{ $monsterTitleParts[1] }}</span>
                 @endif
-            </h1>
+            </h2>
         </a>
 
         <a href="/valiant-shade" class="vs-quad__cell vs-quad__cell--records vs-quad__cell--dimmed">
@@ -360,7 +392,7 @@
             <span class="vs-quad__corner vs-quad__corner--tr" aria-hidden="true"></span>
             <span class="vs-quad__corner vs-quad__corner--bl" aria-hidden="true"></span>
             <span class="vs-quad__corner vs-quad__corner--br" aria-hidden="true"></span>
-            <h1 class="vs-quad__title">{{ __('BETA') }}</h1>
+            <h2 class="vs-quad__title">{{ __('Guild Records') }}</h2>
         </a>
     </main>
 </body>

@@ -19,6 +19,12 @@ return function (bool $registerNames = true): void {
         $newspaper->name('web.newspaper');
     }
 
+    $article = Route::get('/haber/{slug}', [NewspaperController::class, 'show'])
+        ->where('slug', '[a-z0-9](?:[a-z0-9\-]*[a-z0-9])?');
+    if ($registerNames) {
+        $article->name('web.newspaper.article');
+    }
+
     Route::redirect('/newspaper', '/', 301);
 
     Route::prefix('api')->group(function () {
@@ -27,6 +33,8 @@ return function (bool $registerNames = true): void {
             Route::get('/gazette-issues', [PublicNewsController::class, 'gazetteIssues']);
             Route::get('/featured', [PublicNewsController::class, 'featured']);
             Route::get('/', [PublicNewsController::class, 'index']);
+            Route::get('/by-slug/{slug}', [PublicNewsController::class, 'showBySlug'])
+                ->where('slug', '[a-z0-9](?:[a-z0-9\-]*[a-z0-9])?');
             Route::get('/{id}', [PublicNewsController::class, 'show'])->whereNumber('id');
             Route::post('/{id}/engagement', [PublicNewsController::class, 'recordEngagement'])
                 ->whereNumber('id')

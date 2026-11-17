@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\ValiantShade\Services\PublicNewsService;
+use App\ValiantShade\Support\NewsSlug;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\BaseModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -15,6 +16,7 @@ class News extends BaseModel
 
     protected $fillable = [
         'title',
+        'slug',
         'category',
         'news_type',
         'gazette_issue_id',
@@ -55,6 +57,12 @@ class News extends BaseModel
 
     protected static function booted(): void
     {
+        static::saving(function (News $news): void {
+            if ((string) ($news->status ?? '') === 'published' && ! filled($news->slug)) {
+                $news->slug = NewsSlug::assignUnique((string) $news->title, $news->exists ? (int) $news->id : null);
+            }
+        });
+
         static::saved(function (News $news): void {
             app(PublicNewsService::class)->bumpCacheVersion();
             app(\App\ValiantShade\Services\GazetteIssueService::class)->attachNewsToCurrentIssue($news);

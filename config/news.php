@@ -3,6 +3,9 @@
 return [
     'public_cache_ttl' => (int) env('NEWS_PUBLIC_CACHE_TTL', 300),
 
+    /** Aynı IP + haber için okunma sayacı en fazla bu kadar saatte bir artar. */
+    'view_throttle_hours' => (int) env('NEWS_VIEW_THROTTLE_HOURS', 6),
+
     'types' => [
         'royal_news' => [
             'label' => 'Kraliyet Haberi',

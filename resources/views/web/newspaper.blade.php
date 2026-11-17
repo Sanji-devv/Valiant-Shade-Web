@@ -18,6 +18,7 @@
     ];
     $onGazetteHost = PublicSiteUrls::isGazetteSubdomainRequest();
     $isGazetteView = request()->query('gorunum') === 'gazette'
+        || request()->routeIs('web.newspaper.article')
         || request()->hasAny(['yaprak', 'sayi', 'haber'])
         || ($onGazetteHost && request()->query('gorunum') !== 'web');
 @endphp
@@ -32,12 +33,47 @@
     @include('web.partials.head-public-seo', [
         'title' => $share['title'],
         'description' => $share['description'],
+        'keywords' => implode(', ', array_filter([
+            $gazetteTitle,
+            config('seo.site_name'),
+            'Pathfinder',
+            'gazete',
+        ])),
         'canonical' => $share['url'],
         'ogSiteName' => $gazetteTitle,
         'ogType' => $share['type'],
         'ogImage' => $share['image'],
         'ogImageAlt' => $share['image_alt'],
     ])
+    <script type="application/ld+json">
+        {!! json_encode(
+            ($share['type'] ?? 'website') === 'article'
+                ? [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'NewsArticle',
+                    'headline' => $share['title'],
+                    'description' => $share['description'],
+                    'image' => [$share['image']],
+                    'url' => $share['url'],
+                    'inLanguage' => 'tr-TR',
+                    'isPartOf' => [
+                        '@type' => 'NewsMediaOrganization',
+                        'name' => $gazetteTitle,
+                        'url' => PublicSiteUrls::gazette('/'),
+                    ],
+                ]
+                : [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'NewsMediaOrganization',
+                    'name' => $gazetteTitle,
+                    'description' => $share['description'],
+                    'url' => PublicSiteUrls::gazette('/'),
+                    'logo' => $share['image'],
+                    'inLanguage' => 'tr-TR',
+                ],
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR,
+        ) !!}
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=IM+Fell+English:ital@0;1&family=Newsreader:ital,opsz,wght@0,12..72,400;0,12..72,600;0,12..72,700;1,12..72,400&display=swap" rel="stylesheet">
@@ -139,6 +175,17 @@
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
                         <span id="toggleFiltersLabel">Filtreler</span>
                     </button>
+                    <button
+                        type="button"
+                        class="vs-toolbar__btn vs-toolbar__btn--stream"
+                        id="toggleStreamModeBtn"
+                        aria-pressed="false"
+                        aria-controls="newsStream"
+                        title="Yeniden eskiye, görselsiz akış"
+                    >
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16"/><path d="M4 12h10"/><path d="M4 18h14"/><circle cx="19" cy="17" r="3"/></svg>
+                        <span id="toggleStreamModeLabel">Akış</span>
+                    </button>
                     <button type="button" class="vs-toolbar__btn vs-toolbar__btn--view" id="toggleViewModeBtn" aria-pressed="false" title="Liste görünümü">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
                         <span id="toggleViewModeLabel">Liste</span>
@@ -155,6 +202,8 @@
         </section>
 
         <section class="vs-news-feed vs-news-grid" id="newsGrid" aria-live="polite"></section>
+
+        <section class="vs-news-stream" id="newsStream" hidden aria-live="polite" aria-label="Akış okuma"></section>
 
         <div class="vs-gazette-flip" id="gazetteFlip" hidden>
             <button type="button" class="vs-gazette-flip__arrow vs-gazette-flip__arrow--prev" id="gazetteFlipPrev" aria-label="Önceki yaprak" disabled>

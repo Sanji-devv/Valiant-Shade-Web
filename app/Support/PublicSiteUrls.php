@@ -36,6 +36,11 @@ class PublicSiteUrls
         return self::hostUrl((string) config('gazette.domain'), $path);
     }
 
+    public static function gazetteArticle(string $slug): string
+    {
+        return PublicNewsPaths::gazetteArticleUrl($slug);
+    }
+
     /**
      * Harita kökü Feldan’a yönlendirir; doğrudan Feldan için /feldan kullanın.
      */

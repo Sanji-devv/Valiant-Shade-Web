@@ -100,6 +100,26 @@
     color: #ffffff !important;
     box-shadow: 0 4px 12px rgba(var(--bs-primary-rgb), 0.35);
   }
+  .gazette-filter-btn.active {
+    background-color: rgba(var(--bs-primary-rgb), 0.18) !important;
+    border-color: var(--bs-primary) !important;
+    color: #e2e8f0 !important;
+  }
+  .news-drag-handle {
+    cursor: grab;
+    opacity: 0.55;
+    touch-action: none;
+  }
+  .news-drag-handle:active {
+    cursor: grabbing;
+  }
+  .news-item-col--dragging {
+    opacity: 0.45;
+  }
+  .news-item-col--drag-over {
+    outline: 2px dashed rgba(var(--bs-primary-rgb), 0.65);
+    outline-offset: 4px;
+  }
 
   /* Detail Reader Modal */
   #newsDetailModal .modal-dialog {
@@ -499,11 +519,39 @@
           </div>
         </div>
       </div>
+      @if($usesDatabaseNews ?? false)
+      <div class="row mt-3 pt-3 border-top border-secondary border-opacity-25">
+        <div class="col-12">
+          <div class="d-flex align-items-center gap-2 flex-wrap" id="gazetteSlotFilterGroup">
+            <span class="text-body-secondary small text-uppercase fw-semibold">{{ __('Gazette slot') }}</span>
+            @php $gCounts = $gazetteSlotCounts ?? ['all' => 0, 'lead' => 0, 'corner' => 0, 'article' => 0, 'flash' => 0]; @endphp
+            <button type="button" class="btn btn-sm category-filter-btn gazette-filter-btn active" data-gazette-slot="all">
+              {{ __('All Bulletins') }} ({{ (int) ($gCounts['all'] ?? 0) }})
+            </button>
+            <button type="button" class="btn btn-sm category-filter-btn gazette-filter-btn btn-outline-warning" data-gazette-slot="lead">
+              {{ __('Headline') }} ({{ (int) ($gCounts['lead'] ?? 0) }})
+            </button>
+            <button type="button" class="btn btn-sm category-filter-btn gazette-filter-btn btn-outline-info" data-gazette-slot="corner">
+              {{ __('Corner article') }} ({{ (int) ($gCounts['corner'] ?? 0) }})
+            </button>
+            <button type="button" class="btn btn-sm category-filter-btn gazette-filter-btn btn-outline-secondary" data-gazette-slot="article">
+              {{ __('News article') }} ({{ (int) ($gCounts['article'] ?? 0) }})
+            </button>
+            <button type="button" class="btn btn-sm category-filter-btn gazette-filter-btn btn-outline-danger" data-gazette-slot="flash">
+              {{ __('Hot news') }} ({{ (int) ($gCounts['flash'] ?? 0) }})
+            </button>
+            @if($canUpdateNews ?? false)
+            <span class="text-body-secondary small ms-auto"><i class="icon-base ti tabler-grip-vertical me-1"></i>{{ __('Drag cards to set gazette order') }}</span>
+            @endif
+          </div>
+        </div>
+      </div>
+      @endif
     </div>
   </div>
 
   <!-- News Cards Grid -->
-  <div class="row g-4" id="newsCardsContainer">
+  <div class="row g-4" id="newsCardsContainer" @if($canUpdateNews ?? false) data-reorder-url="{{ route('valiant-shade.pages-news.reorder') }}" @endif>
     @forelse($news as $item)
     @php
       $catType = match((int)$item->id) {
@@ -514,9 +562,15 @@
         7 => 'assassination',
         default => 'general'
       };
+      $gazetteSlot = \App\ValiantShade\Support\NewsStats::gazetteSlotKind(is_array($item->stats ?? null) ? $item->stats : null);
+      $readerReactions = \App\ValiantShade\Support\NewsEngagement::reactionMetrics(is_array($item->stats ?? null) ? $item->stats : null);
+      $readerReactionTotal = array_sum($readerReactions);
+      $gazetteBadge = \App\ValiantShade\Support\NewsStats::submissionBadge(is_array($item->stats ?? null) ? $item->stats : null);
     @endphp
     <div class="col-lg-4 col-md-6 news-item-col"
          data-id="{{ $item->id }}"
+         data-gazette-slot="{{ $gazetteSlot }}"
+         @if(($canUpdateNews ?? false) && ($item instanceof \App\Models\News)) draggable="true" @endif
          data-cat-type="{{ $catType }}"
          data-category="{{ mb_strtolower($item->category) }}"
          data-title="{{ mb_strtolower($item->title) }}"
@@ -524,7 +578,12 @@
          data-location="{{ mb_strtolower($item->location_badge ?? '') }}"
          data-author="{{ mb_strtolower($item->author ?? '') }}">
 
-      <div class="card news-feed-card h-100">
+      <div class="card news-feed-card h-100 position-relative">
+        @if(($canUpdateNews ?? false) && ($item instanceof \App\Models\News))
+        <div class="position-absolute top-0 end-0 p-2 news-drag-handle" style="z-index: 4;" title="{{ __('Drag to reorder') }}" aria-hidden="true">
+          <i class="icon-base ti tabler-grip-vertical text-white"></i>
+        </div>
+        @endif
         <!-- Thumbnail with Badges -->
         <div class="news-thumb-box" style="background-image: url('{{ $item->image_asset }}');">
           <div class="news-thumb-overlay"></div>
@@ -538,6 +597,11 @@
             <span class="news-tag-badge">
               <i class="{{ $item->tag_icon ?: 'icon-base ti tabler-sparkles' }} me-1 text-{{ $item->badge_color ?? 'warning' }}"></i>
               {{ $item->tag }}
+            </span>
+            @endif
+            @if($gazetteBadge)
+            <span class="news-tag-badge border-warning border-opacity-50">
+              <i class="icon-base ti tabler-news me-1 text-warning"></i> {{ $gazetteBadge }}
             </span>
             @endif
           </div>
@@ -587,7 +651,7 @@
             @php
               $cardStatPills = \App\ValiantShade\Support\NewsStats::pills($item->stats ?? null);
             @endphp
-            @if(!empty($cardStatPills))
+            @if(!empty($cardStatPills) || $readerReactionTotal > 0)
             <div class="row g-2 mb-3">
               @foreach(array_slice($cardStatPills, 0, 2) as $st)
               <div class="col-6">
@@ -597,6 +661,14 @@
                 </div>
               </div>
               @endforeach
+              @if($readerReactionTotal > 0)
+              <div class="col-6">
+                <div class="news-stat-pill">
+                  <div class="text-info fw-bold" style="font-size: 0.85rem;">{{ $readerReactionTotal }}</div>
+                  <div class="text-body-secondary" style="font-size: 0.72rem;">{{ __('Reader reactions') }}</div>
+                </div>
+              </div>
+              @endif
             </div>
             @endif
           </div>
@@ -1026,6 +1098,14 @@
     if (typeof item.views_count === 'number' && item.views_count > 0) {
       statPills.unshift({ value: item.views_count, label: 'okunma', color: 'text-secondary' });
     }
+    const reactionLabels = { victory: 'Zafer', mourning: 'Yas', whisper: 'Han fısıltısı', bounty: 'Ferman' };
+    const reactionMetrics = item.reaction_metrics || {};
+    Object.keys(reactionLabels).forEach((key) => {
+      const count = Number(reactionMetrics[key] || 0);
+      if (count > 0) {
+        statPills.push({ value: count, label: reactionLabels[key] + ' (okuyucu)', color: 'text-info' });
+      }
+    });
     if (statPills.length > 0) {
       statsGrid.innerHTML = statPills.map(st => `
         <div class="col-sm-3 col-6">
@@ -1203,10 +1283,14 @@
     initNewsTypePicker(document.getElementById('whisperTypePicker'), document.getElementById('whisperNewsType'));
     const cards = document.querySelectorAll('.news-item-col');
     const filterButtons = document.querySelectorAll('#categoryFilterGroup .category-filter-btn');
+    const gazetteFilterButtons = document.querySelectorAll('#gazetteSlotFilterGroup .gazette-filter-btn');
     const searchInput = document.getElementById('liveSearchInput');
     const clearBtn = document.getElementById('clearSearchBtn');
+    const newsGrid = document.getElementById('newsCardsContainer');
+    const reorderUrl = newsGrid?.getAttribute('data-reorder-url') || '';
 
     let currentFilter = 'all';
+    let currentGazetteSlot = 'all';
 
     function filterCards() {
       const query = (searchInput.value || '').trim().toLowerCase();
@@ -1222,6 +1306,9 @@
         const cardCatType = card.getAttribute('data-cat-type') || '';
         const matchCategory = (currentFilter === 'all') || (cardCatType === currentFilter);
 
+        const cardGazetteSlot = card.getAttribute('data-gazette-slot') || 'article';
+        const matchGazette = (currentGazetteSlot === 'all') || (cardGazetteSlot === currentGazetteSlot);
+
         // Search check
         const matchQuery = !query
           || title.includes(query)
@@ -1229,7 +1316,7 @@
           || location.includes(query)
           || author.includes(query);
 
-        if (matchCategory && matchQuery) {
+        if (matchCategory && matchGazette && matchQuery) {
           card.style.display = '';
         } else {
           card.style.display = 'none';
@@ -1246,6 +1333,82 @@
         filterCards();
       });
     });
+
+    gazetteFilterButtons.forEach(btn => {
+      btn.addEventListener('click', function () {
+        gazetteFilterButtons.forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        currentGazetteSlot = this.getAttribute('data-gazette-slot') || 'all';
+        filterCards();
+      });
+    });
+
+  function visibleNewsIdsInDomOrder() {
+    return Array.from(cards)
+      .filter((card) => card.style.display !== 'none')
+      .map((card) => parseInt(card.getAttribute('data-id') || '0', 10))
+      .filter((id) => Number.isFinite(id) && id > 0);
+  }
+
+  let dragSource = null;
+
+  async function saveNewsOrder() {
+    if (!reorderUrl || !canUpdateNews) return;
+    const ids = visibleNewsIdsInDomOrder();
+    if (!ids.length) return;
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    try {
+      await fetch(reorderUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': token || '',
+        },
+        body: JSON.stringify({ ids }),
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  if (reorderUrl && canUpdateNews && newsGrid) {
+    cards.forEach((card) => {
+      card.addEventListener('dragstart', (event) => {
+        dragSource = card;
+        card.classList.add('news-item-col--dragging');
+        event.dataTransfer.effectAllowed = 'move';
+      });
+      card.addEventListener('dragend', () => {
+        card.classList.remove('news-item-col--dragging');
+        cards.forEach((c) => c.classList.remove('news-item-col--drag-over'));
+        dragSource = null;
+      });
+      card.addEventListener('dragover', (event) => {
+        if (!dragSource || dragSource === card) return;
+        event.preventDefault();
+        card.classList.add('news-item-col--drag-over');
+      });
+      card.addEventListener('dragleave', () => {
+        card.classList.remove('news-item-col--drag-over');
+      });
+      card.addEventListener('drop', (event) => {
+        event.preventDefault();
+        card.classList.remove('news-item-col--drag-over');
+        if (!dragSource || dragSource === card) return;
+        const all = Array.from(newsGrid.querySelectorAll('.news-item-col'));
+        const targetIdx = all.indexOf(card);
+        const sourceIdx = all.indexOf(dragSource);
+        if (targetIdx < 0 || sourceIdx < 0) return;
+        if (sourceIdx < targetIdx) {
+          card.after(dragSource);
+        } else {
+          card.before(dragSource);
+        }
+        saveNewsOrder();
+      });
+    });
+  }
 
     // Search Input
     searchInput.addEventListener('input', filterCards);

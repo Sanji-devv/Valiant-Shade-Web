@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Web\PublicSeoController;
 use App\Support\PublicSiteUrls;
 use Illuminate\Support\Facades\Route;
 
@@ -16,6 +17,11 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('web.home');
 })->name('web.home');
+
+Route::get('/sitemap.xml', [PublicSeoController::class, 'sitemap'])->name('web.sitemap');
+Route::get('/robots.txt', [PublicSeoController::class, 'robots'])->name('web.robots');
+Route::get('/llms.txt', [PublicSeoController::class, 'llms'])->name('web.llms');
+Route::get('/llms-full.txt', [PublicSeoController::class, 'llmsFull'])->name('web.llms-full');
 
 Route::get('/newspaper', fn () => redirect(PublicSiteUrls::gazette(), 301));
 

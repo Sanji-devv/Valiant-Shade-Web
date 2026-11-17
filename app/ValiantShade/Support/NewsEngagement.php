@@ -3,6 +3,8 @@
 namespace App\ValiantShade\Support;
 
 use App\Models\News;
+use App\Models\NewsViewLog;
+use Illuminate\Http\Request;
 
 final class NewsEngagement
 {
@@ -83,6 +85,72 @@ final class NewsEngagement
             self::METRIC_SHARES => 0,
             self::METRIC_PNG_DOWNLOADS => 0,
         ];
+    }
+
+    /**
+     * Her açılış loglanır (IP + port). Sayım: aynı IP aynı haber için throttle süresinde en fazla bir kez.
+     *
+     * @return bool Okunma sayacı bu istekte arttı mı
+     */
+    public static function recordView(News $news, Request $request): bool
+    {
+        $ip = self::clientIp($request);
+        $port = self::clientPort($request);
+        $hours = max(1, (int) config('news.view_throttle_hours', 6));
+        $windowStart = now()->subHours($hours);
+
+        $alreadyCounted = NewsViewLog::query()
+            ->where('news_id', $news->id)
+            ->where('ip_address', $ip)
+            ->where('counted', true)
+            ->where('created_at', '>=', $windowStart)
+            ->exists();
+
+        $counted = ! $alreadyCounted;
+
+        NewsViewLog::query()->create([
+            'news_id' => $news->id,
+            'ip_address' => $ip,
+            'client_port' => $port,
+            'counted' => $counted,
+            'user_agent' => self::truncateUserAgent($request->userAgent()),
+        ]);
+
+        if ($counted) {
+            self::bump($news, self::METRIC_VIEWS);
+        }
+
+        return $counted;
+    }
+
+    public static function clientIp(Request $request): string
+    {
+        $ip = trim((string) ($request->ip() ?? ''));
+        if ($ip === '') {
+            $ip = trim((string) $request->server('REMOTE_ADDR', ''));
+        }
+
+        return $ip !== '' ? mb_substr($ip, 0, 45) : 'unknown';
+    }
+
+    public static function clientPort(Request $request): ?int
+    {
+        $raw = $request->server('REMOTE_PORT');
+        if ($raw === null || $raw === '') {
+            return null;
+        }
+        $port = (int) $raw;
+
+        return ($port >= 0 && $port <= 65535) ? $port : null;
+    }
+
+    protected static function truncateUserAgent(?string $ua): ?string
+    {
+        if ($ua === null || trim($ua) === '') {
+            return null;
+        }
+
+        return mb_strlen($ua) > 512 ? mb_substr($ua, 0, 512) : $ua;
     }
 
     public static function bump(News $news, string $metric, int $by = 1): void

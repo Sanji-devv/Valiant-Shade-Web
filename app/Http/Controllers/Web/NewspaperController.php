@@ -3,16 +3,36 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\News;
+use App\Support\PublicNewsPaths;
+use App\Support\PublicSiteUrls;
 use App\ValiantShade\Support\GazetteImageLibrary;
 use App\ValiantShade\Support\GazetteShareMeta;
 use App\ValiantShade\Support\WorldCalendar;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class NewspaperController extends Controller
 {
-    public function show(Request $request): View
+    public function show(Request $request): View|RedirectResponse
     {
+        $legacyId = (int) $request->query('haber', 0);
+        if ($legacyId > 0 && ! $request->route('slug')) {
+            $slug = News::query()
+                ->where('id', $legacyId)
+                ->where('status', 'published')
+                ->whereNotNull('slug')
+                ->value('slug');
+            if (is_string($slug) && $slug !== '') {
+                $target = PublicSiteUrls::gazette(PublicNewsPaths::gazetteArticlePath($slug));
+                $query = $request->query();
+                unset($query['haber']);
+                $qs = $query !== [] ? '?'.http_build_query($query) : '';
+
+                return redirect()->away($target.$qs, 301);
+            }
+        }
         $issue = config('gazette.issue', []);
         $gazetteImagePresets = [];
         foreach (GazetteImageLibrary::catalog() as $entry) {

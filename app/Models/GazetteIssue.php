@@ -108,7 +108,32 @@ class GazetteIssue extends Model
             ->map(function (array $def) use ($stored) {
                 $merged = array_merge($def, $stored->get($def['key'] ?? '', []) ?? []);
                 $articles = is_array($merged['articles'] ?? null) ? $merged['articles'] : [];
-                $articles = array_values(array_filter($articles, static fn ($row) => is_array($row)));
+                $articles = array_values(array_filter($articles, static function ($row) {
+                    if (! is_array($row)) {
+                        return false;
+                    }
+                    $id = (int) ($row['news_id'] ?? 0);
+                    if ($id <= 0) {
+                        return true;
+                    }
+
+                    return News::query()
+                        ->where('id', $id)
+                        ->where('status', 'published')
+                        ->exists();
+                }));
+                if ($articles === [] && ! empty($merged['news_id'])) {
+                    $legacyId = (int) $merged['news_id'];
+                    $legacyOk = $legacyId > 0 && News::query()
+                        ->where('id', $legacyId)
+                        ->where('status', 'published')
+                        ->exists();
+                    if (! $legacyOk) {
+                        $merged['body'] = null;
+                        $merged['teaser'] = null;
+                        unset($merged['news_id']);
+                    }
+                }
                 if ($articles === [] && ! empty($merged['news_id'])) {
                     $legacyBody = trim((string) ($merged['body'] ?? ''));
                     $articles[] = array_filter([

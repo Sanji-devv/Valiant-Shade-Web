@@ -51,6 +51,29 @@ final class NewsStats
         return is_array($sub) ? $sub : null;
     }
 
+    public static function gazetteSlotKind(?array $stats): string
+    {
+        $sub = self::submission($stats);
+        $kind = strtolower(trim((string) ($sub['gazette_slot_kind'] ?? '')));
+
+        return match ($kind) {
+            'lead', 'corner', 'brief', 'flash', 'extra' => $kind === 'extra' ? 'flash' : $kind,
+            default => 'article',
+        };
+    }
+
+    public static function gazetteSlotFilterLabel(string $kind): string
+    {
+        return match ($kind) {
+            'lead' => 'Manşet',
+            'corner' => 'Köşe yazısı',
+            'brief' => 'Kapak özeti',
+            'flash' => 'Sıcak haber',
+            'article' => 'Haber',
+            default => $kind,
+        };
+    }
+
     public static function submissionBadge(?array $stats): ?string
     {
         $sub = self::submission($stats);

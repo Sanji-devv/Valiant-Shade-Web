@@ -2,6 +2,7 @@
 
 namespace App\ValiantShade\Support;
 
+use App\Support\PublicNewsPaths;
 use Illuminate\Http\Request;
 
 final class GazetteShareMeta
@@ -17,9 +18,14 @@ final class GazetteShareMeta
         $defaultImage = self::absolutePublicUrl($crestPath);
         $defaultDescription = GazetteTypography::scrub($tagline) ?: 'Kraliyet ve lonca dedikoduları, han fısıltıları ve taşra ihbarları.';
 
+        $routeSlug = $request->route('slug');
         $haberId = (int) $request->query('haber', 0);
+        $news = app(\App\ValiantShade\Services\PublicNewsService::class);
+        if ($article === null && is_string($routeSlug) && $routeSlug !== '') {
+            $article = $news->findPublishedBySlug($routeSlug);
+        }
         if ($article === null && $haberId > 0) {
-            $article = app(\App\ValiantShade\Services\PublicNewsService::class)->findPublished($haberId);
+            $article = $news->findPublished($haberId);
         }
 
         if (is_array($article) && ($article['title'] ?? '') !== '') {
@@ -29,7 +35,7 @@ final class GazetteShareMeta
             $image = $imagePath !== ''
                 ? self::absolutePublicUrl($imagePath)
                 : self::normalizeShareImage((string) ($article['image_asset'] ?? $defaultImage));
-            $url = self::shareUrl($request, $haberId > 0 ? $haberId : (int) ($article['id'] ?? 0));
+            $url = self::shareUrl($request, $article);
 
             return [
                 'title' => "{$title} · {$brandTitle}",
@@ -105,27 +111,27 @@ final class GazetteShareMeta
         return self::absolutePublicUrl($imageAsset);
     }
 
-    public static function shareUrl(Request $request, ?int $articleId = null): string
+    /**
+     * @param  array<string, mixed>|null  $article
+     */
+    public static function shareUrl(Request $request, ?array $article = null): string
     {
-        $root = rtrim(self::siteRoot(), '/').'/';
-        $query = [];
-        $sayi = $request->query('sayi');
-        if ($sayi !== null && $sayi !== '') {
-            $query['sayi'] = $sayi;
+        $root = rtrim(self::siteRoot(), '/');
+        $slug = is_array($article) ? trim((string) ($article['slug'] ?? '')) : '';
+        if ($slug !== '' && NewsSlug::isValidFormat($slug)) {
+            return $root.PublicNewsPaths::gazetteArticlePath($slug);
         }
+
+        $query = [];
         $gorunum = $request->query('gorunum');
         if ($gorunum !== null && $gorunum !== '') {
             $query['gorunum'] = $gorunum;
         }
-        $id = $articleId ?? (int) $request->query('haber', 0);
-        if ($id > 0) {
-            $query['haber'] = $id;
-        }
         if ($query === []) {
-            return $root;
+            return $root.'/';
         }
 
-        return $root.'?'.http_build_query($query);
+        return $root.'/?'.http_build_query($query);
     }
 
     /**

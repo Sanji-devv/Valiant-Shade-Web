@@ -5,7 +5,10 @@ namespace App\ValiantShade\Http\Controllers;
 use App\Models\News;
 use App\ValiantShade\Http\Controllers\Controller;
 use App\ValiantShade\Services\GazetteIssueService;
+use App\ValiantShade\Services\PublicNewsService;
 use App\ValiantShade\Support\GazetteNewsImage;
+use App\ValiantShade\Support\NewsEngagement;
+use App\ValiantShade\Support\NewsStats;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -694,8 +697,8 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
 
         $dbNews = News::query()
             ->where('status', 'published')
-            ->orderBy('order')
             ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->get();
         $allNews = $dbNews->isNotEmpty() ? $dbNews : self::getNewsData();
 
@@ -749,6 +752,22 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
             'decrees' => $decreeNewsCount,
         ];
 
+        $gazetteSlotCounts = [
+            'all' => $allNews->count(),
+            'lead' => 0,
+            'corner' => 0,
+            'article' => 0,
+            'flash' => 0,
+        ];
+        foreach ($allNews as $item) {
+            $stats = is_object($item) ? ($item->stats ?? null) : ($item['stats'] ?? null);
+            $kind = NewsStats::gazetteSlotKind(is_array($stats) ? $stats : null);
+            if (! isset($gazetteSlotCounts[$kind])) {
+                $gazetteSlotCounts[$kind] = 0;
+            }
+            $gazetteSlotCounts[$kind]++;
+        }
+
         $management = $this->newsManagementFlags();
 
         return view('valiant-shade.content.pages.pages-news', [
@@ -760,6 +779,7 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
             'pendingNews' => $pendingNews,
             'featuredNews' => $featuredNews,
             'statsSummary' => $statsSummary,
+            'gazetteSlotCounts' => $gazetteSlotCounts,
             'activeCategory' => $activeCategory,
             'searchQuery' => $searchQuery,
             'usesDatabaseNews' => $dbNews->isNotEmpty(),
@@ -811,6 +831,10 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
                 $row = $item->toArray();
                 $row['image_asset'] = $item->image_asset;
                 $row['is_database'] = true;
+                $row['gazette_slot_kind'] = NewsStats::gazetteSlotKind(is_array($item->stats) ? $item->stats : null);
+                $row['gazette_slot_badge'] = NewsStats::submissionBadge(is_array($item->stats) ? $item->stats : null);
+                $row['reaction_metrics'] = NewsEngagement::reactionMetrics(is_array($item->stats) ? $item->stats : null);
+                $row['engagement_metrics'] = NewsEngagement::metrics(is_array($item->stats) ? $item->stats : null);
 
                 return $row;
             }
@@ -820,6 +844,10 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
                 $row['image_asset'] = asset(ltrim((string) $row['image_url'], '/'));
             }
             $row['is_database'] = in_array((int) ($row['id'] ?? 0), $databaseIds, true);
+            $row['gazette_slot_kind'] = NewsStats::gazetteSlotKind(is_array($row['stats'] ?? null) ? $row['stats'] : null);
+            $row['gazette_slot_badge'] = NewsStats::submissionBadge(is_array($row['stats'] ?? null) ? $row['stats'] : null);
+            $row['reaction_metrics'] = NewsEngagement::reactionMetrics(is_array($row['stats'] ?? null) ? $row['stats'] : null);
+            $row['engagement_metrics'] = NewsEngagement::metrics(is_array($row['stats'] ?? null) ? $row['stats'] : null);
 
             return $row;
         })->values();
@@ -1049,6 +1077,32 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
 
         $redirectRoute = str_contains($request->path(), 'guild-news') ? 'valiant-shade.pages-guild-news' : 'valiant-shade.pages-news';
         return redirect()->route($redirectRoute)->with('success', __('News updated successfully.'));
+    }
+
+    /**
+     * Drag-drop sıralama: üstteki kart en yüksek order değerini alır (gazete iç sayfa sırası).
+     */
+    public function reorder(Request $request): JsonResponse
+    {
+        $this->authorizeNewsManagement('update');
+
+        $data = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|distinct',
+        ]);
+
+        $ids = array_values(array_map('intval', $data['ids']));
+        $count = count($ids);
+        foreach ($ids as $index => $id) {
+            News::query()->where('id', $id)->update(['order' => $count - $index]);
+        }
+
+        app(PublicNewsService::class)->invalidatePublicFeed();
+
+        return response()->json([
+            'success' => true,
+            'message' => __('Order saved.'),
+        ]);
     }
 
     /**

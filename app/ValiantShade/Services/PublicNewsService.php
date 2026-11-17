@@ -3,9 +3,12 @@
 namespace App\ValiantShade\Services;
 
 use App\Models\News;
+use App\Support\PublicNewsPaths;
+use App\Support\PublicSiteUrls;
 use App\ValiantShade\Http\Controllers\NewsController;
 use App\ValiantShade\Support\GazetteTypography;
 use App\ValiantShade\Support\NewsEngagement;
+use App\ValiantShade\Support\NewsStats;
 use App\ValiantShade\Support\NewsTypeResolver;
 use App\ValiantShade\Support\WorldCalendar;
 use Illuminate\Database\Eloquent\Builder;
@@ -92,6 +95,11 @@ class PublicNewsService
                     return $rankCompare;
                 }
 
+                $orderCompare = (int) ($b->order ?? 0) <=> (int) ($a->order ?? 0);
+                if ($orderCompare !== 0) {
+                    return $orderCompare;
+                }
+
                 return $this->recencyTimestamp($b) <=> $this->recencyTimestamp($a);
             })
             ->values();
@@ -142,9 +150,23 @@ class PublicNewsService
         }
         $worldDate = WorldCalendar::formatNewsStamp($createdAt);
         $worldParts = WorldCalendar::fromDateTime($createdAt);
+        $statsArray = is_array($item->stats ?? null) ? $item->stats : [];
+        $gazetteSlotKind = NewsStats::gazetteSlotKind($statsArray);
+        $gazettePlacementLabel = match ($gazetteSlotKind) {
+            'lead' => 'Manşet',
+            'corner' => 'Köşe yazısı',
+            'flash' => 'Sıcak haber',
+            'brief' => 'Kapak haberi',
+            default => 'Haber',
+        };
+
+        $slug = filled($item->slug ?? null) ? (string) $item->slug : null;
 
         return [
             'id' => (int) $item->id,
+            'slug' => $slug ?? '',
+            'canonical_url' => $slug ? PublicSiteUrls::gazetteArticle($slug) : null,
+            'canonical_path' => $slug ? PublicNewsPaths::gazetteArticlePath($slug) : null,
             'title' => GazetteTypography::scrub((string) $item->title) ?? '',
             'category' => GazetteTypography::scrub((string) ($item->category ?? $typeConfig['label'])) ?? '',
             'news_type' => $newsType,
@@ -171,6 +193,8 @@ class PublicNewsService
             'reactions' => NewsEngagement::reactionMetrics(is_array($item->stats ?? null) ? $item->stats : null),
             'order' => (int) ($item->order ?? 0),
             'gazette_issue_id' => isset($item->gazette_issue_id) ? (int) $item->gazette_issue_id : null,
+            'gazette_slot_kind' => $gazetteSlotKind,
+            'gazette_placement_label' => $gazettePlacementLabel,
         ];
     }
 
@@ -226,6 +250,54 @@ class PublicNewsService
                 ->orderByDesc('id')
                 ->get()
                 ->filter(fn (News $item) => ! $this->isSliderMasthead($item))
+                ->values();
+
+            $total = $filtered->count();
+            $lastPage = max(1, (int) ceil($total / $perPage));
+            $page = min(max(1, $page), $lastPage);
+            $slice = $filtered->slice(($page - 1) * $perPage, $perPage)->values();
+
+            $searchTerm = trim((string) $search);
+            if ($searchTerm !== '') {
+                $countsQuery = $this->publishedQuery();
+                $this->applyPublicSearch($countsQuery, $search);
+                $typeCounts = $this->typeCounts($countsQuery->get());
+            } else {
+                $typeCounts = $this->globalPublishedTypeCounts();
+            }
+
+            return [
+                'data' => $slice->map(fn ($item) => $this->transformItem($item))->values()->all(),
+                'meta' => [
+                    'current_page' => $page,
+                    'last_page' => $lastPage,
+                    'per_page' => $perPage,
+                    'total' => $total,
+                ],
+                'type_counts' => $typeCounts,
+            ];
+        });
+    }
+
+    /**
+     * Akış okuma: manşet dahil tüm yayınlar, yeniden eskiye.
+     *
+     * @return array{data: array<int, array<string, mixed>>, meta: array<string, int>, type_counts: array<string, int>}
+     */
+    public function paginateStream(int $page = 1, int $perPage = 12, ?string $search = null): array
+    {
+        $locale = app()->getLocale();
+        $searchKey = $search ? md5(mb_strtolower(trim($search))) : 'all';
+        $cacheKey = $this->cacheKey("stream.{$locale}.p{$page}.s{$perPage}.q{$searchKey}");
+
+        return Cache::remember($cacheKey, $this->cacheTtl(), function () use ($page, $perPage, $search) {
+            $listQuery = $this->publishedQuery();
+            $this->applyPublicSearch($listQuery, $search);
+
+            $filtered = (clone $listQuery)
+                ->orderByDesc('created_at')
+                ->orderByDesc('id')
+                ->get()
                 ->values();
 
             $total = $filtered->count();
@@ -407,6 +479,29 @@ class PublicNewsService
             return null;
         }
 
+        return $this->publishedShowCandidate($model);
+    }
+
+    public function findPublishedForShowBySlug(string $slug): ?News
+    {
+        if (! \App\ValiantShade\Support\NewsSlug::isValidFormat($slug)) {
+            return null;
+        }
+
+        $model = News::query()
+            ->where('slug', $slug)
+            ->where('status', 'published')
+            ->first();
+
+        if (! $model) {
+            return null;
+        }
+
+        return $this->publishedShowCandidate($model);
+    }
+
+    protected function publishedShowCandidate(News $model): ?News
+    {
         if ($model->is_active) {
             return $model;
         }
@@ -420,6 +515,18 @@ class PublicNewsService
 
         return Cache::remember($this->cacheKey("show.{$locale}.{$id}"), $this->cacheTtl(), function () use ($id) {
             $item = $this->findPublishedForShow($id);
+
+            return $item ? $this->transformItem($item) : null;
+        });
+    }
+
+    public function findPublishedBySlug(string $slug): ?array
+    {
+        $locale = app()->getLocale();
+        $slug = trim($slug);
+
+        return Cache::remember($this->cacheKey("show.slug.{$locale}.{$slug}"), $this->cacheTtl(), function () use ($slug) {
+            $item = $this->findPublishedForShowBySlug($slug);
 
             return $item ? $this->transformItem($item) : null;
         });

@@ -78,9 +78,13 @@ class PublicNewsController extends Controller
             $newsType = null;
         }
 
+        $payload = $request->boolean('stream')
+            ? $this->news->paginateStream($page, $perPage, $search)
+            : $this->news->paginate($page, $perPage, $newsType, $search);
+
         return $this->cachedJson([
             'success' => true,
-            ...$this->news->paginate($page, $perPage, $newsType, $search),
+            ...$payload,
         ]);
     }
 
@@ -94,7 +98,7 @@ class PublicNewsController extends Controller
         ]);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(Request $request, int $id): JsonResponse
     {
         $model = $this->news->findPublishedForShow($id);
 
@@ -102,7 +106,23 @@ class PublicNewsController extends Controller
             return response()->json(['success' => false, 'message' => 'Haber bulunamadı.'], 404);
         }
 
-        NewsEngagement::bump($model, NewsEngagement::METRIC_VIEWS);
+        NewsEngagement::recordView($model, $request);
+
+        return response()->json([
+            'success' => true,
+            'news' => $this->news->transformItem($model->fresh()),
+        ], 200)->header('Cache-Control', 'private, no-cache, must-revalidate');
+    }
+
+    public function showBySlug(Request $request, string $slug): JsonResponse
+    {
+        $model = $this->news->findPublishedForShowBySlug($slug);
+
+        if (! $model) {
+            return response()->json(['success' => false, 'message' => 'Haber bulunamadı.'], 404);
+        }
+
+        NewsEngagement::recordView($model, $request);
 
         return response()->json([
             'success' => true,
