@@ -3,7 +3,6 @@
 namespace App\ValiantShade\Support;
 
 use App\Models\News;
-use Illuminate\Support\Facades\DB;
 
 final class NewsEngagement
 {
@@ -136,10 +135,7 @@ final class NewsEngagement
             ];
         }
 
-        $reactionStats = is_array($engagement['reactions'] ?? null)
-            ? ['engagement' => ['reactions' => $engagement['reactions']]]
-            : $existingStats;
-        $reactions = self::reactionMetrics($reactionStats);
+        $reactions = self::reactionMetrics($existingStats);
         foreach (self::reactionLabels() as $key => $label) {
             $count = $reactions[$key] ?? 0;
             if ($count <= 0) {
@@ -180,72 +176,25 @@ final class NewsEngagement
     /**
      * @return array<string, int>
      */
-    public static function recordReaderReaction(
-        News $news,
-        string $reactionKey,
-        string $readerHash,
-        ?string $legacyReaction = null,
-    ): array
+    public static function recordReaderReaction(News $news, string $reactionKey): array
     {
         if (! in_array($reactionKey, self::allowedReactions(), true)) {
             return self::reactionMetrics(is_array($news->stats) ? $news->stats : null);
         }
 
-        return DB::transaction(function () use ($news, $reactionKey, $readerHash, $legacyReaction): array {
-            $lockedNews = News::query()->whereKey($news->getKey())->lockForUpdate()->firstOrFail();
-            $readerRecord = DB::table('news_reader_reactions')
-                ->where('news_id', $lockedNews->getKey())
-                ->where('reader_hash', $readerHash)
-                ->lockForUpdate()
-                ->first();
+        $stats = is_array($news->stats) ? $news->stats : [];
+        $engagement = is_array($stats['engagement'] ?? null) ? $stats['engagement'] : self::emptyMetrics();
+        $reactions = self::reactionMetrics($stats);
+        $reactions[$reactionKey]++;
+        $engagement['reactions'] = $reactions;
+        $engagement = array_merge(self::metrics($stats), $engagement);
+        $stats['engagement'] = $engagement;
+        $stats['pills'] = self::buildPills($engagement, $stats);
 
-            $stats = is_array($lockedNews->stats) ? $lockedNews->stats : [];
-            $reactions = self::reactionMetrics($stats);
+        $news->stats = $stats;
+        $news->saveQuietly();
 
-            if ($readerRecord) {
-                if ($readerRecord->reaction !== $reactionKey) {
-                    $reactions[$readerRecord->reaction] = max(0, ($reactions[$readerRecord->reaction] ?? 0) - 1);
-                    $reactions[$reactionKey]++;
-                    DB::table('news_reader_reactions')
-                        ->where('news_id', $lockedNews->getKey())
-                        ->where('reader_hash', $readerHash)
-                        ->update([
-                            'reaction' => $reactionKey,
-                            'updated_at' => now(),
-                        ]);
-                } else {
-                    return $reactions;
-                }
-            } else {
-                $legacyReaction = in_array($legacyReaction, self::allowedReactions(), true) ? $legacyReaction : null;
-                if ($legacyReaction && $legacyReaction !== $reactionKey) {
-                    $reactions[$legacyReaction] = max(0, ($reactions[$legacyReaction] ?? 0) - 1);
-                    $reactions[$reactionKey]++;
-                } elseif (! $legacyReaction) {
-                    $reactions[$reactionKey]++;
-                }
-
-                $now = now();
-                DB::table('news_reader_reactions')->insert([
-                    'news_id' => $lockedNews->getKey(),
-                    'reader_hash' => $readerHash,
-                    'reaction' => $reactionKey,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]);
-            }
-
-            $engagement = is_array($stats['engagement'] ?? null) ? $stats['engagement'] : self::emptyMetrics();
-            $engagement['reactions'] = $reactions;
-            $engagement = array_merge(self::metrics($stats), $engagement);
-            $stats['engagement'] = $engagement;
-            $stats['pills'] = self::buildPills($engagement, $stats);
-
-            $lockedNews->stats = $stats;
-            $lockedNews->saveQuietly();
-
-            return $reactions;
-        });
+        return $reactions;
     }
 
     /**

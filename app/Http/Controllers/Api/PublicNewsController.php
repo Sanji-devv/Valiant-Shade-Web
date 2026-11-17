@@ -139,32 +139,20 @@ class PublicNewsController extends Controller
 
     public function recordReaction(Request $request, int $id): JsonResponse
     {
-        $allowedReactions = implode(',', NewsEngagement::allowedReactions());
-        $validator = Validator::make($request->all(), [
-            'reaction' => 'required|string|in:'.$allowedReactions,
-            'reader_id' => 'required|uuid',
-            'previous_reaction' => 'nullable|string|in:'.$allowedReactions,
-        ]);
-        if ($validator->fails()) {
+        $reaction = (string) $request->input('reaction', '');
+        if (! in_array($reaction, NewsEngagement::allowedReactions(), true)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Geçersiz tepki bilgisi.',
+                'message' => 'Geçersiz tepki türü.',
             ], 422);
         }
-        $validated = $validator->validated();
 
         $model = $this->news->findPublishedForShow($id);
         if (! $model) {
             return response()->json(['success' => false, 'message' => 'Haber bulunamadı.'], 404);
         }
 
-        $readerHash = hash('sha256', strtolower($validated['reader_id']));
-        $counts = NewsEngagement::recordReaderReaction(
-            $model,
-            $validated['reaction'],
-            $readerHash,
-            $validated['previous_reaction'] ?? null,
-        );
+        $counts = NewsEngagement::recordReaderReaction($model, $reaction);
 
         return response()->json([
             'success' => true,
