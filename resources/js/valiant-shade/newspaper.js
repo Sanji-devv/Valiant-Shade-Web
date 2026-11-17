@@ -269,6 +269,28 @@ function articlePathFromSlug(slug) {
   return `/haber/${normalized}`;
 }
 
+function articleSlugFromPathname(pathname = window.location.pathname) {
+  const pathMatch = String(pathname || '').match(/^\/haber\/([a-z0-9][a-z0-9-]*)$/i);
+  return pathMatch ? pathMatch[1].toLowerCase() : '';
+}
+
+function resolveShareArticleSlug({ articleSlug = null, includeArticle = false } = {}) {
+  const explicit = String(articleSlug || '').trim().toLowerCase();
+  if (explicit) {
+    return explicit;
+  }
+  if (includeArticle && state.openArticleSnapshot?.slug) {
+    return String(state.openArticleSnapshot.slug).trim().toLowerCase();
+  }
+  if (state.pendingArticleSlug) {
+    return String(state.pendingArticleSlug).trim().toLowerCase();
+  }
+  if (state.openArticleSnapshot?.slug) {
+    return String(state.openArticleSnapshot.slug).trim().toLowerCase();
+  }
+  return articleSlugFromPathname();
+}
+
 function readUrlIntoState() {
   const params = new URLSearchParams(window.location.search);
   const gorunum = params.get('gorunum');
@@ -319,10 +341,7 @@ function readUrlIntoState() {
 }
 
 function buildShareUrl({ articleId = null, articleSlug = null, includeArticle = false } = {}) {
-  const slug =
-    articleSlug ??
-    (includeArticle ? state.openArticleSnapshot?.slug : null) ??
-    null;
+  const slug = resolveShareArticleSlug({ articleSlug, includeArticle });
   const snapshot = state.openArticleSnapshot;
   if (slug) {
     const articlePath = articlePathFromSlug(slug);
@@ -1729,7 +1748,7 @@ async function loadStream(reset = true) {
     state.streamHasMore = page < lastPage;
     state.streamPage = page + 1;
     renderStreamFeed();
-    if (!state.suppressUrlSync) {
+    if (!state.suppressUrlSync && !state.pendingArticleId && !state.pendingArticleSlug) {
       syncBrowserUrl();
     }
   } catch (error) {
@@ -1892,6 +1911,7 @@ async function bootstrapPendingArticle() {
   if ((!articleSlug && !articleId) || state.articleBootstrapInFlight) {
     return;
   }
+  const entryLayout = state.layoutMode;
   state.pendingArticleSlug = null;
   state.pendingArticleId = null;
   state.articleBootstrapInFlight = true;
@@ -1910,18 +1930,30 @@ async function bootstrapPendingArticle() {
     const item = payload.news;
     const resolvedId = Number(item?.id) || articleId;
     const issueId = item?.gazette_issue_id;
+    const streamEntry = entryLayout === 'stream';
     if (issueId && Number(state.issueId) !== Number(issueId)) {
       state.issueId = issueId;
-      state.layoutMode = 'gazette';
-      applyLayoutMode();
-      await loadFeed();
+      if (!streamEntry) {
+        state.layoutMode = 'gazette';
+        applyLayoutMode();
+        await loadFeed();
+      }
     }
     const targetSheet = sheetForArticleId(resolvedId);
-    if (Number.isFinite(targetSheet) && targetSheet >= 1 && targetSheet !== state.page) {
+    if (
+      !streamEntry &&
+      Number.isFinite(targetSheet) &&
+      targetSheet >= 1 &&
+      targetSheet !== state.page
+    ) {
       state.page = targetSheet;
       await loadFeed();
     }
-    await openArticle(resolvedId, { gazetteReader: isGazetteLayout() });
+    const slugForOpen = articleSlug || String(item?.slug || '').trim().toLowerCase();
+    await openArticle(resolvedId, {
+      gazetteReader: streamEntry ? prefersGazetteArticleModal() : isGazetteLayout(),
+      slug: slugForOpen || undefined,
+    });
   } catch (error) {
     console.warn(error);
   } finally {
@@ -1976,6 +2008,12 @@ function renderPagination(meta) {
 async function loadFeed() {
   if (isStreamLayout()) {
     await loadStream(true);
+    if ((state.pendingArticleId || state.pendingArticleSlug) && !state.articleBootstrapInFlight) {
+      await bootstrapPendingArticle();
+    } else if (!state.suppressUrlSync) {
+      const shareSlug = resolveShareArticleSlug({ includeArticle: true });
+      syncBrowserUrl(shareSlug ? { articleSlug: shareSlug } : {});
+    }
     return;
   }
   const gazette = isGazetteLayout();
@@ -3659,7 +3697,9 @@ document.addEventListener('DOMContentLoaded', () => {
     urlParams.has('haber');
   const onGazetteHost = document.body?.dataset?.gazetteSubdomain === '1';
   const layoutParam = urlParams.get('gorunum');
-  if (onGazetteHost && layoutParam !== 'web' && layoutParam !== 'stream') {
+  if (layoutParam === 'stream') {
+    state.layoutMode = 'stream';
+  } else if (onGazetteHost && layoutParam !== 'web' && layoutParam !== 'stream') {
     state.layoutMode = 'gazette';
   } else if (layoutParam === 'web') {
     state.layoutMode = 'web';
