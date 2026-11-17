@@ -125,6 +125,15 @@ class PublicGodsPagesTest extends TestCase
         }
     }
 
+    public function test_renvil_subdomains_are_individual_entries(): void
+    {
+        $this->get(route('valiant-shade.gods.index'))
+            ->assertOk()
+            ->assertSee('value="Caves"', false)
+            ->assertSee('value="Metal"', false)
+            ->assertDontSee('CavesMetal');
+    }
+
     public function test_god_filters_show_only_selected_groups(): void
     {
         config()->set('gods.groups', [

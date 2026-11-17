@@ -25,7 +25,7 @@ return [
                     'sections' => [],
                     'alignment' => 'Neutral Good',
                     'domains' => ['Air', 'Earth', 'Strength', 'Weather', 'Good'],
-                    'subdomains' => ['Cloud', 'Lightning', 'Wind', 'CavesMetal', 'Ferocity', 'Resolve', 'Storms', 'Agathion', 'Friendship'],
+                    'subdomains' => ['Cloud', 'Lightning', 'Wind', 'Caves', 'Metal', 'Ferocity', 'Resolve', 'Storms', 'Agathion', 'Friendship'],
                     'weapon' => 'Warhammer',
                 ],
                 [
