@@ -760,43 +760,24 @@ class GazetteIssueService
             if (($slot['key'] ?? '') !== $key) {
                 continue;
             }
-            $body = trim((string) ($news->full_story ?: $news->description));
-            $anonymous = ! empty($submission['anonymous'])
-                || preg_match('/anonim\s*gözcü/i', (string) ($news->author ?? '')) === 1;
-            $rumuz = null;
+            $piece = $this->buildCornerArticlePiece($news, $submission);
+            $anonymous = ! empty($piece['anonymous']);
             if ($anonymous) {
                 $slot['anonymous'] = true;
             } else {
                 unset($slot['anonymous']);
-                $rumuzInput = trim((string) ($submission['rumuz'] ?? ''));
-                if ($rumuzInput !== '') {
-                    $rumuz = $rumuzInput;
-                } elseif (! empty($news->author) && ! preg_match('/anonim|gizli/i', (string) $news->author)) {
-                    $rumuz = (string) $news->author;
-                }
             }
-
-            $teaser = $body !== ''
-                ? (mb_strlen($body) > 110 ? mb_substr($body, 0, 107).'…' : $body)
-                : null;
-            $piece = array_filter([
-                'news_id' => (int) $news->id,
-                'title' => (string) $news->title,
-                'body' => $body !== '' ? $body : null,
-                'teaser' => $teaser,
-                'rumuz' => $rumuz,
-                'anonymous' => $anonymous,
-                'created_at' => now()->toIso8601String(),
-            ], static fn ($v) => $v !== null && $v !== '');
 
             $articles = is_array($slot['articles'] ?? null) ? $slot['articles'] : [];
             $articles[] = $piece;
             $slot['articles'] = array_slice($articles, -16);
 
-            $slot['body'] = $body;
-            $slot['teaser'] = $teaser;
+            $slot['body'] = $piece['body'] ?? null;
+            $slot['teaser'] = $piece['teaser'] ?? null;
             $slot['news_id'] = $news->id;
-            $slot['rumuz'] = $rumuz;
+            if (! empty($piece['rumuz'])) {
+                $slot['rumuz'] = (string) $piece['rumuz'];
+            }
             $updated = true;
             break;
         }
@@ -1205,7 +1186,7 @@ class GazetteIssueService
         $slots = $this->writableCornerSlots($issue);
         $dirty = false;
         foreach ($slots as &$slot) {
-            if ($this->pruneInvalidCornerArticles($slot)) {
+            if ($this->pruneInvalidCornerArticles($issue, $slot)) {
                 $dirty = true;
             }
         }
@@ -1228,7 +1209,7 @@ class GazetteIssueService
         $slots = $this->writableCornerSlots($issue);
         $dirty = false;
         foreach ($slots as &$slot) {
-            if ($this->removeNewsFromCornerSlot($slot, $newsId)) {
+            if ($this->removeNewsFromCornerSlot($issue, $slot, $newsId)) {
                 $dirty = true;
             }
         }
@@ -1250,7 +1231,7 @@ class GazetteIssueService
   /**
      * @param  array<string, mixed>  $slot
      */
-    protected function removeNewsFromCornerSlot(array &$slot, int $newsId): bool
+    protected function removeNewsFromCornerSlot(GazetteIssue $issue, array &$slot, int $newsId): bool
     {
         $had = false;
         $articles = is_array($slot['articles'] ?? null) ? $slot['articles'] : [];
@@ -1265,14 +1246,14 @@ class GazetteIssueService
         }));
         if ($filtered !== $articles) {
             $slot['articles'] = $filtered;
-            $this->rebuildCornerSlotFromArticles($slot);
+            $this->rebuildCornerSlotFromArticles($issue, $slot);
 
             return true;
         }
 
         if ((int) ($slot['news_id'] ?? 0) === $newsId) {
             $had = true;
-            $this->rebuildCornerSlotFromArticles($slot);
+            $this->rebuildCornerSlotFromArticles($issue, $slot);
 
             return true;
         }
@@ -1283,7 +1264,7 @@ class GazetteIssueService
     /**
      * @param  array<string, mixed>  $slot
      */
-    protected function pruneInvalidCornerArticles(array &$slot): bool
+    protected function pruneInvalidCornerArticles(GazetteIssue $issue, array &$slot): bool
     {
         $articles = is_array($slot['articles'] ?? null) ? $slot['articles'] : [];
         if ($articles === []) {
@@ -1298,7 +1279,7 @@ class GazetteIssueService
             if ($stillPublished) {
                 return false;
             }
-            $this->resetCornerSlot($slot);
+            $this->rebuildCornerSlotFromArticles($issue, $slot);
 
             return true;
         }
@@ -1319,7 +1300,84 @@ class GazetteIssueService
             return false;
         }
         $slot['articles'] = $articles;
-        $this->rebuildCornerSlotFromArticles($slot);
+        $this->rebuildCornerSlotFromArticles($issue, $slot);
+
+        return true;
+    }
+
+    /**
+     * @param  array<string, mixed>  $submission
+     * @return array<string, mixed>
+     */
+    protected function buildCornerArticlePiece(News $news, array $submission): array
+    {
+        $body = trim((string) ($news->full_story ?: $news->description));
+        $anonymous = ! empty($submission['anonymous'])
+            || preg_match('/anonim\s*gözcü/i', (string) ($news->author ?? '')) === 1;
+        $rumuz = null;
+        if (! $anonymous) {
+            $rumuzInput = trim((string) ($submission['rumuz'] ?? ''));
+            if ($rumuzInput !== '') {
+                $rumuz = $rumuzInput;
+            } elseif (! empty($news->author) && ! preg_match('/anonim|gizli/i', (string) $news->author)) {
+                $rumuz = (string) $news->author;
+            }
+        }
+        $teaser = $body !== ''
+            ? (mb_strlen($body) > 110 ? mb_substr($body, 0, 107).'…' : $body)
+            : null;
+
+        return array_filter([
+            'news_id' => (int) $news->id,
+            'title' => (string) $news->title,
+            'body' => $body !== '' ? $body : null,
+            'teaser' => $teaser,
+            'rumuz' => $rumuz,
+            'anonymous' => $anonymous,
+            'created_at' => now()->toIso8601String(),
+        ], static fn ($v) => $v !== null && $v !== '');
+    }
+
+    protected function repopulateCornerSlotFromPublishedNews(GazetteIssue $issue, array &$slot): bool
+    {
+        $slotKey = (string) ($slot['key'] ?? '');
+        if ($slotKey === '' || $issue->isLocked()) {
+            return false;
+        }
+
+        $pieces = News::query()
+            ->where('gazette_issue_id', $issue->id)
+            ->where('status', 'published')
+            ->orderBy('id')
+            ->get()
+            ->filter(function (News $news) use ($issue, $slotKey) {
+                $stats = is_array($news->stats) ? $news->stats : [];
+                $submission = is_array($stats['submission'] ?? null) ? $stats['submission'] : [];
+                if (! $this->looksLikeCornerSubmission($news, $submission)) {
+                    return false;
+                }
+                $key = trim((string) ($submission['gazette_slot_key'] ?? ''));
+                if ($key === '') {
+                    $key = $this->resolveCornerSlotKey($issue, $submission, $news);
+                }
+
+                return $key === $slotKey;
+            })
+            ->map(function (News $news) {
+                $stats = is_array($news->stats) ? $news->stats : [];
+                $submission = is_array($stats['submission'] ?? null) ? $stats['submission'] : [];
+
+                return $this->buildCornerArticlePiece($news, $submission);
+            })
+            ->values()
+            ->all();
+
+        if ($pieces === []) {
+            return false;
+        }
+
+        $slot['articles'] = array_slice($pieces, -16);
+        $this->applyLatestCornerPieceToSlot($slot);
 
         return true;
     }
@@ -1327,7 +1385,7 @@ class GazetteIssueService
     /**
      * @param  array<string, mixed>  $slot
      */
-    protected function rebuildCornerSlotFromArticles(array &$slot): void
+    protected function applyLatestCornerPieceToSlot(array &$slot): void
     {
         $articles = is_array($slot['articles'] ?? null) ? $slot['articles'] : [];
         $articles = array_values(array_filter($articles, static fn ($row) => is_array($row)));
@@ -1358,6 +1416,26 @@ class GazetteIssueService
         } else {
             unset($slot['anonymous']);
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $slot
+     */
+    protected function rebuildCornerSlotFromArticles(GazetteIssue $issue, array &$slot): void
+    {
+        $articles = is_array($slot['articles'] ?? null) ? $slot['articles'] : [];
+        $articles = array_values(array_filter($articles, static fn ($row) => is_array($row)));
+        if ($articles === []) {
+            if ($this->repopulateCornerSlotFromPublishedNews($issue, $slot)) {
+                return;
+            }
+            $this->resetCornerSlot($slot);
+
+            return;
+        }
+
+        $slot['articles'] = $articles;
+        $this->applyLatestCornerPieceToSlot($slot);
     }
 
     /**
