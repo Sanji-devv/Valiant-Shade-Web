@@ -26,8 +26,6 @@ return function (bool $registerNames = true): void {
             Route::get('/bootstrap', [PublicNewsController::class, 'bootstrap']);
             Route::get('/gazette-issues', [PublicNewsController::class, 'gazetteIssues']);
             Route::get('/featured', [PublicNewsController::class, 'featured']);
-            Route::get('/exports/articles/{id}', [PublicNewsController::class, 'exportArticle'])->whereNumber('id');
-            Route::get('/exports/issues/{issueId}', [PublicNewsController::class, 'exportIssue'])->whereNumber('issueId');
             Route::get('/', [PublicNewsController::class, 'index']);
             Route::get('/{id}', [PublicNewsController::class, 'show'])->whereNumber('id');
             Route::post('/{id}/engagement', [PublicNewsController::class, 'recordEngagement'])
