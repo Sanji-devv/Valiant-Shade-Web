@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('news_id')->constrained('news')->cascadeOnDelete();
             $table->string('ip_address', 45);
-            $table->unsignedSmallInteger('client_port')->nullable();
+            $table->unsignedInteger('client_port')->nullable();
             $table->boolean('counted')->default(false);
             $table->text('user_agent')->nullable();
             $table->timestamp('created_at')->useCurrent();

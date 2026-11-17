@@ -106,7 +106,11 @@ class PublicNewsController extends Controller
             return response()->json(['success' => false, 'message' => 'Haber bulunamadı.'], 404);
         }
 
-        NewsEngagement::recordView($model, $request);
+        try {
+            NewsEngagement::recordView($model, $request);
+        } catch (\Throwable) {
+            // Okunma logu başarısız olsa da haber metni sunulsun.
+        }
 
         return response()->json([
             'success' => true,
@@ -122,7 +126,11 @@ class PublicNewsController extends Controller
             return response()->json(['success' => false, 'message' => 'Haber bulunamadı.'], 404);
         }
 
-        NewsEngagement::recordView($model, $request);
+        try {
+            NewsEngagement::recordView($model, $request);
+        } catch (\Throwable) {
+            // Okunma logu başarısız olsa da haber metni sunulsun.
+        }
 
         return response()->json([
             'success' => true,
