@@ -18,6 +18,12 @@ Laravel is a web application framework with expressive, elegant syntax. We belie
 - Database agnostic [schema migrations](https://laravel.com/docs/migrations).
 - [Robust background job processing](https://laravel.com/docs/queues).
 
+## Gods page editing
+
+The gods table and profiles are publicly editable. Add domains and subdomains individually, with an optional HTTP(S) link for each. Filter the table by god type, alignment and domain. Profile images accept JPEG, PNG, or WebP files up to 5 MB and 4096 × 4096 pixels.
+
+Deploy the gods profile-fields migration and ensure the public disk is writable and linked with `php artisan storage:link`. Back up the database and uploaded files before deployment; existing god overrides are preserved.
+
 ## Player XP Tracker import
 
 Administrators can upload the JSON using **Import Data** on the XP Tracker, or run `php artisan xp:import "C:\path\to\Player XP Tracker.json"` to import both tables. Existing characters and users are matched by name; unmatched records, including Unknown entries, remain visible. The page shows their count, and the command lists them. The import does not create users or characters or change existing character XP. Re-running it updates imported tracker values; the transaction rolls back if a record has distributed quest-report XP. XP values are rounded to the nearest integer for tracker fields. Resetting the tracker to defaults replaces imported records with sample data.

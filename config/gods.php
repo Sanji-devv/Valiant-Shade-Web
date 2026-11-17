@@ -14,7 +14,7 @@ return [
                     'sections' => [],
                     'alignment' => 'Lawful Neutral',
                     'domains' => ['Fire', 'Sun', 'Law', 'Destruction', 'Healing'],
-                    'subdomains' => ['Arson – Ash – Smoke', 'Day – Light – Revelation – Thirst', 'Judgment – Loyalty', 'Catastrophe', 'Resurrection'],
+                    'subdomains' => ['Arson', 'Ash', 'Smoke', 'Day', 'Light', 'Revelation', 'Thirst', 'Judgment', 'Loyalty', 'Catastrophe', 'Resurrection'],
                     'weapon' => 'Lantern Staff',
                 ],
                 [
@@ -25,7 +25,7 @@ return [
                     'sections' => [],
                     'alignment' => 'Neutral Good',
                     'domains' => ['Air', 'Earth', 'Strength', 'Weather', 'Good'],
-                    'subdomains' => ['Cloud – Lightning – Wind', 'CavesMetal', 'Ferocity – Resolve', 'Storms', 'Agathion – Friendship'],
+                    'subdomains' => ['Cloud', 'Lightning', 'Wind', 'CavesMetal', 'Ferocity', 'Resolve', 'Storms', 'Agathion', 'Friendship'],
                     'weapon' => 'Warhammer',
                 ],
                 [
@@ -36,7 +36,7 @@ return [
                     'sections' => [],
                     'alignment' => 'Chaotic Good',
                     'domains' => ['Travel', 'Trickery', 'Liberation', 'Chaos', 'Good'],
-                    'subdomains' => ['Exploration – Portal – Trade', 'Greed – Espionage – Innuendo – Thievery', 'Freedom – Self-Realization', 'Azata – Revelry – Whimsy', 'Azata – Friendship – Redemption'],
+                    'subdomains' => ['Exploration', 'Portal', 'Trade', 'Greed', 'Espionage', 'Innuendo', 'Thievery', 'Freedom', 'Self-Realization', 'Azata', 'Revelry', 'Whimsy', 'Friendship', 'Redemption'],
                     'weapon' => 'Gladius',
                 ],
                 [

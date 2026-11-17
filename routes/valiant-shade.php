@@ -67,6 +67,11 @@ Route::put('/gods/{slug}', [GodsPageController::class, 'update'])
     ->middleware('throttle:30,1')
     ->name('valiant-shade.gods.update');
 
+Route::put('/gods/{slug}/profile', [GodsPageController::class, 'updateProfile'])
+    ->where('slug', '[a-z0-9-]+')
+    ->middleware('throttle:5,1')
+    ->name('valiant-shade.gods.profile.update');
+
 Route::get('/pages/profile-user', [UserProfile::class, 'index'])->name('valiant-shade.pages-profile-user');
 Route::post('/pages/profile-user/vault-transfer', [UserProfile::class, 'vaultTransfer'])->name('valiant-shade.pages-profile-user.vault-transfer');
 Route::get('/pages/profile-teams', [UserTeams::class, 'index'])->name('valiant-shade.pages-profile-teams');
