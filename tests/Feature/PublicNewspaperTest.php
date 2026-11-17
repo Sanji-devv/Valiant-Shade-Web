@@ -431,14 +431,92 @@ class PublicNewspaperTest extends TestCase
             'image_url' => 'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg',
             'is_active' => true,
         ]);
+        $readerId = 'c4bbd849-b258-47a5-b252-b4e49f37a621';
 
-        $this->postJson('/api/public/news/'.$news->id.'/reactions', ['reaction' => 'mourning'])
+        $this->postJson('/api/public/news/'.$news->id.'/reactions', [
+            'reaction' => 'mourning',
+            'reader_id' => $readerId,
+        ])
             ->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('reactions.mourning', 1);
 
+        $this->postJson('/api/public/news/'.$news->id.'/reactions', [
+            'reaction' => 'mourning',
+            'reader_id' => $readerId,
+            'previous_reaction' => 'mourning',
+        ])
+            ->assertOk()
+            ->assertJsonPath('reactions.mourning', 1);
+
         $stats = $news->fresh()->stats;
         $this->assertSame(1, (int) ($stats['engagement']['reactions']['mourning'] ?? 0));
+        $this->assertDatabaseHas('news_reader_reactions', [
+            'news_id' => $news->id,
+            'reader_hash' => hash('sha256', $readerId),
+            'reaction' => 'mourning',
+        ]);
+    }
+
+    public function test_public_reader_can_replace_its_reaction(): void
+    {
+        $news = News::create([
+            'title' => 'Tepki değiştirme testi haber başlığı uzun',
+            'category' => 'Yerel Haberler',
+            'news_type' => 'local_news',
+            'status' => 'published',
+            'description' => 'Okuyucu tepkisini değiştirebilmelidir.',
+            'image_url' => 'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg',
+            'is_active' => true,
+        ]);
+        $readerId = 'f7f0d4db-d649-48a6-8a91-93bcb7b43a2f';
+
+        $this->postJson('/api/public/news/'.$news->id.'/reactions', [
+            'reaction' => 'mourning',
+            'reader_id' => $readerId,
+        ])->assertOk();
+
+        $this->postJson('/api/public/news/'.$news->id.'/reactions', [
+            'reaction' => 'victory',
+            'reader_id' => $readerId,
+            'previous_reaction' => 'mourning',
+        ])
+            ->assertOk()
+            ->assertJsonPath('reactions.mourning', 0)
+            ->assertJsonPath('reactions.victory', 1);
+
+        $this->assertDatabaseHas('news_reader_reactions', [
+            'news_id' => $news->id,
+            'reader_hash' => hash('sha256', $readerId),
+            'reaction' => 'victory',
+        ]);
+        $pills = $news->fresh()->stats['pills'];
+        $this->assertContains(['value' => '1', 'label' => 'Zafer kutlandı', 'color' => 'success'], $pills);
+        $this->assertNotContains(['value' => '1', 'label' => 'Yas tutuldu', 'color' => 'danger'], $pills);
+    }
+
+    public function test_public_reader_can_replace_a_reaction_saved_before_browser_tracking(): void
+    {
+        $news = News::create([
+            'title' => 'Eski tepki değiştirme testi haber başlığı uzun',
+            'category' => 'Yerel Haberler',
+            'news_type' => 'local_news',
+            'status' => 'published',
+            'description' => 'Eski tarayıcı tepkisi de taşınabilmelidir.',
+            'image_url' => 'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg',
+            'is_active' => true,
+            'stats' => ['engagement' => ['reactions' => ['mourning' => 1]]],
+        ]);
+        $readerId = '2aa384ea-0e91-482d-9e83-073136605d53';
+
+        $this->postJson('/api/public/news/'.$news->id.'/reactions', [
+            'reaction' => 'victory',
+            'reader_id' => $readerId,
+            'previous_reaction' => 'mourning',
+        ])
+            ->assertOk()
+            ->assertJsonPath('reactions.mourning', 0)
+            ->assertJsonPath('reactions.victory', 1);
     }
 
     public function test_cache_version_bumps_after_news_change(): void

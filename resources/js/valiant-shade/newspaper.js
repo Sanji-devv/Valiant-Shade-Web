@@ -1633,7 +1633,13 @@ function renderStoryHtml(storyText) {
   return paragraphs
     .map((p) => p.trim())
     .filter(Boolean)
-    .map((p) => `<p class="vs-article-p">${escapeHtml(p)}</p>`)
+    .map((p, index) => {
+      if (index !== 0) {
+        return `<p class="vs-article-p">${escapeHtml(p)}</p>`;
+      }
+      const [initial, ...remaining] = Array.from(p);
+      return `<p class="vs-article-p"><span class="vs-article-p__initial">${escapeHtml(initial)}</span>${escapeHtml(remaining.join(''))}</p>`;
+    })
     .join('');
 }
 
@@ -1839,6 +1845,27 @@ function readerReactionStorageKey(articleId) {
   return `vs_article_reaction_${articleId}`;
 }
 
+function readerBrowserId() {
+  const storageKey = 'vs_article_reader_id';
+  try {
+    let id = localStorage.getItem(storageKey);
+    if (id && /^[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i.test(id)) {
+      return id.toLowerCase();
+    }
+
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+    id = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+    localStorage.setItem(storageKey, id);
+    return id;
+  } catch {
+    throw new Error('Tepki tercihi bu tarayıcıda saklanamadı.');
+  }
+}
+
 function storedReaderReaction(articleId) {
   try {
     return localStorage.getItem(readerReactionStorageKey(articleId)) || '';
@@ -1905,8 +1932,7 @@ function renderArticleReactions(item, articleId) {
     const countHtml =
       count > 0 ? `<span class="vs-modal__reaction-count" aria-hidden="true">${count}</span>` : '';
     const active = picked === cfg.key ? ' is-active' : '';
-    const disabled = picked && picked !== cfg.key ? ' disabled' : '';
-    return `<button type="button" class="vs-modal__reaction vs-modal__reaction--${cfg.key}${active}" data-reaction="${cfg.key}" aria-pressed="${picked === cfg.key ? 'true' : 'false'}"${disabled} title="${escapeHtml(cfg.label)}">
+    return `<button type="button" class="vs-modal__reaction vs-modal__reaction--${cfg.key}${active}" data-reaction="${cfg.key}" aria-pressed="${picked === cfg.key ? 'true' : 'false'}" title="${escapeHtml(cfg.label)}">
       <span class="vs-modal__reaction-icon">${cfg.icon}</span>
       <span class="vs-modal__reaction-label">${escapeHtml(cfg.label)}</span>
       ${countHtml}
@@ -1926,10 +1952,21 @@ async function sendArticleReaction(articleId, reaction, itemSnapshot = {}) {
   }
   const cfg = ARTICLE_REACTIONS.find((row) => row.key === reaction);
   const prior = storedReaderReaction(articleId);
-  if (prior) {
-    showToast('Bu habere zaten bir tepki bıraktınız.', 'warning');
+  if (prior === reaction) {
     return;
   }
+  let readerId;
+  try {
+    readerId = readerBrowserId();
+  } catch (error) {
+    showToast(error.message, 'error');
+    return;
+  }
+  const reactionButtons = els.modalReactions?.querySelectorAll('[data-reaction]') || [];
+  reactionButtons.forEach((button) => {
+    button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+  });
   const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
   try {
     const response = await fetch(`/api/public/news/${articleId}/reactions`, {
@@ -1939,7 +1976,7 @@ async function sendArticleReaction(articleId, reaction, itemSnapshot = {}) {
         'Content-Type': 'application/json',
         'X-CSRF-TOKEN': token || '',
       },
-      body: JSON.stringify({ reaction }),
+      body: JSON.stringify({ reaction, reader_id: readerId, previous_reaction: prior || null }),
     });
     const payload = await response.json();
     if (!response.ok || !payload.success) {
@@ -1962,6 +1999,13 @@ async function sendArticleReaction(articleId, reaction, itemSnapshot = {}) {
     showToast(cfg?.toast || 'Tepkiniz kaydedildi.');
   } catch (error) {
     showToast(error.message || 'Tepki kaydedilemedi.', 'error');
+  } finally {
+    if (state.openArticleId === Number(articleId)) {
+      els.modalReactions?.querySelectorAll('[data-reaction]').forEach((button) => {
+        button.disabled = false;
+        button.removeAttribute('aria-busy');
+      });
+    }
   }
 }
 
@@ -2198,7 +2242,17 @@ async function downloadArticleModalPng() {
       scale: Math.min(2, window.devicePixelRatio || 1.5),
       useCORS: true,
       onclone: (clonedDocument) => {
-        clonedDocument.getElementById('newsDetailModal')?.style.setProperty('background-color', 'transparent', 'important');
+        const clonedPanel = clonedDocument.getElementById('newsDetailModalPanel');
+        const backdrop = clonedPanel?.parentElement;
+        if (!clonedPanel || !backdrop) {
+          return;
+        }
+
+        const captureRoot = clonedDocument.createElement('div');
+        captureRoot.className = 'vs-modal-backdrop vs-modal-backdrop--article vs-modal-backdrop--gazette-read';
+        captureRoot.style.cssText = `position:static; display:block; width:${panel.getBoundingClientRect().width}px; padding:0; background:transparent;`;
+        captureRoot.appendChild(clonedPanel);
+        backdrop.replaceWith(captureRoot);
       },
     });
     const blob = await new Promise((resolve, reject) => {
