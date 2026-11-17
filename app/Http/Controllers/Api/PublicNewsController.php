@@ -96,11 +96,7 @@ class PublicNewsController extends Controller
 
     public function show(int $id): JsonResponse
     {
-        $model = News::query()
-            ->where('id', $id)
-            ->where('status', 'published')
-            ->where('is_active', true)
-            ->first();
+        $model = $this->news->findPublishedForShow($id);
 
         if (! $model) {
             return response()->json(['success' => false, 'message' => 'Haber bulunamadı.'], 404);
@@ -125,11 +121,7 @@ class PublicNewsController extends Controller
             ], 422);
         }
 
-        $model = News::query()
-            ->where('id', $id)
-            ->where('status', 'published')
-            ->where('is_active', true)
-            ->first();
+        $model = $this->news->findPublishedForShow($id);
 
         if (! $model) {
             return response()->json(['success' => false, 'message' => 'Haber bulunamadı.'], 404);
@@ -143,6 +135,30 @@ class PublicNewsController extends Controller
             'success' => true,
             'engagement' => NewsEngagement::metrics(is_array($fresh->stats) ? $fresh->stats : null),
         ]);
+    }
+
+    public function recordReaction(Request $request, int $id): JsonResponse
+    {
+        $reaction = (string) $request->input('reaction', '');
+        if (! in_array($reaction, NewsEngagement::allowedReactions(), true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Geçersiz tepki türü.',
+            ], 422);
+        }
+
+        $model = $this->news->findPublishedForShow($id);
+        if (! $model) {
+            return response()->json(['success' => false, 'message' => 'Haber bulunamadı.'], 404);
+        }
+
+        $counts = NewsEngagement::recordReaderReaction($model, $reaction);
+
+        return response()->json([
+            'success' => true,
+            'reactions' => $counts,
+            'engagement' => NewsEngagement::metrics(is_array($model->fresh()->stats) ? $model->fresh()->stats : null),
+        ], 200)->header('Cache-Control', 'private, no-cache, must-revalidate');
     }
 
     public function submit(Request $request): JsonResponse

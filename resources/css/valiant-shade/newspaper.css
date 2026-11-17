@@ -1958,6 +1958,15 @@ body.vs-article-modal-open {
   font-style: italic;
 }
 
+.vs-modal-backdrop--gazette-read .vs-modal__date-loc-sep {
+  opacity: 0.7;
+  font-style: normal;
+}
+
+.vs-modal-backdrop--gazette-read .vs-modal__date-loc {
+  font-style: italic;
+}
+
 .vs-modal-backdrop--gazette-read .vs-modal__title {
   font-family: 'Cinzel', serif;
   color: #2a1f14;
@@ -1995,11 +2004,9 @@ body.vs-article-modal-open {
   font-style: italic;
 }
 
-.vs-modal-backdrop--gazette-read .vs-modal__loc-mark {
+.vs-modal-backdrop--gazette-read .vs-modal__loc-icon {
   color: #7c4a12;
-  opacity: 0.75;
-  font-style: normal;
-  margin-inline-end: 0.15rem;
+  opacity: 0.82;
 }
 
 .vs-modal-backdrop--gazette-read .vs-modal__meta-item--read {
@@ -2146,9 +2153,10 @@ body.vs-article-modal-open {
   color: #cbd5e1;
 }
 
-.vs-modal__loc-mark {
+.vs-modal__loc-icon {
+  flex-shrink: 0;
   color: #94a3b8;
-  font-style: normal;
+  opacity: 0.9;
 }
 
 .vs-modal__meta-item--read {
@@ -2919,6 +2927,114 @@ label:has(.vs-form-field--invalid) .vs-field-inline-error,
 
 .vs-modal__article-foot {
   margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.vs-modal__reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.35rem;
+}
+
+.vs-modal__reaction {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.42rem 0.62rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(15, 23, 42, 0.55);
+  color: #e2e8f0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+}
+
+.vs-modal__reaction:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(245, 158, 11, 0.45);
+}
+
+.vs-modal__reaction:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.vs-modal__reaction.is-active {
+  border-color: rgba(245, 158, 11, 0.55);
+  background: rgba(245, 158, 11, 0.14);
+}
+
+.vs-modal__reaction-icon {
+  display: inline-flex;
+  line-height: 0;
+}
+
+.vs-modal__reaction--victory .vs-modal__reaction-icon {
+  color: #4ade80;
+}
+
+.vs-modal__reaction--mourning .vs-modal__reaction-icon {
+  color: #f87171;
+}
+
+.vs-modal__reaction--whisper .vs-modal__reaction-icon {
+  color: #fbbf24;
+}
+
+.vs-modal__reaction--bounty .vs-modal__reaction-icon {
+  color: #60a5fa;
+}
+
+.vs-modal__reaction-count {
+  min-width: 1.15rem;
+  text-align: center;
+  font-size: 0.68rem;
+  opacity: 0.85;
+}
+
+.vs-modal-backdrop--gazette-read .vs-modal__reactions {
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+
+.vs-modal-backdrop--gazette-read .vs-modal__reaction {
+  font-family: Newsreader, Georgia, serif;
+  font-weight: 600;
+  font-size: 0.74rem;
+  border-color: rgba(42, 31, 20, 0.22);
+  background: rgba(255, 250, 240, 0.65);
+  color: #3d2914;
+}
+
+.vs-modal-backdrop--gazette-read .vs-modal__reaction:hover:not(:disabled) {
+  border-color: rgba(124, 74, 18, 0.45);
+  background: rgba(255, 250, 240, 0.92);
+}
+
+.vs-modal-backdrop--gazette-read .vs-modal__reaction.is-active {
+  border-color: rgba(124, 74, 18, 0.55);
+  background: rgba(212, 168, 83, 0.22);
+}
+
+.vs-modal-backdrop--gazette-read .vs-modal__reaction--victory .vs-modal__reaction-icon {
+  color: #3d7a3f;
+}
+
+.vs-modal-backdrop--gazette-read .vs-modal__reaction--mourning .vs-modal__reaction-icon {
+  color: #8b3a3a;
+}
+
+.vs-modal-backdrop--gazette-read .vs-modal__reaction--whisper .vs-modal__reaction-icon {
+  color: #7c4a12;
+}
+
+.vs-modal-backdrop--gazette-read .vs-modal__reaction--bounty .vs-modal__reaction-icon {
+  color: #3d4f7a;
 }
 
 .vs-modal__engagement {

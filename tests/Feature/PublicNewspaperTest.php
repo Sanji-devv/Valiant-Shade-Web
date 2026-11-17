@@ -420,6 +420,27 @@ class PublicNewspaperTest extends TestCase
             ->assertJsonPath('success', true);
     }
 
+    public function test_public_reader_reaction_increments_count(): void
+    {
+        $news = News::create([
+            'title' => 'Tepki testi haber başlığı uzun',
+            'category' => 'Yerel Haberler',
+            'news_type' => 'local_news',
+            'status' => 'published',
+            'description' => 'Okuyucu tepkileri sayılmalı.',
+            'image_url' => 'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg',
+            'is_active' => true,
+        ]);
+
+        $this->postJson('/api/public/news/'.$news->id.'/reactions', ['reaction' => 'mourning'])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('reactions.mourning', 1);
+
+        $stats = $news->fresh()->stats;
+        $this->assertSame(1, (int) ($stats['engagement']['reactions']['mourning'] ?? 0));
+    }
+
     public function test_cache_version_bumps_after_news_change(): void
     {
         Cache::put('public.news.cache_version', 3, now()->addHour());

@@ -168,6 +168,7 @@ class PublicNewsService
             'is_breaking' => (bool) ($item->is_breaking ?? false),
             'views_count' => (int) ($item->views_count ?? 0),
             'engagement' => NewsEngagement::metrics(is_array($item->stats ?? null) ? $item->stats : null),
+            'reactions' => NewsEngagement::reactionMetrics(is_array($item->stats ?? null) ? $item->stats : null),
             'order' => (int) ($item->order ?? 0),
             'gazette_issue_id' => isset($item->gazette_issue_id) ? (int) $item->gazette_issue_id : null,
         ];
@@ -376,17 +377,51 @@ class PublicNewsService
         return $counts;
     }
 
+    public function isGazetteCornerArticle(News $news): bool
+    {
+        $stats = is_array($news->stats) ? $news->stats : [];
+        $submission = is_array($stats['submission'] ?? null) ? $stats['submission'] : [];
+
+        if (($submission['gazette_slot_kind'] ?? null) === 'corner') {
+            return true;
+        }
+
+        if (($stats['gazette_placement'] ?? null) === 'cover_corner') {
+            return true;
+        }
+
+        $tag = (string) ($news->tag ?? '');
+
+        return str_contains($tag, 'Köşe Yazısı');
+    }
+
+    /** Published article readable via public show (feed may hide inactive corner pieces). */
+    public function findPublishedForShow(int $id): ?News
+    {
+        $model = News::query()
+            ->where('id', $id)
+            ->where('status', 'published')
+            ->first();
+
+        if (! $model) {
+            return null;
+        }
+
+        if ($model->is_active) {
+            return $model;
+        }
+
+        return $this->isGazetteCornerArticle($model) ? $model : null;
+    }
+
     public function findPublished(int $id): ?array
     {
         $locale = app()->getLocale();
 
         return Cache::remember($this->cacheKey("show.{$locale}.{$id}"), $this->cacheTtl(), function () use ($id) {
-            $item = $this->publishedSource()->firstWhere('id', $id);
-            if (! $item) {
-                return null;
-            }
+            $item = $this->findPublishedForShow($id);
 
-            return $this->transformItem($item);
+            return $item ? $this->transformItem($item) : null;
         });
     }
 

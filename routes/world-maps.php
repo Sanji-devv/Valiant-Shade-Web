@@ -59,6 +59,10 @@ Route::prefix('api')->group(function () {
             ->whereNumber('id')
             ->middleware('throttle:60,1')
             ->name('api.public.news.engagement');
+        Route::post('/{id}/reactions', [PublicNewsController::class, 'recordReaction'])
+            ->whereNumber('id')
+            ->middleware('throttle:30,1')
+            ->name('api.public.news.reactions');
         Route::post('/submissions', [PublicNewsController::class, 'submit'])
             ->middleware('throttle:public.news.submissions')
             ->name('api.public.news.submit');

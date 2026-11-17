@@ -12,6 +12,50 @@ final class NewsEngagement
 
     public const METRIC_PNG_DOWNLOADS = 'png_downloads';
 
+    public const REACTION_VICTORY = 'victory';
+
+    public const REACTION_MOURNING = 'mourning';
+
+    public const REACTION_WHISPER = 'whisper';
+
+    public const REACTION_BOUNTY = 'bounty';
+
+    /**
+     * @return array<string, string>
+     */
+    public static function reactionLabels(): array
+    {
+        return [
+            self::REACTION_VICTORY => 'Zafer kutlandı',
+            self::REACTION_MOURNING => 'Yas tutuldu',
+            self::REACTION_WHISPER => 'Han fısıltısı',
+            self::REACTION_BOUNTY => 'Ferman kaydı',
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function allowedReactions(): array
+    {
+        return array_keys(self::reactionLabels());
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    public static function reactionMetrics(?array $stats): array
+    {
+        $engagement = is_array($stats['engagement'] ?? null) ? $stats['engagement'] : [];
+        $raw = is_array($engagement['reactions'] ?? null) ? $engagement['reactions'] : [];
+        $out = [];
+        foreach (self::allowedReactions() as $key) {
+            $out[$key] = max(0, (int) ($raw[$key] ?? 0));
+        }
+
+        return $out;
+    }
+
     /**
      * @return array<string, int>
      */
@@ -91,19 +135,66 @@ final class NewsEngagement
             ];
         }
 
+        $reactions = self::reactionMetrics($existingStats);
+        foreach (self::reactionLabels() as $key => $label) {
+            $count = $reactions[$key] ?? 0;
+            if ($count <= 0) {
+                continue;
+            }
+            $pills[] = [
+                'value' => (string) $count,
+                'label' => $label,
+                'color' => match ($key) {
+                    self::REACTION_VICTORY => 'success',
+                    self::REACTION_MOURNING => 'danger',
+                    self::REACTION_WHISPER => 'warning',
+                    self::REACTION_BOUNTY => 'primary',
+                    default => 'secondary',
+                },
+            ];
+        }
+
+        $skipLabels = array_merge(
+            ['okunma', 'paylaşım', 'PNG indirme'],
+            array_values(self::reactionLabels()),
+        );
         $existing = is_array($existingStats['pills'] ?? null) ? $existingStats['pills'] : [];
         foreach ($existing as $pill) {
             if (! is_array($pill) || ! isset($pill['label'])) {
                 continue;
             }
             $label = (string) $pill['label'];
-            if (in_array($label, ['okunma', 'paylaşım', 'PNG indirme'], true)) {
+            if (in_array($label, $skipLabels, true)) {
                 continue;
             }
             $pills[] = $pill;
         }
 
         return $pills;
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    public static function recordReaderReaction(News $news, string $reactionKey): array
+    {
+        if (! in_array($reactionKey, self::allowedReactions(), true)) {
+            return self::reactionMetrics(is_array($news->stats) ? $news->stats : null);
+        }
+
+        $stats = is_array($news->stats) ? $news->stats : [];
+        $engagement = is_array($stats['engagement'] ?? null) ? $stats['engagement'] : self::emptyMetrics();
+        $reactions = self::reactionMetrics($stats);
+        $reactions[$reactionKey]++;
+        $engagement['reactions'] = $reactions;
+        $engagement = array_merge(self::metrics($stats), $engagement);
+        $stats['engagement'] = $engagement;
+        $stats['pills'] = self::buildPills($engagement, $stats);
+
+        $news->stats = $stats;
+        $news->saveQuietly();
+
+        return $reactions;
     }
 
     /**
@@ -120,23 +211,13 @@ final class NewsEngagement
         ];
         $stats['editorial_reactions'] = array_slice($list, -20);
 
-        $existingPills = is_array($stats['pills'] ?? null) ? $stats['pills'] : [];
-        $filtered = array_values(array_filter(
-            $existingPills,
-            static fn ($pill) => ! is_array($pill) || (($pill['label'] ?? '') !== $reactionLabel),
-        ));
-        $filtered[] = [
-            'value' => '1',
-            'label' => $reactionLabel,
-            'color' => match ($reactionKey) {
-                'victory' => 'success',
-                'mourning' => 'danger',
-                'whisper' => 'warning',
-                'bounty' => 'primary',
-                default => 'secondary',
-            },
-        ];
-        $stats['pills'] = $filtered;
+        $reactions = self::reactionMetrics($stats);
+        $reactions[$reactionKey] = ($reactions[$reactionKey] ?? 0) + 1;
+        $engagement = is_array($stats['engagement'] ?? null) ? $stats['engagement'] : self::emptyMetrics();
+        $engagement['reactions'] = $reactions;
+        $stats['engagement'] = array_merge(self::metrics($stats), $engagement);
+        $stats['pills'] = self::buildPills($stats['engagement'], $stats);
+
         $news->stats = $stats;
         $news->saveQuietly();
     }

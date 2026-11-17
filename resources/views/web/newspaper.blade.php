@@ -228,6 +228,7 @@
                 <div class="vs-modal-story" id="newsModalStory"></div>
                 <blockquote class="vs-modal-quote" id="newsModalQuote" hidden></blockquote>
                 <footer class="vs-modal__article-foot">
+                    <div class="vs-modal__reactions" id="newsModalReactions" role="group" aria-label="Olay tepkileri"></div>
                     <div class="vs-modal__engagement" id="newsModalEngagement" hidden aria-label="Okuma istatistikleri"></div>
                 </footer>
             </div>

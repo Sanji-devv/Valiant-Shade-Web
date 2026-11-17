@@ -1592,6 +1592,36 @@ function renderModalBadges(item) {
   return parts.join('');
 }
 
+const MODAL_LOCATION_ICON = `<svg class="vs-modal__loc-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 21s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>`;
+
+function articleModalDateLine(item, gazetteReader) {
+  const when = item.world_date_text || item.published_date || item.date_text || '';
+  const loc = String(item.location_badge || '').trim();
+  if (!when && !loc) {
+    return { html: '', hasContent: false };
+  }
+  if (!gazetteReader || !loc) {
+    return {
+      html: when ? escapeHtml(when) : '',
+      hasContent: Boolean(when),
+    };
+  }
+  const datePart = when ? escapeHtml(when) : '';
+  const sep = datePart ? '<span class="vs-modal__date-loc-sep" aria-hidden="true"> · </span>' : '';
+  return {
+    html: `${datePart}${sep}<span class="vs-modal__date-loc">${escapeHtml(loc)}</span>`,
+    hasContent: true,
+  };
+}
+
+function renderModalLocationMarkup(loc) {
+  const label = String(loc || '').trim();
+  if (!label) {
+    return '';
+  }
+  return `${MODAL_LOCATION_ICON}<span>${escapeHtml(label)}</span>`;
+}
+
 function renderStoryHtml(storyText) {
   const normalized = String(storyText || '').trim();
   if (!normalized) {
@@ -1682,6 +1712,9 @@ async function openCornerReader(slotKey) {
   if (els.modalReadTime) {
     els.modalReadTime.hidden = true;
   }
+  if (els.modalReactions) {
+    els.modalReactions.innerHTML = '';
+  }
   els.modalStory.innerHTML = renderStoryHtml(slot.body || '');
   if (els.modalQuote) {
     els.modalQuote.hidden = true;
@@ -1712,6 +1745,9 @@ function openCornerArticlePicker(slot, articles) {
   if (els.modalEngagement) {
     els.modalEngagement.hidden = true;
     els.modalEngagement.innerHTML = '';
+  }
+  if (els.modalReactions) {
+    els.modalReactions.innerHTML = '';
   }
   els.modalTitle.textContent = title;
   if (els.modalDate) {
@@ -1772,6 +1808,45 @@ function articleModalShowsHero(item, gazetteReader) {
   return true;
 }
 
+const ARTICLE_REACTIONS = [
+  {
+    key: 'victory',
+    label: 'Zafer kutla',
+    toast: 'Birakın fıçılar patlasın! Zaferiniz gazetede yankılanıyor.',
+    icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10l1 5a4 4 0 0 1-8 0Z"/><path d="M5.5 9H7l1 3"/><path d="M18.5 9H17l-1 3"/></svg>',
+  },
+  {
+    key: 'mourning',
+    label: 'Yas tut',
+    toast: 'Şehitlerin anısına bir mum yaktınız. İsimleri Onur Kitabı\'na yazıldı.',
+    icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 22c4-3 6-7 6-11a6 6 0 1 0-12 0c0 4 2 8 6 11Z"/><path d="M12 13V9"/><path d="M10 3h4"/></svg>',
+  },
+  {
+    key: 'whisper',
+    label: 'Han fısıltısı',
+    toast: 'Kırmızı Han\'da bir kadeh ısmarladınız; söylenti kulaktan kulağa yayılıyor.',
+    icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M17 11h1a3 3 0 0 1 0 6h-1"/><path d="M9 12v6"/><path d="M13 12v6"/><path d="M14 7.5c-1 0-2-.5-2-2s1-2 2-2 2 1 2 2-.9 2-2 2Z"/></svg>',
+  },
+  {
+    key: 'bounty',
+    label: 'Ferman kaydı',
+    toast: 'Fermana imza attınız. Hedef teslim edilince payınız lonca kasasında.',
+    icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>',
+  },
+];
+
+function readerReactionStorageKey(articleId) {
+  return `vs_article_reaction_${articleId}`;
+}
+
+function storedReaderReaction(articleId) {
+  try {
+    return localStorage.getItem(readerReactionStorageKey(articleId)) || '';
+  } catch {
+    return '';
+  }
+}
+
 function publicAuthorRole(item) {
   const role = String(item?.author_role || '').trim();
   if (!role || /onay[ıi]\s*bekliyor|editör onayı/i.test(role)) {
@@ -1790,6 +1865,7 @@ function renderArticleEngagement(item) {
     return;
   }
   const engagement = item.engagement || {};
+  const reactions = item.reactions || {};
   const views = Number(item.views_count ?? engagement.views ?? 0);
   const shares = Number(engagement.shares ?? 0);
   const pngs = Number(engagement.png_downloads ?? 0);
@@ -1803,6 +1879,12 @@ function renderArticleEngagement(item) {
   if (pngs > 0) {
     chips.push(`<span class="vs-modal__engagement-chip">${pngs} PNG</span>`);
   }
+  ARTICLE_REACTIONS.forEach((cfg) => {
+    const count = Number(reactions[cfg.key] ?? 0);
+    if (count > 0) {
+      chips.push(`<span class="vs-modal__engagement-chip vs-modal__engagement-chip--reaction vs-modal__engagement-chip--${cfg.key}">${count} ${escapeHtml(cfg.label.toLowerCase())}</span>`);
+    }
+  });
   if (!chips.length) {
     els.modalEngagement.hidden = true;
     els.modalEngagement.innerHTML = '';
@@ -1810,6 +1892,77 @@ function renderArticleEngagement(item) {
   }
   els.modalEngagement.hidden = false;
   els.modalEngagement.innerHTML = chips.join('');
+}
+
+function renderArticleReactions(item, articleId) {
+  if (!els.modalReactions) {
+    return;
+  }
+  const reactions = item.reactions || {};
+  const picked = storedReaderReaction(articleId);
+  const buttons = ARTICLE_REACTIONS.map((cfg) => {
+    const count = Number(reactions[cfg.key] ?? 0);
+    const countHtml =
+      count > 0 ? `<span class="vs-modal__reaction-count" aria-hidden="true">${count}</span>` : '';
+    const active = picked === cfg.key ? ' is-active' : '';
+    const disabled = picked && picked !== cfg.key ? ' disabled' : '';
+    return `<button type="button" class="vs-modal__reaction vs-modal__reaction--${cfg.key}${active}" data-reaction="${cfg.key}" aria-pressed="${picked === cfg.key ? 'true' : 'false'}"${disabled} title="${escapeHtml(cfg.label)}">
+      <span class="vs-modal__reaction-icon">${cfg.icon}</span>
+      <span class="vs-modal__reaction-label">${escapeHtml(cfg.label)}</span>
+      ${countHtml}
+    </button>`;
+  }).join('');
+  els.modalReactions.innerHTML = buttons;
+  els.modalReactions.querySelectorAll('[data-reaction]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      sendArticleReaction(articleId, btn.dataset.reaction, item);
+    });
+  });
+}
+
+async function sendArticleReaction(articleId, reaction, itemSnapshot = {}) {
+  if (!articleId || !reaction) {
+    return;
+  }
+  const cfg = ARTICLE_REACTIONS.find((row) => row.key === reaction);
+  const prior = storedReaderReaction(articleId);
+  if (prior) {
+    showToast('Bu habere zaten bir tepki bıraktınız.', 'warning');
+    return;
+  }
+  const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+  try {
+    const response = await fetch(`/api/public/news/${articleId}/reactions`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': token || '',
+      },
+      body: JSON.stringify({ reaction }),
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload.success) {
+      throw new Error(payload.message || 'Tepki kaydedilemedi.');
+    }
+    try {
+      localStorage.setItem(readerReactionStorageKey(articleId), reaction);
+    } catch {
+      /* depolama yoksa yine de devam */
+    }
+    if (state.openArticleId === Number(articleId)) {
+      const merged = {
+        ...itemSnapshot,
+        reactions: payload.reactions || {},
+        engagement: { ...(itemSnapshot.engagement || {}), ...(payload.engagement || {}) },
+      };
+      renderArticleReactions(merged, articleId);
+      renderArticleEngagement(merged);
+    }
+    showToast(cfg?.toast || 'Tepkiniz kaydedildi.');
+  } catch (error) {
+    showToast(error.message || 'Tepki kaydedilemedi.', 'error');
+  }
 }
 
 async function openArticle(id, options = {}) {
@@ -1840,10 +1993,16 @@ async function openArticle(id, options = {}) {
   if (els.modalBadges) {
     els.modalBadges.innerHTML = renderModalBadges(item);
   }
+  const loc = String(item.location_badge || '').trim();
+  const dateLine = articleModalDateLine(item, gazetteReader);
+
   if (els.modalDate) {
-    const when = item.world_date_text || item.published_date || item.date_text || '';
-    els.modalDate.textContent = when;
-    els.modalDate.hidden = !when;
+    if (dateLine.html) {
+      els.modalDate.innerHTML = dateLine.html;
+    } else {
+      els.modalDate.textContent = '';
+    }
+    els.modalDate.hidden = !dateLine.hasContent;
   }
 
   if (els.modalAuthor) {
@@ -1856,14 +2015,14 @@ async function openArticle(id, options = {}) {
   }
 
   if (els.modalLocation) {
-    const loc = item.location_badge || '';
-    if (loc) {
-      els.modalLocation.innerHTML = `<span class="vs-modal__loc-mark" aria-hidden="true">☙</span><span>${escapeHtml(loc)}</span>`;
+    const showLocInByline = Boolean(loc) && !gazetteReader;
+    if (showLocInByline) {
+      els.modalLocation.innerHTML = renderModalLocationMarkup(loc);
     } else {
-      els.modalLocation.textContent = '';
+      els.modalLocation.innerHTML = '';
     }
-    els.modalLocation.classList.toggle('vs-modal__meta-item--location', Boolean(loc));
-    els.modalLocation.hidden = !loc;
+    els.modalLocation.classList.toggle('vs-modal__meta-item--location', showLocInByline);
+    els.modalLocation.hidden = !showLocInByline;
   }
   if (els.modalReadTime) {
     const readTime = item.read_time || '3 dk okuma';
@@ -1873,6 +2032,7 @@ async function openArticle(id, options = {}) {
 
   const story = item.full_story || item.description;
   els.modalStory.innerHTML = renderStoryHtml(story);
+  renderArticleReactions(item, id);
   renderArticleEngagement(item);
 
   if (item.testimony) {
@@ -1894,14 +2054,8 @@ async function openArticle(id, options = {}) {
     els.modalHero.classList.toggle('vs-modal__hero--gazette-photo', gazetteReader && showHero);
     els.modalHero.hidden = !showHero;
   }
-  if (els.modalDate) {
-    els.modalDate.hidden = false;
-  }
   if (els.modalAuthorRole) {
     els.modalAuthorRole.hidden = !els.modalAuthorRole.textContent;
-  }
-  if (els.modalLocation) {
-    els.modalLocation.hidden = !els.modalLocation.textContent;
   }
   if (els.modalReadTime) {
     els.modalReadTime.hidden = false;
@@ -2770,6 +2924,7 @@ document.addEventListener('DOMContentLoaded', () => {
   els.modalPdf = qs('newsModalPdf');
   els.modalPng = qs('newsModalPng');
   els.modalEngagement = qs('newsModalEngagement');
+  els.modalReactions = qs('newsModalReactions');
   els.openRumorBtn = qs('openRumorModal');
   els.rumorWizardPick = qs('rumorWizardPick');
   els.rumorWizardForm = qs('rumorWizardForm');
