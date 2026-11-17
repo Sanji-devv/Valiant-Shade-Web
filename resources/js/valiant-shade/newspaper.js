@@ -10,6 +10,22 @@ async function loadHtml2Canvas() {
   }
   return html2canvasModulePromise;
 }
+
+function isolatePngCaptureTarget(clonedDocument, targetId, rootClass, rect) {
+  const target = clonedDocument.getElementById(targetId);
+  const parent = target?.parentElement;
+  if (!target || !parent) {
+    throw new Error(`PNG yakalama hedefi bulunamadı: ${targetId}`);
+  }
+
+  const captureRoot = clonedDocument.createElement('div');
+  captureRoot.className = rootClass;
+  captureRoot.style.cssText = `position:static; display:block; width:${Math.ceil(rect.width)}px; height:${Math.ceil(rect.height)}px; margin:0; padding:0; background:transparent; overflow:visible;`;
+  captureRoot.appendChild(target);
+  parent.replaceWith(captureRoot);
+  return target;
+}
+
 const GAZETTE_SUMMARY_SLOTS = 5;
 
 const state = {
@@ -1143,11 +1159,17 @@ async function downloadGazettePagePng() {
 
     const html2canvas = await loadHtml2Canvas();
     const canvas = await html2canvas(sheet, {
-      backgroundColor: null,
+      backgroundColor: '#f2e4c8',
       scale: 2,
       useCORS: true,
       onclone: (clonedDocument) => {
-        clonedDocument.querySelector('#gazettePrintSheet')?.classList.remove('is-turning', 'is-turning--back');
+        const clonedSheet = isolatePngCaptureTarget(
+          clonedDocument,
+          'gazettePrintSheet',
+          'vs-gazette-stage',
+          sheet.getBoundingClientRect(),
+        );
+        clonedSheet.classList.remove('is-turning', 'is-turning--back');
       },
     });
     const blob = await new Promise((resolve, reject) => {
@@ -2238,21 +2260,19 @@ async function downloadArticleModalPng() {
     await document.fonts.ready;
     const html2canvas = await loadHtml2Canvas();
     const canvas = await html2canvas(panel, {
-      backgroundColor: null,
+      backgroundColor: '#f6ecd8',
       scale: Math.min(2, window.devicePixelRatio || 1.5),
       useCORS: true,
       onclone: (clonedDocument) => {
-        const clonedPanel = clonedDocument.getElementById('newsDetailModalPanel');
-        const backdrop = clonedPanel?.parentElement;
-        if (!clonedPanel || !backdrop) {
-          return;
-        }
-
-        const captureRoot = clonedDocument.createElement('div');
-        captureRoot.className = 'vs-modal-backdrop vs-modal-backdrop--article vs-modal-backdrop--gazette-read';
-        captureRoot.style.cssText = `position:static; display:block; width:${panel.getBoundingClientRect().width}px; padding:0; background:transparent;`;
-        captureRoot.appendChild(clonedPanel);
-        backdrop.replaceWith(captureRoot);
+        const clonedPanel = isolatePngCaptureTarget(
+          clonedDocument,
+          'newsDetailModalPanel',
+          'vs-modal-backdrop vs-modal-backdrop--article vs-modal-backdrop--gazette-read is-open',
+          panel.getBoundingClientRect(),
+        );
+        clonedPanel.classList.remove('vs-modal--sheet-drag', 'vs-modal--hero-hidden');
+        clonedPanel.style.removeProperty('--vs-modal-drag-y');
+        clonedPanel.querySelector('#newsModalHero')?.classList.remove('vs-modal__hero--peek-hidden');
       },
     });
     const blob = await new Promise((resolve, reject) => {
