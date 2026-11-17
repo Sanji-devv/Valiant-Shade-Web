@@ -5092,7 +5092,7 @@ body.vs-layout-gazette .vs-page-hint {
   color: #1f160c;
 }
 
-.vs-gazette-extra__body--columns {
+.vs-gazette-sheet--extra .vs-gazette-extra__body--columns {
   width: 100%;
   max-width: 100%;
   column-count: 1;
@@ -5100,15 +5100,6 @@ body.vs-layout-gazette .vs-page-hint {
   column-rule: none;
   text-align: justify;
   hyphens: auto;
-}
-
-@media (min-width: 900px) {
-  .vs-gazette-extra__body--columns {
-    column-count: 2;
-    column-gap: 1.75rem;
-    column-rule: 1px solid rgba(42, 31, 20, 0.15);
-    column-fill: balance;
-  }
 }
 
 .vs-gazette-extra__body p {

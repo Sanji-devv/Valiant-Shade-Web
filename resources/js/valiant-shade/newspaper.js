@@ -531,7 +531,7 @@ function renderCornerSlot(slot, slotIndex = 0) {
     articleCount > 1
       ? `<span class="vs-gazette-corner__count">${articleCount} yazı</span>`
       : '';
-  const openAttrs = ` data-corner-key="${key}"`;
+  const openAttrs = ` ${cornerOpenAttrs(slot, key)}`;
 
   return `
     <button type="button" class="vs-gazette-corner vs-gazette-corner--teaser vs-gazette-corner--open"${openAttrs}>
@@ -553,6 +553,32 @@ function cornerSlotForInnerPage(page) {
     return null;
   }
   return slots[innerIndex];
+}
+
+function resolveCornerNewsId(slot) {
+  if (!slot) {
+    return null;
+  }
+  const articles = Array.isArray(slot.articles) ? slot.articles.filter(Boolean) : [];
+  if (articles.length) {
+    const last = articles[articles.length - 1];
+    if (last?.news_id != null) {
+      return Number(last.news_id);
+    }
+  }
+  if (slot.news_id != null) {
+    return Number(slot.news_id);
+  }
+  return null;
+}
+
+function cornerOpenAttrs(slot, key) {
+  const newsId = resolveCornerNewsId(slot);
+  const parts = [`data-corner-key="${escapeHtml(key)}"`];
+  if (newsId) {
+    parts.push(`data-open-id="${escapeHtml(String(newsId))}"`);
+  }
+  return parts.join(' ');
 }
 
 function renderInnerCornerRail(slot) {
@@ -584,11 +610,10 @@ function renderInnerCornerRail(slot) {
     .map((p) => `<p class="vs-gazette-corner-rail__p">${escapeHtml(p)}</p>`)
     .join('');
 
-  const newsId = slot.news_id != null ? escapeHtml(String(slot.news_id)) : '';
-  const openAttrs = newsId ? ` data-open-id="${newsId}"` : ` data-corner-key="${key}"`;
+  const openAttrs = cornerOpenAttrs(slot, key);
 
   return `
-    <aside class="vs-gazette-corner-rail vs-gazette-corner-rail--open" aria-label="${title}"${openAttrs} role="button" tabindex="0">
+    <aside class="vs-gazette-corner-rail vs-gazette-corner-rail--open" aria-label="${title}" ${openAttrs} role="button" tabindex="0">
       <h3 class="vs-gazette-corner-rail__title">${title}</h3>
       ${rumuz || slot.anonymous ? `<p class="vs-gazette-corner-rail__rumuz">${escapeHtml(rumuz || (slot.anonymous ? 'Anonim Gözcü' : ''))}</p>` : ''}
       <div class="vs-gazette-corner-rail__body">${paras}</div>
@@ -1621,7 +1646,7 @@ async function openCornerReader(slotKey) {
     openCornerArticlePicker(slot, articles);
     return;
   }
-  const singleId = articles[0]?.news_id ?? slot.news_id;
+  const singleId = resolveCornerNewsId(slot);
   if (singleId) {
     await openArticle(singleId, { gazetteReader: true });
     syncBrowserUrl({ articleId: singleId });
@@ -2591,14 +2616,19 @@ function bindEvents() {
       goGazetteHome();
       return;
     }
-    const cornerBtn = event.target.closest('[data-corner-key]');
-    if (cornerBtn && !cornerBtn.dataset.openId) {
-      const inGazette = isGazetteLayout();
-      if (!inGazette || els.gazetteStage?.contains(cornerBtn)) {
-        event.preventDefault();
-        openCornerReader(cornerBtn.dataset.cornerKey).catch(console.error);
+    const cornerOpen = event.target.closest('.vs-gazette-corner--open, .vs-gazette-corner-rail--open');
+    if (cornerOpen && isGazetteLayout() && els.gazetteStage?.contains(cornerOpen)) {
+      event.preventDefault();
+      const articleId = cornerOpen.dataset.openId;
+      if (articleId) {
+        openArticle(articleId, { gazetteReader: true }).catch(console.error);
+        return;
       }
-      return;
+      const cornerKey = cornerOpen.dataset.cornerKey;
+      if (cornerKey) {
+        openCornerReader(cornerKey).catch(console.error);
+        return;
+      }
     }
     const openBtn = event.target.closest('[data-open-id]');
     if (!openBtn) {
@@ -2625,12 +2655,18 @@ function bindEvents() {
     if (event.key !== 'Enter' && event.key !== ' ') {
       return;
     }
-    const cornerRail = event.target.closest('.vs-gazette-corner-rail--open[data-corner-key]');
-    if (!cornerRail) {
+    const cornerRail = event.target.closest('.vs-gazette-corner-rail--open, .vs-gazette-corner--open');
+    if (!cornerRail || !isGazetteLayout()) {
       return;
     }
     event.preventDefault();
-    openCornerReader(cornerRail.dataset.cornerKey).catch(console.error);
+    if (cornerRail.dataset.openId) {
+      openArticle(cornerRail.dataset.openId, { gazetteReader: true }).catch(console.error);
+      return;
+    }
+    if (cornerRail.dataset.cornerKey) {
+      openCornerReader(cornerRail.dataset.cornerKey).catch(console.error);
+    }
   });
 
   document.addEventListener('keydown', (event) => {
