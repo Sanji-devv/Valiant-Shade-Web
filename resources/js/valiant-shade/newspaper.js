@@ -1,10 +1,4 @@
 import { createRumorWizard } from './newspaper-submission-wizard.js';
-import {
-  buildReactionPayload,
-  getReaderIdentity,
-  getStoredReaction,
-  saveStoredReaction,
-} from './newspaper-reactions.js';
 
 const WEB_ITEMS_PER_PAGE = 9;
 
@@ -53,8 +47,6 @@ const state = {
   articleBootstrapInFlight: false,
   openArticleId: null,
   openArticleItem: null,
-  reactionRequestToken: 0,
-  articleOpenRequestToken: 0,
   coverMastIndex: 0,
   coverMastTimer: null,
 };
@@ -1888,10 +1880,7 @@ async function openCornerReader(slotKey) {
   resetArticleModalHeroPeek();
   initArticleModalSwipe();
   initArticleModalHeroScroll();
-  state.reactionRequestToken += 1;
-  state.articleOpenRequestToken += 1;
   state.openArticleId = null;
-  state.openArticleItem = null;
   syncBrowserUrl();
 }
 
@@ -1951,10 +1940,7 @@ function openCornerArticlePicker(slot, articles) {
   document.body.classList.add('vs-article-modal-open');
   els.detailModal.classList.add('is-open');
   resetArticleModalDrag();
-  state.reactionRequestToken += 1;
-  state.articleOpenRequestToken += 1;
   state.openArticleId = null;
-  state.openArticleItem = null;
   syncBrowserUrl();
 }
 
@@ -2000,7 +1986,38 @@ const ARTICLE_REACTIONS = [
   },
 ];
 
-const ARTICLE_REACTION_KEYS = ARTICLE_REACTIONS.map((reaction) => reaction.key);
+function readerReactionStorageKey(articleId) {
+  return `vs_article_reaction_${articleId}`;
+}
+
+function readerBrowserId() {
+  const storageKey = 'vs_article_reader_id';
+  try {
+    let id = localStorage.getItem(storageKey);
+    if (id && /^[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i.test(id)) {
+      return id.toLowerCase();
+    }
+
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+    id = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+    localStorage.setItem(storageKey, id);
+    return id;
+  } catch {
+    throw new Error('Tepki tercihi bu tarayıcıda saklanamadı.');
+  }
+}
+
+function storedReaderReaction(articleId) {
+  try {
+    return localStorage.getItem(readerReactionStorageKey(articleId)) || '';
+  } catch {
+    return '';
+  }
+}
 
 function publicAuthorRole(item) {
   const role = String(item?.author_role || '').trim();
@@ -2054,7 +2071,7 @@ function renderArticleReactions(item, articleId) {
     return;
   }
   const reactions = item.reactions || {};
-  const picked = getStoredReaction(articleId, ARTICLE_REACTION_KEYS);
+  const picked = storedReaderReaction(articleId);
   const buttons = ARTICLE_REACTIONS.map((cfg) => {
     const count = Number(reactions[cfg.key] ?? 0);
     const countHtml =
@@ -2069,24 +2086,9 @@ function renderArticleReactions(item, articleId) {
   els.modalReactions.innerHTML = buttons;
   els.modalReactions.querySelectorAll('[data-reaction]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      sendArticleReaction(articleId, btn.dataset.reaction, item).catch(console.error);
+      sendArticleReaction(articleId, btn.dataset.reaction, item);
     });
   });
-}
-
-function reactionRequestError(payload, status) {
-  const labels = {
-    reaction: 'tepki türü',
-    reader_id: 'tarayıcı kimliği',
-    previous_reaction: 'önceki tepki',
-  };
-  const invalidFields = Object.keys(payload?.errors || {})
-    .map((field) => labels[field])
-    .filter(Boolean);
-  if (invalidFields.length) {
-    return new Error(`Tepki kaydedilemedi: ${invalidFields.join(', ')} geçersiz.`);
-  }
-  return new Error(payload?.message || `Tepki kaydedilemedi (HTTP ${status}).`);
 }
 
 async function sendArticleReaction(articleId, reaction, itemSnapshot = {}) {
@@ -2094,29 +2096,23 @@ async function sendArticleReaction(articleId, reaction, itemSnapshot = {}) {
     return;
   }
   const cfg = ARTICLE_REACTIONS.find((row) => row.key === reaction);
-  const prior = getStoredReaction(articleId, ARTICLE_REACTION_KEYS);
+  const prior = storedReaderReaction(articleId);
   if (prior === reaction) {
     return;
   }
-  let identity;
-  let requestBody;
+  let readerId;
   try {
-    identity = getReaderIdentity();
-    requestBody = buildReactionPayload(reaction, identity.id, prior, ARTICLE_REACTION_KEYS);
+    readerId = readerBrowserId();
   } catch (error) {
     showToast(error.message, 'error');
     return;
   }
-  const requestToken = ++state.reactionRequestToken;
-  const targetArticleId = Number(articleId);
   const reactionButtons = els.modalReactions?.querySelectorAll('[data-reaction]') || [];
   reactionButtons.forEach((button) => {
     button.disabled = true;
     button.setAttribute('aria-busy', 'true');
   });
   const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-  const abortController = new AbortController();
-  const timeoutId = window.setTimeout(() => abortController.abort(), 15000);
   try {
     const response = await fetch(`/api/public/news/${articleId}/reactions`, {
       method: 'POST',
@@ -2125,48 +2121,31 @@ async function sendArticleReaction(articleId, reaction, itemSnapshot = {}) {
         'Content-Type': 'application/json',
         'X-CSRF-TOKEN': token || '',
       },
-      body: JSON.stringify(requestBody),
-      signal: abortController.signal,
+      body: JSON.stringify({ reaction, reader_id: readerId, previous_reaction: prior || null }),
     });
-    let payload;
-    try {
-      payload = await response.json();
-    } catch (error) {
-      throw new Error(`Tepki sunucusundan geçerli cevap alınamadı (HTTP ${response.status}).`, { cause: error });
-    }
-    if (!payload || typeof payload !== 'object') {
-      throw new Error(`Tepki sunucusundan geçerli cevap alınamadı (HTTP ${response.status}).`);
-    }
+    const payload = await response.json();
     if (!response.ok || !payload.success) {
-      throw reactionRequestError(payload, response.status);
+      throw new Error(payload.message || 'Tepki kaydedilemedi.');
     }
-    if (!payload.reactions || typeof payload.reactions !== 'object') {
-      throw new Error('Tepki sunucusundan sayaç bilgisi alınamadı.');
+    try {
+      localStorage.setItem(readerReactionStorageKey(articleId), reaction);
+    } catch {
+      /* depolama yoksa yine de devam */
     }
-    const persisted = saveStoredReaction(articleId, reaction, ARTICLE_REACTION_KEYS);
-    if (state.openArticleId === targetArticleId && state.reactionRequestToken === requestToken) {
+    if (state.openArticleId === Number(articleId)) {
       const merged = {
         ...itemSnapshot,
-        reactions: payload.reactions,
+        reactions: payload.reactions || {},
         engagement: { ...(itemSnapshot.engagement || {}), ...(payload.engagement || {}) },
       };
-      state.openArticleItem = merged;
       renderArticleReactions(merged, articleId);
       renderArticleEngagement(merged);
     }
-    const message = persisted
-      ? cfg?.toast || 'Tepkiniz kaydedildi.'
-      : 'Tepkiniz kaydedildi; bu oturum seçim bilgisini kalıcı saklayamıyor.';
-    showToast(message, persisted ? 'success' : 'warning');
+    showToast(cfg?.toast || 'Tepkiniz kaydedildi.');
   } catch (error) {
-    const message = error.name === 'AbortError'
-      ? 'Tepki isteği zaman aşımına uğradı. Yeniden deneyebilirsiniz.'
-      : error.message || 'Tepki kaydedilemedi.';
-    console.error('Haber tepkisi kaydedilemedi.', error);
-    showToast(message, 'error');
+    showToast(error.message || 'Tepki kaydedilemedi.', 'error');
   } finally {
-    window.clearTimeout(timeoutId);
-    if (state.openArticleId === targetArticleId && state.reactionRequestToken === requestToken) {
+    if (state.openArticleId === Number(articleId)) {
       els.modalReactions?.querySelectorAll('[data-reaction]').forEach((button) => {
         button.disabled = false;
         button.removeAttribute('aria-busy');
@@ -2176,7 +2155,6 @@ async function sendArticleReaction(articleId, reaction, itemSnapshot = {}) {
 }
 
 async function openArticle(id, options = {}) {
-  const openRequestToken = ++state.articleOpenRequestToken;
   const gazetteReader =
     typeof options.gazetteReader === 'boolean' ? options.gazetteReader : isGazetteLayout();
   const response = await fetch(`/api/public/news/${id}`, {
@@ -2187,13 +2165,7 @@ async function openArticle(id, options = {}) {
     return;
   }
   const payload = await response.json();
-  if (state.articleOpenRequestToken !== openRequestToken) {
-    return;
-  }
   const item = payload.news;
-  state.reactionRequestToken += 1;
-  state.openArticleId = Number(id) || null;
-  state.openArticleItem = item;
   const heroUrl = item.image_asset || '';
   const showHero = articleModalShowsHero(item, gazetteReader);
   if (showHero) {
@@ -2291,8 +2263,6 @@ async function openArticle(id, options = {}) {
 }
 
 function closeModal() {
-  state.reactionRequestToken += 1;
-  state.articleOpenRequestToken += 1;
   els.detailModal.classList.remove('is-open');
   resetArticleModalDrag();
   resetArticleModalHeroPeek();

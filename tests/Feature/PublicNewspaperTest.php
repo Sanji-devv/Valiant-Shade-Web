@@ -530,32 +530,6 @@ class PublicNewspaperTest extends TestCase
         ]);
     }
 
-    public function test_public_reader_reaction_validation_returns_field_errors_without_changing_counts(): void
-    {
-        $news = News::create([
-            'title' => 'Tepki doğrulama testi haber başlığı',
-            'category' => 'Yerel Haberler',
-            'news_type' => 'local_news',
-            'status' => 'published',
-            'description' => 'Geçersiz tepki isteği sayaçları değiştirmemelidir.',
-            'image_url' => 'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg',
-            'is_active' => true,
-            'stats' => ['engagement' => ['reactions' => ['mourning' => 3]]],
-        ]);
-
-        $this->postJson('/api/public/news/'.$news->id.'/reactions', [
-            'reaction' => 'invalid',
-            'reader_id' => 'not-a-uuid',
-            'previous_reaction' => 'stale-reaction',
-        ])
-            ->assertUnprocessable()
-            ->assertJsonPath('success', false)
-            ->assertJsonStructure(['errors' => ['reaction', 'reader_id', 'previous_reaction']]);
-
-        $this->assertSame(3, (int) $news->fresh()->stats['engagement']['reactions']['mourning']);
-        $this->assertDatabaseCount('news_reader_reactions', 0);
-    }
-
     public function test_public_reader_can_replace_its_reaction(): void
     {
         $news = News::create([

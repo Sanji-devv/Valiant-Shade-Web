@@ -180,7 +180,6 @@ class PublicNewsController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Geçersiz tepki bilgisi.',
-                'errors' => $validator->errors(),
             ], 422);
         }
         $validated = $validator->validated();
