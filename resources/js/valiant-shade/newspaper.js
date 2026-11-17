@@ -1594,22 +1594,28 @@ function renderModalBadges(item) {
 
 const MODAL_LOCATION_ICON = `<svg class="vs-modal__loc-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 21s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>`;
 
-function articleModalDateLine(item, gazetteReader) {
+const MODAL_LOCATION_ICON_SM = `<svg class="vs-modal__loc-icon vs-modal__loc-icon--sm" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 21s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>`;
+
+function articleModalDateLine(item) {
   const when = item.world_date_text || item.published_date || item.date_text || '';
   const loc = String(item.location_badge || '').trim();
   if (!when && !loc) {
     return { html: '', hasContent: false };
   }
-  if (!gazetteReader || !loc) {
-    return {
-      html: when ? escapeHtml(when) : '',
-      hasContent: Boolean(when),
-    };
+  const chunks = [];
+  if (when) {
+    chunks.push(`<time class="vs-modal__date-when">${escapeHtml(when)}</time>`);
   }
-  const datePart = when ? escapeHtml(when) : '';
-  const sep = datePart ? '<span class="vs-modal__date-loc-sep" aria-hidden="true"> · </span>' : '';
+  if (loc) {
+    if (chunks.length) {
+      chunks.push('<span class="vs-modal__date-loc-sep" aria-hidden="true"> · </span>');
+    }
+    chunks.push(
+      `<span class="vs-modal__date-loc">${MODAL_LOCATION_ICON_SM}<span class="vs-modal__date-loc-text">${escapeHtml(loc)}</span></span>`,
+    );
+  }
   return {
-    html: `${datePart}${sep}<span class="vs-modal__date-loc">${escapeHtml(loc)}</span>`,
+    html: chunks.join(''),
     hasContent: true,
   };
 }
@@ -1913,18 +1919,16 @@ function renderArticleReactions(item, articleId) {
     </button>`;
   }).join('');
   els.modalReactions.innerHTML = buttons;
-  els.modalReactions.querySelectorAll('[data-reaction]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      sendArticleReaction(articleId, btn.dataset.reaction, item);
-    });
-  });
 }
 
 async function sendArticleReaction(articleId, reaction, itemSnapshot = {}) {
-  if (!articleId || !reaction) {
+  const reactionKey = String(reaction || '')
+    .trim()
+    .toLowerCase();
+  if (!articleId || !reactionKey) {
     return;
   }
-  const cfg = ARTICLE_REACTIONS.find((row) => row.key === reaction);
+  const cfg = ARTICLE_REACTIONS.find((row) => row.key === reactionKey);
   const prior = storedReaderReaction(articleId);
   if (prior) {
     showToast('Bu habere zaten bir tepki bıraktınız.', 'warning');
@@ -1932,21 +1936,50 @@ async function sendArticleReaction(articleId, reaction, itemSnapshot = {}) {
   }
   const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
   try {
-    const response = await fetch(`/api/public/news/${articleId}/reactions`, {
+    let response = await fetch(`/api/public/news/${articleId}/reactions`, {
       method: 'POST',
+      credentials: 'same-origin',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
         'X-CSRF-TOKEN': token || '',
       },
-      body: JSON.stringify({ reaction }),
+      body: JSON.stringify({ reaction: reactionKey }),
     });
-    const payload = await response.json();
+    let payload = {};
+    try {
+      payload = await response.json();
+    } catch {
+      payload = {};
+    }
+    if (response.status === 404 || response.status === 405) {
+      response = await fetch(`/api/public/news/${articleId}/engagement`, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': token || '',
+        },
+        body: JSON.stringify({ metric: reactionKey }),
+      });
+      try {
+        payload = await response.json();
+      } catch {
+        payload = {};
+      }
+    }
     if (!response.ok || !payload.success) {
-      throw new Error(payload.message || 'Tepki kaydedilemedi.');
+      const hint =
+        response.status === 419
+          ? 'Oturum süresi doldu; sayfayı yenileyip tekrar deneyin.'
+          : payload.message || 'Tepki kaydedilemedi.';
+      throw new Error(hint);
     }
     try {
-      localStorage.setItem(readerReactionStorageKey(articleId), reaction);
+      localStorage.setItem(readerReactionStorageKey(articleId), reactionKey);
     } catch {
       /* depolama yoksa yine de devam */
     }
@@ -1994,7 +2027,7 @@ async function openArticle(id, options = {}) {
     els.modalBadges.innerHTML = renderModalBadges(item);
   }
   const loc = String(item.location_badge || '').trim();
-  const dateLine = articleModalDateLine(item, gazetteReader);
+  const dateLine = articleModalDateLine(item);
 
   if (els.modalDate) {
     if (dateLine.html) {
@@ -2003,6 +2036,7 @@ async function openArticle(id, options = {}) {
       els.modalDate.textContent = '';
     }
     els.modalDate.hidden = !dateLine.hasContent;
+    els.modalDate.classList.toggle('vs-modal__date--has-location', Boolean(loc));
   }
 
   if (els.modalAuthor) {
@@ -2015,14 +2049,9 @@ async function openArticle(id, options = {}) {
   }
 
   if (els.modalLocation) {
-    const showLocInByline = Boolean(loc) && !gazetteReader;
-    if (showLocInByline) {
-      els.modalLocation.innerHTML = renderModalLocationMarkup(loc);
-    } else {
-      els.modalLocation.innerHTML = '';
-    }
-    els.modalLocation.classList.toggle('vs-modal__meta-item--location', showLocInByline);
-    els.modalLocation.hidden = !showLocInByline;
+    els.modalLocation.innerHTML = '';
+    els.modalLocation.hidden = true;
+    els.modalLocation.classList.remove('vs-modal__meta-item--location');
   }
   if (els.modalReadTime) {
     const readTime = item.read_time || '3 dk okuma';
@@ -2067,6 +2096,7 @@ async function openArticle(id, options = {}) {
   initArticleModalSwipe();
   initArticleModalHeroScroll();
   state.openArticleId = Number(id) || null;
+  state.openArticleSnapshot = item;
   if (!options.skipUrlSync) {
     syncBrowserUrl({ articleId: id });
   }
@@ -2088,6 +2118,7 @@ function closeModal() {
   }
   document.body.classList.remove('vs-article-modal-open');
   state.openArticleId = null;
+  state.openArticleSnapshot = null;
   syncBrowserUrl();
 }
 
@@ -2418,10 +2449,17 @@ async function submitHotExtra(formData) {
     },
     body: formData,
   });
-  const payload = await response.json();
+  let payload = {};
+  try {
+    payload = await response.json();
+  } catch {
+    payload = {};
+  }
   if (!response.ok || !payload.success) {
     const detail = payload.errors ? Object.values(payload.errors).flat().join(' ') : '';
-    throw new Error([payload.message, detail].filter(Boolean).join(' ') || 'Ek sayı basılamadı.');
+    const err = new Error([payload.message, detail].filter(Boolean).join(' ') || 'Ek sayı basılamadı.');
+    err.payload = payload;
+    throw err;
   }
   return payload;
 }
@@ -2499,10 +2537,17 @@ async function submitRumor(formData) {
     },
     body: formData,
   });
-  const payload = await response.json();
+  let payload = {};
+  try {
+    payload = await response.json();
+  } catch {
+    payload = {};
+  }
   if (!response.ok || !payload.success) {
     const detail = payload.errors ? Object.values(payload.errors).flat().join(' ') : '';
-    throw new Error([payload.message, detail].filter(Boolean).join(' ') || 'Gönderim başarısız.');
+    const err = new Error([payload.message, detail].filter(Boolean).join(' ') || 'Gönderim başarısız.');
+    err.payload = payload;
+    throw err;
   }
   return payload;
 }
@@ -2868,6 +2913,17 @@ function bindEvents() {
       downloadArticleModalPng().catch(console.error);
     });
   }
+  els.modalReactions?.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-reaction]');
+    if (!btn || btn.disabled) {
+      return;
+    }
+    const id = state.openArticleId;
+    if (!id) {
+      return;
+    }
+    sendArticleReaction(id, btn.dataset.reaction, state.openArticleSnapshot || {}).catch(console.error);
+  });
   els.detailModal.addEventListener('click', (event) => {
     if (event.target === els.detailModal) {
       closeModal();

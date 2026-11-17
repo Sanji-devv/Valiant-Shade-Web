@@ -112,7 +112,13 @@ class PublicNewsController extends Controller
 
     public function recordEngagement(Request $request, int $id): JsonResponse
     {
-        $metric = (string) $request->input('metric', '');
+        $metric = strtolower(trim((string) $request->input('metric', '')));
+        if (in_array($metric, NewsEngagement::allowedReactions(), true)) {
+            $request->merge(['reaction' => $metric]);
+
+            return $this->recordReaction($request, $id);
+        }
+
         $allowed = [NewsEngagement::METRIC_SHARES, NewsEngagement::METRIC_PNG_DOWNLOADS];
         if (! in_array($metric, $allowed, true)) {
             return response()->json([
@@ -139,7 +145,14 @@ class PublicNewsController extends Controller
 
     public function recordReaction(Request $request, int $id): JsonResponse
     {
-        $reaction = (string) $request->input('reaction', '');
+        $reaction = $this->resolvePublicReactionKey($request);
+        if ($reaction === '') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Geçersiz tepki türü. Lütfen tekrar deneyin.',
+            ], 422);
+        }
+
         if (! in_array($reaction, NewsEngagement::allowedReactions(), true)) {
             return response()->json([
                 'success' => false,
@@ -524,5 +537,28 @@ class PublicNewsController extends Controller
             ->header('Cache-Control', 'private, no-cache, must-revalidate')
             ->header('Pragma', 'no-cache')
             ->header('X-Public-News-Cache-Version', (string) $version);
+    }
+
+    protected function resolvePublicReactionKey(Request $request): string
+    {
+        $candidates = [
+            $request->input('reaction'),
+            $request->input('metric'),
+            $request->input('type'),
+            $request->json('reaction'),
+            $request->json('metric'),
+        ];
+
+        foreach ($candidates as $value) {
+            if ($value === null || $value === '') {
+                continue;
+            }
+            $key = strtolower(trim((string) $value));
+            if ($key !== '') {
+                return $key;
+            }
+        }
+
+        return '';
     }
 }

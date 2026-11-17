@@ -638,19 +638,29 @@ function initImageMapZoom(frame) {
         applyTransform();
     };
 
-    zoomInBtn?.addEventListener('click', () => {
-        const rect = viewport.getBoundingClientRect();
-        zoomBy(ZOOM_STEP, rect.left + rect.width / 2, rect.top + rect.height / 2);
-    });
+    const bindZoomButtons = () => {
+        if (isMobileLayout()) {
+            return;
+        }
+        zoomInBtn?.addEventListener('click', () => {
+            const rect = viewport.getBoundingClientRect();
+            zoomBy(ZOOM_STEP, rect.left + rect.width / 2, rect.top + rect.height / 2);
+        });
 
-    zoomOutBtn?.addEventListener('click', () => {
-        const rect = viewport.getBoundingClientRect();
-        zoomBy(-ZOOM_STEP, rect.left + rect.width / 2, rect.top + rect.height / 2);
-    });
+        zoomOutBtn?.addEventListener('click', () => {
+            const rect = viewport.getBoundingClientRect();
+            zoomBy(-ZOOM_STEP, rect.left + rect.width / 2, rect.top + rect.height / 2);
+        });
 
-    resetBtn?.addEventListener('click', resetZoom);
+        resetBtn?.addEventListener('click', resetZoom);
+    };
+    bindZoomButtons();
 
     const zoomFromWheel = (event) => {
+        if (isMobileLayout()) {
+            return;
+        }
+
         const modZoom = event.ctrlKey || event.metaKey;
         if (fillLightbox && !modZoom) {
             return;
@@ -663,16 +673,85 @@ function initImageMapZoom(frame) {
         zoomBy(delta, event.clientX, event.clientY);
     };
 
-    viewport.addEventListener('wheel', zoomFromWheel, { passive: false });
+    if (!isMobileLayout()) {
+        viewport.addEventListener('wheel', zoomFromWheel, { passive: false });
 
-    if (fillLightbox) {
-        const lightboxRoot = frame.closest('[data-map-lightbox]');
-        lightboxRoot?.addEventListener('wheel', zoomFromWheel, { passive: false, capture: true });
+        if (fillLightbox) {
+            const lightboxRoot = frame.closest('[data-map-lightbox]');
+            lightboxRoot?.addEventListener('wheel', zoomFromWheel, { passive: false, capture: true });
+        }
     }
+
+    let isPinching = false;
+    let pinchStartDistance = 0;
+    let pinchStartScale = 1;
+    let pinchOriginX = 0;
+    let pinchOriginY = 0;
+
+    const touchPairDistance = (touches) => {
+        const dx = touches[0].clientX - touches[1].clientX;
+        const dy = touches[0].clientY - touches[1].clientY;
+        return Math.hypot(dx, dy);
+    };
+
+    const touchPairOrigin = (touches) => {
+        const rect = viewport.getBoundingClientRect();
+        const cx = (touches[0].clientX + touches[1].clientX) / 2;
+        const cy = (touches[0].clientY + touches[1].clientY) / 2;
+        return { x: cx - rect.left, y: cy - rect.top };
+    };
+
+    viewport.addEventListener(
+        'touchstart',
+        (event) => {
+            if (!isMobileLayout() || event.touches.length !== 2) {
+                return;
+            }
+
+            isPinching = true;
+            isDragging = false;
+            didDrag = true;
+            viewport.classList.remove('is-dragging');
+            pinchStartDistance = touchPairDistance(event.touches);
+            pinchStartScale = scale;
+            const origin = touchPairOrigin(event.touches);
+            pinchOriginX = origin.x;
+            pinchOriginY = origin.y;
+            event.preventDefault();
+        },
+        { passive: false },
+    );
+
+    viewport.addEventListener(
+        'touchmove',
+        (event) => {
+            if (!isMobileLayout() || !isPinching || event.touches.length < 2 || pinchStartDistance <= 0) {
+                return;
+            }
+
+            const distance = touchPairDistance(event.touches);
+            const origin = touchPairOrigin(event.touches);
+            const ratio = distance / pinchStartDistance;
+            setScale(pinchStartScale * ratio, origin.x, origin.y);
+            event.preventDefault();
+        },
+        { passive: false },
+    );
+
+    const endPinch = (event) => {
+        if (event.touches.length >= 2) {
+            return;
+        }
+        isPinching = false;
+        pinchStartDistance = 0;
+    };
+
+    viewport.addEventListener('touchend', endPinch, { passive: true });
+    viewport.addEventListener('touchcancel', endPinch, { passive: true });
 
     const canPan = () => {
         if (isMobileLayout()) {
-            return true;
+            return !isPinching;
         }
 
         const contentW = contentWidthAtScale(scale);
@@ -682,6 +761,14 @@ function initImageMapZoom(frame) {
     };
 
     viewport.addEventListener('pointerdown', (event) => {
+        if (isMobileLayout() && event.pointerType !== 'touch') {
+            return;
+        }
+
+        if (isPinching) {
+            return;
+        }
+
         if (event.button !== 0 || !canPan()) {
             return;
         }

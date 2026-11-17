@@ -37,6 +37,17 @@ const FIELD_ERROR_EL = {
   image: 'rumorImageFieldError',
 };
 
+const SERVER_FIELD_TO_CLIENT = {
+  gazette_issue_id: 'issue',
+  news_type: 'type',
+  title: 'title',
+  description: 'body',
+  gazette_slot_key: 'corner',
+  rumuz: 'rumuz',
+  custom_image: 'image',
+  image_preset: 'image',
+};
+
 export function createRumorWizard(deps) {
   const {
     els,
@@ -177,6 +188,30 @@ export function createRumorWizard(deps) {
 
   function clearFieldErrors() {
     Object.values(FIELD_ERROR_EL).forEach((id) => setFieldErrorById(id, ''));
+    document.querySelectorAll('.vs-form-field--invalid').forEach((node) => {
+      node.classList.remove('vs-form-field--invalid');
+    });
+  }
+
+  function applyServerValidationErrors(payload) {
+    const errors = payload?.errors;
+    if (!errors || typeof errors !== 'object') {
+      return false;
+    }
+    let applied = false;
+    Object.entries(errors).forEach(([apiField, messages]) => {
+      const clientKey = SERVER_FIELD_TO_CLIENT[apiField];
+      if (!clientKey) {
+        return;
+      }
+      const msg = Array.isArray(messages) ? messages[0] : messages;
+      if (!msg) {
+        return;
+      }
+      setFieldError(clientKey, String(msg));
+      applied = true;
+    });
+    return applied;
   }
 
   function setFieldErrorById(id, message) {
@@ -816,6 +851,7 @@ export function createRumorWizard(deps) {
 
     els.rumorForm?.addEventListener('submit', async (event) => {
       event.preventDefault();
+      clearFieldErrors();
       if (!validateClientForm()) {
         return;
       }
@@ -860,7 +896,13 @@ export function createRumorWizard(deps) {
         closeWizard();
         showToast(payload.message || 'Gönderiniz editöre ulaştı.', 'success');
       } catch (error) {
-        showToast(error.message || 'Gönderim başarısız.', 'error');
+        clearFieldErrors();
+        const mapped = error.payload ? applyServerValidationErrors(error.payload) : false;
+        if (!mapped) {
+          showToast(error.message || 'Gönderim başarısız.', 'error');
+        } else {
+          showToast(error.message || 'Lütfen işaretli alanları düzeltin.', 'warning');
+        }
       } finally {
         els.rumorSubmit.disabled = false;
       }

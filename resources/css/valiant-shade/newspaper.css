@@ -1748,9 +1748,16 @@ body.vs-article-modal-open {
 
   .vs-modal-backdrop--gazette-read .vs-modal__date {
     margin: 0;
-    flex-shrink: 0;
+    flex-shrink: 1;
     font-size: 0.72rem;
     white-space: nowrap;
+    min-width: 0;
+  }
+
+  .vs-modal-backdrop--gazette-read .vs-modal__date.vs-modal__date--has-location {
+    white-space: normal;
+    text-align: right;
+    max-width: min(100%, 62%);
   }
 
   .vs-modal-backdrop--gazette-read .vs-modal__title {
@@ -1964,7 +1971,43 @@ body.vs-article-modal-open {
 }
 
 .vs-modal-backdrop--gazette-read .vs-modal__date-loc {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
   font-style: italic;
+}
+
+.vs-modal-backdrop--gazette-read .vs-modal__date-loc .vs-modal__loc-icon--sm {
+  color: #7c4a12;
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+
+.vs-modal__date-loc {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  vertical-align: baseline;
+}
+
+.vs-modal__date-loc-text {
+  font-style: inherit;
+}
+
+.vs-modal-backdrop--web-read .vs-modal__date-loc .vs-modal__loc-icon--sm {
+  color: #a8b4c4;
+  opacity: 0.92;
+}
+
+.vs-modal__date--has-location {
+  max-width: min(100%, 52vw);
+  text-align: right;
+  line-height: 1.35;
+}
+
+.vs-modal__loc-icon--sm {
+  width: 12px;
+  height: 12px;
 }
 
 .vs-modal-backdrop--gazette-read .vs-modal__title {

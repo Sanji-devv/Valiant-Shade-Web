@@ -278,6 +278,10 @@ body.vs-image-map-page {
         font-style: normal;
         opacity: 0.85;
     }
+
+    .vs-image-map-zoom-controls {
+        display: none !important;
+    }
 }
 
 .vs-image-map-hint--mobile {

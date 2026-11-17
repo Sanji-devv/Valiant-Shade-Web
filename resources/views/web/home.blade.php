@@ -9,6 +9,13 @@
     $imgMonster = asset('static/valiant-shade/assets/img/news/guild_dragon_quest.jpg');
     $imgMap = asset('static/valiant-shade/world/feldan-kralligi-preview.webp');
     $imgRecords = asset('static/valiant-shade/assets/img/news/guild_treasury_vault.jpg');
+    $imgMineria = asset('static/valiant-shade/assets/img/news/guild_mystic_forest.jpg');
+    $imgRules = asset('static/valiant-shade/assets/img/news/guild_arcane_academy.jpg');
+
+    $mineriaUrl = 'https://mineria.fandom.com/tr/wiki/Mineria_Wiki';
+    $rulesUrl = 'https://www.d20pfsrd.com/';
+
+    $monsterTitleParts = explode(' ', (string) __('Monster Database'), 2);
 
     $pageTitle = (string) config('seo.home.title');
     $pageDescription = (string) config('seo.home.description');
@@ -73,7 +80,7 @@
             height: 100vh;
             height: 100dvh;
             grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
+            grid-template-rows: repeat(3, 1fr);
             gap: 3px;
             background: #1a1520;
         }
@@ -82,7 +89,7 @@
             .vs-quad {
                 grid-template-columns: 1fr;
                 grid-template-rows: none;
-                grid-auto-rows: minmax(42vh, auto);
+                grid-auto-rows: minmax(28vh, auto);
                 overflow: visible;
                 height: auto;
                 min-height: 100dvh;
@@ -105,7 +112,7 @@
         }
 
         @media (max-width: 639px) {
-            .vs-quad__cell { min-height: 42vh; }
+            .vs-quad__cell { min-height: 28vh; }
         }
 
         .vs-quad__cell::before {
@@ -155,9 +162,43 @@
         }
 
         .vs-quad__cell--gazette .vs-quad__title { color: #f5e6c8; }
-        .vs-quad__cell--monster .vs-quad__title { color: #ffd4d4; }
         .vs-quad__cell--map .vs-quad__title { color: #b8d4e8; }
+        .vs-quad__cell--mineria .vs-quad__title { color: #c8e8f5; }
+        .vs-quad__cell--rules .vs-quad__title { color: #e8dcc8; }
+        .vs-quad__cell--monster .vs-quad__title { color: #ffd4d4; }
         .vs-quad__cell--records .vs-quad__title { color: #d4e8d0; }
+
+        .vs-quad__title--long {
+            font-size: clamp(1.35rem, 4.2vw, 2.65rem);
+            line-height: 1.2;
+        }
+
+        .vs-quad__title--stacked {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.1em;
+            font-size: clamp(1.25rem, 3.6vw, 2.35rem);
+            line-height: 1.12;
+        }
+
+        .vs-quad__cell--monster {
+            background-color: #1c1410;
+        }
+
+        .vs-quad__cell--monster .vs-quad__bg {
+            background-size: cover;
+            background-position: 50% 16%;
+            background-repeat: no-repeat;
+            transform-origin: 50% 16%;
+        }
+
+        @media (max-width: 639px) {
+            .vs-quad__cell--monster .vs-quad__bg {
+                background-position: 52% 20%;
+                transform-origin: 52% 20%;
+            }
+        }
 
         /* Disabled quadrants */
         .vs-quad__cell--locked {
@@ -279,13 +320,36 @@
             <h1 class="vs-quad__title">{{ __('Map') }}</h1>
         </a>
 
+        <a href="{{ $mineriaUrl }}" class="vs-quad__cell vs-quad__cell--mineria" rel="noopener noreferrer" target="_blank">
+            <div class="vs-quad__bg" style="background-image: url('{{ $imgMineria }}');" aria-hidden="true"></div>
+            <span class="vs-quad__corner vs-quad__corner--tl" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--tr" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--bl" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--br" aria-hidden="true"></span>
+            <h1 class="vs-quad__title vs-quad__title--long">{{ __('Mineria Fandom') }}</h1>
+        </a>
+
+        <a href="{{ $rulesUrl }}" class="vs-quad__cell vs-quad__cell--rules" rel="noopener noreferrer" target="_blank">
+            <div class="vs-quad__bg" style="background-image: url('{{ $imgRules }}');" aria-hidden="true"></div>
+            <span class="vs-quad__corner vs-quad__corner--tl" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--tr" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--bl" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--br" aria-hidden="true"></span>
+            <h1 class="vs-quad__title">{{ __('Rulebook') }}</h1>
+        </a>
+
         <a href="{{ $monsterDbUrl }}" class="vs-quad__cell vs-quad__cell--monster" rel="noopener">
             <div class="vs-quad__bg" style="background-image: url('{{ $imgMonster }}');" aria-hidden="true"></div>
             <span class="vs-quad__corner vs-quad__corner--tl" aria-hidden="true"></span>
             <span class="vs-quad__corner vs-quad__corner--tr" aria-hidden="true"></span>
             <span class="vs-quad__corner vs-quad__corner--bl" aria-hidden="true"></span>
             <span class="vs-quad__corner vs-quad__corner--br" aria-hidden="true"></span>
-            <h1 class="vs-quad__title">{{ __('Monster Database') }}</h1>
+            <h1 class="vs-quad__title vs-quad__title--stacked" aria-label="{{ __('Monster Database') }}">
+                <span>{{ $monsterTitleParts[0] ?? __('Monster Database') }}</span>
+                @if (! empty($monsterTitleParts[1]))
+                    <span>{{ $monsterTitleParts[1] }}</span>
+                @endif
+            </h1>
         </a>
 
         <a href="/valiant-shade" class="vs-quad__cell vs-quad__cell--records vs-quad__cell--dimmed">

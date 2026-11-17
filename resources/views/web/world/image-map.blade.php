@@ -88,7 +88,7 @@
                 </div>
             </div>
             <p class="vs-image-map-hint vs-image-map-hint--desktop">Yakınlaştırmak için tekerlek veya +/−; tam çözünürlük için görsele tıklayın</p>
-            <p class="vs-image-map-hint vs-image-map-hint--mobile">Haritayı kaydırarak krallıklar arası geçin; tam boyut için tek dokunun</p>
+            <p class="vs-image-map-hint vs-image-map-hint--mobile">İki parmakla yakınlaştırın, tek parmakla kaydırın; krallıklar arası geçiş için kenarda hızlı kaydırın</p>
             <button type="button" class="vs-image-map-open-hd" data-map-lightbox-open aria-label="Tam boyut harita">
                 Tam boyut
             </button>
