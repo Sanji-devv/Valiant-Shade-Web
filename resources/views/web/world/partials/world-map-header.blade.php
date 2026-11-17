@@ -12,7 +12,7 @@
             <p>{{ $subtitle }}</p>
         @endif
     </div>
-    <button type="button" class="vs-menu-btn" data-drawer-toggle aria-label="Menüyü aç">
+    <button type="button" class="vs-menu-btn vs-menu-btn--header" data-drawer-toggle aria-label="Menüyü aç">
         <span></span>
         <span></span>
         <span></span>

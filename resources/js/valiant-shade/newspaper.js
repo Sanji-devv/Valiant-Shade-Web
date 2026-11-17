@@ -766,7 +766,6 @@ function renderGazetteExtraPage(item, brand, issueMeta) {
     return '<p class="vs-gazette-extra__empty">Bu ek sayıda henüz metin yok.</p>';
   }
   const title = escapeHtml(item.title || '');
-  const type = escapeHtml(item.news_type_label || item.category || '');
   const loc = item.location_badge ? escapeHtml(item.location_badge) : '';
   const body = paragraphsToHtml(articlePlainText(item), 48);
   const img =
@@ -777,12 +776,9 @@ function renderGazetteExtraPage(item, brand, issueMeta) {
         </figure>`
       : '';
   const openId = item.id != null ? escapeHtml(String(item.id)) : '';
-  const ticker = 'Yazıyor · Yazıyor · Yazıyor · Yazıyor · Yazıyor · Yazıyor';
 
   return `
     <div class="vs-gazette-extra" data-open-id="${openId}">
-      <div class="vs-gazette-extra__banner" aria-hidden="true">${escapeHtml(ticker)}</div>
-      <p class="vs-gazette-extra__kicker">${type} · Sıcak haber ek sayısı</p>
       <h1 class="vs-gazette-extra__title">${title}</h1>
       ${loc && !img ? `<p class="vs-gazette-extra__place">${loc}</p>` : ''}
       ${img}
@@ -1751,6 +1747,19 @@ function articleModalShowsHero(item, gazetteReader) {
   return true;
 }
 
+function publicAuthorRole(item) {
+  const role = String(item?.author_role || '').trim();
+  if (!role || /onay[ıi]\s*bekliyor|editör onayı/i.test(role)) {
+    return '';
+  }
+  const submission = item?.stats?.submission;
+  const slotKind = typeof submission === 'object' && submission ? submission.gazette_slot_kind : '';
+  if (slotKind === 'flash' || item?.is_breaking) {
+    return '';
+  }
+  return role;
+}
+
 function renderArticleEngagement(item) {
   if (!els.modalEngagement) {
     return;
@@ -1816,20 +1825,24 @@ async function openArticle(id, options = {}) {
     els.modalAuthor.textContent = item.author || 'Gazete Muhabiri';
   }
   if (els.modalAuthorRole) {
-    const role = item.author_role || '';
+    const role = publicAuthorRole(item);
     els.modalAuthorRole.textContent = role;
     els.modalAuthorRole.hidden = !role;
   }
 
   if (els.modalLocation) {
     const loc = item.location_badge || '';
-    els.modalLocation.textContent = loc ? `📍 ${loc}` : '';
+    if (loc) {
+      els.modalLocation.innerHTML = `<span class="vs-modal__loc-mark" aria-hidden="true">☙</span><span>${escapeHtml(loc)}</span>`;
+    } else {
+      els.modalLocation.textContent = '';
+    }
     els.modalLocation.classList.toggle('vs-modal__meta-item--location', Boolean(loc));
     els.modalLocation.hidden = !loc;
   }
   if (els.modalReadTime) {
     const readTime = item.read_time || '3 dk okuma';
-    els.modalReadTime.textContent = `📖 ${readTime}`;
+    els.modalReadTime.textContent = readTime;
     els.modalReadTime.classList.add('vs-modal__meta-item--read');
   }
 
@@ -2042,11 +2055,23 @@ function resetArticleModalDrag() {
   if (els.detailModalPanel) {
     els.detailModalPanel.style.removeProperty('--vs-modal-drag-y');
     els.detailModalPanel.style.transform = '';
+    els.detailModalPanel.classList.remove('vs-modal--sheet-drag');
   }
 }
 
+function articleModalScrollRoot() {
+  const panel = els.detailModalPanel;
+  if (!panel) {
+    return null;
+  }
+  if (isMobileGazetteLayout()) {
+    return panel;
+  }
+  return panel.querySelector('.vs-modal__body--article');
+}
+
 function resetArticleModalHeroPeek() {
-  const scrollRoot = els.detailModalPanel?.querySelector('.vs-modal__body--article');
+  const scrollRoot = articleModalScrollRoot();
   if (scrollRoot) {
     scrollRoot.scrollTop = 0;
   }
@@ -2055,19 +2080,27 @@ function resetArticleModalHeroPeek() {
 }
 
 function initArticleModalHeroScroll() {
-  const scrollRoot = els.detailModalPanel?.querySelector('.vs-modal__body--article');
   const hero = els.modalHero;
   const panel = els.detailModalPanel;
-  if (!scrollRoot || !hero || !panel || scrollRoot.dataset.heroScrollInit === '1') {
+  if (!hero || !panel || panel.dataset.heroScrollInit === '1') {
     return;
   }
-  scrollRoot.dataset.heroScrollInit = '1';
+  panel.dataset.heroScrollInit = '1';
+
+  if (isMobileGazetteLayout()) {
+    return;
+  }
+
+  const scrollRoot = panel.querySelector('.vs-modal__body--article');
+  if (!scrollRoot) {
+    return;
+  }
 
   const onScroll = () => {
-    if (!isMobileGazetteLayout() || !els.detailModal?.classList.contains('is-open') || hero.hidden) {
+    if (!els.detailModal?.classList.contains('is-open') || hero.hidden) {
       return;
     }
-    const hide = scrollRoot.scrollTop > 10;
+    const hide = scrollRoot.scrollTop > 48;
     hero.classList.toggle('vs-modal__hero--peek-hidden', hide);
     panel.classList.toggle('vs-modal--hero-hidden', hide);
   };
@@ -2078,24 +2111,28 @@ function initArticleModalHeroScroll() {
 function initArticleModalSwipe() {
   const panel = els.detailModalPanel;
   const backdrop = els.detailModal;
-  const scrollRoot = panel?.querySelector('.vs-modal__body--article');
-  if (!panel || !backdrop || panel.dataset.swipeInit === '1') {
+  const grabber = panel?.querySelector('.vs-modal__grabber');
+  if (!panel || !backdrop || !grabber || panel.dataset.swipeInit === '1') {
     return;
   }
   panel.dataset.swipeInit = '1';
   let startY = 0;
   let dragging = false;
 
+  const scrollRoot = () => articleModalScrollRoot();
+
   const onStart = (event) => {
     if (!isMobileGazetteLayout() || !backdrop.classList.contains('is-open')) {
       return;
     }
-    if (scrollRoot && scrollRoot.scrollTop > 6) {
+    const root = scrollRoot();
+    if (root && root.scrollTop > 4) {
       return;
     }
     startY = event.touches[0].clientY;
     dragging = true;
     backdrop.classList.add('vs-modal-backdrop--dragging');
+    panel.classList.add('vs-modal--sheet-drag');
   };
 
   const onMove = (event) => {
@@ -2104,7 +2141,6 @@ function initArticleModalSwipe() {
     }
     const dy = Math.max(0, event.touches[0].clientY - startY);
     panel.style.setProperty('--vs-modal-drag-y', `${dy}px`);
-    panel.style.transform = `translateY(${dy}px)`;
   };
 
   const onEnd = (event) => {
@@ -2113,7 +2149,9 @@ function initArticleModalSwipe() {
     }
     dragging = false;
     backdrop.classList.remove('vs-modal-backdrop--dragging');
-    const dy = Math.max(0, (event.changedTouches?.[0]?.clientY || startY) - startY);
+    panel.classList.remove('vs-modal--sheet-drag');
+    const endY = event.changedTouches?.[0]?.clientY ?? startY;
+    const dy = Math.max(0, endY - startY);
     if (dy > 110) {
       closeModal();
     } else {
@@ -2121,10 +2159,10 @@ function initArticleModalSwipe() {
     }
   };
 
-  panel.addEventListener('touchstart', onStart, { passive: true });
-  panel.addEventListener('touchmove', onMove, { passive: true });
-  panel.addEventListener('touchend', onEnd, { passive: true });
-  panel.addEventListener('touchcancel', onEnd, { passive: true });
+  grabber.addEventListener('touchstart', onStart, { passive: true });
+  grabber.addEventListener('touchmove', onMove, { passive: true });
+  grabber.addEventListener('touchend', onEnd, { passive: true });
+  grabber.addEventListener('touchcancel', onEnd, { passive: true });
 }
 
 function initGazetteFlipSwipe() {

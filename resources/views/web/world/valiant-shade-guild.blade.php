@@ -119,5 +119,9 @@
     </main>
 
     @include('web.world.partials.valiant-shade-drawer', ['artConfig' => $artConfig])
+
+    @if (! empty($artConfig['location_id']))
+        @include('web.world.partials.image-map-mobile-location-bar', ['config' => $artConfig])
+    @endif
 </body>
 </html>

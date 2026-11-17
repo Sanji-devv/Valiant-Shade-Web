@@ -164,7 +164,7 @@ class PublicNewsService
             'stats' => $item->stats ?? [],
             'location_badge' => $this->sanitizePublicLocationBadge($item->location_badge ?? null),
             'author' => GazetteTypography::scrub($item->author ?? 'Gazete Muhabiri') ?? 'Gazete Muhabiri',
-            'author_role' => GazetteTypography::scrub($item->author_role ?? 'Valiant Shade Basın Bürosu') ?? 'Valiant Shade Basın Bürosu',
+            'author_role' => $this->sanitizePublicAuthorRole($item),
             'is_breaking' => (bool) ($item->is_breaking ?? false),
             'views_count' => (int) ($item->views_count ?? 0),
             'engagement' => NewsEngagement::metrics(is_array($item->stats ?? null) ? $item->stats : null),
@@ -232,9 +232,14 @@ class PublicNewsService
             $page = min(max(1, $page), $lastPage);
             $slice = $filtered->slice(($page - 1) * $perPage, $perPage)->values();
 
-            $countsQuery = $this->publishedQuery();
-            $this->applyPublicSearch($countsQuery, $search);
-            $countsCollection = $countsQuery->get();
+            $searchTerm = trim((string) $search);
+            if ($searchTerm !== '') {
+                $countsQuery = $this->publishedQuery();
+                $this->applyPublicSearch($countsQuery, $search);
+                $typeCounts = $this->typeCounts($countsQuery->get());
+            } else {
+                $typeCounts = $this->globalPublishedTypeCounts();
+            }
 
             return [
                 'data' => $slice->map(fn ($item) => $this->transformItem($item))->values()->all(),
@@ -244,7 +249,7 @@ class PublicNewsService
                     'per_page' => $perPage,
                     'total' => $total,
                 ],
-                'type_counts' => $this->typeCounts($countsCollection),
+                'type_counts' => $typeCounts,
             ];
         });
     }
@@ -307,6 +312,36 @@ class PublicNewsService
     public function typeCountsForCollection(Collection $items): array
     {
         return $this->typeCounts($items);
+    }
+
+    /**
+     * Tür filtresi rozetleri: tüm sayılardaki yayındaki haberler (sayı seçiminden bağımsız).
+     *
+     * @return array<string, int>
+     */
+    public function globalPublishedTypeCounts(): array
+    {
+        return Cache::remember($this->cacheKey('type_counts.global'), $this->cacheTtl(), function () {
+            $counts = [];
+            foreach (array_keys(config('news.types', [])) as $key) {
+                $counts[$key] = 0;
+            }
+
+            $rows = $this->publishedQuery()
+                ->reorder()
+                ->select('news_type')
+                ->selectRaw('COUNT(*) as aggregate')
+                ->groupBy('news_type')
+                ->pluck('aggregate', 'news_type');
+
+            foreach ($rows as $type => $total) {
+                if (isset($counts[$type])) {
+                    $counts[$type] = (int) $total;
+                }
+            }
+
+            return $counts;
+        });
     }
 
   /**
@@ -399,6 +434,27 @@ class PublicNewsService
         }
 
         return GazetteTypography::scrub($badge);
+    }
+
+    protected function sanitizePublicAuthorRole(mixed $item): ?string
+    {
+        $role = GazetteTypography::scrub($item->author_role ?? null);
+        if ($role === null || trim($role) === '') {
+            return null;
+        }
+
+        if (preg_match('/onay[ıi]\s*bekliyor|editör onayı/ui', $role)) {
+            return null;
+        }
+
+        $stats = is_array($item->stats ?? null) ? $item->stats : [];
+        $submission = is_array($stats['submission'] ?? null) ? $stats['submission'] : [];
+        $slotKind = (string) ($submission['gazette_slot_kind'] ?? '');
+        if ($slotKind === 'flash' || (bool) ($item->is_breaking ?? false)) {
+            return null;
+        }
+
+        return $role;
     }
 
     protected function normalizedImagePath(?string $url): ?string

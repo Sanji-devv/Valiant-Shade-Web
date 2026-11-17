@@ -224,10 +224,12 @@
                         <span class="vs-modal__meta-item" id="newsModalReadTime"></span>
                     </div>
                 </div>
-                <div class="vs-modal__engagement" id="newsModalEngagement" hidden aria-label="Okuma istatistikleri"></div>
                 <hr class="vs-modal__divider">
                 <div class="vs-modal-story" id="newsModalStory"></div>
                 <blockquote class="vs-modal-quote" id="newsModalQuote" hidden></blockquote>
+                <footer class="vs-modal__article-foot">
+                    <div class="vs-modal__engagement" id="newsModalEngagement" hidden aria-label="Okuma istatistikleri"></div>
+                </footer>
             </div>
         </article>
     </div>
@@ -301,7 +303,7 @@
                             </div>
 
                             <label class="vs-form-field vs-rumor-form__span" id="rumorRumuzFieldWrap" hidden>
-                                <span class="vs-form-field__label">Rumuz (köşe imzası) <span class="vs-form-field__req">*</span></span>
+                                <span class="vs-form-field__label">Rumuz <span class="vs-form-field__req">*</span></span>
                                 <input type="text" name="rumuz" id="rumorRumuzInput" maxlength="80" placeholder="Basılacak rumuz, örn. G.T." required>
                                 <p class="vs-field-inline-error" id="rumorRumuzFieldError" hidden role="alert"></p>
                             </label>

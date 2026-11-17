@@ -1686,6 +1686,10 @@ body.vs-image-map-page--lightbox-open {
         border-radius: 0;
         box-shadow: none;
     }
+
+    body.vs-image-map-page--dual:has(.vs-mobile-location-bar) .vs-image-map-stage--dual {
+        padding-bottom: calc(3.75rem + env(safe-area-inset-bottom, 0px));
+    }
 }
 
 @media (min-width: 769px) {

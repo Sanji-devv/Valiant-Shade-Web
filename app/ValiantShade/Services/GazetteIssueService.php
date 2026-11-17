@@ -413,7 +413,7 @@ class GazetteIssueService
                 'data' => $feedData,
                 'meta' => $sliceMeta,
                 'all_article_ids' => $paginationIds,
-                'type_counts' => $this->publicNews->typeCountsForCollection($allNews),
+                'type_counts' => $this->publicNews->globalPublishedTypeCounts(),
             ],
         ];
     }
@@ -1512,7 +1512,7 @@ class GazetteIssueService
                     'inner_per_page' => 1,
                 ],
                 'all_article_ids' => $allNews->pluck('id')->values()->all(),
-                'type_counts' => $this->publicNews->typeCountsForCollection($allNews),
+                'type_counts' => $this->publicNews->globalPublishedTypeCounts(),
             ],
         ];
     }
@@ -1677,12 +1677,18 @@ class GazetteIssueService
         $stats['gazette_placement'] = 'flash_extra';
         $stats['gazette_rank'] = 0;
 
+        $authorRole = (string) ($news->author_role ?? '');
+        if ($authorRole === '' || preg_match('/onay[ıi]\s*bekliyor|flash haber/ui', $authorRole)) {
+            $authorRole = 'Sıcak haber muhabiri';
+        }
+
         $news->forceFill([
             'gazette_issue_id' => $issue->id,
             'is_breaking' => true,
             'tag' => 'Sıcak Haber',
             'tag_icon' => 'icon-base ti tabler-urgent',
             'date_text' => $news->date_text ?: (WorldCalendar::formatNewsStamp($at) ?? $at->locale(app()->getLocale())->translatedFormat('d M Y, H:i')),
+            'author_role' => $authorRole,
             'stats' => $stats,
         ])->saveQuietly();
 
