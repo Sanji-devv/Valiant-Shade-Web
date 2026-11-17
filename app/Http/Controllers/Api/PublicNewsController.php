@@ -79,7 +79,7 @@ class PublicNewsController extends Controller
         }
 
         $payload = $request->boolean('stream')
-            ? $this->news->paginateStream($page, $perPage, $search)
+            ? $this->news->paginateStream($page, $perPage, $search, $newsType)
             : $this->news->paginate($page, $perPage, $newsType, $search);
 
         return $this->cachedJson([

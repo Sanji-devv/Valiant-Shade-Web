@@ -575,13 +575,20 @@ function articleSlugForOpen(id, explicitSlug = '') {
   return slug;
 }
 
-function openArticleFromUi(id, slug = '') {
+function openArticleFromUi(id, slug = '', extraOptions = {}) {
   if (!id && !slug) {
     return Promise.resolve();
   }
 
-  return openArticle(id, { gazetteReader: prefersGazetteArticleModal(), slug });
+  return openArticle(id, {
+    gazetteReader: prefersGazetteArticleModal(),
+    slug,
+    ...extraOptions,
+  });
 }
+
+const STREAM_IMAGE_OPEN_ICON =
+  '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.85" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m21 17-5.5-5.5a1.2 1.2 0 0 0-1.7 0L8 17"/></svg>';
 
 function gazetteBranding() {
   const body = document.body;
@@ -1519,8 +1526,13 @@ function applyLayoutMode() {
     els.downloadGazettePngBtn.hidden = !gazette || stream;
   }
   if (els.pagination) {
+    els.pagination.hidden = stream;
     els.pagination.classList.toggle('vs-pagination--gazette', gazette);
   }
+  if (els.newsToolbar) {
+    els.newsToolbar.classList.toggle('vs-toolbar--stream-mode', stream);
+  }
+  syncFilterPanelVisibility();
   if (els.pageHint) {
     els.pageHint.hidden = !gazette;
   }
@@ -1589,10 +1601,10 @@ function streamCardBodyText(item) {
   const full = String(item.full_story || '').trim();
   const desc = String(item.description || '').trim();
   const text = full || desc;
-  if (text.length <= 520) {
+  if (text.length <= 2400) {
     return text;
   }
-  return `${text.slice(0, 517)}…`;
+  return `${text.slice(0, 2397)}…`;
 }
 
 function renderStreamReactionButtons(item) {
@@ -1601,10 +1613,10 @@ function renderStreamReactionButtons(item) {
   return ARTICLE_REACTIONS.map((cfg) => {
     const count = Number(reactions[cfg.key] ?? 0);
     const countHtml =
-      count > 0 ? `<span class="vs-stream-card__reaction-count">${count}</span>` : '';
+      count > 0 ? `<span class="vs-stream-post__reaction-count vs-stream-card__reaction-count">${count}</span>` : '';
     const active = picked === cfg.key ? ' is-active' : '';
     const disabled = picked && picked !== cfg.key ? ' disabled' : '';
-    return `<button type="button" class="vs-stream-card__reaction${active}" data-stream-reaction="${cfg.key}" data-stream-id="${item.id}" aria-pressed="${picked === cfg.key ? 'true' : 'false'}" title="${escapeHtml(cfg.label)}"${disabled}>
+    return `<button type="button" class="vs-stream-post__reaction vs-stream-card__reaction${active}" data-stream-reaction="${cfg.key}" data-stream-id="${item.id}" aria-pressed="${picked === cfg.key ? 'true' : 'false'}" title="${escapeHtml(cfg.label)}"${disabled}>
       ${cfg.icon}
       ${countHtml}
     </button>`;
@@ -1612,35 +1624,56 @@ function renderStreamReactionButtons(item) {
 }
 
 function renderStreamCard(item) {
-  const placement = escapeHtml(item.gazette_placement_label || 'Haber');
-  const typeLabel = escapeHtml(item.news_type_label || item.category || '');
+  const placementRaw = String(item.gazette_placement_label || '').trim();
+  const placement =
+    placementRaw && placementRaw !== 'Haber'
+      ? `<span class="vs-stream-post__badge">${escapeHtml(placementRaw)}</span>`
+      : '';
+  const typeLabel = escapeHtml(item.news_type_label || item.category || 'Haber');
   const meta = escapeHtml(displayDateText(item));
-  const loc = item.location_badge ? ` · ${escapeHtml(item.location_badge)}` : '';
-  const author = escapeHtml(item.author || '');
-  const imageUrl = item.image_asset ? escapeHtml(item.image_asset) : '';
+  const author = escapeHtml(item.author || 'Gazete Muhabiri');
+  const role = escapeHtml(String(item.author_role || '').trim());
+  const loc = item.location_badge
+    ? `<span class="vs-stream-post__meta-dot" aria-hidden="true">·</span><span class="vs-stream-post__location">${escapeHtml(item.location_badge)}</span>`
+    : '';
+  const hasImage = Boolean(item.image_asset);
   const body = escapeHtml(streamCardBodyText(item));
-  return `<article class="vs-stream-card" data-stream-id="${item.id}">
-    <div class="vs-stream-card__head">
-      <span class="vs-stream-card__placement">${placement}</span>
-      ${typeLabel ? `<span class="vs-stream-card__type">${typeLabel}</span>` : ''}
-      <span class="vs-stream-card__meta">${meta}${loc}</span>
-    </div>
-    <h2 class="vs-stream-card__title">${escapeHtml(item.title || '')}</h2>
-    ${author ? `<p class="vs-stream-card__byline">${author}</p>` : ''}
-    <p class="vs-stream-card__body">${body}</p>
-    ${
-      imageUrl
-        ? `<button type="button" class="vs-stream-card__image-toggle" data-stream-image-toggle="${item.id}">Görsel için tıkla</button>
-    <div class="vs-stream-card__image" id="streamImage${item.id}" hidden>
-      <img src="${imageUrl}" alt="" loading="lazy" decoding="async">
-    </div>`
-        : ''
-    }
-    <footer class="vs-stream-card__footer">
-      <div class="vs-stream-card__reactions" data-stream-reactions="${item.id}">
+  const slugAttr = escapeHtml(item.slug || '');
+  const views = Number(item.views_count ?? item.engagement?.views ?? 0);
+  const viewsHtml =
+    views > 0
+      ? `<span class="vs-stream-post__stat" title="Okunma">${views.toLocaleString('tr-TR')} okunma</span>`
+      : '';
+  const imageBtn = hasImage
+    ? `<button type="button" class="vs-stream-post__image-open" data-stream-image-open="${item.id}" data-article-slug="${slugAttr}" aria-label="Görseli modalda aç" title="Görseli gör">${STREAM_IMAGE_OPEN_ICON}</button>`
+    : '';
+  return `<article class="vs-stream-post" data-stream-id="${item.id}" data-open-id="${item.id}" data-article-slug="${slugAttr}" tabindex="0" role="article">
+    <header class="vs-stream-post__head">
+      <div class="vs-stream-post__names">
+        <span class="vs-stream-post__author">${author}</span>
+        ${role ? `<span class="vs-stream-post__role">${role}</span>` : ''}
+      </div>
+      <div class="vs-stream-post__meta">
+        <span class="vs-stream-post__type">${typeLabel}</span>
+        <span class="vs-stream-post__meta-dot" aria-hidden="true">·</span>
+        <time class="vs-stream-post__time">${meta}</time>
+        ${loc}
+      </div>
+    </header>
+    ${placement}
+    <h2 class="vs-stream-post__title">${escapeHtml(item.title || '')}</h2>
+    <div class="vs-stream-post__body">${body}</div>
+    <footer class="vs-stream-post__footer">
+      <div class="vs-stream-post__reactions" data-stream-reactions="${item.id}">
         ${renderStreamReactionButtons(item)}
       </div>
-      <button type="button" class="vs-stream-card__open" data-open-id="${item.id}" data-article-slug="${escapeHtml(item.slug || '')}">Tam metin</button>
+      <div class="vs-stream-post__footer-end">
+        ${viewsHtml}
+        <div class="vs-stream-post__read-actions">
+          ${imageBtn}
+          <button type="button" class="vs-stream-post__open" data-open-id="${item.id}" data-article-slug="${slugAttr}">Tam metin</button>
+        </div>
+      </div>
     </footer>
   </article>`;
 }
@@ -1670,10 +1703,10 @@ function updateStreamCardReactions(articleId, reactions) {
   wrap.innerHTML = ARTICLE_REACTIONS.map((cfg) => {
     const count = Number(reactions?.[cfg.key] ?? 0);
     const countHtml =
-      count > 0 ? `<span class="vs-stream-card__reaction-count">${count}</span>` : '';
+      count > 0 ? `<span class="vs-stream-post__reaction-count vs-stream-card__reaction-count">${count}</span>` : '';
     const active = picked === cfg.key ? ' is-active' : '';
     const disabled = picked && picked !== cfg.key ? ' disabled' : '';
-    return `<button type="button" class="vs-stream-card__reaction${active}" data-stream-reaction="${cfg.key}" data-stream-id="${articleId}" aria-pressed="${picked === cfg.key ? 'true' : 'false'}" title="${escapeHtml(cfg.label)}"${disabled}>
+    return `<button type="button" class="vs-stream-post__reaction vs-stream-card__reaction${active}" data-stream-reaction="${cfg.key}" data-stream-id="${articleId}" aria-pressed="${picked === cfg.key ? 'true' : 'false'}" title="${escapeHtml(cfg.label)}"${disabled}>
       ${cfg.icon}
       ${countHtml}
     </button>`;
@@ -1702,6 +1735,25 @@ function setupStreamInfiniteScroll() {
   state.streamObserver.observe(sentinel);
 }
 
+async function ensureStreamFilters() {
+  if ((state.filterTypes || []).length > 0) {
+    return;
+  }
+  try {
+    const response = await fetch(apiUrl('/api/public/news/bootstrap', { page: 1, per_page: 1 }), {
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      return;
+    }
+    const payload = await response.json();
+    renderFilters(payload.types, payload.feed?.type_counts);
+  } catch (error) {
+    console.warn(error);
+  }
+}
+
 async function loadStream(reset = true) {
   if (!isStreamLayout() || state.streamLoading) {
     return;
@@ -1717,6 +1769,7 @@ async function loadStream(reset = true) {
     if (els.newsStream) {
       els.newsStream.innerHTML = '<div class="vs-stream-loading">Akış yükleniyor…</div>';
     }
+    await ensureStreamFilters();
   }
   const page = reset ? 1 : state.streamPage;
   try {
@@ -1728,6 +1781,9 @@ async function loadStream(reset = true) {
     const q = String(state.search || '').trim();
     if (q) {
       params.set('q', q);
+    }
+    if (state.type && state.type !== 'all') {
+      params.set('type', state.type);
     }
     const response = await fetch(apiUrl(`/api/public/news?${params.toString()}`), {
       headers: { Accept: 'application/json' },
@@ -1764,19 +1820,45 @@ async function loadStream(reset = true) {
   }
 }
 
+function toggleStreamLayoutMode() {
+  if (isStreamLayout()) {
+    leaveStreamMode();
+    state.layoutMode = state.streamReturnLayout || 'gazette';
+    state.streamReturnLayout = null;
+    state.page = 1;
+  } else {
+    state.streamReturnLayout = state.layoutMode;
+    state.layoutMode = 'stream';
+    state.page = 1;
+    state.type = 'all';
+  }
+  try {
+    localStorage.setItem('vs.gazette.layoutMode', state.layoutMode);
+  } catch (e) {
+    /* ignore */
+  }
+  applyLayoutMode();
+  loadFeed().catch(console.error);
+}
+
 function syncStreamToggleUi() {
   const active = isStreamLayout();
+  const title = active ? 'Gazete veya web görünümüne dön' : 'Yeniden eskiye, görselsiz akış okuma';
+  const label = active ? 'Kapat' : 'Akış';
   if (els.toggleStreamModeBtn) {
     els.toggleStreamModeBtn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    els.toggleStreamModeBtn.setAttribute('title', title);
   }
   if (els.toggleStreamModeLabel) {
-    els.toggleStreamModeLabel.textContent = active ? 'Kapat' : 'Akış';
+    els.toggleStreamModeLabel.textContent = label;
   }
-  if (els.toggleStreamModeBtn) {
-    els.toggleStreamModeBtn.setAttribute(
-      'title',
-      active ? 'Gazete veya web görünümüne dön' : 'Yeniden eskiye, görselsiz akış okuma',
-    );
+  if (els.toggleStreamNavBtn) {
+    els.toggleStreamNavBtn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    els.toggleStreamNavBtn.setAttribute('title', title);
+    els.toggleStreamNavBtn.setAttribute('aria-label', active ? 'Akışı kapat' : 'Akış okuma');
+  }
+  if (els.toggleStreamNavLabel) {
+    els.toggleStreamNavLabel.textContent = label;
   }
 }
 
@@ -1812,6 +1894,22 @@ function updateFilterToggleLabel() {
 function syncFilterPanelVisibility() {
   if (!els.filterPanel || !els.toggleFiltersBtn) {
     return;
+  }
+  if (isStreamLayout()) {
+    els.filterPanel.hidden = false;
+    els.toggleFiltersBtn.hidden = true;
+    els.toggleFiltersBtn.setAttribute('aria-expanded', 'true');
+    if (els.newsToolbar) {
+      els.newsToolbar.classList.remove('vs-toolbar--filters-open');
+    }
+    if (els.toggleGazetteLayoutBtn) {
+      els.toggleGazetteLayoutBtn.hidden = true;
+    }
+    return;
+  }
+  els.toggleFiltersBtn.hidden = false;
+  if (els.toggleGazetteLayoutBtn) {
+    els.toggleGazetteLayoutBtn.hidden = false;
   }
   if (!isMobileGazetteLayout() && state.viewMode === 'list') {
     state.viewMode = 'grid';
@@ -2550,7 +2648,10 @@ async function openArticle(id, options = {}) {
   const payload = await response.json();
   const item = payload.news;
   const heroUrl = item.image_asset || '';
-  const showHero = articleModalShowsHero(item, gazetteReader);
+  const showHero =
+    options.showHero === true
+      ? Boolean(item.image_asset || item.image_url)
+      : articleModalShowsHero(item, gazetteReader);
   if (showHero) {
     els.modalHero.style.backgroundImage = `url('${heroUrl}')`;
     els.modalHero.dataset.imageUrl = heroUrl;
@@ -3225,24 +3326,12 @@ function bindEvents() {
 
   if (els.toggleStreamModeBtn) {
     els.toggleStreamModeBtn.addEventListener('click', () => {
-      if (isStreamLayout()) {
-        leaveStreamMode();
-        state.layoutMode = state.streamReturnLayout || 'gazette';
-        state.streamReturnLayout = null;
-        state.page = 1;
-      } else {
-        state.streamReturnLayout = state.layoutMode;
-        state.layoutMode = 'stream';
-        state.page = 1;
-        state.type = 'all';
-      }
-      try {
-        localStorage.setItem('vs.gazette.layoutMode', state.layoutMode);
-      } catch (e) {
-        /* ignore */
-      }
-      applyLayoutMode();
-      loadFeed().catch(console.error);
+      toggleStreamLayoutMode();
+    });
+  }
+  if (els.toggleStreamNavBtn) {
+    els.toggleStreamNavBtn.addEventListener('click', () => {
+      toggleStreamLayoutMode();
     });
   }
 
@@ -3257,17 +3346,12 @@ function bindEvents() {
         sendArticleReaction(id, reaction, item || {}).catch(console.error);
         return;
       }
-      const imgBtn = event.target.closest('[data-stream-image-toggle]');
-      if (imgBtn) {
+      const imgOpen = event.target.closest('[data-stream-image-open]');
+      if (imgOpen) {
         event.preventDefault();
-        const id = imgBtn.dataset.streamImageToggle;
-        const box = document.getElementById(`streamImage${id}`);
-        if (!box) {
-          return;
-        }
-        const show = box.hidden;
-        box.hidden = !show;
-        imgBtn.textContent = show ? 'Görseli gizle' : 'Görsel için tıkla';
+        openArticleFromUi(imgOpen.dataset.streamImageOpen, imgOpen.dataset.articleSlug, {
+          showHero: true,
+        }).catch(console.error);
         return;
       }
       const openBtn = event.target.closest('[data-open-id]');
@@ -3433,6 +3517,19 @@ function bindEvents() {
         openCornerReader(cornerKey).catch(console.error);
         return;
       }
+    }
+    const streamPost = event.target.closest('.vs-stream-post');
+    if (
+      streamPost &&
+      isStreamLayout() &&
+      els.newsStream?.contains(streamPost) &&
+      !event.target.closest(
+        '.vs-stream-post__reactions, .vs-stream-post__reaction, .vs-stream-post__read-actions, [data-stream-image-open]',
+      )
+    ) {
+      event.preventDefault();
+      openArticleFromUi(streamPost.dataset.openId, streamPost.dataset.articleSlug).catch(console.error);
+      return;
     }
     const openBtn = event.target.closest('[data-open-id]');
     if (!openBtn) {
@@ -3652,6 +3749,8 @@ document.addEventListener('DOMContentLoaded', () => {
   els.newsStream = qs('newsStream');
   els.toggleStreamModeBtn = qs('toggleStreamModeBtn');
   els.toggleStreamModeLabel = qs('toggleStreamModeLabel');
+  els.toggleStreamNavBtn = qs('toggleStreamNavBtn');
+  els.toggleStreamNavLabel = qs('toggleStreamNavLabel');
   els.gazetteStage = qs('gazetteStage');
   els.newsSliderSection = document.querySelector('.vs-news-slider');
   els.toggleGazetteLayoutBtn = qs('toggleGazetteLayoutBtn');

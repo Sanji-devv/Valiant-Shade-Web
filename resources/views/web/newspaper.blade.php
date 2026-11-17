@@ -111,6 +111,7 @@
             </div>
         </div>
         <nav class="vs-newspaper-nav" aria-label="Gazete menüsü">
+            <div class="vs-newspaper-nav__cluster vs-newspaper-nav__cluster--main">
             <a href="{{ $mainSiteUrl }}" class="vs-newspaper-nav__item" aria-label="Ana Sayfa">
                 <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V9.5z"/></svg>
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">Ana Sayfa</span>
@@ -137,11 +138,25 @@
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">PNG İndir</span>
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">PNG</span>
             </button>
+            </div>
+            <div class="vs-newspaper-nav__cluster vs-newspaper-nav__cluster--actions">
+            <button
+                type="button"
+                class="vs-newspaper-nav__item vs-newspaper-nav__item--stream-mobile"
+                id="toggleStreamNavBtn"
+                aria-pressed="false"
+                aria-label="Akış okuma"
+            >
+                <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16"/><path d="M4 12h10"/><path d="M4 18h14"/><circle cx="19" cy="17" r="3"/></svg>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">Akış</span>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short" id="toggleStreamNavLabel">Akış</span>
+            </button>
             <button type="button" class="vs-newspaper-nav__item vs-newspaper-nav__item--primary" id="openRumorModal" aria-label="Söylenti Gönder">
                 <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8z"/></svg>
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">Söylenti Gönder</span>
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">Söylenti</span>
             </button>
+            </div>
         </nav>
     </header>
 

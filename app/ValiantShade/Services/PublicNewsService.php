@@ -284,14 +284,18 @@ class PublicNewsService
      *
      * @return array{data: array<int, array<string, mixed>>, meta: array<string, int>, type_counts: array<string, int>}
      */
-    public function paginateStream(int $page = 1, int $perPage = 12, ?string $search = null): array
+    public function paginateStream(int $page = 1, int $perPage = 12, ?string $search = null, ?string $newsType = null): array
     {
         $locale = app()->getLocale();
         $searchKey = $search ? md5(mb_strtolower(trim($search))) : 'all';
-        $cacheKey = $this->cacheKey("stream.{$locale}.p{$page}.s{$perPage}.q{$searchKey}");
+        $typeKey = $newsType ?: 'all';
+        $cacheKey = $this->cacheKey("stream.{$locale}.p{$page}.s{$perPage}.t{$typeKey}.q{$searchKey}");
 
-        return Cache::remember($cacheKey, $this->cacheTtl(), function () use ($page, $perPage, $search) {
+        return Cache::remember($cacheKey, $this->cacheTtl(), function () use ($page, $perPage, $search, $newsType) {
             $listQuery = $this->publishedQuery();
+            if ($newsType) {
+                $listQuery->where('news_type', $newsType);
+            }
             $this->applyPublicSearch($listQuery, $search);
 
             $filtered = (clone $listQuery)
