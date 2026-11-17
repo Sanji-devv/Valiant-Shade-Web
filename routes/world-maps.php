@@ -53,6 +53,8 @@ Route::prefix('api')->group(function () {
     Route::prefix('public/news')->group(function () {
         Route::get('/bootstrap', [PublicNewsController::class, 'bootstrap'])->name('api.public.news.bootstrap');
         Route::get('/featured', [PublicNewsController::class, 'featured'])->name('api.public.news.featured');
+        Route::get('/exports/articles/{id}', [PublicNewsController::class, 'exportArticle'])->whereNumber('id')->name('api.public.news.exports.articles.show');
+        Route::get('/exports/issues/{issueId}', [PublicNewsController::class, 'exportIssue'])->whereNumber('issueId')->name('api.public.news.exports.issues.show');
         Route::get('/', [PublicNewsController::class, 'index'])->name('api.public.news.index');
         Route::get('/{id}', [PublicNewsController::class, 'show'])->whereNumber('id')->name('api.public.news.show');
         Route::post('/{id}/engagement', [PublicNewsController::class, 'recordEngagement'])

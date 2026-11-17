@@ -155,6 +155,78 @@ class PublicNewspaperTest extends TestCase
         $this->assertNotContains('Bekleyen Söylenti Başlığı Uzun Metin', $titles);
     }
 
+    public function test_issue_export_returns_all_published_articles_without_incrementing_views(): void
+    {
+        $issue = app(\App\ValiantShade\Services\GazetteIssueService::class)->ensureDefaultIssue();
+        $first = News::create([
+            'title' => 'Sayıdaki İlk Haber Başlığı',
+            'category' => 'Lonca Haberi',
+            'news_type' => 'guild_news',
+            'gazette_issue_id' => $issue->id,
+            'status' => 'published',
+            'description' => 'İlk haberin toplu PNG dışa aktarımında yer alması gereken metni.',
+            'full_story' => 'İlk haberin tamamı.',
+            'image_url' => 'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg',
+            'is_active' => true,
+            'views_count' => 0,
+        ]);
+        $second = News::create([
+            'title' => 'Sayıdaki İkinci Haber Başlığı',
+            'category' => 'Lonca Söylentisi',
+            'news_type' => 'guild_rumor',
+            'gazette_issue_id' => $issue->id,
+            'status' => 'published',
+            'description' => 'İkinci haber de aynı sayının toplu PNG arşivinde bulunmalı.',
+            'image_url' => 'static/valiant-shade/assets/img/news/guild_tavern_whispers.jpg',
+            'is_active' => true,
+            'views_count' => 0,
+        ]);
+        News::create([
+            'title' => 'Onay Bekleyen Haber Başlığı',
+            'category' => 'Lonca Söylentisi',
+            'news_type' => 'guild_rumor',
+            'gazette_issue_id' => $issue->id,
+            'status' => 'pending',
+            'description' => 'Onaysız haber dışa aktarım listesine girmemeli.',
+            'image_url' => 'static/valiant-shade/assets/img/news/guild_tavern_whispers.jpg',
+            'is_active' => false,
+        ]);
+
+        $response = $this->getJson('/api/public/news/exports/issues/'.$issue->id);
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('issue_id', $issue->id)
+            ->assertJsonCount(2, 'data')
+            ->assertJsonFragment(['id' => $first->id, 'full_story' => 'İlk haberin tamamı.'])
+            ->assertJsonFragment(['id' => $second->id]);
+
+        $this->assertSame(0, (int) $first->fresh()->views_count);
+        $this->assertSame(0, (int) $second->fresh()->views_count);
+    }
+
+    public function test_single_article_export_does_not_increment_views(): void
+    {
+        $news = News::create([
+            'title' => 'Tekil PNG İçin Haber Başlığı',
+            'category' => 'Lonca Haberi',
+            'news_type' => 'guild_news',
+            'status' => 'published',
+            'description' => 'Bu haber tek başına PNG olarak indirilecek.',
+            'full_story' => 'Bu haberin bütün metni.',
+            'image_url' => 'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg',
+            'is_active' => true,
+            'views_count' => 0,
+        ]);
+
+        $this->getJson('/api/public/news/exports/articles/'.$news->id)
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('news.id', $news->id)
+            ->assertJsonPath('news.full_story', 'Bu haberin bütün metni.');
+
+        $this->assertSame(0, (int) $news->fresh()->views_count);
+    }
+
     public function test_public_can_submit_pending_rumor(): void
     {
         $response = $this->postJson('/api/public/news/submissions', [

@@ -94,6 +94,37 @@ class PublicNewsController extends Controller
         ]);
     }
 
+    public function exportArticle(int $id): JsonResponse
+    {
+        $model = $this->news->findPublishedForShow($id);
+        if (! $model) {
+            return response()->json(['success' => false, 'message' => 'Haber bulunamadı.'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'news' => $this->news->transformItem($model),
+        ])->header('Cache-Control', 'private, no-cache, must-revalidate');
+    }
+
+    public function exportIssue(int $issueId): JsonResponse
+    {
+        if (! GazetteIssue::query()->whereKey($issueId)->exists()) {
+            return response()->json(['success' => false, 'message' => 'Gazete sayısı bulunamadı.'], 404);
+        }
+
+        $articles = $this->news->publishedForIssue($issueId)
+            ->map(fn ($item) => $this->news->transformItem($item))
+            ->values()
+            ->all();
+
+        return response()->json([
+            'success' => true,
+            'issue_id' => $issueId,
+            'data' => $articles,
+        ])->header('Cache-Control', 'private, no-cache, must-revalidate');
+    }
+
     public function show(int $id): JsonResponse
     {
         $model = $this->news->findPublishedForShow($id);

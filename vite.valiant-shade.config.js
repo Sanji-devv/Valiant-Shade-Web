@@ -76,9 +76,6 @@ export default defineConfig({
       '@': path.resolve(__dirname, resourceRoot),
     },
   },
-  optimizeDeps: {
-    include: ['html2canvas'],
-  },
   json: {
     stringify: true,
   },

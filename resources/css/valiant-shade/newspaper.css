@@ -1274,7 +1274,7 @@ body.vs-layout-gazette .vs-layout-toggle[aria-pressed='true'] {
 
 .vs-news-list__item {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.65rem;
   align-items: center;
   padding: 0.75rem 0.85rem;
@@ -1283,6 +1283,40 @@ body.vs-layout-gazette .vs-layout-toggle[aria-pressed='true'] {
   background: rgba(24, 34, 52, 0.75);
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.vs-news-list__open {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.65rem;
+  align-items: center;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.vs-news-item__download {
+  flex: 0 0 auto;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid rgba(198, 129, 47, 0.45);
+  border-radius: 999px;
+  background: rgba(198, 129, 47, 0.12);
+  color: inherit;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.vs-news-item__download:hover,
+.vs-news-item__download:focus-visible {
+  background: rgba(198, 129, 47, 0.24);
+  outline: 2px solid rgba(198, 129, 47, 0.45);
+  outline-offset: 2px;
 }
 
 .vs-news-list__item:hover {
@@ -1324,6 +1358,11 @@ body.vs-layout-gazette .vs-layout-toggle[aria-pressed='true'] {
 
 @media (max-width: 480px) {
   .vs-news-list__item {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.35rem;
+  }
+
+  .vs-news-list__open {
     grid-template-columns: 1fr;
     gap: 0.35rem;
   }
@@ -1361,6 +1400,26 @@ body.vs-layout-gazette .vs-layout-toggle[aria-pressed='true'] {
   flex-direction: column;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   cursor: pointer;
+}
+
+.vs-news-card__open {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.vs-news-card__download {
+  align-self: flex-start;
+  margin: 0 1rem 1rem;
 }
 
 .vs-news-card:hover {

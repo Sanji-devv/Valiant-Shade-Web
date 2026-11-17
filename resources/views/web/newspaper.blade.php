@@ -101,6 +101,17 @@
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">PNG İndir</span>
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">PNG</span>
             </button>
+            <button
+                type="button"
+                class="vs-newspaper-nav__item vs-newspaper-nav__item--print"
+                id="downloadIssueZipBtn"
+                @if (! $isGazetteView) hidden @endif
+                aria-label="Açık sayıdaki haberleri ayrı PNG dosyaları olarak ZIP indir"
+            >
+                <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M9 4v5h6V4M9 20v-6h6v6M4 9h5m6 0h5"/></svg>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">Haberleri ZIP indir</span>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">ZIP</span>
+            </button>
             <button type="button" class="vs-newspaper-nav__item vs-newspaper-nav__item--primary" id="openRumorModal" aria-label="Söylenti Gönder">
                 <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8z"/></svg>
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">Söylenti Gönder</span>

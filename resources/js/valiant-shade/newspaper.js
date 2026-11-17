@@ -2,28 +2,21 @@ import { createRumorWizard } from './newspaper-submission-wizard.js';
 
 const WEB_ITEMS_PER_PAGE = 9;
 
-let html2canvasModulePromise;
+let exportModulePromise;
+let jsZipModulePromise;
 
-async function loadHtml2Canvas() {
-  if (!html2canvasModulePromise) {
-    html2canvasModulePromise = import('html2canvas').then((mod) => mod.default || mod);
+async function loadExportModule() {
+  if (!exportModulePromise) {
+    exportModulePromise = import('./newspaper-export.js');
   }
-  return html2canvasModulePromise;
+  return exportModulePromise;
 }
 
-function isolatePngCaptureTarget(clonedDocument, targetId, rootClass, rect) {
-  const target = clonedDocument.getElementById(targetId);
-  const parent = target?.parentElement;
-  if (!target || !parent) {
-    throw new Error(`PNG yakalama hedefi bulunamadı: ${targetId}`);
+async function loadJSZip() {
+  if (!jsZipModulePromise) {
+    jsZipModulePromise = import('jszip').then((mod) => mod.default || mod);
   }
-
-  const captureRoot = clonedDocument.createElement('div');
-  captureRoot.className = rootClass;
-  captureRoot.style.cssText = `position:static; display:block; width:${Math.ceil(rect.width)}px; height:${Math.ceil(rect.height)}px; margin:0; padding:0; background:transparent; overflow:visible;`;
-  captureRoot.appendChild(target);
-  parent.replaceWith(captureRoot);
-  return target;
+  return jsZipModulePromise;
 }
 
 const GAZETTE_SUMMARY_SLOTS = 5;
@@ -53,6 +46,7 @@ const state = {
   suppressUrlSync: false,
   articleBootstrapInFlight: false,
   openArticleId: null,
+  openArticleItem: null,
   coverMastIndex: 0,
   coverMastTimer: null,
 };
@@ -1110,91 +1104,211 @@ function renderGazette(items, meta) {
   });
 }
 
-async function downloadGazettePagePng() {
-  const sheet = els.gazetteStage?.querySelector('.vs-gazette-sheet');
-  if (!sheet) {
-    showToast('İndirilecek gazete yaprağı yüklenemedi.');
+function safeDownloadSegment(value, fallback = 'haber') {
+  const segment = String(value || '')
+    .trim()
+    .replace(/[<>:"/\\|?*\u0000-\u001f]/g, '-')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^[.-]+|[. -]+$/g, '')
+    .slice(0, 72);
+  return segment || fallback;
+}
+
+function saveBlob(blob, filename) {
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = objectUrl;
+  link.download = filename;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+}
+
+function setZipButtonProgress(button, text) {
+  if (!button) {
+    return;
+  }
+  const fullLabel = button.querySelector('.vs-newspaper-nav__label--full');
+  const shortLabel = button.querySelector('.vs-newspaper-nav__label--short');
+  if (fullLabel) {
+    fullLabel.textContent = text;
+  }
+  if (shortLabel) {
+    shortLabel.textContent = text;
+  }
+  button.setAttribute('aria-label', text);
+}
+
+async function saveArticlePng(item) {
+  const { renderArticlePng } = await loadExportModule();
+  const blob = await renderArticlePng(item);
+  const title = safeDownloadSegment(item.title, `haber-${item.id}`);
+  saveBlob(blob, `lagimdan-sesler-${title}.png`);
+  await recordArticleEngagement(item.id, 'png_downloads');
+}
+
+async function downloadArticlePng(item, button = null) {
+  if (!item?.id) {
+    showToast('PNG için haber bilgisi bulunamadı.', 'error');
     return;
   }
 
+  if (button) {
+    button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+  }
+  try {
+    await saveArticlePng(item);
+    showToast('Haber PNG olarak indirildi.');
+  } catch (error) {
+    console.error('Haber PNG olarak indirilemedi.', error);
+    showToast(error.message || 'Haber PNG olarak indirilemedi.', 'error');
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.removeAttribute('aria-busy');
+    }
+  }
+}
+
+async function downloadArticlePngById(articleId, button) {
+  if (!articleId) {
+    showToast('PNG için haber kimliği bulunamadı.', 'error');
+    return;
+  }
+
+  if (button) {
+    button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+  }
+  try {
+    const response = await fetch(`/api/public/news/exports/articles/${encodeURIComponent(articleId)}`, {
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      throw new Error(`Haber alınamadı (HTTP ${response.status}).`);
+    }
+    const payload = await response.json();
+    if (!payload.success || !payload.news) {
+      throw new Error(payload.message || 'Haber içeriği alınamadı.');
+    }
+    await saveArticlePng(payload.news);
+    showToast('Haber PNG olarak indirildi.');
+  } catch (error) {
+    console.error('Haber PNG olarak indirilemedi.', error);
+    showToast(error.message || 'Haber PNG olarak indirilemedi.', 'error');
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.removeAttribute('aria-busy');
+    }
+  }
+}
+
+async function downloadGazettePagePng() {
   const button = els.downloadGazettePngBtn;
+  if (!state.lastFeedMeta) {
+    showToast('İndirilecek gazete yaprağı yüklenemedi.', 'error');
+    return;
+  }
+
   if (button) {
     button.disabled = true;
     button.setAttribute('aria-busy', 'true');
   }
 
   try {
-    await document.fonts.ready;
-    await Promise.all(Array.from(sheet.querySelectorAll('img')).map((image) => {
-      image.loading = 'eager';
-      return new Promise((resolve, reject) => {
-        const fail = () => reject(new Error(`Gazete görseli yüklenemedi: ${image.currentSrc || image.src}`));
-        const loaded = async () => {
-          if (!image.naturalWidth) {
-            fail();
-            return;
-          }
-          try {
-            await image.decode();
-            resolve();
-          } catch (error) {
-            reject(error);
-          }
-        };
-
-        if (image.complete) {
-          loaded();
-          return;
-        }
-
-        image.addEventListener('load', loaded, { once: true });
-        image.addEventListener('error', fail, { once: true });
-        if (image.complete) {
-          image.removeEventListener('load', loaded);
-          image.removeEventListener('error', fail);
-          loaded();
-        }
-      });
-    }));
-
-    const html2canvas = await loadHtml2Canvas();
-    const canvas = await html2canvas(sheet, {
-      backgroundColor: '#f2e4c8',
-      scale: 2,
-      useCORS: true,
-      onclone: (clonedDocument) => {
-        const clonedSheet = isolatePngCaptureTarget(
-          clonedDocument,
-          'gazettePrintSheet',
-          'vs-gazette-stage',
-          sheet.getBoundingClientRect(),
-        );
-        clonedSheet.classList.remove('is-turning', 'is-turning--back');
-      },
+    const { renderGazettePagePng } = await loadExportModule();
+    const cornerSlot = state.lastFeedMeta.sheet_kind === 'inner'
+      ? cornerSlotForInnerPage(state.lastFeedMeta.current_page)
+      : null;
+    const blob = await renderGazettePagePng({
+      items: state.lastFeedItems,
+      issue: state.currentIssue || {},
+      meta: state.lastFeedMeta,
+      brand: gazetteBranding(),
+      cornerSlot,
     });
-    const blob = await new Promise((resolve, reject) => {
-      canvas.toBlob((result) => {
-        if (result) {
-          resolve(result);
-        } else {
-          reject(new Error('PNG dosyası oluşturulamadı.'));
-        }
-      }, 'image/png');
-    });
-
-    const issueNumber = state.currentIssue?.issue_number || inWorldCalendar().issueNumber;
-    const pageNumber = state.lastFeedMeta?.current_page || state.page || 1;
-    const objectUrl = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = objectUrl;
-    link.download = `lagimdan-sesler-sayi-${issueNumber}-yaprak-${pageNumber}.png`;
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    const issueNumber = state.currentIssue?.display_issue_number || state.currentIssue?.issue_number || inWorldCalendar().issueNumber;
+    const pageNumber = state.lastFeedMeta.current_page || state.page || 1;
+    saveBlob(blob, `lagimdan-sesler-sayi-${issueNumber}-yaprak-${pageNumber}.png`);
+    showToast('Gazete yaprağı PNG olarak indirildi.');
   } catch (error) {
     console.error('Gazete yaprağı PNG olarak indirilemedi.', error);
-    showToast('PNG indirilemedi. Lütfen tekrar deneyin.');
+    showToast(error.message || 'Gazete yaprağı PNG olarak indirilemedi.', 'error');
   } finally {
     if (button) {
+      button.disabled = false;
+      button.removeAttribute('aria-busy');
+    }
+  }
+}
+
+async function downloadIssueArticlesZip() {
+  const button = els.downloadIssueZipBtn;
+  const issueId = state.currentIssue?.id || state.issueId;
+  if (!issueId) {
+    showToast('Açık gazete sayısı belirlenemedi.', 'error');
+    return;
+  }
+
+  const defaultFullLabel = button?.querySelector('.vs-newspaper-nav__label--full')?.textContent || 'Haberleri ZIP indir';
+  const defaultShortLabel = button?.querySelector('.vs-newspaper-nav__label--short')?.textContent || 'ZIP';
+  const defaultAriaLabel = button?.getAttribute('aria-label') || 'Açık sayıdaki haberleri ZIP olarak indir';
+  if (button) {
+    button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+  }
+
+  try {
+    const response = await fetch(`/api/public/news/exports/issues/${encodeURIComponent(issueId)}`, {
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      throw new Error(`Haber listesi alınamadı (HTTP ${response.status}).`);
+    }
+    const payload = await response.json();
+    if (!payload.success || !Array.isArray(payload.data)) {
+      throw new Error(payload.message || 'Toplu indirme için haber listesi okunamadı.');
+    }
+    if (!payload.data.length) {
+      showToast('Açık sayıda indirilecek haber bulunmuyor.', 'warning');
+      return;
+    }
+
+    const [{ renderArticlePng }, JSZip] = await Promise.all([loadExportModule(), loadJSZip()]);
+    const archive = new JSZip();
+    for (let index = 0; index < payload.data.length; index += 1) {
+      const item = payload.data[index];
+      setZipButtonProgress(button, `PNG hazırlanıyor ${index + 1}/${payload.data.length}`);
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      const blob = await renderArticlePng(item);
+      const title = safeDownloadSegment(item.title, `haber-${item.id}`);
+      const number = String(index + 1).padStart(2, '0');
+      archive.file(`${number}-${title}.png`, blob);
+    }
+
+    setZipButtonProgress(button, 'ZIP hazırlanıyor…');
+    const zipBlob = await archive.generateAsync({ type: 'blob', compression: 'STORE' });
+    const issueNumber = state.currentIssue?.display_issue_number || state.currentIssue?.issue_number || inWorldCalendar().issueNumber;
+    saveBlob(zipBlob, `lagimdan-sesler-sayi-${issueNumber}-haberler.zip`);
+    showToast(`${payload.data.length} haber PNG olarak ZIP'e eklendi.`);
+  } catch (error) {
+    console.error('Toplu haber PNG indirmesi başarısız oldu.', error);
+    showToast(error.message || 'Toplu indirme tamamlanamadı.', 'error');
+  } finally {
+    if (button) {
+      setZipButtonProgress(button, defaultFullLabel);
+      const shortLabel = button.querySelector('.vs-newspaper-nav__label--short');
+      if (shortLabel) {
+        shortLabel.textContent = defaultShortLabel;
+      }
+      button.setAttribute('aria-label', defaultAriaLabel);
       button.disabled = false;
       button.removeAttribute('aria-busy');
     }
@@ -1278,6 +1392,9 @@ function applyLayoutMode() {
   if (els.downloadGazettePngBtn) {
     els.downloadGazettePngBtn.hidden = !gazette;
   }
+  if (els.downloadIssueZipBtn) {
+    els.downloadIssueZipBtn.hidden = !gazette || isGlobalFeedMode();
+  }
   if (els.pagination) {
     els.pagination.classList.toggle('vs-pagination--gazette', gazette);
   }
@@ -1316,10 +1433,13 @@ function renderGrid(items) {
     els.newsGrid.innerHTML = items
       .map(
         (item) => `
-        <article class="vs-news-list__item vs-news-list__item--open" data-open-id="${item.id}" role="button" tabindex="0">
-          <span class="vs-news-list__type">${escapeHtml(item.news_type_label || item.category || '')}</span>
-          <h3 class="vs-news-list__title">${escapeHtml(item.title || '')}</h3>
-          <span class="vs-news-list__meta">${escapeHtml(displayDateText(item))}</span>
+        <article class="vs-news-list__item">
+          <button type="button" class="vs-news-list__open" data-open-id="${item.id}" aria-label="Haberi oku: ${escapeHtml(item.title || '')}">
+            <span class="vs-news-list__type">${escapeHtml(item.news_type_label || item.category || '')}</span>
+            <h3 class="vs-news-list__title">${escapeHtml(item.title || '')}</h3>
+            <span class="vs-news-list__meta">${escapeHtml(displayDateText(item))}</span>
+          </button>
+          <button type="button" class="vs-news-item__download" data-download-id="${item.id}" aria-label="${escapeHtml(item.title || 'Haber')} PNG indir">PNG</button>
         </article>
       `,
       )
@@ -1330,14 +1450,17 @@ function renderGrid(items) {
   els.newsGrid.innerHTML = items
     .map(
       (item) => `
-      <article class="vs-news-card vs-news-card--open" data-open-id="${item.id}" role="button" tabindex="0">
-        <div class="vs-news-card__thumb" data-image-url="${escapeHtml(item.image_asset || '')}" style="background-image:url('${escapeHtml(item.image_asset || '')}')"></div>
-        <div class="vs-news-card__body">
-          <span class="vs-badge">${escapeHtml(item.news_type_label || item.category || '')}</span>
-          <h3 class="vs-news-card__title">${escapeHtml(item.title || '')}</h3>
-          <p class="vs-news-card__desc">${escapeHtml(item.description || '')}</p>
-          <small style="color:#94a3b8">${escapeHtml(displayDateText(item))}${item.location_badge ? ' • ' + escapeHtml(item.location_badge) : ''}</small>
-        </div>
+      <article class="vs-news-card">
+        <button type="button" class="vs-news-card__open" data-open-id="${item.id}" aria-label="Haberi oku: ${escapeHtml(item.title || '')}">
+          <div class="vs-news-card__thumb" data-image-url="${escapeHtml(item.image_asset || '')}" style="background-image:url('${escapeHtml(item.image_asset || '')}')"></div>
+          <div class="vs-news-card__body">
+            <span class="vs-badge">${escapeHtml(item.news_type_label || item.category || '')}</span>
+            <h3 class="vs-news-card__title">${escapeHtml(item.title || '')}</h3>
+            <p class="vs-news-card__desc">${escapeHtml(item.description || '')}</p>
+            <small style="color:#94a3b8">${escapeHtml(displayDateText(item))}${item.location_badge ? ' • ' + escapeHtml(item.location_badge) : ''}</small>
+          </div>
+        </button>
+        <button type="button" class="vs-news-item__download vs-news-card__download" data-download-id="${item.id}" aria-label="${escapeHtml(item.title || 'Haber')} PNG indir">Haber PNG indir</button>
       </article>
     `,
     )
@@ -2133,6 +2256,7 @@ async function openArticle(id, options = {}) {
   initArticleModalSwipe();
   initArticleModalHeroScroll();
   state.openArticleId = Number(id) || null;
+  state.openArticleItem = item;
   if (!options.skipUrlSync) {
     syncBrowserUrl({ articleId: id });
   }
@@ -2154,6 +2278,7 @@ function closeModal() {
   }
   document.body.classList.remove('vs-article-modal-open');
   state.openArticleId = null;
+  state.openArticleItem = null;
   syncBrowserUrl();
 }
 
@@ -2246,55 +2371,8 @@ async function shareArticle(articleId) {
   await recordArticleEngagement(id, 'shares');
 }
 
-async function downloadArticleModalPng() {
-  const panel = els.detailModalPanel;
-  if (!panel) {
-    showToast('PNG için haber yüklenemedi.');
-    return;
-  }
-  if (els.modalPng) {
-    els.modalPng.disabled = true;
-    els.modalPng.setAttribute('aria-busy', 'true');
-  }
-  try {
-    await document.fonts.ready;
-    const html2canvas = await loadHtml2Canvas();
-    const canvas = await html2canvas(panel, {
-      backgroundColor: '#f6ecd8',
-      scale: Math.min(2, window.devicePixelRatio || 1.5),
-      useCORS: true,
-      onclone: (clonedDocument) => {
-        const clonedPanel = isolatePngCaptureTarget(
-          clonedDocument,
-          'newsDetailModalPanel',
-          'vs-modal-backdrop vs-modal-backdrop--article vs-modal-backdrop--gazette-read is-open',
-          panel.getBoundingClientRect(),
-        );
-        clonedPanel.classList.remove('vs-modal--sheet-drag', 'vs-modal--hero-hidden');
-        clonedPanel.style.removeProperty('--vs-modal-drag-y');
-        clonedPanel.querySelector('#newsModalHero')?.classList.remove('vs-modal__hero--peek-hidden');
-      },
-    });
-    const blob = await new Promise((resolve, reject) => {
-      canvas.toBlob((result) => (result ? resolve(result) : reject(new Error('PNG oluşturulamadı'))), 'image/png');
-    });
-    const objectUrl = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    const safeTitle = (els.modalTitle?.textContent || 'haber').replace(/\s+/g, '-').slice(0, 48);
-    link.href = objectUrl;
-    link.download = `lagimdan-sesler-${safeTitle}.png`;
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-    await recordArticleEngagement(state.openArticleId, 'png_downloads');
-  } catch (error) {
-    console.error(error);
-    showToast('PNG indirilemedi.');
-  } finally {
-    if (els.modalPng) {
-      els.modalPng.disabled = false;
-      els.modalPng.removeAttribute('aria-busy');
-    }
-  }
+function downloadArticleModalPng() {
+  return downloadArticlePng(state.openArticleItem, els.modalPng);
 }
 
 function printArticleModal() {
@@ -2795,6 +2873,9 @@ function bindEvents() {
   if (els.downloadGazettePngBtn) {
     els.downloadGazettePngBtn.addEventListener('click', downloadGazettePagePng);
   }
+  if (els.downloadIssueZipBtn) {
+    els.downloadIssueZipBtn.addEventListener('click', downloadIssueArticlesZip);
+  }
 
   let mediaFitTimer;
   window.addEventListener('resize', () => {
@@ -2841,6 +2922,14 @@ function bindEvents() {
   }
 
   document.body.addEventListener('click', (event) => {
+    const downloadButton = event.target.closest('[data-download-id]');
+    if (downloadButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      downloadArticlePngById(downloadButton.dataset.downloadId, downloadButton).catch(console.error);
+      return;
+    }
+
     const homeBtn = event.target.closest('[data-gazette-home]');
     if (homeBtn) {
       event.preventDefault();
@@ -2942,7 +3031,7 @@ function bindEvents() {
   }
   if (els.modalPng) {
     els.modalPng.addEventListener('click', () => {
-      downloadArticleModalPng().catch(console.error);
+      downloadArticleModalPng();
     });
   }
   els.detailModal.addEventListener('click', (event) => {
@@ -3060,6 +3149,7 @@ document.addEventListener('DOMContentLoaded', () => {
   els.toggleGazetteLayoutLabel = qs('toggleGazetteLayoutLabel');
   els.printGazetteBtn = qs('printGazetteBtn');
   els.downloadGazettePngBtn = qs('downloadGazettePngBtn');
+  els.downloadIssueZipBtn = qs('downloadIssueZipBtn');
   els.pagination = qs('newsPagination');
   els.pageHint = qs('newsPageHint');
   els.prevPageLabel = qs('newsPrevPageLabel');
