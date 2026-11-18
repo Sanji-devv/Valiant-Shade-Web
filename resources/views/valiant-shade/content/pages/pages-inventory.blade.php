@@ -78,12 +78,22 @@
       <div class="card-body p-4">
         <div class="d-flex align-items-start justify-content-between mb-2">
           <div class="content-left">
-            <span class="text-heading fw-semibold">Guild Vault (Cash)</span>
+            <span class="text-heading fw-semibold">{{ __('Guild Vault (Cash)') }}</span>
             <div class="d-flex align-items-baseline gap-2 my-1">
               <h3 class="mb-0 fw-bold text-heading font-monospace" id="statVaultCash" data-base-sp="{{ $metrics['vault_cash_sp'] ?? 30000 }}">
                 {{ number_format($metrics['vault_cash_converted'] ?? 30000, 2, '.', ',') }}
               </h3>
               <span class="badge bg-label-warning font-monospace curr-badge-label">SP</span>
+              @if($canUpdate)
+                <div class="d-inline-flex align-items-center gap-1 ms-1">
+                  <button type="button" class="btn btn-icon btn-xs btn-label-success rounded-circle shadow-xs btn-vault-trigger" data-vault-tab="deposit" title="{{ __('Deposit Cash (+)') }}" aria-label="{{ __('Deposit Cash (+)') }}">
+                    <i class="icon-base ti tabler-plus"></i>
+                  </button>
+                  <button type="button" class="btn btn-icon btn-xs btn-label-danger rounded-circle shadow-xs btn-vault-trigger" data-vault-tab="withdraw" title="{{ __('Withdraw Cash (-)') }}" aria-label="{{ __('Withdraw Cash (-)') }}">
+                    <i class="icon-base ti tabler-minus"></i>
+                  </button>
+                </div>
+              @endif
             </div>
           </div>
           <div class="avatar">
@@ -92,12 +102,20 @@
             </span>
           </div>
         </div>
-        <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top">
-          <small class="text-body-secondary">Physical Cash Vault (30k Silver)</small>
+        <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top flex-wrap gap-2">
+          <small class="text-body-secondary">{{ __('Physical Cash Vault (30k Silver)') }}</small>
           @if($canUpdate)
-            <button type="button" class="btn btn-xs btn-label-warning rounded-pill px-2 py-0" data-bs-toggle="modal" data-bs-target="#modalManageVault">
-              <i class="icon-base ti tabler-pencil icon-xs me-1"></i> Manage
-            </button>
+            <div class="d-inline-flex align-items-center gap-1">
+              <button type="button" class="btn btn-xs btn-label-success rounded-pill px-2 py-0_5 shadow-xs btn-vault-trigger" data-vault-tab="deposit" title="{{ __('Deposit Cash (+)') }}">
+                <i class="icon-base ti tabler-plus icon-xs me-1"></i> {{ __('Deposit') }}
+              </button>
+              <button type="button" class="btn btn-xs btn-label-danger rounded-pill px-2 py-0_5 shadow-xs btn-vault-trigger" data-vault-tab="withdraw" title="{{ __('Withdraw Cash (-)') }}">
+                <i class="icon-base ti tabler-minus icon-xs me-1"></i> {{ __('Withdraw') }}
+              </button>
+              <button type="button" class="btn btn-xs btn-label-primary rounded-pill px-2 py-0_5 shadow-xs btn-vault-trigger" data-vault-tab="transfer" title="{{ __('Player Character Transfer') }}">
+                <i class="icon-base ti tabler-arrows-exchange icon-xs me-1"></i> {{ __('Transfer') }}
+              </button>
+            </div>
           @endif
         </div>
       </div>
@@ -534,63 +552,467 @@
 @endif
 
 @if($canUpdate)
-<!-- Modal: Manage Guild Vault Cash (Admin Only) -->
+<!-- Modal: Advanced Guild Vault & Cash Management (Admin Only) -->
 <div class="modal fade" id="modalManageVault" tabindex="-1" aria-labelledby="modalManageVaultLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content border-0 shadow">
+      <!-- Modal Header -->
       <div class="modal-header bg-label-warning py-3">
-        <h5 class="modal-title fw-bold text-heading d-flex align-items-center gap-2" id="modalManageVaultLabel">
-          <i class="icon-base ti tabler-building-bank text-warning fs-4"></i>
-          Manage Guild Vault Cash
-        </h5>
+        <div class="d-flex align-items-center gap-2">
+          <span class="avatar avatar-sm rounded-3 bg-warning text-white d-flex align-items-center justify-content-center">
+            <i class="icon-base ti tabler-building-bank fs-4"></i>
+          </span>
+          <div>
+            <h5 class="modal-title fw-bold text-heading mb-0" id="modalManageVaultLabel">
+              {{ __('Guild Vault & Cash Management') }}
+            </h5>
+            <small class="text-body-secondary">{{ __('Physical cash reserves, player character transfers, and treasury transactions') }}</small>
+          </div>
+        </div>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <form id="formManageVault" action="{{ route('valiant-shade.pages-inventory.vault') }}" method="POST">
-        @csrf
-        <div class="modal-body py-4">
-          <div class="alert alert-warning d-flex align-items-center gap-2 mb-3 py-2 px-3" style="font-size: 0.85rem;">
-            <i class="icon-base ti tabler-info-circle fs-5 flex-shrink-0"></i>
-            <div>
-              Current Guild Vault: <strong class="font-monospace text-heading">{{ number_format($vault->balance_sp ?? 30000, 2, '.', ',') }} SP</strong> (Silver)
+
+      <div class="modal-body p-4">
+        <!-- Live Vault Balance Summary Banner -->
+        <div class="card bg-label-secondary border-0 mb-4 shadow-none">
+          <div class="card-body p-3">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+              <div class="d-flex align-items-center gap-2">
+                <span class="avatar avatar-sm rounded-circle bg-warning text-white d-flex align-items-center justify-content-center">
+                  <i class="icon-base ti tabler-vault fs-5"></i>
+                </span>
+                <div>
+                  <small class="text-body-secondary text-uppercase fw-semibold" style="font-size: 0.75rem;">{{ __('Current Vault Liquid Reserves') }}</small>
+                  <h4 class="mb-0 fw-bold font-monospace text-heading" id="modalVaultCurrentSp" data-base-sp="{{ $vault->balance_sp ?? 30000 }}">
+                    {{ number_format($vault->balance_sp ?? 30000, 2, '.', ',') }} <span class="badge bg-warning text-dark font-monospace">SP</span>
+                  </h4>
+                </div>
+              </div>
+
+              <!-- Multi-Currency Breakdown Pills -->
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="badge bg-body text-heading font-monospace border px-2_5 py-1_5 shadow-xs" title="Platinum (10 GP = 1 PP)">
+                  <span class="rounded-circle d-inline-block me-1" style="width: 7px; height: 7px; background: #00cfe8;"></span><span id="modalVaultPpVal">{{ number_format(($vault->balance_sp ?? 30000) / 100, 2) }}</span> PP
+                </span>
+                <span class="badge bg-body text-heading font-monospace border px-2_5 py-1_5 shadow-xs" title="Gold (1 GP = 10 SP)">
+                  <span class="rounded-circle d-inline-block me-1" style="width: 7px; height: 7px; background: #fbbf24;"></span><span id="modalVaultGpVal">{{ number_format(($vault->balance_sp ?? 30000) / 10, 2) }}</span> GP
+                </span>
+                <span class="badge bg-body text-heading font-monospace border px-2_5 py-1_5 shadow-xs" title="Silver (Base Standard)">
+                  <span class="rounded-circle d-inline-block me-1" style="width: 7px; height: 7px; background: #cbd5e1;"></span><span id="modalVaultSpVal">{{ number_format($vault->balance_sp ?? 30000, 2) }}</span> SP
+                </span>
+                <span class="badge bg-body text-heading font-monospace border px-2_5 py-1_5 shadow-xs" title="Copper (1 SP = 10 CP)">
+                  <span class="rounded-circle d-inline-block me-1" style="width: 7px; height: 7px; background: #ff9f43;"></span><span id="modalVaultCpVal">{{ number_format(($vault->balance_sp ?? 30000) * 10, 0) }}</span> CP
+                </span>
+              </div>
             </div>
           </div>
+        </div>
 
-          <!-- Transaction Type -->
-          <div class="mb-3">
-            <label class="form-label fw-semibold" for="vaultOperation">Transaction Type</label>
-            <select class="form-select font-monospace" id="vaultOperation" name="operation" required>
-              <option value="set">Set Direct Balance (Exact Amount)</option>
-              <option value="deposit">Deposit into Vault (+ Add)</option>
-              <option value="withdraw">Withdraw from Vault (- Deduct)</option>
-            </select>
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-pills nav-fill mb-3 gap-1" id="vaultModalTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active py-2 d-flex align-items-center justify-content-center gap-1_5" id="tab-btn-deposit" data-bs-toggle="pill" data-bs-target="#pane-vault-deposit" type="button" role="tab" aria-controls="pane-vault-deposit" aria-selected="true">
+              <i class="icon-base ti tabler-plus fs-5 text-success"></i>
+              <span class="fw-semibold">{{ __('Deposit (+)') }}</span>
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link py-2 d-flex align-items-center justify-content-center gap-1_5" id="tab-btn-withdraw" data-bs-toggle="pill" data-bs-target="#pane-vault-withdraw" type="button" role="tab" aria-controls="pane-vault-withdraw" aria-selected="false">
+              <i class="icon-base ti tabler-minus fs-5 text-danger"></i>
+              <span class="fw-semibold">{{ __('Withdraw (-)') }}</span>
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link py-2 d-flex align-items-center justify-content-center gap-1_5" id="tab-btn-transfer" data-bs-toggle="pill" data-bs-target="#pane-vault-transfer" type="button" role="tab" aria-controls="pane-vault-transfer" aria-selected="false">
+              <i class="icon-base ti tabler-arrows-exchange fs-5 text-primary"></i>
+              <span class="fw-semibold">{{ __('Character Transfer') }}</span>
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link py-2 d-flex align-items-center justify-content-center gap-1_5" id="tab-btn-set" data-bs-toggle="pill" data-bs-target="#pane-vault-set" type="button" role="tab" aria-controls="pane-vault-set" aria-selected="false">
+              <i class="icon-base ti tabler-adjustments-horizontal fs-5 text-warning"></i>
+              <span class="fw-semibold">{{ __('Set Balance (=)') }}</span>
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link py-2 d-flex align-items-center justify-content-center gap-1_5" id="tab-btn-history" data-bs-toggle="pill" data-bs-target="#pane-vault-history" type="button" role="tab" aria-controls="pane-vault-history" aria-selected="false">
+              <i class="icon-base ti tabler-history fs-5 text-info"></i>
+              <span class="fw-semibold">{{ __('History') }}</span>
+            </button>
+          </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content border rounded p-3 bg-body" id="vaultModalTabContent">
+          <!-- 1. DEPOSIT TAB -->
+          <div class="tab-pane fade show active" id="pane-vault-deposit" role="tabpanel" aria-labelledby="tab-btn-deposit">
+            <form id="formVaultDeposit" action="{{ route('valiant-shade.pages-inventory.vault') }}" method="POST">
+              @csrf
+              <input type="hidden" name="operation" value="deposit" />
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold d-flex justify-content-between align-items-center" for="depositAmount">
+                  <span>{{ __('Deposit Amount') }} <span class="text-danger">*</span></span>
+                  <small class="text-body-secondary">{{ __('Quick Presets') }}</small>
+                </label>
+                <!-- Quick Amount Presets -->
+                <div class="d-flex align-items-center gap-1 flex-wrap mb-2">
+                  <button type="button" class="btn btn-xs btn-label-success rounded-pill preset-deposit-btn" data-amount="100" data-curr="SP">+100 SP</button>
+                  <button type="button" class="btn btn-xs btn-label-success rounded-pill preset-deposit-btn" data-amount="500" data-curr="SP">+500 SP</button>
+                  <button type="button" class="btn btn-xs btn-label-success rounded-pill preset-deposit-btn" data-amount="1000" data-curr="SP">+1,000 SP</button>
+                  <button type="button" class="btn btn-xs btn-label-success rounded-pill preset-deposit-btn" data-amount="5000" data-curr="SP">+5,000 SP</button>
+                  <button type="button" class="btn btn-xs btn-label-warning rounded-pill preset-deposit-btn" data-amount="100" data-curr="GP">+100 GP</button>
+                  <button type="button" class="btn btn-xs btn-label-warning rounded-pill preset-deposit-btn" data-amount="500" data-curr="GP">+500 GP</button>
+                </div>
+                <!-- Amount & Currency Input -->
+                <div class="input-group">
+                  <input type="number" step="0.01" min="0.01" class="form-control font-monospace" id="depositAmount" name="amount" placeholder="0.00" required />
+                  <select class="form-select fw-bold font-monospace" id="depositCurrency" name="currency" style="max-width: 100px;">
+                    <option value="SP" selected>SP</option>
+                    <option value="GP">GP</option>
+                    <option value="CP">CP</option>
+                    <option value="PP">PP</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Deposit Live Preview -->
+              <div class="alert alert-label-success d-flex align-items-center justify-content-between py-2 px-3 mb-3">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="icon-base ti tabler-arrow-up-right fs-4 text-success"></i>
+                  <div>
+                    <span class="small d-block text-body-secondary">{{ __('Calculated Addition') }}:</span>
+                    <strong class="font-monospace text-success fs-6" id="previewDepositSp">+0.00 SP</strong>
+                  </div>
+                </div>
+                <div class="text-end">
+                  <span class="small d-block text-body-secondary">{{ __('New Vault Balance') }}:</span>
+                  <strong class="font-monospace text-heading fs-6" id="previewDepositNewVault">{{ number_format($vault->balance_sp ?? 30000, 2) }} SP</strong>
+                </div>
+              </div>
+
+              <!-- Notes / Description -->
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="depositNotes">{{ __('Transaction Note / Reason') }}</label>
+                <input type="text" class="form-control" id="depositNotes" name="notes" placeholder="{{ __('e.g. Dungeon treasure share, guild quest rewards, monster bounty...') }}" />
+              </div>
+
+              <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+                <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                <button type="submit" class="btn btn-success waves-effect waves-light">
+                  <i class="icon-base ti tabler-plus me-1"></i> {{ __('Confirm Deposit (+)') }}
+                </button>
+              </div>
+            </form>
           </div>
 
-          <!-- Amount (Silver / Gold) -->
-          <div class="mb-3">
-            <label class="form-label fw-semibold" for="vaultAmount">Transaction Amount (<span class="text-warning">SP or GP</span>) <span class="text-danger">*</span></label>
-            <div class="input-group">
-              <input type="number" step="0.01" class="form-control font-monospace" id="vaultAmount" name="amount" min="0" value="{{ $vault->balance_sp ?? 30000 }}" required />
-              <select class="form-select fw-bold" id="vaultCurrency" name="currency" style="max-width: 90px;">
-                <option value="SP">SP</option>
-                <option value="GP">GP</option>
-              </select>
+          <!-- 2. WITHDRAW TAB -->
+          <div class="tab-pane fade" id="pane-vault-withdraw" role="tabpanel" aria-labelledby="tab-btn-withdraw">
+            <form id="formVaultWithdraw" action="{{ route('valiant-shade.pages-inventory.vault') }}" method="POST">
+              @csrf
+              <input type="hidden" name="operation" value="withdraw" />
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold d-flex justify-content-between align-items-center" for="withdrawAmount">
+                  <span>{{ __('Withdrawal Amount') }} <span class="text-danger">*</span></span>
+                  <small class="text-body-secondary">{{ __('Quick Presets') }}</small>
+                </label>
+                <!-- Quick Amount Presets -->
+                <div class="d-flex align-items-center gap-1 flex-wrap mb-2">
+                  <button type="button" class="btn btn-xs btn-label-danger rounded-pill preset-withdraw-btn" data-amount="100" data-curr="SP">-100 SP</button>
+                  <button type="button" class="btn btn-xs btn-label-danger rounded-pill preset-withdraw-btn" data-amount="500" data-curr="SP">-500 SP</button>
+                  <button type="button" class="btn btn-xs btn-label-danger rounded-pill preset-withdraw-btn" data-amount="1000" data-curr="SP">-1,000 SP</button>
+                  <button type="button" class="btn btn-xs btn-label-danger rounded-pill preset-withdraw-btn" data-amount="5000" data-curr="SP">-5,000 SP</button>
+                  <button type="button" class="btn btn-xs btn-label-warning rounded-pill preset-withdraw-btn" data-amount="100" data-curr="GP">-100 GP</button>
+                  <button type="button" class="btn btn-xs btn-label-secondary rounded-pill preset-withdraw-percent-btn" data-percent="25">25%</button>
+                  <button type="button" class="btn btn-xs btn-label-secondary rounded-pill preset-withdraw-percent-btn" data-percent="50">50%</button>
+                </div>
+                <!-- Amount & Currency Input -->
+                <div class="input-group">
+                  <input type="number" step="0.01" min="0.01" class="form-control font-monospace" id="withdrawAmount" name="amount" placeholder="0.00" required />
+                  <select class="form-select fw-bold font-monospace" id="withdrawCurrency" name="currency" style="max-width: 100px;">
+                    <option value="SP" selected>SP</option>
+                    <option value="GP">GP</option>
+                    <option value="CP">CP</option>
+                    <option value="PP">PP</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Withdraw Live Preview -->
+              <div class="alert alert-label-danger d-flex align-items-center justify-content-between py-2 px-3 mb-3">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="icon-base ti tabler-arrow-down-right fs-4 text-danger"></i>
+                  <div>
+                    <span class="small d-block text-body-secondary">{{ __('Calculated Deduction') }}:</span>
+                    <strong class="font-monospace text-danger fs-6" id="previewWithdrawSp">-0.00 SP</strong>
+                  </div>
+                </div>
+                <div class="text-end">
+                  <span class="small d-block text-body-secondary">{{ __('Remaining Vault Balance') }}:</span>
+                  <strong class="font-monospace text-heading fs-6" id="previewWithdrawRemainingVault">{{ number_format($vault->balance_sp ?? 30000, 2) }} SP</strong>
+                </div>
+              </div>
+
+              <div class="alert alert-danger d-none py-2 px-3 mb-3" id="alertWithdrawInsufficient">
+                <i class="icon-base ti tabler-alert-triangle me-1"></i> {{ __('Insufficient vault funds for this withdrawal amount!') }}
+              </div>
+
+              <!-- Notes / Description -->
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="withdrawNotes">{{ __('Transaction Note / Reason') }}</label>
+                <input type="text" class="form-control" id="withdrawNotes" name="notes" placeholder="{{ __('e.g. Guild supplies, gear repair, expedition expenses...') }}" />
+              </div>
+
+              <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+                <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                <button type="submit" class="btn btn-danger waves-effect waves-light" id="btnSubmitWithdraw">
+                  <i class="icon-base ti tabler-minus me-1"></i> {{ __('Confirm Withdrawal (-)') }}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- 3. CHARACTER TRANSFER TAB -->
+          <div class="tab-pane fade" id="pane-vault-transfer" role="tabpanel" aria-labelledby="tab-btn-transfer">
+            <form id="formVaultTransfer" action="{{ route('valiant-shade.pages-inventory.vault') }}" method="POST">
+              @csrf
+              <input type="hidden" id="transferOperationInput" name="operation" value="transfer_to_character" />
+
+              <!-- Transfer Direction Segmented Toggle -->
+              <div class="mb-3">
+                <label class="form-label fw-semibold">{{ __('Transfer Direction') }}</label>
+                <div class="btn-group w-100 shadow-xs" role="group" aria-label="Transfer Direction">
+                  <input type="radio" class="btn-check" name="transferDirectionRadio" id="dirVaultToChar" value="transfer_to_character" checked autocomplete="off">
+                  <label class="btn btn-outline-primary btn-sm py-2" for="dirVaultToChar">
+                    <i class="icon-base ti tabler-arrow-down-left me-1"></i> {{ __('Vault → Character') }}
+                  </label>
+
+                  <input type="radio" class="btn-check" name="transferDirectionRadio" id="dirCharToVault" value="transfer_from_character" autocomplete="off">
+                  <label class="btn btn-outline-primary btn-sm py-2" for="dirCharToVault">
+                    <i class="icon-base ti tabler-arrow-up-right me-1"></i> {{ __('Character → Vault') }}
+                  </label>
+
+                  <input type="radio" class="btn-check" name="transferDirectionRadio" id="dirDistributeAll" value="distribute_characters" autocomplete="off">
+                  <label class="btn btn-outline-primary btn-sm py-2" for="dirDistributeAll">
+                    <i class="icon-base ti tabler-users-group me-1"></i> {{ __('Split to All Players') }}
+                  </label>
+                </div>
+              </div>
+
+              <!-- Character Select Container (Single character modes) -->
+              <div class="mb-3" id="containerSelectCharacter">
+                <label class="form-label fw-semibold" for="transferCharacterSelect">{{ __('Select Player Character') }} <span class="text-danger">*</span></label>
+                <select class="form-select font-monospace" id="transferCharacterSelect" name="character_id">
+                  @forelse($characters ?? [] as $char)
+                    <option value="{{ $char->id }}" data-balance-sp="{{ $char->allowance_sp ?? 0 }}" data-name="{{ $char->name }}" data-level="{{ $char->current_level }}" data-player="{{ $char->user?->name ?? 'Unassigned' }}">
+                      {{ $char->name }} (Lv.{{ $char->current_level }}) — {{ $char->user?->name ?? 'No Player' }} [{{ __('Balance') }}: {{ number_format($char->allowance_sp ?? 0, 2) }} SP]
+                    </option>
+                  @empty
+                    <option value="" disabled>{{ __('No active player characters found') }}</option>
+                  @endforelse
+                </select>
+              </div>
+
+              <!-- Dynamic Character Info & Projected Balance Box -->
+              <div class="card bg-label-primary border-0 mb-3 shadow-none" id="cardCharacterTransferPreview">
+                <div class="card-body p-3">
+                  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2 pb-2 border-bottom">
+                    <div class="d-flex align-items-center gap-2">
+                      <span class="avatar avatar-xs rounded-circle bg-primary text-white d-flex align-items-center justify-content-center">
+                        <i class="icon-base ti tabler-user fs-6"></i>
+                      </span>
+                      <div>
+                        <strong class="text-heading" id="prevCharName">Character</strong>
+                        <small class="text-body-secondary ms-1">(<span id="prevCharLevel">Lv. 1</span> &bull; <span id="prevCharPlayer">Player</span>)</small>
+                      </div>
+                    </div>
+                    <div class="font-monospace">
+                      <small class="text-body-secondary">{{ __('Current Allowance') }}:</small>
+                      <strong class="text-heading ms-1" id="prevCharCurrentBalance">0.00 SP</strong>
+                    </div>
+                  </div>
+
+                  <div class="row g-2 text-center">
+                    <div class="col-6">
+                      <div class="p-2 rounded bg-body">
+                        <small class="text-body-secondary d-block">{{ __('Character Balance After') }}</small>
+                        <strong class="font-monospace text-primary fs-6" id="prevCharProjectedBalance">0.00 SP</strong>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="p-2 rounded bg-body">
+                        <small class="text-body-secondary d-block">{{ __('Guild Vault Balance After') }}</small>
+                        <strong class="font-monospace text-heading fs-6" id="prevVaultProjectedBalance">{{ number_format($vault->balance_sp ?? 30000, 2) }} SP</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Distribute Evenly Info Box (Hidden unless Split to All Players chosen) -->
+              <div class="alert alert-label-info d-none mb-3 py-2 px-3" id="cardDistributeInfo">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <i class="icon-base ti tabler-users-group fs-5 text-info"></i>
+                  <span class="fw-semibold">{{ __('Equal Distribution Mode') }}</span>
+                </div>
+                <div class="small">
+                  {{ __('Active characters') }}: <strong id="distributeCharCount">{{ count($characters ?? []) }}</strong> {{ __('heroes') }} &bull;
+                  {{ __('Per-character share') }}: <strong class="font-monospace text-info fs-6" id="distributeSharePreview">0.00 SP</strong>
+                </div>
+              </div>
+
+              <!-- Amount & Currency Input -->
+              <div class="mb-3">
+                <label class="form-label fw-semibold d-flex justify-content-between align-items-center" for="transferAmount">
+                  <span>{{ __('Transfer Amount') }} <span class="text-danger">*</span></span>
+                  <small class="text-body-secondary">{{ __('Quick Presets') }}</small>
+                </label>
+                <!-- Quick Amount Presets -->
+                <div class="d-flex align-items-center gap-1 flex-wrap mb-2">
+                  <button type="button" class="btn btn-xs btn-label-primary rounded-pill preset-transfer-btn" data-amount="50" data-curr="SP">50 SP</button>
+                  <button type="button" class="btn btn-xs btn-label-primary rounded-pill preset-transfer-btn" data-amount="100" data-curr="SP">100 SP</button>
+                  <button type="button" class="btn btn-xs btn-label-primary rounded-pill preset-transfer-btn" data-amount="250" data-curr="SP">250 SP</button>
+                  <button type="button" class="btn btn-xs btn-label-primary rounded-pill preset-transfer-btn" data-amount="500" data-curr="SP">500 SP</button>
+                  <button type="button" class="btn btn-xs btn-label-primary rounded-pill preset-transfer-btn" data-amount="1000" data-curr="SP">1,000 SP</button>
+                  <button type="button" class="btn btn-xs btn-label-warning rounded-pill preset-transfer-btn" data-amount="50" data-curr="GP">50 GP</button>
+                  <button type="button" class="btn btn-xs btn-label-warning rounded-pill preset-transfer-btn" data-amount="100" data-curr="GP">100 GP</button>
+                </div>
+                <div class="input-group">
+                  <input type="number" step="0.01" min="0.01" class="form-control font-monospace" id="transferAmount" name="amount" placeholder="0.00" required />
+                  <select class="form-select fw-bold font-monospace" id="transferCurrency" name="currency" style="max-width: 100px;">
+                    <option value="SP" selected>SP</option>
+                    <option value="GP">GP</option>
+                    <option value="CP">CP</option>
+                    <option value="PP">PP</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Transfer Error Alert -->
+              <div class="alert alert-danger d-none py-2 px-3 mb-3" id="alertTransferInsufficient">
+                <i class="icon-base ti tabler-alert-triangle me-1"></i> <span id="transferInsufficientMsg">{{ __('Insufficient funds for this transfer!') }}</span>
+              </div>
+
+              <!-- Notes / Description -->
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="transferNotes">{{ __('Transaction Note / Reason') }}</label>
+                <input type="text" class="form-control" id="transferNotes" name="notes" placeholder="{{ __('e.g. Quest reward split, personal allowance, equipment reimbursement...') }}" />
+              </div>
+
+              <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+                <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                <button type="submit" class="btn btn-primary waves-effect waves-light" id="btnSubmitTransfer">
+                  <i class="icon-base ti tabler-arrows-exchange me-1"></i> <span id="btnTransferLabel">{{ __('Execute Transfer') }}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- 4. SET BALANCE TAB -->
+          <div class="tab-pane fade" id="pane-vault-set" role="tabpanel" aria-labelledby="tab-btn-set">
+            <form id="formVaultSet" action="{{ route('valiant-shade.pages-inventory.vault') }}" method="POST">
+              @csrf
+              <input type="hidden" name="operation" value="set" />
+
+              <div class="alert alert-warning d-flex align-items-center gap-2 mb-3 py-2 px-3">
+                <i class="icon-base ti tabler-alert-triangle fs-5 flex-shrink-0 text-warning"></i>
+                <div class="small">
+                  {{ __('Direct Balance Adjustment sets the total liquid reserve in the vault directly. Use for audit corrections.') }}
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="setAmount">{{ __('New Exact Vault Balance') }} <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <input type="number" step="0.01" min="0" class="form-control font-monospace" id="setAmount" name="amount" value="{{ $vault->balance_sp ?? 30000 }}" required />
+                  <select class="form-select fw-bold font-monospace" id="setCurrency" name="currency" style="max-width: 100px;">
+                    <option value="SP" selected>SP</option>
+                    <option value="GP">GP</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="setNotes">{{ __('Audit Note / Reason') }}</label>
+                <input type="text" class="form-control" id="setNotes" name="notes" placeholder="{{ __('e.g. Master sheet balance audit, treasury correction...') }}" value="{{ $vault->notes ?? '' }}" />
+              </div>
+
+              <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+                <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                <button type="submit" class="btn btn-warning waves-effect waves-light">
+                  <i class="icon-base ti tabler-check me-1"></i> {{ __('Set Direct Balance') }}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- 5. HISTORY / AUDIT LOG TAB -->
+          <div class="tab-pane fade" id="pane-vault-history" role="tabpanel" aria-labelledby="tab-btn-history">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <h6 class="mb-0 fw-semibold text-heading">{{ __('Recent Vault & Character Transactions') }}</h6>
+              <span class="badge bg-label-info">{{ __('Last 10 Records') }}</span>
             </div>
-            <small class="text-muted d-block mt-1" id="vaultOperationHint">Will be set as the new total balance of the guild vault.</small>
-          </div>
 
-          <!-- Notes / Description -->
-          <div class="mb-0">
-            <label class="form-label fw-semibold" for="vaultNotes">Transaction Note / Description</label>
-            <input type="text" class="form-control" id="vaultNotes" name="notes" placeholder="e.g. Dragon hoard loot, party gear purchases..." value="{{ $vault->notes ?? '' }}" />
+            <div class="table-responsive border rounded" style="max-height: 320px; overflow-y: auto;">
+              <table class="table table-sm table-striped table-hover mb-0" style="font-size: 0.85rem;">
+                <thead class="table-light sticky-top">
+                  <tr>
+                    <th>{{ __('Date') }}</th>
+                    <th>{{ __('Type') }}</th>
+                    <th>{{ __('Character / Entity') }}</th>
+                    <th class="text-end">{{ __('Amount') }}</th>
+                    <th class="text-end">{{ __('Balance After') }}</th>
+                    <th>{{ __('Description') }}</th>
+                  </tr>
+                </thead>
+                <tbody class="font-monospace">
+                  @forelse($recentTransactions ?? [] as $tx)
+                    @php
+                      $isCredit = (float) $tx->amount_sp > 0;
+                      $badgeClass = match($tx->transaction_type) {
+                        'DEPOSIT' => 'bg-label-success',
+                        'WITHDRAWAL' => 'bg-label-danger',
+                        'QUEST_SHARE' => 'bg-label-primary',
+                        default => 'bg-label-secondary'
+                      };
+                    @endphp
+                    <tr>
+                      <td class="text-body-secondary" style="font-size: 0.78rem;">
+                        {{ $tx->created_at ? $tx->created_at->format('Y-m-d H:i') : '-' }}
+                      </td>
+                      <td>
+                        <span class="badge {{ $badgeClass }} py-0_5 px-1_5" style="font-size: 0.7rem;">
+                          {{ $tx->transaction_type }}
+                        </span>
+                      </td>
+                      <td class="text-heading fw-semibold">
+                        {{ $tx->character?->name ?? __('Guild Reserve') }}
+                      </td>
+                      <td class="text-end fw-bold {{ $isCredit ? 'text-success' : 'text-danger' }}">
+                        {{ $isCredit ? '+' : '' }}{{ number_format($tx->amount_sp, 2) }} SP
+                      </td>
+                      <td class="text-end text-heading">
+                        {{ number_format($tx->balance_after_sp, 2) }} SP
+                      </td>
+                      <td class="text-truncate text-body-secondary font-sans-serif" style="max-width: 180px;" title="{{ $tx->description }}">
+                        {{ $tx->description ?: '-' }}
+                      </td>
+                    </tr>
+                  @empty
+                    <tr>
+                      <td colspan="6" class="text-center py-4 text-muted font-sans-serif">
+                        <i class="icon-base ti tabler-receipt-off fs-4 d-block mb-1 opacity-50"></i>
+                        {{ __('No financial transactions recorded yet.') }}
+                      </td>
+                    </tr>
+                  @endforelse
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-        <div class="modal-footer border-top">
-          <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-warning waves-effect waves-light">
-            <i class="icon-base ti tabler-check me-1"></i> Update Vault
-          </button>
-        </div>
-      </form>
+      </div>
     </div>
   </div>
 </div>
@@ -657,6 +1079,9 @@ document.addEventListener('DOMContentLoaded', function () {
       const baseGp = baseSp / 10.0;
       convertedCash = baseGp * rate;
       elVaultCash.textContent = convertedCash.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (typeof updateVaultSummaryPills === 'function') {
+        updateVaultSummaryPills(baseSp);
+      }
     }
 
     const elTotal = document.getElementById('statTotalPrice');
@@ -1031,44 +1456,277 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // Guild Vault Operation Hint Change
-  const vaultOpSelect = document.getElementById('vaultOperation');
-  const vaultHint = document.getElementById('vaultOperationHint');
-  if (vaultOpSelect && vaultHint) {
-    vaultOpSelect.addEventListener('change', function () {
-      if (this.value === 'deposit') {
-        vaultHint.textContent = 'The entered SP amount will be deposited into the guild vault (+).';
-      } else if (this.value === 'withdraw') {
-        vaultHint.textContent = 'The entered SP amount will be withdrawn from the guild vault (-).';
-      } else {
-        vaultHint.textContent = 'Will be set as the new total balance of the guild vault.';
+  // 6. Advanced Guild Vault & Cash Management System
+  const modalVaultEl = document.getElementById('modalManageVault');
+  const vaultTriggers = document.querySelectorAll('.btn-vault-trigger');
+
+  function getCurrentVaultSp() {
+    const el = document.getElementById('statVaultCash') || document.getElementById('modalVaultCurrentSp');
+    return parseFloat(el?.getAttribute('data-base-sp')) || 30000;
+  }
+
+  function convertToSp(amount, currency) {
+    const amt = parseFloat(amount) || 0;
+    switch ((currency || 'SP').toUpperCase()) {
+      case 'PP': return amt * 100.0;
+      case 'GP': return amt * 10.0;
+      case 'SP': return amt * 1.0;
+      case 'CP': return amt * 0.1;
+      default: return amt;
+    }
+  }
+
+  function updateVaultSummaryPills(vaultSp) {
+    const ppEl = document.getElementById('modalVaultPpVal');
+    const gpEl = document.getElementById('modalVaultGpVal');
+    const spEl = document.getElementById('modalVaultSpVal');
+    const cpEl = document.getElementById('modalVaultCpVal');
+    if (ppEl) ppEl.textContent = (vaultSp / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (gpEl) gpEl.textContent = (vaultSp / 10).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (spEl) spEl.textContent = vaultSp.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (cpEl) cpEl.textContent = (vaultSp * 10).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  }
+
+  if (modalVaultEl) {
+    const vaultModal = bootstrap.Modal.getOrCreateInstance(modalVaultEl);
+
+    vaultTriggers.forEach(btn => {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        const targetTab = this.getAttribute('data-vault-tab') || 'deposit';
+        const tabBtn = document.getElementById('tab-btn-' + targetTab);
+        if (tabBtn) {
+          bootstrap.Tab.getOrCreateInstance(tabBtn).show();
+        }
+        vaultModal.show();
+        setTimeout(() => {
+          if (targetTab === 'deposit') document.getElementById('depositAmount')?.focus();
+          else if (targetTab === 'withdraw') document.getElementById('withdrawAmount')?.focus();
+          else if (targetTab === 'transfer') document.getElementById('transferAmount')?.focus();
+          else if (targetTab === 'set') document.getElementById('setAmount')?.focus();
+        }, 200);
+      });
+    });
+
+    // A. Deposit calculation
+    const depositAmtInput = document.getElementById('depositAmount');
+    const depositCurrSelect = document.getElementById('depositCurrency');
+    const prevDepositSp = document.getElementById('previewDepositSp');
+    const prevDepositNewVault = document.getElementById('previewDepositNewVault');
+
+    function updateDepositPreview() {
+      if (!depositAmtInput) return;
+      const currentVault = getCurrentVaultSp();
+      const amt = parseFloat(depositAmtInput.value) || 0;
+      const curr = depositCurrSelect?.value || 'SP';
+      const spValue = convertToSp(amt, curr);
+      const newVault = currentVault + spValue;
+
+      if (prevDepositSp) {
+        prevDepositSp.textContent = (spValue > 0 ? '+' : '') + spValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' SP';
+      }
+      if (prevDepositNewVault) {
+        prevDepositNewVault.textContent = newVault.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' SP';
+      }
+    }
+
+    depositAmtInput?.addEventListener('input', updateDepositPreview);
+    depositCurrSelect?.addEventListener('change', updateDepositPreview);
+
+    document.querySelectorAll('.preset-deposit-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        const amt = this.getAttribute('data-amount');
+        const curr = this.getAttribute('data-curr');
+        if (depositAmtInput) depositAmtInput.value = amt;
+        if (depositCurrSelect) depositCurrSelect.value = curr;
+        updateDepositPreview();
+      });
+    });
+
+    // B. Withdraw calculation
+    const withdrawAmtInput = document.getElementById('withdrawAmount');
+    const withdrawCurrSelect = document.getElementById('withdrawCurrency');
+    const prevWithdrawSp = document.getElementById('previewWithdrawSp');
+    const prevWithdrawRemaining = document.getElementById('previewWithdrawRemainingVault');
+    const alertWithdrawInsufficient = document.getElementById('alertWithdrawInsufficient');
+    const btnSubmitWithdraw = document.getElementById('btnSubmitWithdraw');
+
+    function updateWithdrawPreview() {
+      if (!withdrawAmtInput) return;
+      const currentVault = getCurrentVaultSp();
+      const amt = parseFloat(withdrawAmtInput.value) || 0;
+      const curr = withdrawCurrSelect?.value || 'SP';
+      const spValue = convertToSp(amt, curr);
+      const remainingVault = currentVault - spValue;
+
+      if (prevWithdrawSp) {
+        prevWithdrawSp.textContent = (spValue > 0 ? '-' : '') + spValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' SP';
+      }
+      if (prevWithdrawRemaining) {
+        prevWithdrawRemaining.textContent = remainingVault.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' SP';
       }
 
-      const vaultCurrency = document.getElementById('vaultCurrency');
-      const vaultAmountInput = document.getElementById('vaultAmount');
-      if (vaultCurrency && vaultOpSelect && vaultHint) {
-        let previousVaultCurrency = vaultCurrency.value;
-        const updateVaultHint = () => {
-          const currency = vaultCurrency.value;
-          const unit = currency === 'GP' ? 'GP (1 GP = 10 SP)' : 'SP';
-          const action = vaultOpSelect.value === 'deposit'
-            ? 'deposited into'
-            : vaultOpSelect.value === 'withdraw' ? 'withdrawn from' : 'set as the new balance of';
-          vaultHint.textContent = `The entered ${unit} amount will be ${action} the guild vault.`;
-        };
-        vaultCurrency.addEventListener('change', () => {
-          if (vaultAmountInput && vaultCurrency.value !== previousVaultCurrency) {
-            const amount = parseFloat(vaultAmountInput.value) || 0;
-            const convertedAmount = previousVaultCurrency === 'SP' ? amount / 10 : amount * 10;
-            vaultAmountInput.value = convertedAmount.toFixed(2);
-          }
-          previousVaultCurrency = vaultCurrency.value;
-          updateVaultHint();
-        });
-        vaultOpSelect.addEventListener('change', updateVaultHint);
-        updateVaultHint();
+      const isInsufficient = spValue > currentVault;
+      if (alertWithdrawInsufficient) {
+        alertWithdrawInsufficient.classList.toggle('d-none', !isInsufficient);
       }
+      if (btnSubmitWithdraw) {
+        btnSubmitWithdraw.disabled = isInsufficient && spValue > 0;
+      }
+    }
+
+    withdrawAmtInput?.addEventListener('input', updateWithdrawPreview);
+    withdrawCurrSelect?.addEventListener('change', updateWithdrawPreview);
+
+    document.querySelectorAll('.preset-withdraw-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        const amt = this.getAttribute('data-amount');
+        const curr = this.getAttribute('data-curr');
+        if (withdrawAmtInput) withdrawAmtInput.value = amt;
+        if (withdrawCurrSelect) withdrawCurrSelect.value = curr;
+        updateWithdrawPreview();
+      });
     });
+
+    document.querySelectorAll('.preset-withdraw-percent-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        const percent = parseFloat(this.getAttribute('data-percent')) || 25;
+        const currentVault = getCurrentVaultSp();
+        const amtSp = (currentVault * (percent / 100.0));
+        if (withdrawAmtInput) withdrawAmtInput.value = amtSp.toFixed(2);
+        if (withdrawCurrSelect) withdrawCurrSelect.value = 'SP';
+        updateWithdrawPreview();
+      });
+    });
+
+    // C. Character Transfer calculation & direction handling
+    const transferOpInput = document.getElementById('transferOperationInput');
+    const dirRadios = document.querySelectorAll('input[name="transferDirectionRadio"]');
+    const containerSelectChar = document.getElementById('containerSelectCharacter');
+    const cardCharPreview = document.getElementById('cardCharacterTransferPreview');
+    const cardDistributeInfo = document.getElementById('cardDistributeInfo');
+    const charSelect = document.getElementById('transferCharacterSelect');
+    const transferAmtInput = document.getElementById('transferAmount');
+    const transferCurrSelect = document.getElementById('transferCurrency');
+    const btnTransferLabel = document.getElementById('btnTransferLabel');
+    const btnSubmitTransfer = document.getElementById('btnSubmitTransfer');
+    const alertTransferInsufficient = document.getElementById('alertTransferInsufficient');
+    const transferInsufficientMsg = document.getElementById('transferInsufficientMsg');
+
+    const prevCharName = document.getElementById('prevCharName');
+    const prevCharLevel = document.getElementById('prevCharLevel');
+    const prevCharPlayer = document.getElementById('prevCharPlayer');
+    const prevCharCurrentBalance = document.getElementById('prevCharCurrentBalance');
+    const prevCharProjected = document.getElementById('prevCharProjectedBalance');
+    const prevVaultProjected = document.getElementById('prevVaultProjectedBalance');
+    const distributeSharePreview = document.getElementById('distributeSharePreview');
+
+    function updateCharacterTransferPreview() {
+      const currentVault = getCurrentVaultSp();
+      const direction = transferOpInput?.value || 'transfer_to_character';
+      const amt = parseFloat(transferAmtInput?.value) || 0;
+      const curr = transferCurrSelect?.value || 'SP';
+      const spValue = convertToSp(amt, curr);
+
+      let isInsufficient = false;
+      let errorMsg = '';
+
+      if (direction === 'distribute_characters') {
+        if (containerSelectChar) containerSelectChar.classList.add('d-none');
+        if (cardCharPreview) cardCharPreview.classList.add('d-none');
+        if (cardDistributeInfo) cardDistributeInfo.classList.remove('d-none');
+        if (btnTransferLabel) btnTransferLabel.textContent = @json(__('Distribute to All Players'));
+
+        const charCount = parseInt(document.getElementById('distributeCharCount')?.textContent, 10) || 1;
+        const perCharShare = charCount > 0 ? (spValue / charCount) : 0;
+        if (distributeSharePreview) {
+          distributeSharePreview.textContent = perCharShare.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' SP';
+        }
+
+        if (spValue > currentVault) {
+          isInsufficient = true;
+          errorMsg = @json(__('Insufficient vault funds for distribution! Current vault: ')) + currentVault.toLocaleString('en-US') + ' SP';
+        }
+      } else {
+        if (containerSelectChar) containerSelectChar.classList.remove('d-none');
+        if (cardCharPreview) cardCharPreview.classList.remove('d-none');
+        if (cardDistributeInfo) cardDistributeInfo.classList.add('d-none');
+
+        const selectedOpt = charSelect?.selectedOptions[0];
+        const charName = selectedOpt?.getAttribute('data-name') || 'Character';
+        const charLevel = selectedOpt?.getAttribute('data-level') || '1';
+        const charPlayer = selectedOpt?.getAttribute('data-player') || 'Unassigned';
+        const charBalance = parseFloat(selectedOpt?.getAttribute('data-balance-sp')) || 0;
+
+        if (prevCharName) prevCharName.textContent = charName;
+        if (prevCharLevel) prevCharLevel.textContent = 'Lv. ' + charLevel;
+        if (prevCharPlayer) prevCharPlayer.textContent = charPlayer;
+        if (prevCharCurrentBalance) prevCharCurrentBalance.textContent = charBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' SP';
+
+        let projectedChar = charBalance;
+        let projectedVault = currentVault;
+
+        if (direction === 'transfer_to_character') {
+          if (btnTransferLabel) btnTransferLabel.textContent = @json(__('Transfer to Character'));
+          projectedChar = charBalance + spValue;
+          projectedVault = currentVault - spValue;
+
+          if (spValue > currentVault) {
+            isInsufficient = true;
+            errorMsg = @json(__('Insufficient vault funds! Available in vault: ')) + currentVault.toLocaleString('en-US') + ' SP';
+          }
+        } else {
+          if (btnTransferLabel) btnTransferLabel.textContent = @json(__('Receive into Vault'));
+          projectedChar = charBalance - spValue;
+          projectedVault = currentVault + spValue;
+
+          if (spValue > charBalance) {
+            isInsufficient = true;
+            errorMsg = charName + ' ' + @json(__('has insufficient funds! Character balance: ')) + charBalance.toLocaleString('en-US') + ' SP';
+          }
+        }
+
+        if (prevCharProjected) {
+          prevCharProjected.textContent = projectedChar.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' SP';
+        }
+        if (prevVaultProjected) {
+          prevVaultProjected.textContent = projectedVault.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' SP';
+        }
+      }
+
+      if (alertTransferInsufficient && transferInsufficientMsg) {
+        transferInsufficientMsg.textContent = errorMsg;
+        alertTransferInsufficient.classList.toggle('d-none', !isInsufficient);
+      }
+      if (btnSubmitTransfer) {
+        btnSubmitTransfer.disabled = isInsufficient && spValue > 0;
+      }
+    }
+
+    dirRadios.forEach(radio => {
+      radio.addEventListener('change', function () {
+        if (transferOpInput) transferOpInput.value = this.value;
+        updateCharacterTransferPreview();
+      });
+    });
+
+    charSelect?.addEventListener('change', updateCharacterTransferPreview);
+    transferAmtInput?.addEventListener('input', updateCharacterTransferPreview);
+    transferCurrSelect?.addEventListener('change', updateCharacterTransferPreview);
+
+    document.querySelectorAll('.preset-transfer-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        const amt = this.getAttribute('data-amount');
+        const curr = this.getAttribute('data-curr');
+        if (transferAmtInput) transferAmtInput.value = amt;
+        if (transferCurrSelect) transferCurrSelect.value = curr;
+        updateCharacterTransferPreview();
+      });
+    });
+
+    updateDepositPreview();
+    updateWithdrawPreview();
+    updateCharacterTransferPreview();
   }
 
   // Initialize with Silver (SP) on page load

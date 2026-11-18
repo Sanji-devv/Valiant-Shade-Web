@@ -2,12 +2,13 @@
 
 namespace App\ValiantShade\Http\Controllers;
 
-use App\ValiantShade\Http\Controllers\Controller;
+use App\Models\FinancialLedger;
 use App\ValiantShade\Services\InventoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class Inventory extends Controller
@@ -35,6 +36,7 @@ class Inventory extends Controller
             }
             abort(403, 'This action requires inventory management privileges.');
         }
+
         return null;
     }
 
@@ -47,7 +49,7 @@ class Inventory extends Controller
 
         $currency = strtoupper($request->get('currency', 'SP'));
         $currencies = $this->inventoryService->getCurrencies();
-        if (!isset($currencies[$currency])) {
+        if (! isset($currencies[$currency])) {
             $currency = 'SP'; // Default Silver
         }
 
@@ -62,6 +64,8 @@ class Inventory extends Controller
         $metrics = $this->inventoryService->getMetrics($currency);
         $categories = $this->inventoryService->getCategories();
         $vault = $this->inventoryService->getVault();
+        $characters = $this->inventoryService->getPlayableCharacters();
+        $recentTransactions = $this->inventoryService->getRecentVaultTransactions(10);
         $user = auth()->user();
         $canCreate = $user?->hasPermission('inventory.create') ?? false;
         $canUpdate = $user?->hasPermission('inventory.update') ?? false;
@@ -74,6 +78,8 @@ class Inventory extends Controller
                 'items' => $items,
                 'metrics' => $metrics,
                 'vault' => $vault,
+                'characters' => $characters,
+                'recentTransactions' => $recentTransactions,
                 'currency' => $currency,
                 'currencies' => $currencies,
                 'isAdmin' => $canManageItems,
@@ -87,6 +93,8 @@ class Inventory extends Controller
             'items' => $items,
             'metrics' => $metrics,
             'vault' => $vault,
+            'characters' => $characters,
+            'recentTransactions' => $recentTransactions,
             'categories' => $categories,
             'currencies' => $currencies,
             'currentCurrency' => $currency,
@@ -100,7 +108,7 @@ class Inventory extends Controller
     }
 
     /**
-     * Update or deposit/withdraw cash in the guild vault (Admin only).
+     * Update or deposit/withdraw cash in the guild vault or transfer with player characters (Admin only).
      */
     public function updateVault(Request $request): JsonResponse|RedirectResponse
     {
@@ -109,27 +117,93 @@ class Inventory extends Controller
         }
 
         $validated = $request->validate([
-            'operation' => ['required', 'string', 'in:set,deposit,withdraw'],
+            'operation' => ['required', 'string', 'in:set,deposit,withdraw,transfer_to_character,transfer_from_character,distribute_characters'],
             'amount' => ['required_without:amount_sp', 'numeric', 'min:0'],
             'amount_sp' => ['required_without:amount', 'numeric', 'min:0'],
-            'currency' => ['nullable', 'string', 'in:SP,GP'],
+            'currency' => ['nullable', 'string', 'in:CP,SP,GP,PP'],
+            'character_id' => ['required_if:operation,transfer_to_character', 'required_if:operation,transfer_from_character', 'nullable', 'integer'],
+            'character_ids' => ['nullable', 'array'],
+            'character_ids.*' => ['integer'],
             'notes' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $amount = (float) ($validated['amount'] ?? $validated['amount_sp']);
-        $amountSp = $amount * (($validated['currency'] ?? 'SP') === 'GP' && isset($validated['amount']) ? 10 : 1);
+        $curr = strtoupper($validated['currency'] ?? 'SP');
+        $rateToSp = match ($curr) {
+            'PP' => 100.0,
+            'GP' => 10.0,
+            'SP' => 1.0,
+            'CP' => 0.1,
+            default => 1.0,
+        };
+
+        $amountSp = isset($validated['amount_sp']) && ! isset($validated['amount'])
+            ? (float) $validated['amount_sp']
+            : ((float) $validated['amount']) * $rateToSp;
+
+        $amountSp = round($amountSp, 2);
         $operation = $validated['operation'];
         $notes = $validated['notes'] ?? null;
+        $transferResult = null;
 
         if ($operation === 'deposit') {
             $vault = $this->inventoryService->adjustVaultBalance($amountSp, $notes);
-            $msg = number_format($amountSp, 0, ',', '.') . ' SP deposited into the guild vault.';
+            FinancialLedger::create([
+                'character_id' => null,
+                'guild_vault_id' => $vault->id,
+                'entity_type' => FinancialLedger::ENTITY_GUILD_RESERVE,
+                'amount_sp' => $amountSp,
+                'balance_after_sp' => (float) $vault->balance_sp,
+                'transaction_type' => 'DEPOSIT',
+                'description' => $notes ?: 'Guild vault cash deposit',
+            ]);
+            $msg = number_format($amountSp, 2, '.', ',').' SP deposited into the guild vault.';
         } elseif ($operation === 'withdraw') {
+            if ((float) $this->inventoryService->getVault()->balance_sp < $amountSp) {
+                throw ValidationException::withMessages([
+                    'amount' => 'Insufficient funds in the guild vault.',
+                ]);
+            }
             $vault = $this->inventoryService->adjustVaultBalance(-$amountSp, $notes);
-            $msg = number_format($amountSp, 0, ',', '.') . ' SP withdrawn from the guild vault.';
+            FinancialLedger::create([
+                'character_id' => null,
+                'guild_vault_id' => $vault->id,
+                'entity_type' => FinancialLedger::ENTITY_GUILD_RESERVE,
+                'amount_sp' => -$amountSp,
+                'balance_after_sp' => (float) $vault->balance_sp,
+                'transaction_type' => 'WITHDRAWAL',
+                'description' => $notes ?: 'Guild vault cash withdrawal',
+            ]);
+            $msg = number_format($amountSp, 2, '.', ',').' SP withdrawn from the guild vault.';
+        } elseif ($operation === 'transfer_to_character') {
+            $charId = (int) $validated['character_id'];
+            $transferResult = $this->inventoryService->transferToCharacter($charId, $amountSp, $notes);
+            $vault = $transferResult['vault'];
+            $char = $transferResult['character'];
+            $msg = number_format($amountSp, 2, '.', ',')." SP transferred from Guild Vault to {$char->name}.";
+        } elseif ($operation === 'transfer_from_character') {
+            $charId = (int) $validated['character_id'];
+            $transferResult = $this->inventoryService->transferFromCharacter($charId, $amountSp, $notes);
+            $vault = $transferResult['vault'];
+            $char = $transferResult['character'];
+            $msg = number_format($amountSp, 2, '.', ',')." SP contributed from {$char->name} into Guild Vault.";
+        } elseif ($operation === 'distribute_characters') {
+            $charIds = (array) ($validated['character_ids'] ?? []);
+            $transferResult = $this->inventoryService->distributeToCharacters($charIds, $amountSp, $notes);
+            $vault = $transferResult['vault'];
+            $count = count($transferResult['characters']);
+            $msg = number_format($amountSp, 2, '.', ',')." SP distributed equally among {$count} player characters (".number_format($transferResult['share_sp'], 2, '.', ',').' SP each).';
         } else {
             $vault = $this->inventoryService->updateVaultBalance($amountSp, $notes);
-            $msg = 'Guild vault balance updated to ' . number_format($amountSp, 0, ',', '.') . ' SP.';
+            FinancialLedger::create([
+                'character_id' => null,
+                'guild_vault_id' => $vault->id,
+                'entity_type' => FinancialLedger::ENTITY_GUILD_RESERVE,
+                'amount_sp' => $amountSp,
+                'balance_after_sp' => (float) $vault->balance_sp,
+                'transaction_type' => 'DEPOSIT',
+                'description' => $notes ?: 'Guild vault balance manual adjustment',
+            ]);
+            $msg = 'Guild vault balance updated to '.number_format($amountSp, 2, '.', ',').' SP.';
         }
 
         if ($request->wantsJson() || $request->ajax()) {
@@ -137,7 +211,10 @@ class Inventory extends Controller
                 'success' => true,
                 'message' => $msg,
                 'vault' => $vault,
+                'character' => $transferResult['character'] ?? null,
+                'characters' => $transferResult['characters'] ?? null,
                 'metrics' => $this->inventoryService->getMetrics('SP'),
+                'recentTransactions' => $this->inventoryService->getRecentVaultTransactions(10),
             ]);
         }
 
@@ -184,7 +261,7 @@ class Inventory extends Controller
             $createdItems = ['item' => $item];
         }
 
-        $message = $itemCount . ' item' . ($itemCount === 1 ? '' : 's') . ' added to inventory successfully.';
+        $message = $itemCount.' item'.($itemCount === 1 ? '' : 's').' added to inventory successfully.';
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json(array_merge([
@@ -212,7 +289,7 @@ class Inventory extends Controller
         ]);
 
         $deletedCount = $this->inventoryService->deleteItems($validated['ids']);
-        $message = $deletedCount . ' items deleted successfully.';
+        $message = $deletedCount.' items deleted successfully.';
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([

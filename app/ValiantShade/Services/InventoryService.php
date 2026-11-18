@@ -2,8 +2,12 @@
 
 namespace App\ValiantShade\Services;
 
-use App\Models\InventoryItem;
+use App\Models\Character;
+use App\Models\CharacterInfo;
+use App\Models\FinancialLedger;
 use App\Models\GuildVault;
+use App\Models\InventoryItem;
+use App\Models\PlayerXp;
 use App\ValiantShade\Contracts\GuildVaultRepositoryInterface;
 use App\ValiantShade\Contracts\InventoryCalculationServiceInterface;
 use App\ValiantShade\Contracts\InventoryRepositoryInterface;
@@ -32,6 +36,252 @@ class InventoryService
     public function adjustVaultBalance(float $deltaSp, ?string $notes = null): GuildVault
     {
         return $this->vaultRepository->adjustBalance($deltaSp, $notes);
+    }
+
+    public function getPlayableCharacters(): Collection
+    {
+        return Character::query()
+            ->with(['user', 'info'])
+            ->whereNotIn('status', ['KIA', 'MIA'])
+            ->orderBy('name')
+            ->get();
+    }
+
+    public function getRecentVaultTransactions(int $limit = 10): Collection
+    {
+        return FinancialLedger::query()
+            ->with(['character', 'vault'])
+            ->where(function ($q) {
+                $q->whereNotNull('guild_vault_id')
+                    ->orWhere('entity_type', FinancialLedger::ENTITY_GUILD_RESERVE);
+            })
+            ->latest('id')
+            ->limit($limit)
+            ->get();
+    }
+
+    public function transferToCharacter(int $characterId, float $amountSp, ?string $notes = null): array
+    {
+        return DB::transaction(function () use ($characterId, $amountSp, $notes) {
+            $amountSp = round(max(0, $amountSp), 2);
+            if ($amountSp <= 0) {
+                throw ValidationException::withMessages([
+                    'amount' => 'Transfer amount must be greater than zero.',
+                ]);
+            }
+
+            $vault = $this->getVault();
+            $vault = GuildVault::query()->whereKey($vault->id)->lockForUpdate()->firstOrFail();
+            if ((float) $vault->balance_sp < $amountSp) {
+                throw ValidationException::withMessages([
+                    'amount' => 'Insufficient guild vault funds. Current balance: '.number_format($vault->balance_sp, 2, '.', ',').' SP.',
+                ]);
+            }
+
+            $character = Character::query()->whereKey($characterId)->lockForUpdate()->firstOrFail();
+
+            $newVaultBalance = round(((float) $vault->balance_sp) - $amountSp, 2);
+            $vault->balance_sp = $newVaultBalance;
+            $vault->save();
+
+            $oldCharBalance = (float) ($character->allowance_sp ?? 0);
+            $newCharBalance = round($oldCharBalance + $amountSp, 2);
+            $character->allowance_sp = $newCharBalance;
+            $character->save();
+
+            // Sync CharacterInfo pocket_money / currency
+            $info = $character->info ?? CharacterInfo::firstOrNew(['character_id' => $character->id]);
+            $pocket = is_array($info->pocket_money) ? $info->pocket_money : ['pp' => 0, 'gp' => 0, 'sp' => 0, 'cp' => 0];
+            $pocket['sp'] = round(((float) ($pocket['sp'] ?? 0)) + $amountSp, 2);
+            $info->pocket_money = $pocket;
+            $info->currency = $pocket;
+            $info->save();
+
+            // Sync PlayerXp
+            PlayerXp::where('character_name', $character->name)
+                ->update(['allowance_sp' => (int) round($newCharBalance)]);
+
+            // Log FinancialLedger entries
+            FinancialLedger::create([
+                'character_id' => $character->id,
+                'guild_vault_id' => $vault->id,
+                'entity_type' => FinancialLedger::ENTITY_GUILD_RESERVE,
+                'amount_sp' => -$amountSp,
+                'balance_after_sp' => $newVaultBalance,
+                'transaction_type' => 'WITHDRAWAL',
+                'description' => "Cash transfer to character {$character->name}".($notes ? ": {$notes}" : ''),
+            ]);
+
+            FinancialLedger::create([
+                'character_id' => $character->id,
+                'guild_vault_id' => $vault->id,
+                'entity_type' => FinancialLedger::ENTITY_CHARACTER,
+                'amount_sp' => $amountSp,
+                'balance_after_sp' => $newCharBalance,
+                'transaction_type' => 'DEPOSIT',
+                'description' => 'Cash received from Guild Vault'.($notes ? ": {$notes}" : ''),
+            ]);
+
+            return [
+                'vault' => $vault,
+                'character' => $character,
+                'amount_sp' => $amountSp,
+            ];
+        });
+    }
+
+    public function transferFromCharacter(int $characterId, float $amountSp, ?string $notes = null): array
+    {
+        return DB::transaction(function () use ($characterId, $amountSp, $notes) {
+            $amountSp = round(max(0, $amountSp), 2);
+            if ($amountSp <= 0) {
+                throw ValidationException::withMessages([
+                    'amount' => 'Transfer amount must be greater than zero.',
+                ]);
+            }
+
+            $character = Character::query()->whereKey($characterId)->lockForUpdate()->firstOrFail();
+            $currentCharBalance = (float) ($character->allowance_sp ?? 0);
+            if ($currentCharBalance < $amountSp) {
+                throw ValidationException::withMessages([
+                    'amount' => "Character {$character->name} has insufficient funds. Current allowance: ".number_format($currentCharBalance, 2, '.', ',').' SP.',
+                ]);
+            }
+
+            $vault = $this->getVault();
+            $vault = GuildVault::query()->whereKey($vault->id)->lockForUpdate()->firstOrFail();
+
+            $newCharBalance = round($currentCharBalance - $amountSp, 2);
+            $character->allowance_sp = $newCharBalance;
+            $character->save();
+
+            $newVaultBalance = round(((float) $vault->balance_sp) + $amountSp, 2);
+            $vault->balance_sp = $newVaultBalance;
+            $vault->save();
+
+            // Sync CharacterInfo pocket_money
+            $info = $character->info ?? CharacterInfo::firstOrNew(['character_id' => $character->id]);
+            $pocket = is_array($info->pocket_money) ? $info->pocket_money : ['pp' => 0, 'gp' => 0, 'sp' => 0, 'cp' => 0];
+            $pocket['sp'] = max(0, round(((float) ($pocket['sp'] ?? 0)) - $amountSp, 2));
+            $info->pocket_money = $pocket;
+            $info->currency = $pocket;
+            $info->save();
+
+            // Sync PlayerXp
+            PlayerXp::where('character_name', $character->name)
+                ->update(['allowance_sp' => (int) round($newCharBalance)]);
+
+            // Log FinancialLedger entries
+            FinancialLedger::create([
+                'character_id' => $character->id,
+                'guild_vault_id' => $vault->id,
+                'entity_type' => FinancialLedger::ENTITY_CHARACTER,
+                'amount_sp' => -$amountSp,
+                'balance_after_sp' => $newCharBalance,
+                'transaction_type' => 'WITHDRAWAL',
+                'description' => "Contribution from character {$character->name} to Guild Vault".($notes ? ": {$notes}" : ''),
+            ]);
+
+            FinancialLedger::create([
+                'character_id' => $character->id,
+                'guild_vault_id' => $vault->id,
+                'entity_type' => FinancialLedger::ENTITY_GUILD_RESERVE,
+                'amount_sp' => $amountSp,
+                'balance_after_sp' => $newVaultBalance,
+                'transaction_type' => 'DEPOSIT',
+                'description' => "Contribution received from character {$character->name}".($notes ? ": {$notes}" : ''),
+            ]);
+
+            return [
+                'vault' => $vault,
+                'character' => $character,
+                'amount_sp' => $amountSp,
+            ];
+        });
+    }
+
+    public function distributeToCharacters(array $characterIds, float $totalAmountSp, ?string $notes = null): array
+    {
+        return DB::transaction(function () use ($characterIds, $totalAmountSp, $notes) {
+            $totalAmountSp = round(max(0, $totalAmountSp), 2);
+            if ($totalAmountSp <= 0) {
+                throw ValidationException::withMessages([
+                    'amount' => 'Distribution amount must be greater than zero.',
+                ]);
+            }
+
+            $charactersQuery = Character::query()->whereNotIn('status', ['KIA', 'MIA']);
+            if (! empty($characterIds)) {
+                $charactersQuery->whereIn('id', $characterIds);
+            }
+            $characters = $charactersQuery->lockForUpdate()->get();
+            $count = $characters->count();
+
+            if ($count === 0) {
+                throw ValidationException::withMessages([
+                    'character_id' => 'No active characters found for distribution.',
+                ]);
+            }
+
+            $vault = $this->getVault();
+            $vault = GuildVault::query()->whereKey($vault->id)->lockForUpdate()->firstOrFail();
+            if ((float) $vault->balance_sp < $totalAmountSp) {
+                throw ValidationException::withMessages([
+                    'amount' => 'Insufficient guild vault funds. Current balance: '.number_format($vault->balance_sp, 2, '.', ',').' SP.',
+                ]);
+            }
+
+            $shareSp = round($totalAmountSp / $count, 2);
+            $actualTotal = round($shareSp * $count, 2);
+
+            $newVaultBalance = round(((float) $vault->balance_sp) - $actualTotal, 2);
+            $vault->balance_sp = $newVaultBalance;
+            $vault->save();
+
+            FinancialLedger::create([
+                'character_id' => null,
+                'guild_vault_id' => $vault->id,
+                'entity_type' => FinancialLedger::ENTITY_GUILD_RESERVE,
+                'amount_sp' => -$actualTotal,
+                'balance_after_sp' => $newVaultBalance,
+                'transaction_type' => 'WITHDRAWAL',
+                'description' => "Equal distribution to {$count} characters (".number_format($shareSp, 2, '.', ',').' SP each)'.($notes ? ": {$notes}" : ''),
+            ]);
+
+            foreach ($characters as $character) {
+                $oldBalance = (float) ($character->allowance_sp ?? 0);
+                $newBalance = round($oldBalance + $shareSp, 2);
+                $character->allowance_sp = $newBalance;
+                $character->save();
+
+                $info = $character->info ?? CharacterInfo::firstOrNew(['character_id' => $character->id]);
+                $pocket = is_array($info->pocket_money) ? $info->pocket_money : ['pp' => 0, 'gp' => 0, 'sp' => 0, 'cp' => 0];
+                $pocket['sp'] = round(((float) ($pocket['sp'] ?? 0)) + $shareSp, 2);
+                $info->pocket_money = $pocket;
+                $info->currency = $pocket;
+                $info->save();
+
+                PlayerXp::where('character_name', $character->name)
+                    ->update(['allowance_sp' => (int) round($newBalance)]);
+
+                FinancialLedger::create([
+                    'character_id' => $character->id,
+                    'guild_vault_id' => $vault->id,
+                    'entity_type' => FinancialLedger::ENTITY_CHARACTER,
+                    'amount_sp' => $shareSp,
+                    'balance_after_sp' => $newBalance,
+                    'transaction_type' => 'DEPOSIT',
+                    'description' => 'Equal guild distribution'.($notes ? ": {$notes}" : ''),
+                ]);
+            }
+
+            return [
+                'vault' => $vault,
+                'characters' => $characters,
+                'share_sp' => $shareSp,
+                'total_sp' => $actualTotal,
+            ];
+        });
     }
 
     public function getItems(array $filters = []): Collection
@@ -109,7 +359,7 @@ class InventoryService
     public function createItems(array $items): Collection
     {
         return DB::transaction(function () use ($items) {
-            $created = new Collection();
+            $created = new Collection;
             foreach ($items as $item) {
                 $created->push($this->createItem($item));
             }
@@ -183,7 +433,7 @@ class InventoryService
 
     public function getCategories(): array
     {
-        return array_keys(\App\Models\InventoryItem::TYPES);
+        return array_keys(InventoryItem::TYPES);
     }
 
     public function ensureSampleDataSeeded(): void

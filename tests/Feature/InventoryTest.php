@@ -2,8 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\Character;
+use App\Models\CharacterInfo;
 use App\Models\InventoryItem;
+use App\Models\PlayerXp;
 use App\Models\User;
+use App\ValiantShade\Services\InventoryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
@@ -227,7 +231,7 @@ class InventoryTest extends TestCase
         $admin = User::factory()->create(['role' => 'Admin']);
         $this->actingAs($admin)->get('/valiant-shade/pages/inventory');
 
-        $inventoryService = app(\App\ValiantShade\Services\InventoryService::class);
+        $inventoryService = app(InventoryService::class);
         $firstItem = $inventoryService->createItem([
             'name' => 'Sale Test Sword',
             'type' => 'Weapon',
@@ -345,7 +349,7 @@ class InventoryTest extends TestCase
         $response->assertSee('id="btnAddItems"', false)
             ->assertSee('title="Add items"', false)
             ->assertSee('id="btnAddItemRow"', false)
-            ->assertSee('action="' . route('valiant-shade.pages-inventory.store') . '"', false)
+            ->assertSee('action="'.route('valiant-shade.pages-inventory.store').'"', false)
             ->assertSee('id="btnDeleteSelected"', false)
             ->assertDontSee('id="modalAddItem"', false)
             ->assertDontSee('btn-delete-item')
@@ -359,7 +363,7 @@ class InventoryTest extends TestCase
 
         // All types should appear in category filter buttons
         foreach ($expectedTypes as $type) {
-            $response->assertSee('data-type="' . $type . '"', false);
+            $response->assertSee('data-type="'.$type.'"', false);
         }
 
         // Test item creation for a newly added type, e.g. Wand
@@ -590,6 +594,213 @@ class InventoryTest extends TestCase
             'buy_price' => 2475,
         ]);
     }
+
+    public function test_inventory_page_shows_cash_action_buttons_and_no_manage_button(): void
+    {
+        $admin = User::factory()->create(['role' => 'Admin']);
+
+        $response = $this->actingAs($admin)->get('/valiant-shade/pages/inventory');
+
+        $response->assertStatus(200);
+        $response->assertSee('data-vault-tab="deposit"', false);
+        $response->assertSee('data-vault-tab="withdraw"', false);
+        $response->assertSee('data-vault-tab="transfer"', false);
+        $response->assertDontSee('> Manage</button>', false);
+        $response->assertSee('Guild Vault & Cash Management');
+    }
+
+    public function test_admin_can_transfer_cash_from_vault_to_character(): void
+    {
+        $admin = User::factory()->create(['role' => 'Admin']);
+        $player = User::factory()->create(['role' => 'User']);
+        $character = Character::create([
+            'user_id' => $player->id,
+            'name' => 'Valiant Warrior',
+            'status' => 'ACTIVE',
+            'current_level' => 3,
+            'allowance_sp' => 200.00,
+        ]);
+        CharacterInfo::create([
+            'character_id' => $character->id,
+            'pocket_money' => ['pp' => 0, 'gp' => 20, 'sp' => 200, 'cp' => 0],
+        ]);
+        PlayerXp::create([
+            'user_id' => $player->id,
+            'character_name' => 'Valiant Warrior',
+            'allowance_sp' => 200,
+        ]);
+
+        $response = $this->actingAs($admin)->post('/valiant-shade/pages/inventory/vault', [
+            'operation' => 'transfer_to_character',
+            'character_id' => $character->id,
+            'amount' => 500,
+            'currency' => 'SP',
+            'notes' => 'Hero adventuring stipend',
+        ]);
+
+        $response->assertRedirect('/valiant-shade/pages/inventory');
+        $this->assertDatabaseHas('guild_vaults', [
+            'id' => 1,
+            'balance_sp' => 29500,
+        ]);
+        $this->assertDatabaseHas('characters', [
+            'id' => $character->id,
+            'allowance_sp' => 700,
+        ]);
+        $this->assertDatabaseHas('player_xps', [
+            'character_name' => 'Valiant Warrior',
+            'allowance_sp' => 700,
+        ]);
+        $this->assertDatabaseHas('financial_ledger', [
+            'character_id' => $character->id,
+            'transaction_type' => 'WITHDRAWAL',
+            'amount_sp' => -500,
+        ]);
+        $this->assertDatabaseHas('financial_ledger', [
+            'character_id' => $character->id,
+            'transaction_type' => 'DEPOSIT',
+            'amount_sp' => 500,
+        ]);
+    }
+
+    public function test_admin_can_transfer_cash_from_character_to_vault(): void
+    {
+        $admin = User::factory()->create(['role' => 'Admin']);
+        $player = User::factory()->create(['role' => 'User']);
+        $character = Character::create([
+            'user_id' => $player->id,
+            'name' => 'Generous Mage',
+            'status' => 'ACTIVE',
+            'current_level' => 4,
+            'allowance_sp' => 1000.00,
+        ]);
+
+        // Transfer 20 GP (= 200 SP) from character to vault
+        $response = $this->actingAs($admin)->post('/valiant-shade/pages/inventory/vault', [
+            'operation' => 'transfer_from_character',
+            'character_id' => $character->id,
+            'amount' => 20,
+            'currency' => 'GP',
+            'notes' => 'Tavern expansion contribution',
+        ]);
+
+        $response->assertRedirect('/valiant-shade/pages/inventory');
+        $this->assertDatabaseHas('guild_vaults', [
+            'id' => 1,
+            'balance_sp' => 30200,
+        ]);
+        $this->assertDatabaseHas('characters', [
+            'id' => $character->id,
+            'allowance_sp' => 800,
+        ]);
+        $this->assertDatabaseHas('financial_ledger', [
+            'character_id' => $character->id,
+            'transaction_type' => 'WITHDRAWAL',
+            'amount_sp' => -200,
+        ]);
+        $this->assertDatabaseHas('financial_ledger', [
+            'character_id' => $character->id,
+            'transaction_type' => 'DEPOSIT',
+            'amount_sp' => 200,
+        ]);
+    }
+
+    public function test_transfer_from_character_fails_when_character_has_insufficient_funds(): void
+    {
+        $admin = User::factory()->create(['role' => 'Admin']);
+        $player = User::factory()->create(['role' => 'User']);
+        $character = Character::create([
+            'user_id' => $player->id,
+            'name' => 'Poor Rogue',
+            'status' => 'ACTIVE',
+            'current_level' => 1,
+            'allowance_sp' => 50.00,
+        ]);
+
+        $response = $this->actingAs($admin)->postJson('/valiant-shade/pages/inventory/vault', [
+            'operation' => 'transfer_from_character',
+            'character_id' => $character->id,
+            'amount' => 100,
+            'currency' => 'SP',
+        ]);
+
+        $response->assertStatus(422);
+        $this->assertDatabaseHas('characters', [
+            'id' => $character->id,
+            'allowance_sp' => 50.00,
+        ]);
+    }
+
+    public function test_transfer_to_character_fails_when_vault_has_insufficient_funds(): void
+    {
+        $admin = User::factory()->create(['role' => 'Admin']);
+        $this->actingAs($admin)->get('/valiant-shade/pages/inventory');
+        $player = User::factory()->create(['role' => 'User']);
+        $character = Character::create([
+            'user_id' => $player->id,
+            'name' => 'Greedy Paladin',
+            'status' => 'ACTIVE',
+            'current_level' => 2,
+            'allowance_sp' => 0.00,
+        ]);
+
+        $response = $this->actingAs($admin)->postJson('/valiant-shade/pages/inventory/vault', [
+            'operation' => 'transfer_to_character',
+            'character_id' => $character->id,
+            'amount' => 50000,
+            'currency' => 'SP',
+        ]);
+
+        $response->assertStatus(422);
+        $this->assertDatabaseHas('guild_vaults', [
+            'id' => 1,
+            'balance_sp' => 30000,
+        ]);
+    }
+
+    public function test_admin_can_distribute_cash_equally_to_characters(): void
+    {
+        $admin = User::factory()->create(['role' => 'Admin']);
+        $player1 = User::factory()->create(['role' => 'User']);
+        $player2 = User::factory()->create(['role' => 'User']);
+        $char1 = Character::create(['user_id' => $player1->id, 'name' => 'Hero One', 'status' => 'ACTIVE', 'allowance_sp' => 0]);
+        $char2 = Character::create(['user_id' => $player2->id, 'name' => 'Hero Two', 'status' => 'ACTIVE', 'allowance_sp' => 0]);
+
+        $response = $this->actingAs($admin)->post('/valiant-shade/pages/inventory/vault', [
+            'operation' => 'distribute_characters',
+            'character_ids' => [$char1->id, $char2->id],
+            'amount' => 1000,
+            'currency' => 'SP',
+            'notes' => 'Expedition bounty equal split',
+        ]);
+
+        $response->assertRedirect('/valiant-shade/pages/inventory');
+        $this->assertDatabaseHas('guild_vaults', [
+            'id' => 1,
+            'balance_sp' => 29000,
+        ]);
+        $this->assertDatabaseHas('characters', [
+            'id' => $char1->id,
+            'allowance_sp' => 500,
+        ]);
+        $this->assertDatabaseHas('characters', [
+            'id' => $char2->id,
+            'allowance_sp' => 500,
+        ]);
+    }
+
+    public function test_non_admin_cannot_perform_character_transfers(): void
+    {
+        $user = User::factory()->create(['role' => 'User']);
+        $char = Character::create(['user_id' => $user->id, 'name' => 'Target Hero', 'status' => 'ACTIVE', 'allowance_sp' => 100]);
+
+        $response = $this->actingAs($user)->postJson('/valiant-shade/pages/inventory/vault', [
+            'operation' => 'transfer_to_character',
+            'character_id' => $char->id,
+            'amount' => 100,
+            'currency' => 'SP',
+        ]);
+
+        $response->assertStatus(403);
+    }
 }
-
-
