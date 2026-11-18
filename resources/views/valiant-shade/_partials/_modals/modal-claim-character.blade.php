@@ -1,354 +1,318 @@
-<!-- Modal Claim Character from XP List -->
-<div class="modal fade" id="claimCharacterModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-    <form id="formClaimCharacter" class="modal-content modal-dossier claim-modal-content">
-      @csrf
+@php
+  // Ensure Pathfinder enums are loaded even if not passed from controller
+  if (empty($pfRaces) || empty($pfClasses)) {
+    $loadEnumFile = function ($file) {
+      $candidates = [
+        config_path('enums/' . $file),
+        config_path('Enums/' . $file),
+        config_path('enums/' . str_replace('pathfinder_', '', $file)),
+        config_path('Enums/' . str_replace('pathfinder_', '', $file)),
+      ];
+      foreach ($candidates as $p) {
+        if (file_exists($p)) return require $p;
+      }
+      return [];
+    };
+    if (empty($pfRaces)) $pfRaces = $loadEnumFile('races.php');
+    if (empty($pfClasses)) $pfClasses = $loadEnumFile('classes.php');
+  }
 
-        <!-- Modal Header -->
-        <div class="modal-header claim-modal-header d-flex align-items-center justify-content-between p-3 p-md-4">
-          <div class="d-flex align-items-center gap-3">
-            <div class="avatar avatar-md bg-warning text-dark rounded-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px;">
-              <i class="icon-base ti tabler-user-check fs-2 text-dark"></i>
-            </div>
-            <div>
-              <h4 class="mb-0 fw-bold text-white d-flex align-items-center gap-2">
-                {{ __('Claim Character from XP List') }}
-                <span class="badge bg-warning text-dark font-monospace fs-6 px-2 py-0_5">{{ __('Existing XP & Level') }}</span>
-              </h4>
-              <small class="claim-subtitle font-monospace">{{ __('Start your character from the Master Sheet XP list with their true level, rank and accumulated points.') }}</small>
-            </div>
+  $currentUser = Auth::user();
+  $userChars = $currentUser ? \App\Models\CharacterProfile::where('user_id', $currentUser->id)->get() : collect();
+  $isFull = $currentUser && ($userChars->count() >= 2);
+@endphp
+
+<!-- Modal Claim Character from XP List -->
+<div class="modal fade" id="claimCharacterModal" tabindex="-1" aria-labelledby="claimCharacterModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-simple modal-claim-character">
+    <div class="modal-content p-2 p-md-4">
+      <div class="modal-body position-relative">
+        <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="{{ __('Close') }}"></button>
+
+        <!-- Header (Vuexy Modal Hero) -->
+        <div class="text-center mb-4">
+          <div class="avatar avatar-xl mx-auto mb-3 bg-label-warning rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 64px; height: 64px;">
+            <i class="icon-base ti tabler-user-check text-warning" style="font-size: 32px;"></i>
           </div>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{{ __('Close') }}"></button>
+          <h3 class="mb-1 fw-bold text-heading" id="claimCharacterModalLabel">{{ __('Claim Character from XP List') }}</h3>
+          <p class="text-body-secondary mb-0">{{ __('Claim an existing hero from the Master Sheet XP records with their true level, rank and accumulated points.') }}</p>
         </div>
 
-        <!-- Modal Body -->
-        <div class="modal-body claim-modal-body p-3 p-md-4">
-
-          <!-- Alert Note -->
-          <div class="alert claim-alert border d-flex align-items-center gap-3 mb-4" role="alert">
-            <i class="icon-base ti tabler-shield-lock fs-3 text-warning flex-shrink-0"></i>
-            <div class="small claim-alert-text">
-              <strong class="text-warning">{{ __('Important Rule & Notice:') }}</strong>
-              {{ __('Your chosen character will start at their true level from the XP list (e.g. Level 12 for Thoma Quickfire). Confirm class and ability scores to claim.') }}
+        @if($isFull)
+          <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+            <i class="icon-base ti tabler-alert-triangle fs-4 me-2 flex-shrink-0"></i>
+            <div>
+              <strong>{{ __('Character Limit Reached (2/2)') }}</strong>
+              <div class="small">{{ __('Each player account is strictly limited to 2 characters: one Main and one Clerk. You already have both.') }}</div>
             </div>
           </div>
+        @else
+          <!-- Alert Note -->
+          <div class="alert alert-warning alert-dismissible d-flex align-items-start mb-4" role="alert">
+            <i class="icon-base ti tabler-shield-lock fs-4 me-2 flex-shrink-0 mt-0_5"></i>
+            <div class="small">
+              <strong class="d-block mb-1">{{ __('Important Rule & Notice:') }}</strong>
+              <span>{{ __('Your chosen character will start at their true level from the XP list (e.g. Level 12 for Thoma Quickfire). Confirm class, race, and ability scores to claim.') }}</span>
+            </div>
+          </div>
+        @endif
 
-          <!-- Section 1: Character Selection (Autocomplete / Search) -->
-          <div class="claim-panel-card p-3 mb-4">
-            <label class="form-label fw-bold text-white fs-6 mb-2">
-              <i class="icon-base ti tabler-user-search text-warning me-1"></i>
-              {{ __('1. Select Character to Claim (XP Records)') }} <span class="text-danger">*</span>
-            </label>
+        <form id="formClaimCharacter" class="claim-form">
+          @csrf
 
-            <div class="row g-2 align-items-center">
-              <div class="col-12 col-md-8">
-                <div class="input-group input-group-merge">
-                  <span class="input-group-text"><i class="icon-base ti tabler-search text-light"></i></span>
-                  <input type="text" class="form-control font-monospace"
-                         id="claimSearchInput" placeholder="{{ __('Type character name (e.g. Thoma Quickfire, Bart...)') }}" autocomplete="off" />
-                  <button type="button" class="btn btn-warning btn-sm fw-bold px-3" id="btnClaimSearch">{{ __('Search') }}</button>
-                </div>
+          <!-- Section 1: Character Selection (Autocomplete / Search & Full A-Z Dropdown) -->
+          <div class="card border mb-4 shadow-none">
+            <div class="card-header bg-transparent border-bottom py-3 px-3 px-md-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+              <div class="d-flex align-items-center gap-2">
+                <span class="avatar avatar-xs bg-label-warning rounded d-flex align-items-center justify-content-center">
+                  <i class="icon-base ti tabler-user-search fs-6"></i>
+                </span>
+                <h6 class="card-title mb-0 fw-bold text-heading">
+                  {{ __('1. Select Character to Claim (XP Records)') }} <span class="text-danger">*</span>
+                </h6>
               </div>
-              <div class="col-12 col-md-4">
-                <select id="claimCharacterSelect" class="form-select font-monospace" required>
-                  <option value="" disabled selected>{{ __('Select a character...') }}</option>
-                </select>
-              </div>
+              <span class="badge bg-label-secondary font-monospace" id="claimCharCountBadge">
+                <span class="spinner-border spinner-border-sm me-1" style="width: 0.8rem; height: 0.8rem;"></span>{{ __('Loading characters...') }}
+              </span>
             </div>
 
-            <!-- Dynamic Selected Character Dossier Info Card -->
-            <div id="claimSelectedDossierCard" class="claim-dossier-card mt-3 p-3 rounded-3 d-none">
-              <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-                <div class="d-flex align-items-center gap-2">
-                  <div class="avatar avatar-sm bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center fw-bold fs-5">
-                    <i class="icon-base ti tabler-flame"></i>
+            <div class="card-body p-3 p-md-4">
+              <div class="row g-3">
+                <div class="col-12 col-md-5">
+                  <label class="form-label fw-medium mb-1" for="claimSearchInput">
+                    <i class="icon-base ti tabler-filter me-1 text-warning"></i>{{ __('Quick Filter / Search') }}
+                  </label>
+                  <div class="input-group input-group-merge">
+                    <span class="input-group-text"><i class="icon-base ti tabler-search text-body-secondary"></i></span>
+                    <input type="text" class="form-control" id="claimSearchInput" placeholder="{{ __('Type name to filter (e.g. Thoma, Bart...)') }}" autocomplete="off" />
+                    <button type="button" class="btn btn-outline-secondary px-2 d-none" id="btnClaimClearSearch" title="{{ __('Clear filter') }}">
+                      <i class="icon-base ti tabler-x"></i>
+                    </button>
                   </div>
-                  <div>
-                    <h5 class="mb-0 fw-bold text-white" id="claimCardCharName">-</h5>
-                    <small class="claim-subtitle font-monospace" id="claimCardPlayerRank">-</small>
-                  </div>
+                  <small class="text-body-secondary mt-1 d-block">{{ __('Filters the A-Z list in real time.') }}</small>
                 </div>
-                <div class="d-flex align-items-center gap-2">
-                  <span class="badge bg-warning text-dark font-monospace fs-6 px-3 py-1" id="claimCardLevelBadge">Level 12</span>
-                  <span class="badge bg-info text-white font-monospace fs-6 px-3 py-1" id="claimCardXpBadge">161,506.57 XP</span>
+
+                <div class="col-12 col-md-7">
+                  <label class="form-label fw-medium mb-1" for="claimCharacterSelect">
+                    <i class="icon-base ti tabler-user me-1 text-warning"></i>{{ __('Select Character (A - Z)') }} <span class="text-danger">*</span>
+                  </label>
+                  <select id="claimCharacterSelect" class="form-select font-monospace" required>
+                    <option value="" disabled selected>{{ __('Loading characters from XP records...') }}</option>
+                  </select>
+                  <small class="text-body-secondary mt-1 d-block" id="claimSelectSubtext">{{ __('All characters in registry sorted alphabetically A to Z.') }}</small>
                 </div>
               </div>
-              <div class="row g-2 font-monospace small pt-2 border-top border-secondary border-opacity-30" style="font-size: 0.82rem;">
-                <div class="col-12 col-md-4">
-                  <span class="claim-label-dim d-block">{{ __('Rank:') }}</span>
-                  <strong class="text-warning fs-6" id="claimCardRank">-</strong>
-                </div>
-                <div class="col-12 col-md-4">
-                  <span class="claim-label-dim d-block">{{ __('Character Type:') }}</span>
-                  <strong class="text-white fs-6" id="claimCardType">MAIN</strong>
-                </div>
-                <div class="col-12 col-md-4">
-                  <span class="claim-label-dim d-block">{{ __('Guild Allowance:') }}</span>
-                  <strong class="text-info fs-6" id="claimCardAllowance">0 SP</strong>
+
+              <!-- Dynamic Selected Character Dossier Info Card (Vuexy Style) -->
+              <div id="claimSelectedDossierCard" class="card border border-warning border-opacity-50 bg-label-warning mt-4 shadow-none d-none">
+                <div class="card-body p-3 p-md-4">
+                  <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
+                    <div class="d-flex align-items-center gap-3">
+                      <div class="avatar avatar-md bg-warning text-white rounded d-flex align-items-center justify-content-center shadow-sm">
+                        <i class="icon-base ti tabler-shield-bolt fs-3"></i>
+                      </div>
+                      <div>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                          <h5 class="mb-0 fw-bold text-heading" id="claimCardCharName">-</h5>
+                          <span class="badge bg-warning text-dark fw-bold font-monospace" id="claimCardType">MAIN</span>
+                        </div>
+                        <small class="text-body-secondary font-monospace" id="claimCardPlayerRank">-</small>
+                      </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                      <span class="badge bg-warning text-dark font-monospace fs-6 px-3 py-1_5 shadow-xs" id="claimCardLevelBadge">Level 12</span>
+                      <span class="badge bg-primary font-monospace fs-6 px-3 py-1_5 shadow-xs" id="claimCardXpBadge">161,506 XP</span>
+                      <span class="badge bg-success font-monospace fs-6 px-3 py-1_5 shadow-xs" id="claimCardAllowanceBadge">0 SP</span>
+                    </div>
+                  </div>
+
+                  <div class="row g-3 pt-3 border-top border-warning border-opacity-25 small font-monospace">
+                    <div class="col-6 col-md-3">
+                      <span class="text-body-secondary d-block">{{ __('Rank:') }}</span>
+                      <span class="fw-bold text-heading fs-6" id="claimCardRank">-</span>
+                    </div>
+                    <div class="col-6 col-md-3">
+                      <span class="text-body-secondary d-block">{{ __('Character Type:') }}</span>
+                      <span class="fw-bold text-heading fs-6" id="claimCardTypeDetail">MAIN</span>
+                    </div>
+                    <div class="col-6 col-md-3">
+                      <span class="text-body-secondary d-block">{{ __('Guild Allowance:') }}</span>
+                      <span class="fw-bold text-success fs-6" id="claimCardAllowance">0 SP</span>
+                    </div>
+                    <div class="col-6 col-md-3">
+                      <span class="text-body-secondary d-block">{{ __('Total XP Points:') }}</span>
+                      <span class="fw-bold text-primary fs-6" id="claimCardXpRaw">0 XP</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Section 2: Class & Race (Required) -->
-          <div class="row g-3 mb-4">
-            <div class="col-12 col-md-4">
-              <label class="form-label fw-bold text-white">
-                <i class="icon-base ti tabler-dna text-info me-1"></i> {{ __('Character Race') }} <span class="text-danger">*</span>
-              </label>
-              <select class="form-select text-white" id="claimCharRace" required>
-                @if(!empty($pfRaces))
-                  @foreach ($pfRaces as $rKey => $r)
-                    <option value="{{ $r['name'] ?? $rKey }}">{{ $r['name'] ?? $rKey }}</option>
-                  @endforeach
-                @else
-                  <option value="Human">Human</option>
-                  <option value="Elf">Elf</option>
-                  <option value="Dwarf">Dwarf</option>
-                  <option value="Half-Elf">Half-Elf</option>
-                  <option value="Half-Orc">Half-Orc</option>
-                  <option value="Gnome">Gnome</option>
-                  <option value="Halfling">Halfling</option>
-                @endif
-              </select>
+          <div class="card border mb-4 shadow-none">
+            <div class="card-header bg-transparent border-bottom py-3 px-3 px-md-4">
+              <div class="d-flex align-items-center gap-2">
+                <span class="avatar avatar-xs bg-label-primary rounded d-flex align-items-center justify-content-center">
+                  <i class="icon-base ti tabler-dna fs-6"></i>
+                </span>
+                <h6 class="card-title mb-0 fw-bold text-heading">
+                  {{ __('2. Hero Race, Class & Archetype') }}
+                </h6>
+              </div>
             </div>
 
-            <div class="col-12 col-md-4">
-              <label class="form-label fw-bold text-white">
-                <i class="icon-base ti tabler-swords text-info me-1"></i> {{ __('Character Class') }} <span class="text-danger">*</span>
-              </label>
-              <select class="form-select text-white" id="claimCharClass" required>
-                @if(!empty($pfClasses))
-                  @foreach ($pfClasses as $cKey => $c)
-                    <option value="{{ $c['name'] ?? $cKey }}">{{ $c['name'] ?? $cKey }} ({{ $c['hit_die'] ?? 'd10' }})</option>
-                  @endforeach
-                @else
-                  <option value="Fighter">Fighter (d10)</option>
-                  <option value="Alchemist">Alchemist (d8)</option>
-                  <option value="Rogue">Rogue (d8)</option>
-                  <option value="Paladin">Paladin (d10)</option>
-                  <option value="Wizard">Wizard (d6)</option>
-                  <option value="Cleric">Cleric (d8)</option>
-                  <option value="Ranger">Ranger (d10)</option>
-                  <option value="Barbarian">Barbarian (d12)</option>
-                  <option value="Bard">Bard (d8)</option>
-                  <option value="Monk">Monk (d8)</option>
-                  <option value="Sorcerer">Sorcerer (d6)</option>
-                @endif
-              </select>
-            </div>
+            <div class="card-body p-3 p-md-4">
+              <div class="row g-3">
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-medium" for="claimCharRace">
+                    <i class="icon-base ti tabler-dna text-primary me-1"></i> {{ __('Character Race') }} <span class="text-danger">*</span>
+                  </label>
+                  <select class="form-select" id="claimCharRace" required>
+                    @if(!empty($pfRaces))
+                      @foreach ($pfRaces as $rKey => $r)
+                        <option value="{{ $r['name'] ?? ucfirst($rKey) }}" {{ strtolower($rKey) === 'human' ? 'selected' : '' }}>
+                          {{ $r['name'] ?? ucfirst($rKey) }}
+                        </option>
+                      @endforeach
+                    @else
+                      <option value="Human" selected>Human</option>
+                      <option value="Elf">Elf</option>
+                      <option value="Dwarf">Dwarf</option>
+                      <option value="Half-Elf">Half-Elf</option>
+                      <option value="Half-Orc">Half-Orc</option>
+                      <option value="Gnome">Gnome</option>
+                      <option value="Halfling">Halfling</option>
+                    @endif
+                  </select>
+                </div>
 
-            <div class="col-12 col-md-4">
-              <label class="form-label fw-semibold text-white">
-                <i class="icon-base ti tabler-crown text-warning me-1"></i> {{ __('Archetype (Subclass / If any)') }}
-              </label>
-              <input type="text" class="form-control text-white" id="claimCharArchetype" placeholder="{{ __('e.g. Grenadier, Mutagen Mauler...') }}" />
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-medium" for="claimCharClass">
+                    <i class="icon-base ti tabler-swords text-primary me-1"></i> {{ __('Character Class') }} <span class="text-danger">*</span>
+                  </label>
+                  <select class="form-select" id="claimCharClass" required>
+                    @if(!empty($pfClasses))
+                      @foreach ($pfClasses as $cKey => $c)
+                        <option value="{{ $c['name'] ?? ucfirst($cKey) }}" {{ strtolower($cKey) === 'fighter' ? 'selected' : '' }}>
+                          {{ $c['name'] ?? ucfirst($cKey) }} ({{ $c['hit_die'] ?? 'd10' }})
+                        </option>
+                      @endforeach
+                    @else
+                      <option value="Fighter" selected>Fighter (d10)</option>
+                      <option value="Alchemist">Alchemist (d8)</option>
+                      <option value="Rogue">Rogue (d8)</option>
+                      <option value="Paladin">Paladin (d10)</option>
+                      <option value="Wizard">Wizard (d6)</option>
+                      <option value="Cleric">Cleric (d8)</option>
+                      <option value="Ranger">Ranger (d10)</option>
+                      <option value="Barbarian">Barbarian (d12)</option>
+                      <option value="Bard">Bard (d8)</option>
+                      <option value="Monk">Monk (d8)</option>
+                      <option value="Sorcerer">Sorcerer (d6)</option>
+                    @endif
+                  </select>
+                </div>
+
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-medium" for="claimCharArchetype">
+                    <i class="icon-base ti tabler-crown text-warning me-1"></i> {{ __('Archetype (Subclass / Optional)') }}
+                  </label>
+                  <input type="text" class="form-control" id="claimCharArchetype" placeholder="{{ __('e.g. Grenadier, Mutagen Mauler...') }}" />
+                </div>
+              </div>
             </div>
           </div>
 
           <!-- Section 3: Ability Scores (STR, DEX, CON, INT, WIS, CHA) -->
-          <div class="claim-panel-card p-3 mb-3">
-            <div class="d-flex align-items-center justify-content-between mb-3">
-              <h6 class="fw-bold text-white mb-0 d-flex align-items-center gap-2 fs-5">
-                <i class="icon-base ti tabler-dice-6 text-warning fs-4"></i>
-                <span>{{ __('Ability Scores') }} <span class="text-danger">*</span></span>
-              </h6>
-              <button type="button" class="btn btn-warning btn-sm fw-bold px-3" id="btnClaimRollStats">
+          <div class="card border mb-4 shadow-none">
+            <div class="card-header bg-transparent border-bottom py-3 px-3 px-md-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+              <div class="d-flex align-items-center gap-2">
+                <span class="avatar avatar-xs bg-label-info rounded d-flex align-items-center justify-content-center">
+                  <i class="icon-base ti tabler-dice-6 fs-6"></i>
+                </span>
+                <h6 class="card-title mb-0 fw-bold text-heading">
+                  {{ __('3. Ability Scores') }} <span class="text-danger">*</span>
+                </h6>
+              </div>
+              <button type="button" class="btn btn-xs btn-label-warning fw-semibold waves-effect" id="btnClaimRollStats">
                 <i class="icon-base ti tabler-dice me-1"></i> {{ __('Standard Heroic Array (16, 14, 14, 12, 12, 10)') }}
               </button>
             </div>
 
-            <div class="row g-2 text-center font-monospace">
-              @php
-                $stats = ['str' => 'STR', 'dex' => 'DEX', 'con' => 'CON', 'int' => 'INT', 'wis' => 'WIS', 'cha' => 'CHA'];
-              @endphp
-              @foreach($stats as $k => $label)
-                <div class="col-4 col-md-2">
-                  <div class="claim-stat-box p-2 rounded">
-                    <span class="d-block fw-bold text-info small mb-1">{{ $label }}</span>
-                    <input type="number" min="1" max="30" class="form-control form-control-sm text-center fw-bold claim-stat-input text-white"
-                           id="claimStat_{{ $k }}" data-stat="{{ $k }}" value="14" required />
-                    <span class="small fw-bold text-success claim-stat-mod mt-1 d-block" id="claimMod_{{ $k }}">+2</span>
+            <div class="card-body p-3 p-md-4">
+              <div class="row g-2 text-center font-monospace">
+                @php
+                  $stats = ['str' => 'STR', 'dex' => 'DEX', 'con' => 'CON', 'int' => 'INT', 'wis' => 'WIS', 'cha' => 'CHA'];
+                @endphp
+                @foreach($stats as $k => $label)
+                  <div class="col-4 col-md-2">
+                    <div class="card border shadow-none bg-body p-2 h-100 text-center">
+                      <span class="d-block fw-bold text-uppercase text-body-secondary small mb-1">{{ $label }}</span>
+                      <input type="number" min="1" max="30" class="form-control form-control-sm text-center fw-bold claim-stat-input fs-5"
+                             id="claimStat_{{ $k }}" data-stat="{{ $k }}" value="14" required />
+                      <span class="badge bg-label-success mt-2 fw-bold claim-stat-mod" id="claimMod_{{ $k }}">+2</span>
+                    </div>
                   </div>
+                @endforeach
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 4: Live Combat & Progression Preview -->
+          <div class="card border border-primary border-opacity-25 bg-label-primary shadow-none mb-4" id="claimLiveStatsPreview">
+            <div class="card-body p-3 p-md-4">
+              <div class="row g-3 text-center font-monospace align-items-center">
+                <div class="col-6 col-md-3">
+                  <span class="text-body-secondary small d-block mb-1">{{ __('Starting Level') }}</span>
+                  <h4 class="mb-0 fw-bold text-primary" id="claimPreviewLevel">Level 12</h4>
                 </div>
-              @endforeach
-            </div>
-          </div>
-
-          <!-- Section 4: Live Combat Preview (Level Calculation) -->
-          <div class="claim-preview-box p-3 rounded-3 text-center font-monospace" id="claimLiveStatsPreview">
-            <div class="row g-2 small">
-              <div class="col-3">
-                <span class="d-block claim-label-dim">{{ __('Starting HP:') }}</span>
-                <strong class="text-success fs-5" id="claimPreviewHp">100 HP</strong>
-              </div>
-              <div class="col-3">
-                <span class="d-block claim-label-dim">{{ __('BAB:') }}</span>
-                <strong class="text-warning fs-5" id="claimPreviewBab">+12/+7/+2</strong>
-              </div>
-              <div class="col-3">
-                <span class="d-block claim-label-dim">{{ __('Fort / Ref / Will:') }}</span>
-                <strong class="text-info fs-5" id="claimPreviewSaves">+8 / +4 / +4</strong>
-              </div>
-              <div class="col-3">
-                <span class="d-block claim-label-dim">{{ __('Starting Level:') }}</span>
-                <strong class="text-warning fs-5" id="claimPreviewLevel">Level 12</strong>
+                <div class="col-6 col-md-3">
+                  <span class="text-body-secondary small d-block mb-1">{{ __('Calculated HP') }}</span>
+                  <h4 class="mb-0 fw-bold text-success" id="claimPreviewHp">100 HP</h4>
+                </div>
+                <div class="col-6 col-md-3">
+                  <span class="text-body-secondary small d-block mb-1">{{ __('Base Attack (BAB)') }}</span>
+                  <h4 class="mb-0 fw-bold text-warning" id="claimPreviewBab">+12/+7/+2</h4>
+                </div>
+                <div class="col-6 col-md-3">
+                  <span class="text-body-secondary small d-block mb-1">{{ __('Fort / Ref / Will') }}</span>
+                  <h4 class="mb-0 fw-bold text-info" id="claimPreviewSaves">+8 / +4 / +4</h4>
+                </div>
               </div>
             </div>
           </div>
 
-        </div>
-
-        <!-- Modal Footer -->
-        <div class="modal-footer claim-modal-footer p-3 p-md-4 d-flex align-items-center justify-content-between">
-          <button type="button" class="btn btn-outline-secondary btn-sm px-3 text-light" data-bs-dismiss="modal">
-            {{ __('Cancel') }}
-          </button>
-          <button type="submit" class="btn btn-warning btn-sm fw-bold px-4 shadow-md" id="btnSubmitClaimCharacter">
-            <i class="icon-base ti tabler-user-check me-1 fs-5"></i>
-            <span id="btnSubmitClaimText">{{ __('Claim Character & Start at Level') }}</span>
-          </button>
-        </div>
-      </form>
+          <!-- Modal Actions Footer -->
+          <div class="d-flex align-items-center justify-content-between pt-2">
+            <button type="button" class="btn btn-label-secondary waves-effect" data-bs-dismiss="modal">
+              <i class="icon-base ti tabler-x me-1"></i> {{ __('Cancel') }}
+            </button>
+            <button type="submit" class="btn btn-warning waves-effect waves-light shadow-sm fw-bold px-4" id="btnSubmitClaimCharacter" {{ $isFull ? 'disabled' : '' }}>
+              <i class="icon-base ti tabler-user-check me-1_5"></i>
+              <span id="btnSubmitClaimText">{{ __('Claim Character & Start at Level') }}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </div>
 
 <style>
-/* ==========================================================================
-   Claim Character Modal - High Contrast, Smooth Scrolling & Modern Dark Design
-   ========================================================================== */
+/* Vuexy Claim Character Modal Enhancements */
 #claimCharacterModal .modal-dialog {
-  max-height: 90vh !important;
+  max-width: 980px;
 }
-
-#claimCharacterModal .claim-modal-content {
-  background: #111424 !important;
-  border: 1px solid rgba(245, 158, 11, 0.45) !important;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85) !important;
-  border-radius: 0.75rem;
-  max-height: 90vh !important;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
-}
-
-#claimCharacterModal .claim-modal-header {
-  background: #161a30 !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
-  flex-shrink: 0 !important;
-}
-
-#claimCharacterModal .claim-modal-footer {
-  background: #161a30 !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
-  flex-shrink: 0 !important;
-}
-
-#claimCharacterModal .claim-modal-body {
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  flex: 1 1 auto !important;
-  max-height: calc(90vh - 160px) !important;
-  scroll-behavior: smooth;
+#claimCharacterModal .modal-body {
+  max-height: calc(88vh - 40px);
+  overflow-y: auto;
+  overflow-x: hidden;
   scrollbar-width: thin;
-  scrollbar-color: rgba(245, 158, 11, 0.45) #0d101e;
 }
-
-/* Custom Amber/Dark Scrollbar */
-#claimCharacterModal .claim-modal-body::-webkit-scrollbar {
-  width: 10px;
-}
-
-#claimCharacterModal .claim-modal-body::-webkit-scrollbar-track {
-  background: #0d101e;
-  border-radius: 5px;
-}
-
-#claimCharacterModal .claim-modal-body::-webkit-scrollbar-thumb {
-  background: rgba(245, 158, 11, 0.45);
-  border-radius: 5px;
-  border: 2px solid #0d101e;
-}
-
-#claimCharacterModal .claim-modal-body::-webkit-scrollbar-thumb:hover {
-  background: #f59e0b;
-}
-
-#claimCharacterModal .claim-subtitle {
-  color: #cbd5e1 !important;
-  font-size: 0.85rem;
-  line-height: 1.4;
-}
-
-#claimCharacterModal .claim-label-dim {
-  color: #94a3b8 !important;
-  font-weight: 500;
-}
-
-#claimCharacterModal .claim-alert {
-  background: rgba(245, 158, 11, 0.14) !important;
-  border: 1px solid rgba(245, 158, 11, 0.45) !important;
-  border-radius: 0.5rem;
-}
-
-#claimCharacterModal .claim-alert-text {
-  color: #fef3c7 !important;
-  line-height: 1.5;
-}
-
-/* Panel Cards */
-#claimCharacterModal .claim-panel-card {
-  background: #181c33 !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  border-radius: 0.625rem;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
-}
-
-/* Inner Slots & Boxes */
-#claimCharacterModal .claim-stat-box,
-#claimCharacterModal .claim-preview-box {
-  background: #0d101e !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
-}
-
-#claimCharacterModal .claim-dossier-card {
-  background: rgba(245, 158, 11, 0.09) !important;
-  border: 1px solid rgba(245, 158, 11, 0.45) !important;
-}
-
-/* Form Controls & Inputs */
-#claimCharacterModal .form-label {
-  color: #f8fafc !important;
-}
-
-#claimCharacterModal .form-control,
-#claimCharacterModal .form-select,
-#claimCharacterModal .input-group-text {
-  background-color: #0a0d18 !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.22) !important;
-}
-
-#claimCharacterModal .form-control:focus,
-#claimCharacterModal .form-select:focus {
-  background-color: #0e1222 !important;
-  color: #ffffff !important;
-  border-color: #f59e0b !important;
-  box-shadow: 0 0 0 0.2rem rgba(245, 158, 11, 0.25) !important;
-}
-
-#claimCharacterModal .form-control::placeholder {
-  color: #94a3b8 !important;
-  opacity: 1 !important;
-}
-
-#claimCharacterModal .form-select option {
-  background-color: #111424 !important;
-  color: #ffffff !important;
-}
-
 #claimCharacterModal .claim-stat-input {
   font-size: 1.15rem !important;
+  font-weight: 700;
 }
 </style>
 
@@ -358,17 +322,22 @@ document.addEventListener('DOMContentLoaded', function () {
   if (!claimModal) return;
 
   const claimSearchInput = document.getElementById('claimSearchInput');
-  const btnClaimSearch = document.getElementById('btnClaimSearch');
+  const btnClaimClearSearch = document.getElementById('btnClaimClearSearch');
   const claimCharacterSelect = document.getElementById('claimCharacterSelect');
+  const claimCharCountBadge = document.getElementById('claimCharCountBadge');
+  const claimSelectSubtext = document.getElementById('claimSelectSubtext');
   const claimSelectedDossierCard = document.getElementById('claimSelectedDossierCard');
 
   const claimCardCharName = document.getElementById('claimCardCharName');
   const claimCardPlayerRank = document.getElementById('claimCardPlayerRank');
   const claimCardLevelBadge = document.getElementById('claimCardLevelBadge');
   const claimCardXpBadge = document.getElementById('claimCardXpBadge');
+  const claimCardAllowanceBadge = document.getElementById('claimCardAllowanceBadge');
   const claimCardRank = document.getElementById('claimCardRank');
   const claimCardType = document.getElementById('claimCardType');
+  const claimCardTypeDetail = document.getElementById('claimCardTypeDetail');
   const claimCardAllowance = document.getElementById('claimCardAllowance');
+  const claimCardXpRaw = document.getElementById('claimCardXpRaw');
 
   const claimCharRace = document.getElementById('claimCharRace');
   const claimCharClass = document.getElementById('claimCharClass');
@@ -385,81 +354,127 @@ document.addEventListener('DOMContentLoaded', function () {
   const claimPreviewLevel = document.getElementById('claimPreviewLevel');
 
   let activeClaimChar = null;
+  let allCharactersList = [];
   let isClaimLoaded = false;
 
-  function escapeHtml(text) {
-    if (!text) return '';
-    return String(text)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
+  function renderSelectOptions(list) {
+    if (!claimCharacterSelect) return;
+    claimCharacterSelect.innerHTML = '';
+    const totalCount = allCharactersList.length;
+    const currentCount = list.length;
+
+    if (claimCharCountBadge) {
+      claimCharCountBadge.textContent = `${currentCount} ${currentCount === 1 ? '{{ __("Character") }}' : '{{ __("Characters") }}'} (A-Z)`;
+    }
+
+    if (list.length === 0) {
+      claimCharacterSelect.innerHTML = '<option value="" disabled selected>{{ __("No matching characters found") }}</option>';
+      if (claimSelectSubtext) {
+        claimSelectSubtext.textContent = '{{ __("No characters match your search filter.") }}';
+      }
+      return;
+    }
+
+    const placeholderText = list.length === totalCount
+      ? `{{ __("Select a character (:count characters, A to Z)...", ["count" => ""]) }}${totalCount} {{ __("characters (A-Z)") }}`
+      : `{{ __("Select from filtered matches (:count characters)...", ["count" => ""]) }}${currentCount} {{ __("matches") }}`;
+
+    if (claimSelectSubtext) {
+      claimSelectSubtext.textContent = list.length === totalCount
+        ? `{{ __("All :count characters in registry sorted alphabetically A to Z.", ["count" => ""]) }}`.replace(':count', totalCount)
+        : `{{ __("Showing :count matching characters.", ["count" => ""]) }}`.replace(':count', currentCount);
+    }
+
+    const defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.disabled = true;
+    defaultOpt.selected = !activeClaimChar;
+    defaultOpt.textContent = placeholderText;
+    claimCharacterSelect.appendChild(defaultOpt);
+
+    list.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = `${c.name} (Lvl ${c.level} • ${Number(c.total_xp).toLocaleString()} XP • ${c.rank_name})`;
+      if (activeClaimChar && String(activeClaimChar.id) === String(c.id)) {
+        opt.selected = true;
+      }
+      claimCharacterSelect.appendChild(opt);
+    });
+
+    // Auto-select if exact match or single result during search
+    if (list.length === 1 && claimSearchInput && claimSearchInput.value.trim().length > 0) {
+      claimCharacterSelect.value = list[0].id;
+      loadClaimDetails(list[0].id);
+    }
   }
 
-  function fetchClaimableCharacters(search = '') {
-    const baseUrl = '{{ route("valiant-shade.character.claimable-list") }}';
-    const url = baseUrl + (search ? '?q=' + encodeURIComponent(search) : '');
-    claimCharacterSelect.innerHTML = '<option value="" disabled selected>{{ __("Searching characters...") }}</option>';
+  function fetchClaimableCharacters() {
+    if (claimCharCountBadge) {
+      claimCharCountBadge.innerHTML = '<span class="spinner-border spinner-border-sm me-1" style="width: 0.8rem; height: 0.8rem;"></span>{{ __("Loading characters...") }}';
+    }
+    claimCharacterSelect.innerHTML = '<option value="" disabled selected>{{ __("Loading all characters from XP records...") }}</option>';
 
-    fetch(url)
+    fetch('{{ route("valiant-shade.character.claimable-list") }}')
       .then(r => r.json())
       .then(data => {
         if (data.success && Array.isArray(data.characters)) {
-          if (data.characters.length === 0) {
-            claimCharacterSelect.innerHTML = '<option value="" disabled selected>{{ __("No characters found") }}</option>';
-            return;
-          }
-          claimCharacterSelect.innerHTML = '<option value="" disabled selected>{{ __("Select a character (Total: ") }}' + data.characters.length + ')...</option>';
-          data.characters.forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c.id;
-            opt.textContent = `${c.name} (Lvl ${c.level} • ${Number(c.total_xp).toLocaleString()} XP • ${c.rank_name})`;
-            claimCharacterSelect.appendChild(opt);
-          });
-
-          // If search matched single character, auto-select and load details
-          if (search && data.characters.length === 1) {
-            claimCharacterSelect.value = data.characters[0].id;
-            loadClaimDetails(data.characters[0].id);
-          }
+          allCharactersList = data.characters;
+          isClaimLoaded = true;
+          renderSelectOptions(allCharactersList);
+        } else {
+          claimCharacterSelect.innerHTML = '<option value="" disabled selected>{{ __("No characters found") }}</option>';
+          if (claimCharCountBadge) claimCharCountBadge.textContent = '0 {{ __("characters") }}';
         }
       })
       .catch(err => {
         console.error('Failed to load characters:', err);
         claimCharacterSelect.innerHTML = '<option value="" disabled selected>{{ __("Loading failed") }}</option>';
+        if (claimCharCountBadge) claimCharCountBadge.textContent = '{{ __("Error loading") }}';
       });
   }
 
-  // Pre-load characters on modal open
+  // Pre-load characters when modal opens
   claimModal.addEventListener('show.bs.modal', function () {
     if (!isClaimLoaded) {
       fetchClaimableCharacters();
-      isClaimLoaded = true;
     }
   });
 
-  // Debounced search
-  let searchTimeout = null;
-  if (claimSearchInput) {
-    claimSearchInput.addEventListener('input', function () {
-      clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(() => {
-        fetchClaimableCharacters(claimSearchInput.value.trim());
-      }, 350);
-    });
+  // Client-side instant real-time filtering
+  function handleFilter() {
+    if (!claimSearchInput) return;
+    const term = (claimSearchInput.value || '').trim().toLowerCase();
+    if (term.length > 0) {
+      if (btnClaimClearSearch) btnClaimClearSearch.classList.remove('d-none');
+      const filtered = allCharactersList.filter(c => {
+        const nameMatch = c.name && c.name.toLowerCase().includes(term);
+        const rankMatch = c.rank_name && c.rank_name.toLowerCase().includes(term);
+        const typeMatch = c.character_type && c.character_type.toLowerCase().includes(term);
+        return nameMatch || rankMatch || typeMatch;
+      });
+      renderSelectOptions(filtered);
+    } else {
+      if (btnClaimClearSearch) btnClaimClearSearch.classList.add('d-none');
+      renderSelectOptions(allCharactersList);
+    }
+  }
 
+  if (claimSearchInput) {
+    claimSearchInput.addEventListener('input', handleFilter);
     claimSearchInput.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        fetchClaimableCharacters(claimSearchInput.value.trim());
+      if (e.key === 'Escape') {
+        claimSearchInput.value = '';
+        handleFilter();
       }
     });
   }
 
-  if (btnClaimSearch) {
-    btnClaimSearch.addEventListener('click', function () {
-      fetchClaimableCharacters(claimSearchInput.value.trim());
+  if (btnClaimClearSearch) {
+    btnClaimClearSearch.addEventListener('click', function () {
+      claimSearchInput.value = '';
+      handleFilter();
+      claimSearchInput.focus();
     });
   }
 
@@ -489,18 +504,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function renderClaimCharacter(char) {
     activeClaimChar = char;
-    claimSelectedDossierCard.classList.remove('d-none');
+    if (claimSelectedDossierCard) claimSelectedDossierCard.classList.remove('d-none');
 
-    claimCardCharName.textContent = char.name;
-    claimCardPlayerRank.textContent = `${char.rank || 'Member'} • ${char.character_type || 'MAIN'}`;
-    claimCardLevelBadge.textContent = `Level ${char.level}`;
-    claimCardXpBadge.textContent = `${Number(char.total_xp).toLocaleString()} XP`;
-    claimCardRank.textContent = char.rank || 'Member';
-    claimCardType.textContent = char.character_type || 'MAIN';
-    claimCardAllowance.textContent = `${Number(char.allowance_sp).toLocaleString()} SP`;
+    if (claimCardCharName) claimCardCharName.textContent = char.name;
+    if (claimCardPlayerRank) claimCardPlayerRank.textContent = `${char.rank || 'Member'} • ${char.character_type || 'MAIN'}`;
+    if (claimCardLevelBadge) claimCardLevelBadge.textContent = `Level ${char.level}`;
+    if (claimCardXpBadge) claimCardXpBadge.textContent = `${Number(char.total_xp).toLocaleString()} XP`;
+    if (claimCardXpRaw) claimCardXpRaw.textContent = `${Number(char.total_xp).toLocaleString()} XP`;
+    if (claimCardRank) claimCardRank.textContent = char.rank || 'Member';
+    if (claimCardType) claimCardType.textContent = char.character_type || 'MAIN';
+    if (claimCardTypeDetail) claimCardTypeDetail.textContent = char.character_type || 'MAIN';
+    if (claimCardAllowance) claimCardAllowance.textContent = `${Number(char.allowance_sp).toLocaleString()} SP`;
+    if (claimCardAllowanceBadge) claimCardAllowanceBadge.textContent = `${Number(char.allowance_sp).toLocaleString()} SP`;
 
     // Set suggested race
-    if (char.suggested_race) {
+    if (char.suggested_race && claimCharRace) {
       for (let i = 0; i < claimCharRace.options.length; i++) {
         if (claimCharRace.options[i].value.toLowerCase() === char.suggested_race.toLowerCase()) {
           claimCharRace.selectedIndex = i;
@@ -510,7 +528,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Set suggested class
-    if (char.suggested_class) {
+    if (char.suggested_class && claimCharClass) {
       for (let i = 0; i < claimCharClass.options.length; i++) {
         if (claimCharClass.options[i].value.toLowerCase().includes(char.suggested_class.toLowerCase()) ||
             char.suggested_class.toLowerCase().includes(claimCharClass.options[i].value.toLowerCase())) {
@@ -521,7 +539,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Set suggested archetype
-    claimCharArchetype.value = char.suggested_archetype || '';
+    if (claimCharArchetype) {
+      claimCharArchetype.value = char.suggested_archetype || '';
+    }
 
     // Set suggested stats
     if (char.suggested_stats) {
@@ -534,6 +554,10 @@ document.addEventListener('DOMContentLoaded', function () {
       updateAllStatMods();
     }
 
+    if (btnSubmitClaimText) {
+      btnSubmitClaimText.textContent = `{{ __('Claim') }} ${char.name} ({{ __('Level') }} ${char.level})`;
+    }
+
     // Live preview
     updateClaimLivePreview();
   }
@@ -544,7 +568,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const conVal = parseInt(document.getElementById('claimStat_con')?.value, 10) || 10;
     const conMod = Math.floor((conVal - 10) / 2);
 
-    const clsName = claimCharClass.value || 'Fighter';
+    const clsName = claimCharClass ? (claimCharClass.value || 'Fighter') : 'Fighter';
     let hd = 10;
     let babProg = 'full';
     let goodFort = false, goodRef = false, goodWill = false;
@@ -597,10 +621,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const ref = calcSave(goodRef);
     const will = calcSave(goodWill);
 
-    claimPreviewHp.textContent = `${totalHp} HP`;
-    claimPreviewBab.textContent = babStr;
-    claimPreviewSaves.textContent = `+${fort} / +${ref} / +${will}`;
-    claimPreviewLevel.textContent = `Level ${lvl}`;
+    if (claimPreviewHp) claimPreviewHp.textContent = `${totalHp} HP`;
+    if (claimPreviewBab) claimPreviewBab.textContent = babStr;
+    if (claimPreviewSaves) claimPreviewSaves.textContent = `+${fort} / +${ref} / +${will}`;
+    if (claimPreviewLevel) claimPreviewLevel.textContent = `Level ${lvl}`;
   }
 
   function updateAllStatMods() {
@@ -634,7 +658,9 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  claimCharClass.addEventListener('change', updateClaimLivePreview);
+  if (claimCharClass) {
+    claimCharClass.addEventListener('change', updateClaimLivePreview);
+  }
 
   // Form submission with strict validation
   formClaimCharacter.addEventListener('submit', function (e) {
@@ -646,16 +672,16 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    const charRace = claimCharRace.value;
-    const charClass = claimCharClass.value;
+    const charRace = claimCharRace ? claimCharRace.value : '';
+    const charClass = claimCharClass ? claimCharClass.value : '';
     if (!charRace) {
       alert('{{ __("Character Race is required.") }}');
-      claimCharRace.focus();
+      claimCharRace?.focus();
       return;
     }
     if (!charClass) {
       alert('{{ __("Character Class is required.") }}');
-      claimCharClass.focus();
+      claimCharClass?.focus();
       return;
     }
 
@@ -681,7 +707,7 @@ document.addEventListener('DOMContentLoaded', function () {
       character_id: activeClaimChar.id,
       race: charRace,
       class_name: charClass,
-      archetype: claimCharArchetype.value.trim(),
+      archetype: claimCharArchetype ? claimCharArchetype.value.trim() : '',
       str: stats.str,
       dex: stats.dex,
       con: stats.con,
@@ -723,7 +749,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       } else {
         btnSubmitClaimCharacter.disabled = false;
-        btnSubmitClaimText.textContent = '{{ __("Claim Character & Start at Level") }}';
+        btnSubmitClaimText.textContent = `{{ __('Claim') }} ${activeClaimChar.name} ({{ __('Level') }} ${activeClaimChar.level})`;
         const errMsg = body.message || (body.errors ? Object.values(body.errors).flat().join('\n') : '{{ __("Failed to claim character.") }}');
         if (typeof Swal !== 'undefined') {
           Swal.fire({ icon: 'error', title: '{{ __("Error") }}', text: errMsg });
@@ -735,7 +761,7 @@ document.addEventListener('DOMContentLoaded', function () {
     .catch(err => {
       console.error('Claim submit error:', err);
       btnSubmitClaimCharacter.disabled = false;
-      btnSubmitClaimText.textContent = '{{ __("Claim Character & Start at Level") }}';
+      btnSubmitClaimText.textContent = `{{ __('Claim') }} ${activeClaimChar.name} ({{ __('Level') }} ${activeClaimChar.level})`;
       alert('{{ __("Could not connect to server. Please try again.") }}');
     });
   });

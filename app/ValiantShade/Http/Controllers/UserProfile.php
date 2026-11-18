@@ -628,15 +628,16 @@ class UserProfile extends Controller
   {
     $search = $request->query('q', '');
     $query = \App\Models\Character::with('rank')
-      ->orderBy('current_level', 'desc')
-      ->orderBy('total_xp', 'desc');
+      ->whereNotNull('name')
+      ->where('name', '!=', '')
+      ->orderByRaw('LOWER(TRIM(name)) ASC');
 
     if (!empty($search)) {
       $term = mb_strtolower(trim($search));
       $query->whereRaw('LOWER(name) LIKE ?', ["%{$term}%"]);
     }
 
-    $chars = $query->take(150)->get()->map(function ($c) {
+    $chars = $query->get()->map(function ($c) {
       return [
         'id' => $c->id,
         'name' => $c->name,
