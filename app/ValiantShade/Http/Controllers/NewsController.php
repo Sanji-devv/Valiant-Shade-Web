@@ -32,35 +32,35 @@ class NewsController extends Controller
             $rawNews = [
                 [
                     'id' => 1,
-                    'title' => 'Gölge Dehlizleri Seferinde Ağır Kayıp: Baş Muhafız Braum ve 4 Keşif Eri Şehit Düştü',
-                    'category' => 'Ölüm & Şehitler',
+                    'title' => 'GÃ¶lge Dehlizleri Seferinde AÄŸÄ±r KayÄ±p: BaÅŸ MuhafÄ±z Braum ve 4 KeÅŸif Eri Åehit DÃ¼ÅŸtÃ¼',
+                    'category' => 'Ã–lÃ¼m & Åehitler',
                     'badge_color' => 'danger',
                     'category_icon' => 'icon-base ti tabler-skull',
-                    'tag' => 'Lonca Yası & Anma',
+                    'tag' => 'Lonca YasÄ± & Anma',
                     'tag_icon' => 'icon-base ti tabler-candle',
-                    'date_text' => 'Bugün 04:15',
+                    'date_text' => 'BugÃ¼n 04:15',
                     'published_date' => '01 Ekim 2026, 04:15',
                     'read_time' => '4 dk okuma',
                     'image_file' => 'guild_fallen_memorial.jpg',
-                    'location_badge' => 'Gölge Dehlizleri - 3. Mühürlü Kat',
-                    'author' => 'Lonca Başkâtibi Eldrin',
-                    'author_role' => 'Yüksek Divan Kıdemli Yazmanı',
+                    'location_badge' => 'GÃ¶lge Dehlizleri - 3. MÃ¼hÃ¼rlÃ¼ Kat',
+                    'author' => 'Lonca BaÅŸkÃ¢tibi Eldrin',
+                    'author_role' => 'YÃ¼ksek Divan KÄ±demli YazmanÄ±',
                     'author_avatar' => 'static/valiant-shade/assets/img/avatars/1.png',
                     'is_breaking' => true,
-                    'description' => "Gölge Dehlizleri'nin 3. katında Kadim Lich Malgok'un beklenmedik nekromansi pususuna yakalanan 1. Keşif Kolu'nda Baş Muhafız Braum 'Demiryürek' ve beraberindeki 4 genç savaşçı şehadet şerbetini içti. Lonca merkezinde 3 günlük resmi yas ilan edildi.",
-                    'full_story' => "Valiant Shade Yüksek Komutanlığı tarafından sabaha karşı yayınlanan acı bildiriye göre; Gölge Dehlizleri'nin mühürlü 3. seviyesine rutin haritalama amacıyla inen 'Gümüş Pençe' devriye birliği, kadim haritalarda işaretlenmemiş bir nekromansi pususuna düştü.
+                    'description' => "GÃ¶lge Dehlizleri'nin 3. katÄ±nda Kadim Lich Malgok'un beklenmedik nekromansi pususuna yakalanan 1. KeÅŸif Kolu'nda BaÅŸ MuhafÄ±z Braum 'DemiryÃ¼rek' ve beraberindeki 4 genÃ§ savaÅŸÃ§Ä± ÅŸehadet ÅŸerbetini iÃ§ti. Lonca merkezinde 3 gÃ¼nlÃ¼k resmi yas ilan edildi.",
+                    'full_story' => "Valiant Shade YÃ¼ksek KomutanlÄ±ÄŸÄ± tarafÄ±ndan sabaha karÅŸÄ± yayÄ±nlanan acÄ± bildiriye gÃ¶re; GÃ¶lge Dehlizleri'nin mÃ¼hÃ¼rlÃ¼ 3. seviyesine rutin haritalama amacÄ±yla inen 'GÃ¼mÃ¼ÅŸ PenÃ§e' devriye birliÄŸi, kadim haritalarda iÅŸaretlenmemiÅŸ bir nekromansi pususuna dÃ¼ÅŸtÃ¼.
 
-Birliğe liderlik eden 28 yıllık kıdemli Baş Muhafız Braum 'Demiryürek', arkasındaki acemi büyücüleri ve yaralı izcileri kurtarabilmek için yıkılan mermer kemerin altında tek başına kalkan oluşturdu. Yanındaki cesur silah arkadaşları Kolcu Kaelen, Şövalye Varis, Çırak Arcanist Alistair ve Sıhhiyeci Lyanna, son nefeslerine kadar mevzilerini terk etmedi.
+BirliÄŸe liderlik eden 28 yÄ±llÄ±k kÄ±demli BaÅŸ MuhafÄ±z Braum 'DemiryÃ¼rek', arkasÄ±ndaki acemi bÃ¼yÃ¼cÃ¼leri ve yaralÄ± izcileri kurtarabilmek iÃ§in yÄ±kÄ±lan mermer kemerin altÄ±nda tek baÅŸÄ±na kalkan oluÅŸturdu. YanÄ±ndaki cesur silah arkadaÅŸlarÄ± Kolcu Kaelen, ÅÃ¶valye Varis, Ã‡Ä±rak Arcanist Alistair ve SÄ±hhiyeci Lyanna, son nefeslerine kadar mevzilerini terk etmedi.
 
-Hayatta kalan izcilerin ifadesine göre, Braum kalkanını dehlizin girişine mıhlayarak arkasındaki 8 lonca üyesinin güvenle tahliye olmasını sağladı. Şehitlerimizin naaşları, Lonca Şövalyeleri tarafından sabahın ilk ışıklarıyla Meclis Şapeli'ne getirildi.
+Hayatta kalan izcilerin ifadesine gÃ¶re, Braum kalkanÄ±nÄ± dehlizin giriÅŸine mÄ±hlayarak arkasÄ±ndaki 8 lonca Ã¼yesinin gÃ¼venle tahliye olmasÄ±nÄ± saÄŸladÄ±. Åehitlerimizin naaÅŸlarÄ±, Lonca ÅÃ¶valyeleri tarafÄ±ndan sabahÄ±n ilk Ä±ÅŸÄ±klarÄ±yla Meclis Åapeli'ne getirildi.
 
-Lonca Ustası Lord Gerald fermanıyla: Valiant Shade bayrakları yarıya indirilmiş, büyük salonda anma sunağı kurulmuş ve şehitlerimizin ailelerine Lonca Hazinesi'nden ömür boyu maaş tahsis edilmiştir. Ruhları Kadim Işık'ta huzur bulsun.",
-                    'testimony' => "Braum son nefesinde kalkanını yere vurdu ve 'Arkamı kollamayı bırakın, çırakları dehlizden çıkarın!' diye kükredi. Onun sayesinde bugün nefes alabiliyoruz. — Kurtulan İvece Kolcusu Finn",
+Lonca UstasÄ± Lord Gerald fermanÄ±yla: Valiant Shade bayraklarÄ± yarÄ±ya indirilmiÅŸ, bÃ¼yÃ¼k salonda anma sunaÄŸÄ± kurulmuÅŸ ve ÅŸehitlerimizin ailelerine Lonca Hazinesi'nden Ã¶mÃ¼r boyu maaÅŸ tahsis edilmiÅŸtir. RuhlarÄ± Kadim IÅŸÄ±k'ta huzur bulsun.",
+                    'testimony' => "Braum son nefesinde kalkanÄ±nÄ± yere vurdu ve 'ArkamÄ± kollamayÄ± bÄ±rakÄ±n, Ã§Ä±raklarÄ± dehlizden Ã§Ä±karÄ±n!' diye kÃ¼kredi. Onun sayesinde bugÃ¼n nefes alabiliyoruz. â€” Kurtulan Ä°vece Kolcusu Finn",
                     'stats' => [
-                        ['label' => 'Şehit Sayısı', 'value' => '5 Kahraman', 'color' => 'text-danger'],
-                        ['label' => 'Kurtarılan Can', 'value' => '8 İvece', 'color' => 'text-success'],
-                        ['label' => 'Lonca Durumu', 'value' => '3 Gün Yas', 'color' => 'text-warning'],
-                        ['label' => 'Tehlike Kodu', 'value' => 'Kırmızı (Lich)', 'color' => 'text-danger'],
+                        ['label' => 'Åehit SayÄ±sÄ±', 'value' => '5 Kahraman', 'color' => 'text-danger'],
+                        ['label' => 'KurtarÄ±lan Can', 'value' => '8 Ä°vece', 'color' => 'text-success'],
+                        ['label' => 'Lonca Durumu', 'value' => '3 GÃ¼n Yas', 'color' => 'text-warning'],
+                        ['label' => 'Tehlike Kodu', 'value' => 'KÄ±rmÄ±zÄ± (Lich)', 'color' => 'text-danger'],
                     ],
                     'button_text' => 'Taziye Defteri & Detaylar',
                     'button_url' => '/valiant-shade/pages/news#news-1',
@@ -72,37 +72,37 @@ Lonca Ustası Lord Gerald fermanıyla: Valiant Shade bayrakları yarıya indiril
                 ],
                 [
                     'id' => 2,
-                    'title' => "Kızıl Han Fısıltıları: Valiant Shade Yöneticisinin Gölge Cemiyeti ile Gizli Gece Buluşması!",
+                    'title' => "KÄ±zÄ±l Han FÄ±sÄ±ltÄ±larÄ±: Valiant Shade YÃ¶neticisinin GÃ¶lge Cemiyeti ile Gizli Gece BuluÅŸmasÄ±!",
                     'category' => 'Dedikodu & Skandal',
                     'badge_color' => 'warning',
                     'category_icon' => 'icon-base ti tabler-flame',
                     'tag' => 'Meyhane Dedikodusu',
                     'tag_icon' => 'icon-base ti tabler-message-2-question',
-                    'date_text' => 'Dün Gece Yarısı',
-                    'published_date' => '30 Eylül 2026, 23:45',
+                    'date_text' => 'DÃ¼n Gece YarÄ±sÄ±',
+                    'published_date' => '30 EylÃ¼l 2026, 23:45',
                     'read_time' => '3 dk okuma',
                     'image_file' => 'guild_tavern_whispers.jpg',
-                    'location_badge' => 'Kızıl Han - Arka Loca No: 4',
+                    'location_badge' => 'KÄ±zÄ±l Han - Arka Loca No: 4',
                     'author' => 'Meyhaneci Barnaby',
-                    'author_role' => 'Kızıl Han Baş İşletmecisi & Şehir Gözcüsü',
+                    'author_role' => 'KÄ±zÄ±l Han BaÅŸ Ä°ÅŸletmecisi & Åehir GÃ¶zcÃ¼sÃ¼',
                     'author_avatar' => 'static/valiant-shade/assets/img/avatars/2.png',
                     'is_breaking' => false,
-                    'description' => "Kızıl Han'ın loş arka masalarında dün gece fısıltılar koptu: Valiant Shade Yüksek Meclisi'nden kukuletalı bir yöneticinin, yasaklı Gölge Hırsızlar Cemiyeti sözcüsüyle yüklü miktarda kara altın ve kan mühürlü bir antlaşma karşılığında gizlice el sıkıştığı iddia ediliyor!",
-                    'full_story' => "Kızıl Han'ın fıçıların arkasındaki loş köşelerinde dün gece öyle fısıltılar dolaştı ki, cüceler bile biralarını yudumlamayı bıraktı!
+                    'description' => "KÄ±zÄ±l Han'Ä±n loÅŸ arka masalarÄ±nda dÃ¼n gece fÄ±sÄ±ltÄ±lar koptu: Valiant Shade YÃ¼ksek Meclisi'nden kukuletalÄ± bir yÃ¶neticinin, yasaklÄ± GÃ¶lge HÄ±rsÄ±zlar Cemiyeti sÃ¶zcÃ¼sÃ¼yle yÃ¼klÃ¼ miktarda kara altÄ±n ve kan mÃ¼hÃ¼rlÃ¼ bir antlaÅŸma karÅŸÄ±lÄ±ÄŸÄ±nda gizlice el sÄ±kÄ±ÅŸtÄ±ÄŸÄ± iddia ediliyor!",
+                    'full_story' => "KÄ±zÄ±l Han'Ä±n fÄ±Ã§Ä±larÄ±n arkasÄ±ndaki loÅŸ kÃ¶ÅŸelerinde dÃ¼n gece Ã¶yle fÄ±sÄ±ltÄ±lar dolaÅŸtÄ± ki, cÃ¼celer bile biralarÄ±nÄ± yudumlamayÄ± bÄ±raktÄ±!
 
-Saat gece yarısını üç çeyrek geçe, sağ omzunda Valiant Shade'in altın sırmalı kurdelesini taşıdığı söylenen uzun boylu, gri pelerinli bir şahıs hanın servis kapısından içeri süzüldü. Arka localardan 4 numaralı masada, yüzünde gümüş bir tilki maskesi bulunan ve şehrin tekinsiz yeraltı dünyasından olduğu bilinen 'Gölge Elçi' onu bekliyordu.
+Saat gece yarÄ±sÄ±nÄ± Ã¼Ã§ Ã§eyrek geÃ§e, saÄŸ omzunda Valiant Shade'in altÄ±n sÄ±rmalÄ± kurdelesini taÅŸÄ±dÄ±ÄŸÄ± sÃ¶ylenen uzun boylu, gri pelerinli bir ÅŸahÄ±s hanÄ±n servis kapÄ±sÄ±ndan iÃ§eri sÃ¼zÃ¼ldÃ¼. Arka localardan 4 numaralÄ± masada, yÃ¼zÃ¼nde gÃ¼mÃ¼ÅŸ bir tilki maskesi bulunan ve ÅŸehrin tekinsiz yeraltÄ± dÃ¼nyasÄ±ndan olduÄŸu bilinen 'GÃ¶lge ElÃ§i' onu bekliyordu.
 
-Masaya servis yapan garson cüce Thorbjorn'un yeminle anlattığına göre; masaya bırakılan kadife keseden dökülen paralar sıradan imparatorluk altını değil, mühürlü 'Kara Zümrüt' sikkeleriydi! İkili, üzerinde mavi büyü alevi tüten bir antlaşma parşömenini kanla imzaladıktan sonra şehrin su kanallarına doğru hızla gözden kayboldu.
+Masaya servis yapan garson cÃ¼ce Thorbjorn'un yeminle anlattÄ±ÄŸÄ±na gÃ¶re; masaya bÄ±rakÄ±lan kadife keseden dÃ¶kÃ¼len paralar sÄ±radan imparatorluk altÄ±nÄ± deÄŸil, mÃ¼hÃ¼rlÃ¼ 'Kara ZÃ¼mrÃ¼t' sikkeleriydi! Ä°kili, Ã¼zerinde mavi bÃ¼yÃ¼ alevi tÃ¼ten bir antlaÅŸma parÅŸÃ¶menini kanla imzaladÄ±ktan sonra ÅŸehrin su kanallarÄ±na doÄŸru hÄ±zla gÃ¶zden kayboldu.
 
-Lonca Divanı iddiaları henüz resmi olarak doğrulamasa da, Lonca Hazinedarı'nın son 2 haftadır kayıp olan 'Obsidyen Mahzen Anahtarı' ile bu gizli buluşmanın bir bağı olup olmadığı sokaklarda en çok konuşulan komplo teorisi haline geldi.",
-                    'testimony' => "Kendi gözlerimle gördüm efendim! O pelerinin altındaki broş düpedüz Yüksek Meclis'in kartal armasıydı. Kadehleri tokuşturmadılar bile, parayı alıp karanlığa karıştılar. — Cüce Thorbjorn",
+Lonca DivanÄ± iddialarÄ± henÃ¼z resmi olarak doÄŸrulamasa da, Lonca HazinedarÄ±'nÄ±n son 2 haftadÄ±r kayÄ±p olan 'Obsidyen Mahzen AnahtarÄ±' ile bu gizli buluÅŸmanÄ±n bir baÄŸÄ± olup olmadÄ±ÄŸÄ± sokaklarda en Ã§ok konuÅŸulan komplo teorisi haline geldi.",
+                    'testimony' => "Kendi gÃ¶zlerimle gÃ¶rdÃ¼m efendim! O pelerinin altÄ±ndaki broÅŸ dÃ¼pedÃ¼z YÃ¼ksek Meclis'in kartal armasÄ±ydÄ±. Kadehleri tokuÅŸturmadÄ±lar bile, parayÄ± alÄ±p karanlÄ±ÄŸa karÄ±ÅŸtÄ±lar. â€” CÃ¼ce Thorbjorn",
                     'stats' => [
-                        ['label' => 'Güvenilirlik', 'value' => '%75 İddia', 'color' => 'text-warning'],
-                        ['label' => 'Görgü Tanığı', 'value' => '3 Masada', 'color' => 'text-info'],
-                        ['label' => 'Şüpheli Belge', 'value' => 'Kan Mühürlü', 'color' => 'text-danger'],
-                        ['label' => 'Rüşvet Tahmini', 'value' => '5.000 Kara Sikke', 'color' => 'text-warning'],
+                        ['label' => 'GÃ¼venilirlik', 'value' => '%75 Ä°ddia', 'color' => 'text-warning'],
+                        ['label' => 'GÃ¶rgÃ¼ TanÄ±ÄŸÄ±', 'value' => '3 Masada', 'color' => 'text-info'],
+                        ['label' => 'ÅÃ¼pheli Belge', 'value' => 'Kan MÃ¼hÃ¼rlÃ¼', 'color' => 'text-danger'],
+                        ['label' => 'RÃ¼ÅŸvet Tahmini', 'value' => '5.000 Kara Sikke', 'color' => 'text-warning'],
                     ],
-                    'button_text' => 'Fısıltıyı İncele',
+                    'button_text' => 'FÄ±sÄ±ltÄ±yÄ± Ä°ncele',
                     'button_url' => '/valiant-shade/pages/news#news-2',
                     'button_color' => 'warning',
                     'button_icon' => 'icon-base ti tabler-eye',
@@ -112,35 +112,35 @@ Lonca Divanı iddiaları henüz resmi olarak doğrulamasa da, Lonca Hazinedarı'
                 ],
                 [
                     'id' => 3,
-                    'title' => "Lonca Hazinedarı'na Gece Yarısı Suikast Girişimi: Zehirli Ok ve Bırakılan Kara Mektup",
-                    'category' => 'Suikast & İhanet',
+                    'title' => "Lonca HazinedarÄ±'na Gece YarÄ±sÄ± Suikast GiriÅŸimi: Zehirli Ok ve BÄ±rakÄ±lan Kara Mektup",
+                    'category' => 'Suikast & Ä°hanet',
                     'badge_color' => 'dark',
                     'category_icon' => 'icon-base ti tabler-dagger',
-                    'tag' => 'Acil Güvenlik Uyarısı',
+                    'tag' => 'Acil GÃ¼venlik UyarÄ±sÄ±',
                     'tag_icon' => 'icon-base ti tabler-alert-triangle',
-                    'date_text' => '12 saat önce',
+                    'date_text' => '12 saat Ã¶nce',
                     'published_date' => '01 Ekim 2026, 10:30',
                     'read_time' => '3 dk okuma',
                     'image_file' => 'guild_shadow_conspiracy.jpg',
-                    'location_badge' => 'Hazine Kulesi - Muhafız Avlusu',
-                    'author' => 'Muhafız Yüzbaşısı Torin',
-                    'author_role' => 'Kale Güvenliği ve Asayiş Şefi',
+                    'location_badge' => 'Hazine Kulesi - MuhafÄ±z Avlusu',
+                    'author' => 'MuhafÄ±z YÃ¼zbaÅŸÄ±sÄ± Torin',
+                    'author_role' => 'Kale GÃ¼venliÄŸi ve AsayiÅŸ Åefi',
                     'author_avatar' => 'static/valiant-shade/assets/img/avatars/3.png',
                     'is_breaking' => false,
-                    'description' => "Lonca Hazinedarı Lord Vance, çalışma odasında bütçe kayıtlarını incelerken pencereyi delen zehirli bir tatar yayı okuyla hedef alındı! Vance kıl payı kurtulurken, saldırganın geride bıraktığı parşömende 'Kasa açılacak, bedel ödenecek' yazdığı bildirildi.",
-                    'full_story' => "Valiant Shade Hazine Dairesi dün gece kanlı bir suikast girişimine sahne oldu. Saat 01:20 sularında, lonca surlarının doğu kulesinden ateşlenen gölge işlemeli zehirli bir arbalet oku, Lonca Hazinedarı Lord Vance'in tam kulağının yanından geçerek arkasındaki meşe kitaplığa saplandı.
+                    'description' => "Lonca HazinedarÄ± Lord Vance, Ã§alÄ±ÅŸma odasÄ±nda bÃ¼tÃ§e kayÄ±tlarÄ±nÄ± incelerken pencereyi delen zehirli bir tatar yayÄ± okuyla hedef alÄ±ndÄ±! Vance kÄ±l payÄ± kurtulurken, saldÄ±rganÄ±n geride bÄ±raktÄ±ÄŸÄ± parÅŸÃ¶mende 'Kasa aÃ§Ä±lacak, bedel Ã¶denecek' yazdÄ±ÄŸÄ± bildirildi.",
+                    'full_story' => "Valiant Shade Hazine Dairesi dÃ¼n gece kanlÄ± bir suikast giriÅŸimine sahne oldu. Saat 01:20 sularÄ±nda, lonca surlarÄ±nÄ±n doÄŸu kulesinden ateÅŸlenen gÃ¶lge iÅŸlemeli zehirli bir arbalet oku, Lonca HazinedarÄ± Lord Vance'in tam kulaÄŸÄ±nÄ±n yanÄ±ndan geÃ§erek arkasÄ±ndaki meÅŸe kitaplÄ±ÄŸa saplandÄ±.
 
-Okun ucunda sürülen zehrin nadir bulunan 'Wyvern Nefesi' toksini olduğu simyacılar tarafından doğrulandı. Tek bir sıyrığın bile dakikalar içinde kalbi durdurmaya yeteceği bu ölümcül sıvının karaborsadan temin edildiği düşünülüyor.
+Okun ucunda sÃ¼rÃ¼len zehrin nadir bulunan 'Wyvern Nefesi' toksini olduÄŸu simyacÄ±lar tarafÄ±ndan doÄŸrulandÄ±. Tek bir sÄ±yrÄ±ÄŸÄ±n bile dakikalar iÃ§inde kalbi durdurmaya yeteceÄŸi bu Ã¶lÃ¼mcÃ¼l sÄ±vÄ±nÄ±n karaborsadan temin edildiÄŸi dÃ¼ÅŸÃ¼nÃ¼lÃ¼yor.
 
-Suikastçının kaçarken düşürdüğü siyah ipek mendilde, Valiant Shade'in rakip hanedanlarına işaret eden gizli bir kabartma mühür ve kısa bir not bulundu: 'Kasa açılacak, bedel kanla ödenecek.'
+SuikastÃ§Ä±nÄ±n kaÃ§arken dÃ¼ÅŸÃ¼rdÃ¼ÄŸÃ¼ siyah ipek mendilde, Valiant Shade'in rakip hanedanlarÄ±na iÅŸaret eden gizli bir kabartma mÃ¼hÃ¼r ve kÄ±sa bir not bulundu: 'Kasa aÃ§Ä±lacak, bedel kanla Ã¶denecek.'
 
-Muhafız Yüzbaşısı Torin kalede kırmızı alarm ilan etti; Hazine Kulesi'ne giriş çıkışlar kısıtlandı ve tüm lonca üyelerine şüpheli kişileri derhal bildirmeleri çağrısında bulunuldu.",
-                    'testimony' => "Ok meşe tahtaya girdiğinde havaya yeşil bir duman yükseldi. Hedef doğrudan boynumdu. Loncamızın içindeki köstebek bulunana dek kimseye huzur yok. — Lord Vance",
+MuhafÄ±z YÃ¼zbaÅŸÄ±sÄ± Torin kalede kÄ±rmÄ±zÄ± alarm ilan etti; Hazine Kulesi'ne giriÅŸ Ã§Ä±kÄ±ÅŸlar kÄ±sÄ±tlandÄ± ve tÃ¼m lonca Ã¼yelerine ÅŸÃ¼pheli kiÅŸileri derhal bildirmeleri Ã§aÄŸrÄ±sÄ±nda bulunuldu.",
+                    'testimony' => "Ok meÅŸe tahtaya girdiÄŸinde havaya yeÅŸil bir duman yÃ¼kseldi. Hedef doÄŸrudan boynumdu. LoncamÄ±zÄ±n iÃ§indeki kÃ¶stebek bulunana dek kimseye huzur yok. â€” Lord Vance",
                     'stats' => [
                         ['label' => 'Hedef', 'value' => 'Lord Vance', 'color' => 'text-white'],
-                        ['label' => 'Kullanılan Zehir', 'value' => 'Wyvern Nefesi', 'color' => 'text-danger'],
-                        ['label' => 'Alarm Seviyesi', 'value' => 'Kod Kırmızı', 'color' => 'text-danger'],
-                        ['label' => 'Kelle Ödülü', 'value' => '2.500 Altın', 'color' => 'text-warning'],
+                        ['label' => 'KullanÄ±lan Zehir', 'value' => 'Wyvern Nefesi', 'color' => 'text-danger'],
+                        ['label' => 'Alarm Seviyesi', 'value' => 'Kod KÄ±rmÄ±zÄ±', 'color' => 'text-danger'],
+                        ['label' => 'Kelle Ã–dÃ¼lÃ¼', 'value' => '2.500 AltÄ±n', 'color' => 'text-warning'],
                     ],
                     'button_text' => 'Suikast Raporu',
                     'button_url' => '/valiant-shade/pages/news#news-3',
@@ -152,35 +152,35 @@ Muhafız Yüzbaşısı Torin kalede kırmızı alarm ilan etti; Hazine Kulesi'ne
                 ],
                 [
                     'id' => 4,
-                    'title' => "Ejderha Geçidi Şehidi Baş Büyücü Lyra için Büyük Şapel'de Görkemli Cenaze Töreni",
-                    'category' => 'Ölüm & Anma',
+                    'title' => "Ejderha GeÃ§idi Åehidi BaÅŸ BÃ¼yÃ¼cÃ¼ Lyra iÃ§in BÃ¼yÃ¼k Åapel'de GÃ¶rkemli Cenaze TÃ¶reni",
+                    'category' => 'Ã–lÃ¼m & Anma',
                     'badge_color' => 'danger',
                     'category_icon' => 'icon-base ti tabler-flame-off',
-                    'tag' => 'Şapel Töreni & Veda',
+                    'tag' => 'Åapel TÃ¶reni & Veda',
                     'tag_icon' => 'icon-base ti tabler-ribbon-health',
-                    'date_text' => '2 Gün Önce',
-                    'published_date' => '29 Eylül 2026, 14:00',
+                    'date_text' => '2 GÃ¼n Ã–nce',
+                    'published_date' => '29 EylÃ¼l 2026, 14:00',
                     'read_time' => '3 dk okuma',
                     'image_file' => 'guild_heroes_funeral.jpg',
-                    'location_badge' => 'Gök Tapınağı & Şehitler Meydanı',
-                    'author' => 'Yüksek Patrik Aurelius',
-                    'author_role' => 'Güneş Şapeli Baş Rahibi',
+                    'location_badge' => 'GÃ¶k TapÄ±naÄŸÄ± & Åehitler MeydanÄ±',
+                    'author' => 'YÃ¼ksek Patrik Aurelius',
+                    'author_role' => 'GÃ¼neÅŸ Åapeli BaÅŸ Rahibi',
                     'author_avatar' => 'static/valiant-shade/assets/img/avatars/4.png',
                     'is_breaking' => false,
-                    'description' => "Ejderha Geçidi Seferi'nde birliğini korumak için kendini alev hortumunun önüne siper eden Baş Büyücü Lyra Stormchaser, yüzlerce lonca üyesi ve halkın katıldığı görkemli bir törenle sonsuzluğa uğurlandı.",
-                    'full_story' => "Şehrin sokakları dün sabah erken saatlerden itibaren siyah bayraklar ve beyaz zambaklarla donatıldı. Ejderha Geçidi'nde alevler saçan Kırmızı Ejderha'nın ateş dalgasını 'Yıldız Kalkanı' büyüsüyle durduran ve 14 gencecik lonca üyesinin hayatını kurtarırken bedenini feda eden Baş Büyücü Lyra Stormchaser için veda günüydü.
+                    'description' => "Ejderha GeÃ§idi Seferi'nde birliÄŸini korumak iÃ§in kendini alev hortumunun Ã¶nÃ¼ne siper eden BaÅŸ BÃ¼yÃ¼cÃ¼ Lyra Stormchaser, yÃ¼zlerce lonca Ã¼yesi ve halkÄ±n katÄ±ldÄ±ÄŸÄ± gÃ¶rkemli bir tÃ¶renle sonsuzluÄŸa uÄŸurlandÄ±.",
+                    'full_story' => "Åehrin sokaklarÄ± dÃ¼n sabah erken saatlerden itibaren siyah bayraklar ve beyaz zambaklarla donatÄ±ldÄ±. Ejderha GeÃ§idi'nde alevler saÃ§an KÄ±rmÄ±zÄ± Ejderha'nÄ±n ateÅŸ dalgasÄ±nÄ± 'YÄ±ldÄ±z KalkanÄ±' bÃ¼yÃ¼sÃ¼yle durduran ve 14 gencecik lonca Ã¼yesinin hayatÄ±nÄ± kurtarÄ±rken bedenini feda eden BaÅŸ BÃ¼yÃ¼cÃ¼ Lyra Stormchaser iÃ§in veda gÃ¼nÃ¼ydÃ¼.
 
-Gök Tapınağı'ndan Şehitler Meydanı'na kadar uzanan kortejde, loncanın en kıdemli 12 paladini Lyra'nın asasını ve büyücü cüppesini taşıdı. Lonca Ustası, Lyra'ya ölümünden sonra 'Valiant Shade Üstün Cesaret ve Fedakarlık Madalyası' takdim etti.
+GÃ¶k TapÄ±naÄŸÄ±'ndan Åehitler MeydanÄ±'na kadar uzanan kortejde, loncanÄ±n en kÄ±demli 12 paladini Lyra'nÄ±n asasÄ±nÄ± ve bÃ¼yÃ¼cÃ¼ cÃ¼ppesini taÅŸÄ±dÄ±. Lonca UstasÄ±, Lyra'ya Ã¶lÃ¼mÃ¼nden sonra 'Valiant Shade ÃœstÃ¼n Cesaret ve FedakarlÄ±k MadalyasÄ±' takdim etti.
 
-Lyra'nın vasiyeti üzerine lonca kütüphanesine bağışladığı kadim büyü parşömenleri korumaya alınırken, adı Lonca Meclis Salonu'nun girişindeki Altın Mermer Kitabe'ye kazındı.",
-                    'testimony' => "Alevler üstümüze gelirken tek bir adım bile geri çekilmedi. 'Kaçın!' dedi, 'Ben ışığı tutarım'. O ışık hiç sönmeyecek. — Çırak Büyücü Selene",
+Lyra'nÄ±n vasiyeti Ã¼zerine lonca kÃ¼tÃ¼phanesine baÄŸÄ±ÅŸladÄ±ÄŸÄ± kadim bÃ¼yÃ¼ parÅŸÃ¶menleri korumaya alÄ±nÄ±rken, adÄ± Lonca Meclis Salonu'nun giriÅŸindeki AltÄ±n Mermer Kitabe'ye kazÄ±ndÄ±.",
+                    'testimony' => "Alevler Ã¼stÃ¼mÃ¼ze gelirken tek bir adÄ±m bile geri Ã§ekilmedi. 'KaÃ§Ä±n!' dedi, 'Ben Ä±ÅŸÄ±ÄŸÄ± tutarÄ±m'. O Ä±ÅŸÄ±k hiÃ§ sÃ¶nmeyecek. â€” Ã‡Ä±rak BÃ¼yÃ¼cÃ¼ Selene",
                     'stats' => [
-                        ['label' => 'Kurtardığı Can', 'value' => '14 Üye', 'color' => 'text-success'],
-                        ['label' => 'Tören Katılımı', 'value' => '800+ Kişi', 'color' => 'text-info'],
-                        ['label' => 'Liyakat Nişanı', 'value' => 'Altın Madalya', 'color' => 'text-warning'],
-                        ['label' => 'Anıt Kabri', 'value' => 'Büyücüler Bahçesi', 'color' => 'text-primary'],
+                        ['label' => 'KurtardÄ±ÄŸÄ± Can', 'value' => '14 Ãœye', 'color' => 'text-success'],
+                        ['label' => 'TÃ¶ren KatÄ±lÄ±mÄ±', 'value' => '800+ KiÅŸi', 'color' => 'text-info'],
+                        ['label' => 'Liyakat NiÅŸanÄ±', 'value' => 'AltÄ±n Madalya', 'color' => 'text-warning'],
+                        ['label' => 'AnÄ±t Kabri', 'value' => 'BÃ¼yÃ¼cÃ¼ler BahÃ§esi', 'color' => 'text-primary'],
                     ],
-                    'button_text' => 'Anma Kitabesini Gör',
+                    'button_text' => 'Anma Kitabesini GÃ¶r',
                     'button_url' => '/valiant-shade/pages/news#news-4',
                     'button_color' => 'danger',
                     'button_icon' => 'icon-base ti tabler-flower',
@@ -190,35 +190,35 @@ Lyra'nın vasiyeti üzerine lonca kütüphanesine bağışladığı kadim büyü
                 ],
                 [
                     'id' => 5,
-                    'title' => 'Simyacılar Çarşısı Kaynıyor: Sahte Diriliş ve Mana İksirleri Piyasada mı?',
-                    'category' => 'Dedikodu & Uyarı',
+                    'title' => 'SimyacÄ±lar Ã‡arÅŸÄ±sÄ± KaynÄ±yor: Sahte DiriliÅŸ ve Mana Ä°ksirleri Piyasada mÄ±?',
+                    'category' => 'Dedikodu & UyarÄ±',
                     'badge_color' => 'warning',
                     'category_icon' => 'icon-base ti tabler-flask',
-                    'tag' => 'Çarşı Teftişi & Skandal',
+                    'tag' => 'Ã‡arÅŸÄ± TeftiÅŸi & Skandal',
                     'tag_icon' => 'icon-base ti tabler-search',
-                    'date_text' => 'Dün 18:40',
-                    'published_date' => '30 Eylül 2026, 18:40',
+                    'date_text' => 'DÃ¼n 18:40',
+                    'published_date' => '30 EylÃ¼l 2026, 18:40',
                     'read_time' => '2 dk okuma',
                     'image_file' => 'guild_arcane_academy.jpg',
-                    'location_badge' => 'Aşağı Şehir Simyacılar Çıkmazı',
-                    'author' => 'Usta Simyacı Althea',
-                    'author_role' => 'Lonca Teftiş Heyeti Temsilcisi',
+                    'location_badge' => 'AÅŸaÄŸÄ± Åehir SimyacÄ±lar Ã‡Ä±kmazÄ±',
+                    'author' => 'Usta SimyacÄ± Althea',
+                    'author_role' => 'Lonca TeftiÅŸ Heyeti Temsilcisi',
                     'author_avatar' => 'static/valiant-shade/assets/img/avatars/5.png',
                     'is_breaking' => false,
-                    'description' => "Son seferden dönen maceracıların iksir şişelerinde beklenen şifa yerine sadece şekerli su ve parlayan yosun tozu bulduğu iddiası üzerine lonca teftiş müfettişleri çarşıdaki 3 dükkanı ani baskınla mühürledi.",
-                    'full_story' => "Son günlerde zindan görevlerinden dönen savaşçıların ardı ardına sağlık ocağına başvurması üzerine korkunç bir skandal patlak verdi. Zindan canavarlarıyla çarpışırken tüketilen 'Büyük Can İksirleri'nin yaraları iyileştirmek bir yana, savaşçıların görüşünü bulanıklaştırdığı ve mide spazmlarına yol açtığı ortaya çıktı!
+                    'description' => "Son seferden dÃ¶nen maceracÄ±larÄ±n iksir ÅŸiÅŸelerinde beklenen ÅŸifa yerine sadece ÅŸekerli su ve parlayan yosun tozu bulduÄŸu iddiasÄ± Ã¼zerine lonca teftiÅŸ mÃ¼fettiÅŸleri Ã§arÅŸÄ±daki 3 dÃ¼kkanÄ± ani baskÄ±nla mÃ¼hÃ¼rledi.",
+                    'full_story' => "Son gÃ¼nlerde zindan gÃ¶revlerinden dÃ¶nen savaÅŸÃ§Ä±larÄ±n ardÄ± ardÄ±na saÄŸlÄ±k ocaÄŸÄ±na baÅŸvurmasÄ± Ã¼zerine korkunÃ§ bir skandal patlak verdi. Zindan canavarlarÄ±yla Ã§arpÄ±ÅŸÄ±rken tÃ¼ketilen 'BÃ¼yÃ¼k Can Ä°ksirleri'nin yaralarÄ± iyileÅŸtirmek bir yana, savaÅŸÃ§Ä±larÄ±n gÃ¶rÃ¼ÅŸÃ¼nÃ¼ bulanÄ±klaÅŸtÄ±rdÄ±ÄŸÄ± ve mide spazmlarÄ±na yol aÃ§tÄ±ÄŸÄ± ortaya Ã§Ä±ktÄ±!
 
-Lonca Teftiş Heyeti, Aşağı Şehir'deki üç simya atölyesine gece baskını düzenledi. Ele geçirilen yüzlerce şişenin mühürlerinin sahte olduğu, içeriğinde mandrake kökü yerine ucuz bataklık mantarları ve mavi gıda boyası kullanıldığı tespit edildi.
+Lonca TeftiÅŸ Heyeti, AÅŸaÄŸÄ± Åehir'deki Ã¼Ã§ simya atÃ¶lyesine gece baskÄ±nÄ± dÃ¼zenledi. Ele geÃ§irilen yÃ¼zlerce ÅŸiÅŸenin mÃ¼hÃ¼rlerinin sahte olduÄŸu, iÃ§eriÄŸinde mandrake kÃ¶kÃ¼ yerine ucuz bataklÄ±k mantarlarÄ± ve mavi gÄ±da boyasÄ± kullanÄ±ldÄ±ÄŸÄ± tespit edildi.
 
-İddialara göre sahtekarlık şebekesi, lonca armalı kutuları kopyalayarak ucuz fiyatla acemi maceracılara pazarlıyordu. Sahte iksirleri satan iki tüccar Lonca Zindanı'na kapatıldı; lonca hekimleri tüm üyelere yalnızca Lonca Resmi Eczanesi'nden iksir tedarik etmeleri yönünde sert bir uyarı yayınladı.",
-                    'testimony' => "Can havliyle iksiri kafaya diktiğimde şifa yerine ağzımdan mavi köpükler çıktı! Neredeyse goblinlerin elinde can verecektim. — Savaşçı Dan",
+Ä°ddialara gÃ¶re sahtekarlÄ±k ÅŸebekesi, lonca armalÄ± kutularÄ± kopyalayarak ucuz fiyatla acemi maceracÄ±lara pazarlÄ±yordu. Sahte iksirleri satan iki tÃ¼ccar Lonca ZindanÄ±'na kapatÄ±ldÄ±; lonca hekimleri tÃ¼m Ã¼yelere yalnÄ±zca Lonca Resmi Eczanesi'nden iksir tedarik etmeleri yÃ¶nÃ¼nde sert bir uyarÄ± yayÄ±nladÄ±.",
+                    'testimony' => "Can havliyle iksiri kafaya diktiÄŸimde ÅŸifa yerine aÄŸzÄ±mdan mavi kÃ¶pÃ¼kler Ã§Ä±ktÄ±! Neredeyse goblinlerin elinde can verecektim. â€” SavaÅŸÃ§Ä± Dan",
                     'stats' => [
-                        ['label' => 'Mühürlenen Dükkan', 'value' => '3 Atölye', 'color' => 'text-danger'],
-                        ['label' => 'El Konulan Şişe', 'value' => '420 Adet', 'color' => 'text-warning'],
-                        ['label' => 'Etkilenen Üye', 'value' => '12 Maceracı', 'color' => 'text-info'],
-                        ['label' => 'Hapis Cezası', 'value' => 'Müebbet Zindan', 'color' => 'text-danger'],
+                        ['label' => 'MÃ¼hÃ¼rlenen DÃ¼kkan', 'value' => '3 AtÃ¶lye', 'color' => 'text-danger'],
+                        ['label' => 'El Konulan ÅiÅŸe', 'value' => '420 Adet', 'color' => 'text-warning'],
+                        ['label' => 'Etkilenen Ãœye', 'value' => '12 MaceracÄ±', 'color' => 'text-info'],
+                        ['label' => 'Hapis CezasÄ±', 'value' => 'MÃ¼ebbet Zindan', 'color' => 'text-danger'],
                     ],
-                    'button_text' => 'Sahte İksir Listesi',
+                    'button_text' => 'Sahte Ä°ksir Listesi',
                     'button_url' => '/valiant-shade/pages/news#news-5',
                     'button_color' => 'warning',
                     'button_icon' => 'icon-base ti tabler-alert-circle',
@@ -228,35 +228,35 @@ Lonca Teftiş Heyeti, Aşağı Şehir'deki üç simya atölyesine gece baskını
                 ],
                 [
                     'id' => 6,
-                    'title' => 'Kadim Ejderha Ignis Dize Getirildi: Lonca Hazinesine 14.500 Altın ve Kadim Eserler Eklendi',
+                    'title' => 'Kadim Ejderha Ignis Dize Getirildi: Lonca Hazinesine 14.500 AltÄ±n ve Kadim Eserler Eklendi',
                     'category' => 'Sefer Zaferi',
                     'badge_color' => 'success',
                     'category_icon' => 'icon-base ti tabler-trophy',
                     'tag' => 'Efsanevi Zafer',
                     'tag_icon' => 'icon-base ti tabler-sparkles',
-                    'date_text' => '3 Gün Önce',
-                    'published_date' => '28 Eylül 2026, 11:00',
+                    'date_text' => '3 GÃ¼n Ã–nce',
+                    'published_date' => '28 EylÃ¼l 2026, 11:00',
                     'read_time' => '3 dk okuma',
                     'image_file' => 'guild_dragon_quest.jpg',
                     'location_badge' => 'Ejderha Zirvesi Harabeleri',
                     'author' => 'General Ragnor',
-                    'author_role' => '1. Saldırı Lejyonu Başkomutanı',
+                    'author_role' => '1. SaldÄ±rÄ± Lejyonu BaÅŸkomutanÄ±',
                     'author_avatar' => 'static/valiant-shade/assets/img/avatars/6.png',
                     'is_breaking' => false,
-                    'description' => "3 hafta süren amansız kuşatmanın ardından Kadim Alev Ejderhası Ignis mağlup edildi. Ejderhanın ininden çıkarılan Antik Hazine loncamıza taşındı; sefere katılan tüm birliklere yüklü prim dağıtılıyor.",
-                    'full_story' => "Valiant Shade'in en tecrübeli 30 elit savaşçısı, haftalardır Ejderha Zirvesi'nin dondurucu zirvelerinde kamp kurarak Kadim Ignis'in inini abluka altında tutuyordu. Dün sabah şafak sökerken başlayan nihai taarruzda, ejderhanın alev menzili büyücülerimizin dondurucu fırtınasıyla kırıldı.
+                    'description' => "3 hafta sÃ¼ren amansÄ±z kuÅŸatmanÄ±n ardÄ±ndan Kadim Alev EjderhasÄ± Ignis maÄŸlup edildi. EjderhanÄ±n ininden Ã§Ä±karÄ±lan Antik Hazine loncamÄ±za taÅŸÄ±ndÄ±; sefere katÄ±lan tÃ¼m birliklere yÃ¼klÃ¼ prim daÄŸÄ±tÄ±lÄ±yor.",
+                    'full_story' => "Valiant Shade'in en tecrÃ¼beli 30 elit savaÅŸÃ§Ä±sÄ±, haftalardÄ±r Ejderha Zirvesi'nin dondurucu zirvelerinde kamp kurarak Kadim Ignis'in inini abluka altÄ±nda tutuyordu. DÃ¼n sabah ÅŸafak sÃ¶kerken baÅŸlayan nihai taarruzda, ejderhanÄ±n alev menzili bÃ¼yÃ¼cÃ¼lerimizin dondurucu fÄ±rtÄ±nasÄ±yla kÄ±rÄ±ldÄ±.
 
-General Ragnor'un bizzat vurduğu son darbeyle dev yaratık yere serildi. Mağara derinliklerinden çıkarılan ganimetler arasında; Antik Krallık'tan kalma 14.500 altın sikke, 6 adet efsanevi rünik silah ve lonca kütüphanesini aydınlatacak 'Güneş Taşı' yer alıyor.
+General Ragnor'un bizzat vurduÄŸu son darbeyle dev yaratÄ±k yere serildi. MaÄŸara derinliklerinden Ã§Ä±karÄ±lan ganimetler arasÄ±nda; Antik KrallÄ±k'tan kalma 14.500 altÄ±n sikke, 6 adet efsanevi rÃ¼nik silah ve lonca kÃ¼tÃ¼phanesini aydÄ±nlatacak 'GÃ¼neÅŸ TaÅŸÄ±' yer alÄ±yor.
 
-Zafer kutlamaları bu akşam Lonca Meclis Salonu'nda fıçıların patlatılmasıyla başlayacak!",
-                    'testimony' => "Kalkanımın üzerine ateş püskürttüğünde kemiklerimin eridiğini hissettim ama bir santim bile geri adım atmadık. Bu zafer tüm Valiant Shade ailesinindir! — General Ragnor",
+Zafer kutlamalarÄ± bu akÅŸam Lonca Meclis Salonu'nda fÄ±Ã§Ä±larÄ±n patlatÄ±lmasÄ±yla baÅŸlayacak!",
+                    'testimony' => "KalkanÄ±mÄ±n Ã¼zerine ateÅŸ pÃ¼skÃ¼rttÃ¼ÄŸÃ¼nde kemiklerimin eridiÄŸini hissettim ama bir santim bile geri adÄ±m atmadÄ±k. Bu zafer tÃ¼m Valiant Shade ailesinindir! â€” General Ragnor",
                     'stats' => [
-                        ['label' => 'Kazanılan Altın', 'value' => '+14.500 GP', 'color' => 'text-warning'],
-                        ['label' => 'Kazanılan XP', 'value' => '+8.500 XP', 'color' => 'text-success'],
-                        ['label' => 'Rünik Eser', 'value' => '6 Kadim Silah', 'color' => 'text-info'],
-                        ['label' => 'Kayıp Durumu', 'value' => '0 Can Kaybı', 'color' => 'text-success'],
+                        ['label' => 'KazanÄ±lan AltÄ±n', 'value' => '+14.500 GP', 'color' => 'text-warning'],
+                        ['label' => 'KazanÄ±lan XP', 'value' => '+8.500 XP', 'color' => 'text-success'],
+                        ['label' => 'RÃ¼nik Eser', 'value' => '6 Kadim Silah', 'color' => 'text-info'],
+                        ['label' => 'KayÄ±p Durumu', 'value' => '0 Can KaybÄ±', 'color' => 'text-success'],
                     ],
-                    'button_text' => 'Ganimet Paylaşımını Gör',
+                    'button_text' => 'Ganimet PaylaÅŸÄ±mÄ±nÄ± GÃ¶r',
                     'button_url' => '/valiant-shade/pages/news#news-6',
                     'button_color' => 'success',
                     'button_icon' => 'icon-base ti tabler-coin',
@@ -266,39 +266,39 @@ Zafer kutlamaları bu akşam Lonca Meclis Salonu'nda fıçıların patlatılmas�
                 ],
                 [
                     'id' => 7,
-                    'title' => "Yüksek Divan Kararı: 'Kızıl Maskeli İsyancılar' İçin Canlı ya da Ölü 5.000 Altın Kelle Ödülü",
+                    'title' => "YÃ¼ksek Divan KararÄ±: 'KÄ±zÄ±l Maskeli Ä°syancÄ±lar' Ä°Ã§in CanlÄ± ya da Ã–lÃ¼ 5.000 AltÄ±n Kelle Ã–dÃ¼lÃ¼",
                     'category' => 'Lonca Meclisi',
                     'badge_color' => 'primary',
                     'category_icon' => 'icon-base ti tabler-gavel',
                     'tag' => 'Resmi Ferman',
                     'tag_icon' => 'icon-base ti tabler-file-certificate',
-                    'date_text' => '4 Gün Önce',
-                    'published_date' => '27 Eylül 2026, 16:30',
+                    'date_text' => '4 GÃ¼n Ã–nce',
+                    'published_date' => '27 EylÃ¼l 2026, 16:30',
                     'read_time' => '2 dk okuma',
                     'image_file' => 'guild_hall_council.jpg',
-                    'location_badge' => 'Valiant Shade Yüksek Divan Salonu',
-                    'author' => 'Şansölye Valen',
-                    'author_role' => 'Yüksek Adalet ve Divan Başkanı',
+                    'location_badge' => 'Valiant Shade YÃ¼ksek Divan Salonu',
+                    'author' => 'ÅansÃ¶lye Valen',
+                    'author_role' => 'YÃ¼ksek Adalet ve Divan BaÅŸkanÄ±',
                     'author_avatar' => 'static/valiant-shade/assets/img/avatars/7.png',
                     'is_breaking' => false,
-                    'description' => "Loncanın kervan yollarını basıp erzak konvoylarını yağmalayan Kızıl Maske çetesine karşı Yüksek Divan'dan tarihi ferman çıktı: Elebaşı 'Tek Gözlü Silas' ve kurmaylarının başına rekor kelle ödülü kondu.",
-                    'full_story' => "Valiant Shade Yüksek Divanı, son 1 ay içinde Kuzey Ticaret Yolu üzerinde vuku bulan 5 kervan baskınını değerlendirmek üzere olağanüstü toplandı.
+                    'description' => "LoncanÄ±n kervan yollarÄ±nÄ± basÄ±p erzak konvoylarÄ±nÄ± yaÄŸmalayan KÄ±zÄ±l Maske Ã§etesine karÅŸÄ± YÃ¼ksek Divan'dan tarihi ferman Ã§Ä±ktÄ±: ElebaÅŸÄ± 'Tek GÃ¶zlÃ¼ Silas' ve kurmaylarÄ±nÄ±n baÅŸÄ±na rekor kelle Ã¶dÃ¼lÃ¼ kondu.",
+                    'full_story' => "Valiant Shade YÃ¼ksek DivanÄ±, son 1 ay iÃ§inde Kuzey Ticaret Yolu Ã¼zerinde vuku bulan 5 kervan baskÄ±nÄ±nÄ± deÄŸerlendirmek Ã¼zere olaÄŸanÃ¼stÃ¼ toplandÄ±.
 
-Kervan muhafızlarından 3 yoldaşımızın şehit olması ve lonca demirhanesine giden 2 araba dolusu mithril cevherinin çalınması bardağı taşıran son damla oldu. Şansölye Valen imzalı fermana göre:
+Kervan muhafÄ±zlarÄ±ndan 3 yoldaÅŸÄ±mÄ±zÄ±n ÅŸehit olmasÄ± ve lonca demirhanesine giden 2 araba dolusu mithril cevherinin Ã§alÄ±nmasÄ± bardaÄŸÄ± taÅŸÄ±ran son damla oldu. ÅansÃ¶lye Valen imzalÄ± fermana gÃ¶re:
 
-1. Kızıl Maskeli çetenin elebaşı 'Tek Gözlü Silas'ın kellesine 5.000 Altın,
-2. Teğmenlerinin her biri için 1.500 Altın,
-3. Çalınan mithril cevherini getiren birliğe cevherin değerinin %30'u peşin ikramiye ödenecektir.
+1. KÄ±zÄ±l Maskeli Ã§etenin elebaÅŸÄ± 'Tek GÃ¶zlÃ¼ Silas'Ä±n kellesine 5.000 AltÄ±n,
+2. TeÄŸmenlerinin her biri iÃ§in 1.500 AltÄ±n,
+3. Ã‡alÄ±nan mithril cevherini getiren birliÄŸe cevherin deÄŸerinin %30'u peÅŸin ikramiye Ã¶denecektir.
 
-Tüm lonca paralı askerleri ve serbest kılıçlar bu fermandan yararlanabilir.",
-                    'testimony' => "Ticaret yollarımızı tehdit eden hiçbir eşkıya cezasız kalmayacak. Adalet ya kılıçla ya da iple tecelli edecektir. — Şansölye Valen",
+TÃ¼m lonca paralÄ± askerleri ve serbest kÄ±lÄ±Ã§lar bu fermandan yararlanabilir.",
+                    'testimony' => "Ticaret yollarÄ±mÄ±zÄ± tehdit eden hiÃ§bir eÅŸkÄ±ya cezasÄ±z kalmayacak. Adalet ya kÄ±lÄ±Ã§la ya da iple tecelli edecektir. â€” ÅansÃ¶lye Valen",
                     'stats' => [
-                        ['label' => 'Baş Ödülü', 'value' => '5.000 Altın', 'color' => 'text-warning'],
-                        ['label' => 'Çete Gücü', 'value' => '~40 Haydut', 'color' => 'text-danger'],
-                        ['label' => 'Operasyon Bölgesi', 'value' => 'Kuzey Geçitleri', 'color' => 'text-info'],
-                        ['label' => 'Yetki Durumu', 'value' => 'Canlı veya Ölü', 'color' => 'text-white'],
+                        ['label' => 'BaÅŸ Ã–dÃ¼lÃ¼', 'value' => '5.000 AltÄ±n', 'color' => 'text-warning'],
+                        ['label' => 'Ã‡ete GÃ¼cÃ¼', 'value' => '~40 Haydut', 'color' => 'text-danger'],
+                        ['label' => 'Operasyon BÃ¶lgesi', 'value' => 'Kuzey GeÃ§itleri', 'color' => 'text-info'],
+                        ['label' => 'Yetki Durumu', 'value' => 'CanlÄ± veya Ã–lÃ¼', 'color' => 'text-white'],
                     ],
-                    'button_text' => 'Fermanı İmzala & Katıl',
+                    'button_text' => 'FermanÄ± Ä°mzala & KatÄ±l',
                     'button_url' => '/valiant-shade/pages/news#news-7',
                     'button_color' => 'primary',
                     'button_icon' => 'icon-base ti tabler-file-text',
@@ -308,35 +308,35 @@ Tüm lonca paralı askerleri ve serbest kılıçlar bu fermandan yararlanabilir.
                 ],
                 [
                     'id' => 8,
-                    'title' => "Obsidyen Hisar'da Uyanış: Gökyüzünde Kırmızı Ay ve Çığlık Sesleri",
+                    'title' => "Obsidyen Hisar'da UyanÄ±ÅŸ: GÃ¶kyÃ¼zÃ¼nde KÄ±rmÄ±zÄ± Ay ve Ã‡Ä±ÄŸlÄ±k Sesleri",
                     'category' => 'Gizem & Kehanet',
                     'badge_color' => 'dark',
                     'category_icon' => 'icon-base ti tabler-moon',
-                    'tag' => 'Karanlık Kehanet',
+                    'tag' => 'KaranlÄ±k Kehanet',
                     'tag_icon' => 'icon-base ti tabler-sparkles',
-                    'date_text' => '5 Gün Önce',
-                    'published_date' => '26 Eylül 2026, 03:00',
+                    'date_text' => '5 GÃ¼n Ã–nce',
+                    'published_date' => '26 EylÃ¼l 2026, 03:00',
                     'read_time' => '3 dk okuma',
                     'image_file' => 'guild_shadow_realm.jpg',
-                    'location_badge' => 'Yasak Gölge Vadisi Sınırı',
+                    'location_badge' => 'Yasak GÃ¶lge Vadisi SÄ±nÄ±rÄ±',
                     'author' => 'Kahin Morvath',
-                    'author_role' => 'Yıldız Gözlemevi Baş Astroloğu',
+                    'author_role' => 'YÄ±ldÄ±z GÃ¶zlemevi BaÅŸ AstroloÄŸu',
                     'author_avatar' => 'static/valiant-shade/assets/img/avatars/8.png',
                     'is_breaking' => false,
-                    'description' => "Yüzyıllardır mühürlü duran Obsidyen Hisar'ın kulelerinden gökyüzüne kan kırmızısı bir ışık sütunu yükseldi. Çevredeki köylüler dağlardan gelen zincir şakırtıları ve çığlık sesleri nedeniyle köylerini boşaltıyor.",
-                    'full_story' => "Gölge Vadisi sınırındaki gözlem kulelerimiz dün gece dehşet verici doğaüstü olaylar kaydetti. Gece yarısı saat tam 03:00'te ay kırmızıya büründü ve Obsidyen Hisar'ın tepe noktasından bulutları delen karanlık bir enerji dalgası yayıldı.
+                    'description' => "YÃ¼zyÄ±llardÄ±r mÃ¼hÃ¼rlÃ¼ duran Obsidyen Hisar'Ä±n kulelerinden gÃ¶kyÃ¼zÃ¼ne kan kÄ±rmÄ±zÄ±sÄ± bir Ä±ÅŸÄ±k sÃ¼tunu yÃ¼kseldi. Ã‡evredeki kÃ¶ylÃ¼ler daÄŸlardan gelen zincir ÅŸakÄ±rtÄ±larÄ± ve Ã§Ä±ÄŸlÄ±k sesleri nedeniyle kÃ¶ylerini boÅŸaltÄ±yor.",
+                    'full_story' => "GÃ¶lge Vadisi sÄ±nÄ±rÄ±ndaki gÃ¶zlem kulelerimiz dÃ¼n gece dehÅŸet verici doÄŸaÃ¼stÃ¼ olaylar kaydetti. Gece yarÄ±sÄ± saat tam 03:00'te ay kÄ±rmÄ±zÄ±ya bÃ¼rÃ¼ndÃ¼ ve Obsidyen Hisar'Ä±n tepe noktasÄ±ndan bulutlarÄ± delen karanlÄ±k bir enerji dalgasÄ± yayÄ±ldÄ±.
 
-Gözlemciler, hisarın çatlaklarından akan mor alevleri ve taş duvarlara çarpan ruhani haykırışları raporladı. Astrologlar heyeti, bu olayın 300 yıl önce hapsedilen 'Gölge Hükümdarı Malakor'un mührünün zayıfladığına dair açık bir işaret olduğunu vurguluyor.
+GÃ¶zlemciler, hisarÄ±n Ã§atlaklarÄ±ndan akan mor alevleri ve taÅŸ duvarlara Ã§arpan ruhani haykÄ±rÄ±ÅŸlarÄ± raporladÄ±. Astrologlar heyeti, bu olayÄ±n 300 yÄ±l Ã¶nce hapsedilen 'GÃ¶lge HÃ¼kÃ¼mdarÄ± Malakor'un mÃ¼hrÃ¼nÃ¼n zayÄ±fladÄ±ÄŸÄ±na dair aÃ§Ä±k bir iÅŸaret olduÄŸunu vurguluyor.
 
-Lonca Ustası, bölgeye deneyimli izci birlikleri gönderilmesi ve sınır karakollarının tahkim edilmesi talimatını verdi.",
-                    'testimony' => "Rüzgar artık dağ kokmuyor, kükürt ve bin yıllık mezar toprağı kokuyor. Mühür kırılırsa dünya karanlığa boğulur. — Kahin Morvath",
+Lonca UstasÄ±, bÃ¶lgeye deneyimli izci birlikleri gÃ¶nderilmesi ve sÄ±nÄ±r karakollarÄ±nÄ±n tahkim edilmesi talimatÄ±nÄ± verdi.",
+                    'testimony' => "RÃ¼zgar artÄ±k daÄŸ kokmuyor, kÃ¼kÃ¼rt ve bin yÄ±llÄ±k mezar topraÄŸÄ± kokuyor. MÃ¼hÃ¼r kÄ±rÄ±lÄ±rsa dÃ¼nya karanlÄ±ÄŸa boÄŸulur. â€” Kahin Morvath",
                     'stats' => [
-                        ['label' => 'Tehdit Seviyesi', 'value' => 'Omega Sınıfı', 'color' => 'text-danger'],
-                        ['label' => 'Gözlem Noktası', 'value' => 'Kuzey Kulesi', 'color' => 'text-warning'],
-                        ['label' => 'Tahliye', 'value' => '2 Köy Boşaldı', 'color' => 'text-info'],
-                        ['label' => 'Mühür Durumu', 'value' => 'Kritik Çatlak', 'color' => 'text-danger'],
+                        ['label' => 'Tehdit Seviyesi', 'value' => 'Omega SÄ±nÄ±fÄ±', 'color' => 'text-danger'],
+                        ['label' => 'GÃ¶zlem NoktasÄ±', 'value' => 'Kuzey Kulesi', 'color' => 'text-warning'],
+                        ['label' => 'Tahliye', 'value' => '2 KÃ¶y BoÅŸaldÄ±', 'color' => 'text-info'],
+                        ['label' => 'MÃ¼hÃ¼r Durumu', 'value' => 'Kritik Ã‡atlak', 'color' => 'text-danger'],
                     ],
-                    'button_text' => 'Kehanet Parşömenini Oku',
+                    'button_text' => 'Kehanet ParÅŸÃ¶menini Oku',
                     'button_url' => '/valiant-shade/pages/news#news-8',
                     'button_color' => 'dark',
                     'button_icon' => 'icon-base ti tabler-crystal-ball',
@@ -373,7 +373,7 @@ Leading the company, 28-year veteran Head Guard Braum 'Ironheart' formed a solit
 Surviving scouts attest that Braum hammered his shield into the dungeon threshold, securing the safe evacuation of 8 guild members. Their remains were escorted to the Council Chapel by the Guild Knights at first light.
 
 By decree of Guild Master Lord Gerald: Valiant Shade banners are lowered to half-mast, a memorial altar has been erected in the great hall, and lifetime pensions are granted from the Guild Vault to the martyrs' kin. May they rest in the Ancient Light.",
-                    'testimony' => "With his dying breath, Braum slammed his shield down and roared: 'Stop covering my back, get the apprentices out!' Because of him, we breathe today. — Ranger Finn, Survivor",
+                    'testimony' => "With his dying breath, Braum slammed his shield down and roared: 'Stop covering my back, get the apprentices out!' Because of him, we breathe today. â€” Ranger Finn, Survivor",
                     'stats' => [
                         ['label' => 'Fallen Count', 'value' => '5 Heroes', 'color' => 'text-danger'],
                         ['label' => 'Lives Saved', 'value' => '8 Scouts', 'color' => 'text-success'],
@@ -413,7 +413,7 @@ At three quarters past midnight, a tall figure in a grey cloak sporting the gold
 According to dwarf server Thorbjorn, the purse set upon the table spilled not ordinary imperial gold, but minted 'Dark Emerald' bullion! The pair signed a parchment smoldering with blue sorcerous flame before vanishing into the city sewers.
 
 While the High Council has not confirmed the rumors, whispers link this meeting with the missing 'Obsidian Vault Key' unaccounted for these past two weeks.",
-                    'testimony' => "I saw the clasp beneath the cloak with my own eyes—the eagle crest of the High Council. They didn't even clink mugs; took the coin and dissolved into the dark. — Dwarf Thorbjorn",
+                    'testimony' => "I saw the clasp beneath the cloak with my own eyesâ€”the eagle crest of the High Council. They didn't even clink mugs; took the coin and dissolved into the dark. â€” Dwarf Thorbjorn",
                     'stats' => [
                         ['label' => 'Credibility', 'value' => '75% Allegation', 'color' => 'text-warning'],
                         ['label' => 'Eyewitness', 'value' => '3 Tables', 'color' => 'text-info'],
@@ -453,7 +453,7 @@ Alchemists confirmed the bolt was coated in rare 'Wyvern Breath' neurotoxin, cap
 A dropped silk handkerchief bore the embossed seal of rival syndicates and a grim message: 'The vault will open, the price paid in blood.'
 
 Captain Torin placed the castle on red alert, restricting access to the Treasury Tower.",
-                    'testimony' => "Green smoke hissed from the wood where the bolt struck. The target was my throat. There will be no peace until the traitor within is exposed. — Lord Vance",
+                    'testimony' => "Green smoke hissed from the wood where the bolt struck. The target was my throat. There will be no peace until the traitor within is exposed. â€” Lord Vance",
                     'stats' => [
                         ['label' => 'Target', 'value' => 'Lord Vance', 'color' => 'text-white'],
                         ['label' => 'Poison Used', 'value' => 'Wyvern Breath', 'color' => 'text-danger'],
@@ -489,7 +489,7 @@ Captain Torin placed the castle on red alert, restricting access to the Treasury
                     'full_story' => "Streets were draped with black pennants and white lilies from early dawn. It was a day of mourning for Archmage Lyra Stormchaser, who conjured a 'Starlight Aegis' against the Red Dragon's inferno, giving her life to save 14 young guild members.
 
 In a solemn procession from the Sky Temple to Martyrs Square, 12 senior paladins carried Lyra's staff and vestments. The Guild Master posthumously awarded her the 'Valiant Shade Medal of Valor'.",
-                    'testimony' => "As the flames rushed down, she didn't yield an inch. 'Fly!' she yelled, 'I will hold the light'. That light shall never fade. — Apprentice Mage Selene",
+                    'testimony' => "As the flames rushed down, she didn't yield an inch. 'Fly!' she yelled, 'I will hold the light'. That light shall never fade. â€” Apprentice Mage Selene",
                     'stats' => [
                         ['label' => 'Lives Saved', 'value' => '14 Members', 'color' => 'text-success'],
                         ['label' => 'Attendance', 'value' => '800+ People', 'color' => 'text-info'],
@@ -525,7 +525,7 @@ In a solemn procession from the Sky Temple to Martyrs Square, 12 senior paladins
                     'full_story' => "A scandal erupted when multiple frontline fighters reported to the infirmary after drinking 'Greater Healing Draughts' that caused blurred vision and nausea instead of closing wounds.
 
 Inspectors raided three Lower City ateliers, confiscating hundreds of counter-marked bottles filled with swamp lichen extract and food dye. Two illicit merchants have been imprisoned.",
-                    'testimony' => "In dire peril I quaffed the flask, and blue froth erupted from my mouth instead of mend! I nearly fell to goblins. — Dan the Fighter",
+                    'testimony' => "In dire peril I quaffed the flask, and blue froth erupted from my mouth instead of mend! I nearly fell to goblins. â€” Dan the Fighter",
                     'stats' => [
                         ['label' => 'Sealed Shops', 'value' => '3 Ateliers', 'color' => 'text-danger'],
                         ['label' => 'Confiscated Vials', 'value' => '420 Units', 'color' => 'text-warning'],
@@ -561,7 +561,7 @@ Inspectors raided three Lower City ateliers, confiscating hundreds of counter-ma
                     'full_story' => "Thirty of Valiant Shade's elite combatants blockaded the icy spires of Dragon Peak for weeks. At dawn yesterday, the final assault breached the fire drake's domain.
 
 General Ragnor dealt the final blow. Recovered treasures include 14,500 ancient minted gold coins, 6 runic armaments, and the legendary 'Sun Stone' to illuminate the grand library.",
-                    'testimony' => "When fire washed across my shield my marrow burned, yet we gave not an inch. This victory belongs to all Valiant Shade! — General Ragnor",
+                    'testimony' => "When fire washed across my shield my marrow burned, yet we gave not an inch. This victory belongs to all Valiant Shade! â€” General Ragnor",
                     'stats' => [
                         ['label' => 'Gold Won', 'value' => '+14,500 GP', 'color' => 'text-warning'],
                         ['label' => 'XP Earned', 'value' => '+8,500 XP', 'color' => 'text-success'],
@@ -603,7 +603,7 @@ Three escorts fell and two wagons of mithril ore were looted. Chancellor Valen d
 3. 30% bonus on the spot for recovered mithril.
 
 All free blades and guild mercenaries are eligible.",
-                    'testimony' => "No outlaw menacing our lifelines shall evade retribution. Justice shall be done by blade or noose. — Chancellor Valen",
+                    'testimony' => "No outlaw menacing our lifelines shall evade retribution. Justice shall be done by blade or noose. â€” Chancellor Valen",
                     'stats' => [
                         ['label' => 'Bounty Head', 'value' => '5,000 Gold', 'color' => 'text-warning'],
                         ['label' => 'Gang Strength', 'value' => '~40 Bandits', 'color' => 'text-danger'],
@@ -639,7 +639,7 @@ All free blades and guild mercenaries are eligible.",
                     'full_story' => "Border sentries recorded supernatural activity at midnight: the moon turned blood red and an energy pulse pierced the sky from the Obsidian Citadel.
 
 Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrologers warn that the seal binding Malakor the Shadow Lord is fracturing.",
-                    'testimony' => "The wind no longer smells of stone, but of brimstone and centuries of sepulchral earth. If the seal shatters, darkness consumes all. — Prophet Morvath",
+                    'testimony' => "The wind no longer smells of stone, but of brimstone and centuries of sepulchral earth. If the seal shatters, darkness consumes all. â€” Prophet Morvath",
                     'stats' => [
                         ['label' => 'Threat Level', 'value' => 'Omega Class', 'color' => 'text-danger'],
                         ['label' => 'Observation Post', 'value' => 'North Tower', 'color' => 'text-warning'],
@@ -739,7 +739,7 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
 
         // Highlights & Counts (Language-neutral ID fallback + multi-locale category keywords)
         $featuredNews = $allNews->firstWhere('is_breaking', true) ?? $allNews->first();
-        $deathNewsCount = $allNews->filter(fn($n) => in_array((int)$n->id, [1, 6], true) || stripos($n->category, 'Ölüm') !== false || stripos($n->category, 'Death') !== false)->count();
+        $deathNewsCount = $allNews->filter(fn($n) => in_array((int)$n->id, [1, 6], true) || stripos($n->category, 'Ã–lÃ¼m') !== false || stripos($n->category, 'Death') !== false)->count();
         $rumorNewsCount = $allNews->filter(fn($n) => in_array((int)$n->id, [4], true) || stripos($n->category, 'Dedikodu') !== false || stripos($n->category, 'Rumor') !== false || stripos($n->category, 'Gossip') !== false)->count();
         $victoryNewsCount = $allNews->filter(fn($n) => in_array((int)$n->id, [3, 5], true) || stripos($n->category, 'Zafer') !== false || stripos($n->category, 'Victory') !== false || stripos($n->category, 'Expedition') !== false)->count();
         $decreeNewsCount = $allNews->filter(fn($n) => in_array((int)$n->id, [2, 7], true) || stripos($n->category, 'Meclis') !== false || stripos($n->category, 'Ferman') !== false || stripos($n->category, 'Decree') !== false || stripos($n->category, 'Council') !== false)->count();
@@ -1031,6 +1031,9 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
             'stats.*.color' => 'nullable|string|max:50',
         ]);
 
+        $autoImageSelected = ! $request->hasFile('custom_image')
+            && ($validated['image_preset'] ?? null) === '__gazette_auto__';
+
         $imageUrl = $news->image_url;
         if ($request->hasFile('custom_image')) {
             $file = $request->file('custom_image');
@@ -1041,13 +1044,13 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
             }
             $file->move($destination, $filename);
             $imageUrl = 'static/valiant-shade/assets/img/news/' . $filename;
-        } elseif (!empty($request->image_preset)) {
-            $imageUrl = $request->image_preset;
-        } elseif (!empty($request->image_url)) {
-            $imageUrl = $request->image_url;
+        } elseif (! empty($validated['image_preset']) && $validated['image_preset'] !== '__gazette_auto__') {
+            $imageUrl = $validated['image_preset'];
+        } elseif (! empty($validated['image_url'])) {
+            $imageUrl = $validated['image_url'];
         }
 
-        $news->update([
+        $news->fill([
             'title' => $validated['title'],
             'category' => $validated['category'],
             'badge_color' => $validated['badge_color'] ?? $news->badge_color,
@@ -1056,7 +1059,6 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
             'tag_icon' => $validated['tag_icon'] ?? $news->tag_icon,
             'date_text' => $validated['date_text'] ?? null,
             'description' => $validated['description'],
-            'image_url' => $imageUrl,
             'stats' => $validated['stats'] ?? $news->stats,
             'button_text' => $validated['button_text'] ?? null,
             'button_url' => $validated['button_url'] ?? null,
@@ -1066,6 +1068,17 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
             'order' => $validated['order'] ?? $news->order,
             'is_active' => $request->has('is_active') ? (bool) $request->is_active : $news->is_active,
         ]);
+
+        if (! $autoImageSelected) {
+            $news->image_url = $imageUrl;
+        }
+
+        $news->save();
+
+        if ($autoImageSelected) {
+            GazetteNewsImage::assignFromContent($news);
+            $news->saveQuietly();
+        }
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -1080,7 +1093,7 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
     }
 
     /**
-     * Drag-drop sıralama: üstteki kart en yüksek order değerini alır (gazete iç sayfa sırası).
+     * Drag-drop sÄ±ralama: Ã¼stteki kart en yÃ¼ksek order deÄŸerini alÄ±r (gazete iÃ§ sayfa sÄ±rasÄ±).
      */
     public function reorder(Request $request): JsonResponse
     {
@@ -1224,7 +1237,7 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
             return null;
         }
 
-        $message = 'Bu gazete sayısı kilitli; haber durumu değiştirilemez.';
+        $message = 'Bu gazete sayÄ±sÄ± kilitli; haber durumu deÄŸiÅŸtirilemez.';
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json(['success' => false, 'message' => $message], 422);
@@ -1245,10 +1258,10 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
 
         $news = News::query()->findOrFail($id);
         $labels = [
-            'victory' => 'Zafer kutlandı',
+            'victory' => 'Zafer kutlandÄ±',
             'mourning' => 'Yas tutuldu',
-            'whisper' => 'Han fısıltısı',
-            'bounty' => 'Ferman kaydı',
+            'whisper' => 'Han fÄ±sÄ±ltÄ±sÄ±',
+            'bounty' => 'Ferman kaydÄ±',
         ];
 
         \App\ValiantShade\Support\NewsEngagement::recordEditorialReaction(
@@ -1261,8 +1274,9 @@ Observers saw purple flames and ghostly shrieks beating upon stone walls. Astrol
 
         return response()->json([
             'success' => true,
-            'message' => 'Editör tepkisi kaydedildi.',
+            'message' => 'EditÃ¶r tepkisi kaydedildi.',
             'stats' => $news->fresh()->stats,
         ]);
     }
 }
+

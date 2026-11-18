@@ -147,5 +147,49 @@ class NewsTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('guild-news-swiper');
         $response->assertSee('Zafer Sancağı Dalgalanıyor');
+    
+
+    }
+
+    public function test_news_edit_modal_supports_custom_image_upload(): void
+    {
+        $response = $this->actingAs($this->user)->get('/valiant-shade/pages/news');
+        $response->assertOk();
+        $response->assertSee('name="custom_image"', false);
+        $response->assertSee('multipart/form-data', false);
+    }
+
+    public function test_can_set_cover_image_back_to_auto_on_update(): void
+    {
+        config()->set('gazette.title_image_map', []);
+        config()->set('gazette.image_library', []);
+        config()->set('gazette.pf1_image_library', []);
+        config()->set('gazette.default_news_images', [
+            'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg',
+        ]);
+
+        $news = News::create([
+            'title' => 'Old title',
+            'category' => 'Old category',
+            'status' => 'published',
+            'description' => 'Old description',
+            'image_url' => 'static/valiant-shade/assets/img/news/guild_tavern_whispers.jpg',
+            'is_active' => true,
+        ]);
+
+        $payload = [
+            'title' => 'New title about dragons',
+            'category' => 'New category',
+            'description' => 'New description',
+            'image_preset' => '__gazette_auto__',
+            'is_active' => 1,
+        ];
+
+        $response = $this->actingAs($this->user)->post("/valiant-shade/pages/news/{$news->id}", $payload);
+        $response->assertRedirect('/valiant-shade/pages/news');
+
+        $news->refresh();
+        $this->assertNotSame('__gazette_auto__', $news->image_url);
+        $this->assertNotEmpty($news->image_url);
     }
 }

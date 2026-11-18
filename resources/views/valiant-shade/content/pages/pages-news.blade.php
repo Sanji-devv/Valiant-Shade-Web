@@ -292,8 +292,8 @@
         $gazettePublicUrl = \App\Support\PublicSiteUrls::gazette();
       @endphp
       <div class="d-flex flex-wrap gap-2">
-        <a href="{{ $gazettePublicUrl }}?flash=1" class="btn btn-sm btn-danger" target="_blank" rel="noopener" title="Halka açık flash haber formu">
-          <i class="icon-base ti tabler-flame me-1"></i> Flash haber gönder
+        <a href="{{ $gazettePublicUrl }}?flash=1" class="btn btn-sm btn-danger" target="_blank" rel="noopener" title="Halka aÃ§Ä±k flash haber formu">
+          <i class="icon-base ti tabler-flame me-1"></i> Flash haber gÃ¶nder
         </a>
         <a href="{{ $gazettePublicUrl }}" class="btn btn-sm btn-label-primary" target="_blank" rel="noopener">
           <i class="icon-base ti tabler-world me-1"></i> {{ __('Open Public Newspaper') }}
@@ -318,7 +318,7 @@
               @endif
               @if($submissionBadge)
               <span class="badge bg-label-info">{{ $submissionBadge }}</span>
-              @elseif($pending->tag && str_contains($pending->tag, 'Gönderisi'))
+              @elseif($pending->tag && str_contains($pending->tag, 'GÃ¶nderisi'))
               <span class="badge bg-label-secondary">{{ $pending->tag }}</span>
               @endif
               <span class="text-body-secondary small">{{ $pending->date_text }}</span>
@@ -811,7 +811,7 @@
 @if($canManageNews ?? false)
 <div class="modal fade" id="newsEditModal" tabindex="-1" aria-labelledby="newsEditModalTitle" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
-    <form method="post" id="newsEditForm" class="modal-content" style="background: #182234; border: 1px solid rgba(255,255,255,0.15);">
+    <form method="post" id="newsEditForm" enctype="multipart/form-data" class="modal-content" style="background: #182234; border: 1px solid rgba(255,255,255,0.15);">
       @csrf
       <div class="modal-header border-bottom border-white border-opacity-10">
         <h5 class="modal-title fw-bold text-white" id="newsEditModalTitle">{{ __('Edit News') }}</h5>
@@ -829,7 +829,7 @@
           </div>
           <div class="col-md-6">
             <label class="form-label text-white small fw-medium" for="newsEditDateText">{{ __('Date label') }}</label>
-            <input type="text" class="form-control" id="newsEditDateText" name="date_text" maxlength="100" placeholder="Leos 1, 652 — Vonyas">
+            <input type="text" class="form-control" id="newsEditDateText" name="date_text" maxlength="100" placeholder="Leos 1, 652 â€” Vonyas">
           </div>
           <div class="col-12">
             <label class="form-label text-white small fw-medium" for="newsEditDescription">{{ __('Summary / description') }}</label>
@@ -852,11 +852,19 @@
                     $gazetteImagePresets[$path] = (string) ($entry['label'] ?? basename($path, '.jpg'));
                 }
               @endphp
-              <option value="__gazette_auto__" selected>Başlık ve özetten otomatik</option>
+              <option value="__gazette_auto__" selected>BaÅŸlÄ±k ve Ã¶zetten otomatik</option>
               @foreach ($gazetteImagePresets as $preset => $presetLabel)
               <option value="{{ $preset }}">{{ $presetLabel }}</option>
               @endforeach
             </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label text-white small fw-medium" for="newsEditCustomImage">{{ __('Custom cover upload') }}</label>
+            <input type="file" class="form-control" id="newsEditCustomImage" name="custom_image" accept="image/png,image/jpeg,image/webp">
+            <div class="form-text text-body-secondary">{{ __('Optional. Uploading a file overrides the selected preset.') }}</div>
+            <div class="mt-2 d-none" id="newsEditImagePreviewWrap">
+              <img id="newsEditImagePreview" alt="{{ __('Cover preview') }}" class="img-fluid rounded border border-white border-opacity-10" style="max-height: 180px;">
+            </div>
           </div>
           <div class="col-md-4">
             <label class="form-label text-white small fw-medium" for="newsEditOrder">{{ __('Sort order') }}</label>
@@ -939,6 +947,7 @@
   const newsDeleteUrlBase = @json(url('/valiant-shade/pages/news'));
   const newsStoreUrl = @json(route('valiant-shade.pages-news.store'));
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+  const currentImageLabel = @json(__('Current image'));
 
   function isManageableNewsItem(item) {
     return Boolean(item && item.is_database);
@@ -961,6 +970,18 @@
       if (submitBtn) submitBtn.textContent = @json(__('Create'));
       form.reset();
       document.getElementById('newsEditIsActive').checked = true;
+
+      const preset = document.getElementById('newsEditImagePreset');
+      if (preset) {
+        preset.querySelectorAll('option[data-current="1"]').forEach(o => o.remove());
+        preset.value = preset.options[0]?.value;
+      }
+      const previewWrap = document.getElementById('newsEditImagePreviewWrap');
+      const previewImg = document.getElementById('newsEditImagePreview');
+      if (previewWrap) previewWrap.classList.add('d-none');
+      if (previewImg) previewImg.removeAttribute('src');
+      const fileInput = document.getElementById('newsEditCustomImage');
+      if (fileInput) fileInput.value = '';
     } else {
       const item = masterNewsStore.find(n => Number(n.id) === Number(newsId));
       if (!item || !isManageableNewsItem(item)) {
@@ -988,14 +1009,65 @@
       document.getElementById('newsEditOrder').value = item.order ?? '';
       document.getElementById('newsEditIsActive').checked = item.is_active !== false && item.is_active !== 0;
       const preset = document.getElementById('newsEditImagePreset');
+      const previewWrap = document.getElementById('newsEditImagePreviewWrap');
+      const previewImg = document.getElementById('newsEditImagePreview');
+      const fileInput = document.getElementById('newsEditCustomImage');
+
+      if (preset) {
+        preset.querySelectorAll('option[data-current="1"]').forEach(o => o.remove());
+      }
+      if (fileInput) fileInput.value = '';
+      if (previewWrap) previewWrap.classList.add('d-none');
+      if (previewImg) previewImg.removeAttribute('src');
+
       if (preset && item.image_url) {
         const match = Array.from(preset.options).find(o => o.value === item.image_url);
-        preset.value = match ? item.image_url : preset.options[0]?.value;
+        if (match) {
+          preset.value = item.image_url;
+        } else {
+          const opt = document.createElement('option');
+          opt.value = item.image_url;
+          opt.dataset.current = '1';
+          const filename = String(item.image_url).split('/').pop() || item.image_url;
+          opt.textContent = `${currentImageLabel}: ${filename}`;
+          preset.insertBefore(opt, preset.firstChild);
+          preset.value = item.image_url;
+        }
+      }
+
+      if (previewImg && item.image_asset) {
+        previewImg.src = item.image_asset;
+        if (previewWrap) previewWrap.classList.remove('d-none');
       }
     }
 
     bootstrap.Modal.getOrCreateInstance(modalEl).show();
   };
+
+  document.addEventListener('change', (event) => {
+    const input = event.target;
+    if (!input || input.id !== 'newsEditCustomImage') {
+      return;
+    }
+
+    const previewWrap = document.getElementById('newsEditImagePreviewWrap');
+    const previewImg = document.getElementById('newsEditImagePreview');
+    if (!previewWrap || !previewImg) {
+      return;
+    }
+
+    const file = input.files && input.files[0];
+    if (!file) {
+      previewImg.removeAttribute('src');
+      previewWrap.classList.add('d-none');
+      return;
+    }
+
+    const url = URL.createObjectURL(file);
+    previewImg.src = url;
+    previewWrap.classList.remove('d-none');
+    previewImg.onload = () => URL.revokeObjectURL(url);
+  });
 
   function submitNewsDelete(newsId) {
     const form = document.createElement('form');
@@ -1104,7 +1176,7 @@
     if (typeof item.views_count === 'number' && item.views_count > 0) {
       statPills.unshift({ value: item.views_count, label: 'okunma', color: 'text-secondary' });
     }
-    const reactionLabels = { victory: 'Zafer', mourning: 'Yas', whisper: 'Han fısıltısı', bounty: 'Ferman' };
+    const reactionLabels = { victory: 'Zafer', mourning: 'Yas', whisper: 'Han fÄ±sÄ±ltÄ±sÄ±', bounty: 'Ferman' };
     const reactionMetrics = item.reaction_metrics || {};
     Object.keys(reactionLabels).forEach((key) => {
       const count = Number(reactionMetrics[key] || 0);
@@ -1137,10 +1209,10 @@
             <i class="icon-base ti tabler-candle"></i><span>Yas tut</span>
           </button>
           <button type="button" class="btn btn-outline-warning d-inline-flex align-items-center gap-1" onclick="sendEditorialReaction(${itemId}, 'whisper', '${String(item.title).replace(/'/g, "\\'")}')">
-            <i class="icon-base ti tabler-beer"></i><span>Han fısıltısı</span>
+            <i class="icon-base ti tabler-beer"></i><span>Han fÄ±sÄ±ltÄ±sÄ±</span>
           </button>
           <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center gap-1" onclick="sendEditorialReaction(${itemId}, 'bounty', '${String(item.title).replace(/'/g, "\\'")}')">
-            <i class="icon-base ti tabler-file-text"></i><span>Ferman kaydı</span>
+            <i class="icon-base ti tabler-file-text"></i><span>Ferman kaydÄ±</span>
           </button>
         </div>`;
     } else {
@@ -1212,7 +1284,7 @@
   function taziyeBirak(title) {
     if (typeof Swal !== 'undefined') {
       Swal.fire({
-        title: '🕯️ {{ __("Memorial & Moment of Silence") }}',
+        title: 'ğŸ•¯ï¸ {{ __("Memorial & Moment of Silence") }}',
         text: '{{ __("You lit a candle in memory of our fallen heroes. Their names have been inscribed into the Valiant Shade Book of Honor.") }}',
         icon: 'info',
         confirmButtonText: '{{ __("May Their Souls Rest in Glory") }}',
@@ -1227,7 +1299,7 @@
   function fisiltiYay(title) {
     if (typeof Swal !== 'undefined') {
       Swal.fire({
-        title: '🍺 {{ __("Tavern Whisper") }}',
+        title: 'ğŸº {{ __("Tavern Whisper") }}',
         text: '{{ __("You bought a round of ales at the Red Inn and whispered the rumor into eager ears. Suspicion in the city has increased!") }}',
         icon: 'warning',
         confirmButtonText: '{{ __("Keep it Between Us") }}',
@@ -1242,7 +1314,7 @@
   function fermanKayit(title) {
     if (typeof Swal !== 'undefined') {
       Swal.fire({
-        title: '📜 {{ __("Decree Signed") }}',
+        title: 'ğŸ“œ {{ __("Decree Signed") }}',
         text: '{{ __("You have enlisted for the bounty expedition. Your share will await you in the guild coffers once the targets are delivered alive or dead!") }}',
         icon: 'success',
         confirmButtonText: '{{ __("My Blade is Ready") }}',
@@ -1257,7 +1329,7 @@
   function zaferKutla(title) {
     if (typeof Swal !== 'undefined') {
       Swal.fire({
-        title: '🏆 {{ __("Victory Celebration!") }}',
+        title: 'ğŸ† {{ __("Victory Celebration!") }}',
         text: '{{ __("Steins were raised in honor of the grand victory. The Guild Council granted you +50 XP bonus honor points!") }}',
         icon: 'success',
         confirmButtonText: '{{ __("For Valiant Shade!") }}',
@@ -1479,7 +1551,7 @@
 
           if (typeof Swal !== 'undefined') {
             Swal.fire({
-              title: '🤫 {{ __("Whisper Received!") }}',
+              title: 'ğŸ¤« {{ __("Whisper Received!") }}',
               text: result.message,
               icon: 'success',
               confirmButtonText: '{{ __("Understood") }}',
@@ -1500,3 +1572,4 @@
   });
 </script>
 @endsection
+
