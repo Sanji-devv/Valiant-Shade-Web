@@ -27,6 +27,7 @@ class GuestInteractionMiddleware
         'valiant-shade.gods.show',
         'valiant-shade.gods.update',
         'valiant-shade.gods.profile.update',
+        'valiant-shade.gods.religion.update',
         'login',
     ];
 

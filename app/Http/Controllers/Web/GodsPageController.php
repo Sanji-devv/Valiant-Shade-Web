@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use RuntimeException;
@@ -18,8 +19,18 @@ use UnexpectedValueException;
 
 class GodsPageController extends Controller
 {
+    private const RELIGION_FILE = 'religion.txt';
+
+    private const LEGACY_RELIGION_FILE = 'mythology.txt';
+
     public function index(Request $request): View
     {
+        $disk = Storage::disk('local');
+        $file = $disk->exists(self::RELIGION_FILE) ? self::RELIGION_FILE : self::LEGACY_RELIGION_FILE;
+        $religionText = $disk->exists($file) ? $disk->get($file) : config('religion.text');
+        if (! is_string($religionText)) {
+            throw new RuntimeException('İnanç metni okunamadı.');
+        }
         $filter = $request->validate([
             'filter_applied' => ['sometimes', 'in:1'],
             'groups' => ['sometimes', 'array'],
@@ -66,7 +77,37 @@ class GodsPageController extends Controller
             'alignments' => $alignments,
             'domainOptions' => $domains,
             'sourceUrl' => config('gods.source_url'),
+            'religionText' => $religionText,
+            'religionHtml' => Str::markdown($religionText, [
+                'html_input' => 'strip',
+                'allow_unsafe_links' => false,
+                'renderer' => ['soft_break' => "<br />\n"],
+            ]),
         ]);
+    }
+
+    public function updateReligion(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'religion_text' => ['required', 'string', 'max:50000'],
+        ]);
+
+        $disk = Storage::disk('local');
+        $temporaryFile = 'religion-'.Str::uuid().'.tmp';
+        try {
+            if (! $disk->put($temporaryFile, $data['religion_text'])) {
+                throw new RuntimeException('İnanç metni kaydedilemedi.');
+            }
+            if (! $disk->move($temporaryFile, self::RELIGION_FILE)) {
+                throw new RuntimeException('İnanç metni güncellenemedi.');
+            }
+        } finally {
+            if ($disk->exists($temporaryFile) && ! $disk->delete($temporaryFile)) {
+                Log::warning('Geçici inanç dosyası silinemedi.', ['path' => $temporaryFile]);
+            }
+        }
+
+        return redirect()->route('valiant-shade.gods.index')->with('success', 'İnanç metni güncellendi.');
     }
 
     public function show(string $slug): View

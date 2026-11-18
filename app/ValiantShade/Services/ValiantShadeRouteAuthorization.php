@@ -20,6 +20,7 @@ class ValiantShadeRouteAuthorization
         'valiant-shade.gods.show',
         'valiant-shade.gods.update',
         'valiant-shade.gods.profile.update',
+        'valiant-shade.gods.religion.update',
         'logout',
         'valiant-shade.auth-logout',
     ];

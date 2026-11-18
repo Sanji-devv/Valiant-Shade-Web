@@ -251,27 +251,61 @@
         @else
             <article class="card mb-4">
                 <div class="card-body p-4 p-xl-5">
-                    <div class="gods-page__eyebrow">İnanç</div>
-                    <h1 class="display-6 mt-2">Mineria Mitolojisi</h1>
-                    <div class="gods-page__story mt-4">
-                        <p>Mineria'da çok tanrılı bir inanç sistemi yaygındır. Genel kabul görmüş yaratılış mitolojisi ise şöyledir:</p>
-                        <p>İlk ateş vardı. İnsanlar ısınsın, yaşayabilsinler diye. Ona koruyucu gözüyle bakan insanlar, ateşi kendi ruhlarıyla bezediler. Ruhlar birleşti, Bir ateş taşıyıcı uyandı. İlk tanrı ateşti, ilk tanrının adı <strong>Belarun'</strong>du.</p>
-                        <p>Ormansoyu uyanmaya başladı. Doğada kendilerine yer buldular, doğaya isim verdiler, doğaya saygılarını sundular. <strong>Keia</strong> varoldu.</p>
-                        <p>Cüceler gözlerini açtılar dağlarda, dağa minnet duydular, kendilerinden biriymiş gibi sevdiler, beraber çalıştılar. Dağların eteklerine hayran kaldılar, esen rüzgara, havanın ve kayanın gücüne. Bir gün <strong>Renvil</strong> doğdu.</p>
-                        <p>Ka-hooli ve Shea'nın hikayeleri en uzunu. Yıllar, yüzyıllar geçti. İnsanlar medeniyet yarattı, kendi silahlarını, kendi toplulukları, kendi şehirlerini kurdular. İmparatorluk dediler yarattıkları ülkeye. Tüm Dünya tek imparatorluktu. Öyle bir şehir vardı ki ama, hepsinden büyük, hepsinden güzel; Sol.</p>
-                        <p>Sol'da büyü bulundu. Kullananlarda kibir belirdi. İnsan değillerdi onlar artık, onlar büyücüydü. Bu güce inananlar, tapanlar ortaya çıktı. Onlar ortaya çıkınca da, büyü bir kadının vücudunda toplandı: <strong>Shea</strong>!</p>
-                        <p>Shea ortaya çıkar çıkmaz yeni güneşi yarattı. Hala gökyüzünü aydınlatan güneşi. Karanlığı azalttı, soğuk topraklara daha da hayat getirdi. Shea'nın takipçileri güçlüydü, zengindi, insandan daha insandı. Artık onlar insan, diğerleriyse altsoydu. Büyücüler yeni başkenti taşıdılar, artık İmparatorluğa gerek de yoktu. Sadece Sol ve Shea yeterdi.</p>
-                        <p>Altsoy rahatsızdı. Altsoy mutsuzdu. Doğuştan yapamadıkları şeyler için ceza çekmek istemiyordu. Aralarından bir tanesi çıktı, diğerleri ona baktı. Bir maske taktı, ve yemin etti. Uzun zamandır yaşanan büyücü baskısına, yarattıkları acıya son verecekti. Savaşlar uzun sürdü. Halk birbirine girerde, nasıl kısa sürer zaten. Nefret büyüdü, intikam isteği arttı. Kahooli kazandı, altsoy sazandı. Artık yeni bir tanrı vardı, <strong>Kahooli</strong>! Shea, Kahooli tarafından katledildi, savaş bitti.</p>
-                        <p>Krallıklar doğmaya başladılar toprakta. Haksızlık bitmiş, her insan kendi kaderini çalışarak kontrol edebilir olmuştu. Onur, gurur, çalışkanlık her bireyin içinde doğdu büyüdü, beraberinde de <strong>Siwion'</strong>u getirdi.</p>
-                        <p>Krallıklar büyüdükçe, zaman kendini tekrar etti. Krallar hep daha fazlasını istiyordu. Kendileri için savaşacak cesur insanlara ihtiyaçları vardı. Siwion'un öğrettiği gibi onur için değil, altının parıltısı için öleceklere. Yıllar böyle geçti. Rhen adındaki bir ölümlü tanrıları rahatsız etti, ve dünyayı karıştırdı. Uyanan tanrılar insanı küçülttü. Onurunu kırdı.</p>
-                        <p>Krallıklar bitti, şehir devletler kaldı. Tabi onlar için savaşanlar. İnsanlar sarı metalin peşinde savaştı, ve toprağı suladı. Bir paralı asker <strong>Rorin Hiud</strong>, gerçek hazinenin topraklarda değil tanrılarda olduğunu söyledi. Binler ona güldü, ama ismi büyüdü. Yaptığı olağanüstü yolculuklar dilden dile dolandı. İnsanların onurunu geri getireceğine inandılar. Ona güvenenlerin yardımıyla tanrılardan altınları alıp, halka vereceğini söyledi. Peşinde binlerle yolculuğa çıktı. Dönmedi, ama ona güven hala bitmedi.</p>
-                        <p>İnsanların tanrılara karşı olan hikayeleri büyüdü, anlatıldıkça güzelleşti. İnsanlar şarkıyı, hikayeyi hiç bu kadar derinden hissetmemişlerdi. <strong>Silvarin</strong> doğdu.</p>
+                    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="gods-page__eyebrow">İnanç</div>
+                            <h1 class="display-6 mt-2">Mineria İnancı</h1>
+                        </div>
+                        <button type="button" class="btn btn-label-primary" data-bs-toggle="modal" data-bs-target="#religion-edit">Düzenle</button>
                     </div>
+                    <div class="gods-page__story mt-4">{!! $religionHtml !!}</div>
                     <div class="small text-body-secondary mt-4">
                         Kaynak: <a href="{{ $sourceUrl }}" target="_blank" rel="noopener noreferrer">Mineria Wiki — İnanç</a>
                     </div>
                 </div>
             </article>
+
+            <div class="modal fade" id="religion-edit" tabindex="-1" aria-labelledby="religion-edit-title" aria-hidden="true" @if ($errors->any() && old('editing_religion')) data-gods-edit-errors @endif>
+                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+                    <div class="modal-content">
+                        <form method="post" action="{{ route('valiant-shade.gods.religion.update') }}">
+                            @csrf
+                            @method('PUT')
+                            <input type="hidden" name="editing_religion" value="1">
+                            <div class="modal-header">
+                                <h2 class="modal-title h5" id="religion-edit-title">İnancı düzenle</h2>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                            </div>
+                            <div class="modal-body">
+                                @if ($errors->any() && old('editing_religion'))
+                                    <div class="alert alert-danger" role="alert">
+                                        <ul class="mb-0">
+                                            @foreach ($errors->all() as $error)
+                                                <li>{{ $error }}</li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endif
+                                <label class="form-label" for="religion-text">İnanç metni</label>
+                                <textarea class="form-control" id="religion-text" name="religion_text" rows="16" maxlength="50000" required>{{ old('editing_religion') && is_string(old('religion_text')) ? old('religion_text') : $religionText }}</textarea>
+                                <div class="form-text">Paragrafları boş satırla ayırın. Bağlantı eklemek için önce metni seçin.</div>
+                                <div class="mt-3">
+                                    <label class="form-label" for="religion-link">Bağlantı adresi</label>
+                                    <div class="d-flex gap-2">
+                                        <input class="form-control" id="religion-link" type="url" placeholder="https://..." aria-describedby="religion-link-error">
+                                        <button class="btn btn-label-primary text-nowrap" id="religion-link-add" type="button">Bağlantı ekle</button>
+                                    </div>
+                                    <div class="text-danger small mt-1" id="religion-link-error" role="alert"></div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">İptal</button>
+                                <button type="submit" class="btn btn-primary">Kaydet</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
 
             <section class="card mb-4" aria-labelledby="gods-domains-title">
                 <div class="card-header">
@@ -313,7 +347,7 @@
                             <a class="btn btn-label-secondary" href="{{ route('valiant-shade.gods.index') }}#gods-domains-title">Sıfırla</a>
                         </div>
                     </form>
-                    @if ($errors->any())
+                    @if ($errors->any() && ! old('editing_religion'))
                         <div class="alert alert-danger mt-3 mb-0" role="alert">
                             <ul class="mb-0">
                                 @foreach ($errors->all() as $error)
@@ -485,6 +519,40 @@
 @section('page-script')
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            const religionText = document.getElementById('religion-text');
+            const religionLink = document.getElementById('religion-link');
+            const religionLinkAdd = document.getElementById('religion-link-add');
+            if (religionText && religionLink && religionLinkAdd) {
+                religionLinkAdd.addEventListener('click', function () {
+                    const error = document.getElementById('religion-link-error');
+                    const selected = religionText.value.substring(religionText.selectionStart, religionText.selectionEnd);
+                    let url;
+                    try {
+                        url = new URL(religionLink.value);
+                    } catch (exception) {
+                        error.textContent = 'Geçerli bir HTTP veya HTTPS adresi girin.';
+                        return;
+                    }
+                    if (!['http:', 'https:'].includes(url.protocol)) {
+                        error.textContent = 'Geçerli bir HTTP veya HTTPS adresi girin.';
+                        return;
+                    }
+                    if (!selected || selected.includes('\n')) {
+                        error.textContent = 'Bağlantı için metin içinde tek satırlık bir bölüm seçin.';
+                        return;
+                    }
+                    const label = selected.replace(/\\/g, '\\\\').replace(/([[\]])/g, '\\$1');
+                    const link = '[' + label + '](' + url.href.replace(/[()]/g, '\\$&') + ')';
+                    if (religionText.value.length - selected.length + link.length > religionText.maxLength) {
+                        error.textContent = 'Bağlantı eklendiğinde metin uzunluk sınırını aşıyor.';
+                        return;
+                    }
+                    religionText.setRangeText(link, religionText.selectionStart, religionText.selectionEnd, 'end');
+                    religionText.focus();
+                    religionLink.value = '';
+                    error.textContent = '';
+                });
+            }
             document.querySelectorAll('[data-entry-group]').forEach(function (group) {
                 const list = group.querySelector('[data-entry-list]');
                 const template = group.querySelector('[data-entry-template]');

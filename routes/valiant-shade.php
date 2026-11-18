@@ -58,6 +58,10 @@ Route::get('/lang/{locale}', [LanguageController::class, 'swap']);
 Route::get('/gods', [GodsPageController::class, 'index'])
     ->name('valiant-shade.gods.index');
 
+Route::put('/gods/religion', [GodsPageController::class, 'updateReligion'])
+    ->middleware('throttle:30,1')
+    ->name('valiant-shade.gods.religion.update');
+
 Route::get('/gods/{slug}', [GodsPageController::class, 'show'])
     ->where('slug', '[a-z0-9-]+')
     ->name('valiant-shade.gods.show');

@@ -4,13 +4,43 @@ namespace Tests\Feature;
 
 use App\Models\GodDomainOverride;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Mockery;
+use RuntimeException;
 use Tests\TestCase;
 
 class PublicGodsPagesTest extends TestCase
 {
     use RefreshDatabase;
+
+    private string $religionStoragePath;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->religionStoragePath = storage_path('framework/testing/religion-'.Str::uuid());
+        config()->set('filesystems.disks.local.root', $this->religionStoragePath);
+        Storage::forgetDisk('local');
+    }
+
+    protected function tearDown(): void
+    {
+        foreach (['religion.txt', 'mythology.txt'] as $name) {
+            $file = $this->religionStoragePath.DIRECTORY_SEPARATOR.$name;
+            if (is_file($file)) {
+                unlink($file);
+            }
+        }
+        if (is_dir($this->religionStoragePath)) {
+            rmdir($this->religionStoragePath);
+        }
+
+        parent::tearDown();
+    }
 
     public function test_home_displays_nine_portals_with_gods_and_two_empty_locked_cells(): void
     {
@@ -92,13 +122,13 @@ class PublicGodsPagesTest extends TestCase
             ->assertSee('Mineria Wiki — İnanç');
     }
 
-    public function test_gods_index_shows_mythology_then_domains_without_separate_catalog(): void
+    public function test_gods_index_shows_religion_then_domains_without_separate_catalog(): void
     {
         $response = $this->get(route('valiant-shade.gods.index'));
 
         $response->assertOk()
             ->assertSeeInOrder([
-                'Mineria Mitolojisi',
+                'Mineria İnancı',
                 'İlk ateş vardı.',
                 'İnsanların tanrılara karşı olan hikayeleri büyüdü',
                 'Tanrılar ve Domainler',
@@ -164,6 +194,77 @@ class PublicGodsPagesTest extends TestCase
             $this->get(route('valiant-shade.gods.show', ['slug' => $slug]))
                 ->assertOk()
                 ->assertSee('Tanrı profili');
+        }
+    }
+
+    public function test_religion_can_be_edited_with_links_and_remains_saved(): void
+    {
+        $index = route('valiant-shade.gods.index');
+        $this->get($index)->assertOk()
+            ->assertSee('Mineria İnancı')
+            ->assertSee('İlk ateş vardı.')
+            ->assertSee("<strong>Belarun'</strong>du", false)
+            ->assertSee("<strong>Siwion'</strong>u", false)
+            ->assertSee('id="religion-edit"', false)
+            ->assertSee('Bağlantı ekle');
+
+        $this->from($index)->put(route('valiant-shade.gods.religion.update'), [
+            'religion_text' => "Yeni hikâye: [Belarun](https://example.com/belarun).\n\nİkinci paragraf.",
+            'editing_religion' => '1',
+        ])->assertRedirect($index)->assertSessionHas('success');
+
+        $this->get($index)->assertOk()
+            ->assertSee('<a href="https://example.com/belarun">Belarun</a>', false)
+            ->assertSee('İkinci paragraf.')
+            ->assertDontSee('İlk ateş vardı.');
+        $this->assertSame("Yeni hikâye: [Belarun](https://example.com/belarun).\n\nİkinci paragraf.", Storage::disk('local')->get('religion.txt'));
+    }
+
+    public function test_religion_rejects_empty_text_and_renders_untrusted_markup_safely(): void
+    {
+        $index = route('valiant-shade.gods.index');
+        $url = route('valiant-shade.gods.religion.update');
+        $this->from($index)->put($url, ['religion_text' => '', 'editing_religion' => '1'])
+            ->assertRedirect($index)->assertSessionHasErrors('religion_text');
+        $this->assertFalse(Storage::disk('local')->exists('religion.txt'));
+
+        $this->put($url, ['religion_text' => '<script>alert(1)</script> [bad](javascript:alert%281%29)'])
+            ->assertRedirect($index);
+        $content = $this->get($index)->assertOk()->getContent();
+        $this->assertIsString($content);
+        $this->assertSame(1, preg_match('/<div class="gods-page__story mt-4">(.*?)<\/div>/s', $content, $matches));
+        $this->assertStringNotContainsString('<script', $matches[1]);
+        $this->assertStringNotContainsString('href="javascript:', $matches[1]);
+    }
+
+    public function test_existing_religion_text_is_preserved_when_renaming_storage(): void
+    {
+        Storage::disk('local')->put('mythology.txt', 'Eski inanç metni');
+        $index = route('valiant-shade.gods.index');
+        $this->get($index)->assertOk()->assertSee('Eski inanç metni');
+
+        $this->put(route('valiant-shade.gods.religion.update'), ['religion_text' => 'Yeni inanç metni'])
+            ->assertRedirect($index);
+        $this->get($index)->assertOk()->assertSee('Yeni inanç metni')->assertDontSee('Eski inanç metni');
+        $this->assertSame('Eski inanç metni', Storage::disk('local')->get('mythology.txt'));
+        $this->assertSame('Yeni inanç metni', Storage::disk('local')->get('religion.txt'));
+    }
+
+    public function test_religion_write_failure_is_not_reported_as_success(): void
+    {
+        Storage::disk('local')->put('religion.txt', 'Önceki metin');
+        $disk = Mockery::mock(FilesystemAdapter::class);
+        $disk->shouldReceive('put')->once()->andReturn(false);
+        $disk->shouldReceive('exists')->once()->andReturn(false);
+        Storage::shouldReceive('disk')->once()->with('local')->andReturn($disk);
+
+        $this->withoutExceptionHandling();
+        try {
+            $this->put(route('valiant-shade.gods.religion.update'), ['religion_text' => 'Yeni metin']);
+            $this->fail('A failed write must raise an error.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('İnanç metni kaydedilemedi.', $exception->getMessage());
+            $this->assertSame('Önceki metin', file_get_contents($this->religionStoragePath.DIRECTORY_SEPARATOR.'religion.txt'));
         }
     }
 
