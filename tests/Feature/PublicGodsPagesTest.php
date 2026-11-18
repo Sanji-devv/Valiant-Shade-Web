@@ -113,7 +113,49 @@ class PublicGodsPagesTest extends TestCase
         $content = $response->getContent();
         $this->assertIsString($content);
         $this->assertSame(1, preg_match('/<tr>\s*<td class="text-center align-middle">\s*<a[^>]*>Keia<\/a>.*?<\/tr>/s', $content, $matches));
-        $this->assertSame(4, substr_count($matches[0], '—'));
+        $this->assertStringContainsString('Chaotic Neutral', $matches[0]);
+        $this->assertStringContainsString('Quarterstaff', $matches[0]);
+        $this->assertStringContainsString('Vermin (UW)', $matches[0]);
+    }
+
+    public function test_supplied_gods_have_profiles_and_expected_categories(): void
+    {
+        $major = ['belarun', 'bo-leos', 'harados', 'kahooli', 'keia', 'renvil', 'rorin-hiud', 'saubalil', 'shea', 'siwion', 'silvarin'];
+        $minor = ['morax', 'diamania', 'nianor', 'ilk-yildiz', 'korr-vagore', 'livakh', 'nymoria', 'ommos', 'thalor', 'xir-keth', 'chancuhtili', 'aeleos', 'kenzariel', 'mara-kuro', 'myrion'];
+        $groups = config('gods.groups');
+
+        $this->assertEqualsCanonicalizing($major, array_column($groups['major']['gods'], 'slug'));
+        $this->assertEqualsCanonicalizing($minor, array_column($groups['minor']['gods'], 'slug'));
+        foreach (array_merge($major, $minor) as $slug) {
+            $this->get(route('valiant-shade.gods.show', ['slug' => $slug]))->assertOk();
+        }
+
+        $this->get(route('valiant-shade.gods.index', ['filter_applied' => 1, 'group' => 'minor', 'domain' => 'Artifice']))
+            ->assertOk()
+            ->assertSee(route('valiant-shade.gods.show', ['slug' => 'chancuhtili']), false)
+            ->assertDontSee(route('valiant-shade.gods.show', ['slug' => 'belarun']), false)
+            ->assertSee('Dwarf')
+            ->assertSee('Petrification');
+    }
+
+    public function test_existing_override_takes_priority_over_new_catalog_data(): void
+    {
+        GodDomainOverride::create([
+            'slug' => 'keia',
+            'alignment' => 'Lawful Good',
+            'domains' => [['name' => 'Existing', 'url' => 'https://example.com/domain']],
+            'subdomains' => ['Existing subdomain'],
+            'weapon' => 'Existing weapon',
+            'summary' => 'Existing profile',
+        ]);
+
+        $this->get(route('valiant-shade.gods.index'))
+            ->assertOk()
+            ->assertSee('https://example.com/domain', false)
+            ->assertSee('Existing subdomain')
+            ->assertSee('Existing weapon');
+        $this->get(route('valiant-shade.gods.show', ['slug' => 'keia']))
+            ->assertOk()->assertSee('Existing profile');
     }
 
     public function test_default_gods_have_public_profiles(): void

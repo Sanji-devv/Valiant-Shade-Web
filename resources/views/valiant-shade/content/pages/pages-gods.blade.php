@@ -43,6 +43,9 @@
             white-space: normal;
             overflow-wrap: anywhere;
         }
+        .gods-page__table td.gods-page__domain-cell {
+            vertical-align: middle;
+        }
         .gods-page__table ul {
             margin: 0;
             padding-left: 1.15rem;
@@ -350,7 +353,7 @@
                                         @endif
                                     </td>
                                     <td class="text-center align-middle" data-label="Hizalanma">{{ $godItem['alignment'] ?? '—' }}</td>
-                                    <td data-label="Domainler">
+                                    <td class="gods-page__domain-cell" data-label="Domainler">
                                         @if (! empty($godItem['domains']))
                                             <ul>
                                                 @foreach ($godItem['domains'] as $domain)
