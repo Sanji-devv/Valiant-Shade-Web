@@ -8,6 +8,7 @@ use App\Support\PublicSiteUrls;
 use App\ValiantShade\Http\Controllers\NewsController;
 use App\ValiantShade\Support\GazetteTypography;
 use App\ValiantShade\Support\NewsEngagement;
+use App\ValiantShade\Support\NewsPublication;
 use App\ValiantShade\Support\NewsStats;
 use App\ValiantShade\Support\NewsTypeResolver;
 use App\ValiantShade\Support\WorldCalendar;
@@ -48,9 +49,7 @@ class PublicNewsService
      */
     public function publishedSource(): Collection
     {
-        $dbNews = News::query()
-            ->where('status', 'published')
-            ->where('is_active', true)
+        $dbNews = $this->publishedQuery()
             ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->get();
@@ -178,7 +177,10 @@ class PublicNewsService
             'world_date' => $worldParts,
             'read_time' => GazetteTypography::scrub($item->read_time ?? '3 dk okuma') ?? '3 dk okuma',
             'description' => GazetteTypography::scrub((string) ($item->description ?? '')) ?? '',
-            'full_story' => GazetteTypography::scrub($item->full_story ?? null),
+            'full_story' => NewsPublication::isGnome($item) && filled($item->full_story ?? null)
+                ? (string) $item->full_story
+                : GazetteTypography::scrub($item->full_story ?? null),
+            'deck_line' => GazetteTypography::scrub($item->testimony ?? null),
             'testimony' => GazetteTypography::scrub($item->testimony ?? null),
             'image_url' => $item->image_url ?? null,
             'image_asset' => $imageAsset,
@@ -195,6 +197,12 @@ class PublicNewsService
             'gazette_issue_id' => isset($item->gazette_issue_id) ? (int) $item->gazette_issue_id : null,
             'gazette_slot_kind' => $gazetteSlotKind,
             'gazette_placement_label' => $gazettePlacementLabel,
+            'publication' => NewsPublication::columnExists()
+                ? NewsPublication::normalize((string) ($item->publication ?? NewsPublication::LAGIMDAN))
+                : NewsPublication::LAGIMDAN,
+            'gnome_edition_number' => NewsPublication::isGnome($item) && is_array($item->stats ?? null)
+                ? (int) ($item->stats['gnome_edition_number'] ?? 0)
+                : null,
         ];
     }
 
@@ -333,9 +341,92 @@ class PublicNewsService
 
     protected function publishedQuery(): Builder
     {
-        return News::query()
+        $query = News::query()
             ->where('status', 'published')
             ->where('is_active', true);
+
+        return $this->scopeLagimdanSesler($query);
+    }
+
+    protected function scopeLagimdanSesler(Builder $query): Builder
+    {
+        if (! NewsPublication::columnExists()) {
+            return $query;
+        }
+
+        return $query->where('publication', NewsPublication::LAGIMDAN);
+    }
+
+    /**
+     * @return array{current: array<string, mixed>|null, archive: array<int, array<string, mixed>>, brand: array<string, mixed>}
+     */
+    public function gnomeCrySheet(?int $editionId = null, ?int $editionNumber = null): array
+    {
+        if (! NewsPublication::columnExists()) {
+            return [
+                'current' => null,
+                'archive' => [],
+                'brand' => config('gazette.publications.gnome_ciglisi', []),
+            ];
+        }
+
+        $locale = app()->getLocale();
+        $cacheSuffix = $editionId
+            ? "gnome.{$editionId}"
+            : ($editionNumber ? "gnome.n{$editionNumber}" : 'gnome.current');
+
+        return Cache::remember($this->cacheKey("{$cacheSuffix}.{$locale}"), $this->cacheTtl(), function () use ($editionId, $editionNumber) {
+            $rows = News::query()
+                ->where('publication', NewsPublication::GNOME_CIGLISI)
+                ->where('status', 'published')
+                ->orderBy('id')
+                ->get();
+
+            $editions = $rows->values()->map(function (News $row, int $index) {
+                $item = $this->transformItem($row);
+                $num = (int) (is_array($row->stats) ? ($row->stats['gnome_edition_number'] ?? 0) : 0);
+                $item['gnome_edition_number'] = $num > 0 ? $num : $index + 1;
+
+                return $item;
+            })->all();
+
+            $total = count($editions);
+            $current = null;
+            $currentIndex = -1;
+
+            if ($editionId) {
+                $currentIndex = (int) collect($editions)->search(fn ($row) => (int) ($row['id'] ?? 0) === $editionId);
+            } elseif ($editionNumber) {
+                $currentIndex = (int) collect($editions)->search(
+                    fn ($row) => (int) ($row['gnome_edition_number'] ?? 0) === $editionNumber
+                );
+            } elseif ($total > 0) {
+                $currentIndex = $total - 1;
+            }
+
+            if ($currentIndex >= 0 && isset($editions[$currentIndex])) {
+                $current = $editions[$currentIndex];
+            }
+
+            $prev = $currentIndex > 0 ? $editions[$currentIndex - 1] : null;
+            $next = $currentIndex >= 0 && $currentIndex < $total - 1 ? $editions[$currentIndex + 1] : null;
+
+            return [
+                'current' => $current,
+                'editions' => $editions,
+                'archive' => array_reverse($editions),
+                'total_editions' => $total,
+                'current_edition_number' => $current ? (int) ($current['gnome_edition_number'] ?? 0) : 0,
+                'navigation' => [
+                    'index' => $currentIndex,
+                    'prev_id' => $prev['id'] ?? null,
+                    'next_id' => $next['id'] ?? null,
+                    'prev_number' => $prev['gnome_edition_number'] ?? null,
+                    'next_number' => $next['gnome_edition_number'] ?? null,
+                ],
+                'brand' => config('gazette.publications.gnome_ciglisi', []),
+            ];
+        });
     }
 
     protected function likeOperator(): string

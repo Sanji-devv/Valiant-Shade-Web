@@ -1,4 +1,5 @@
 import { createRumorWizard } from './newspaper-submission-wizard.js';
+import { createGnomeCryController, PUBLICATION_GNOME, PUBLICATION_LAGIM } from './newspaper-gnome-cry.js';
 
 const WEB_ITEMS_PER_PAGE = 9;
 const STREAM_ITEMS_PER_PAGE = 12;
@@ -38,6 +39,7 @@ const state = {
   pendingArticleSlug: null,
   suppressUrlSync: false,
   articleBootstrapInFlight: false,
+  articleOpenedFromDeepLink: false,
   openArticleId: null,
   coverMastIndex: 0,
   coverMastTimer: null,
@@ -47,7 +49,15 @@ const state = {
   streamLoading: false,
   streamReturnLayout: null,
   streamObserver: null,
+  publicationMode: PUBLICATION_LAGIM,
+  gnomeCurrentId: null,
+  gnomeEditionId: null,
+  gnomeEditionNumberHint: null,
+  gnomeEditions: [],
+  lagimLayoutBeforeGnome: null,
 };
+
+let gnomeCryCtrl;
 
 const els = {};
 
@@ -216,6 +226,10 @@ function canCrossIssueNav(direction) {
 }
 
 async function goGazettePrev() {
+  if (gnomeCryCtrl?.isGnomePublication() && gnomeCryCtrl.isGnomeDesktopSheet()) {
+    gnomeCryCtrl.stepEdition(-1);
+    return;
+  }
   if (!isGazetteLayout() || isGlobalFeedMode()) {
     goToFeedPage(state.page - 1, 'back');
     return;
@@ -228,6 +242,10 @@ async function goGazettePrev() {
 }
 
 async function goGazetteNext() {
+  if (gnomeCryCtrl?.isGnomePublication() && gnomeCryCtrl.isGnomeDesktopSheet()) {
+    gnomeCryCtrl.stepEdition(1);
+    return;
+  }
   if (!isGazetteLayout() || isGlobalFeedMode()) {
     goToFeedPage(state.page + 1, 'fwd');
     return;
@@ -299,7 +317,7 @@ function readUrlIntoState() {
     state.pendingArticleSlug = pathSlugMatch[1].toLowerCase();
   }
   if (gorunum === 'web' || gorunum === 'gazette' || gorunum === 'stream') {
-    state.layoutMode = gorunum === 'gazette' ? 'gazette' : gorunum === 'stream' ? 'stream' : 'web';
+    state.layoutMode = gorunum === 'stream' ? 'stream' : 'gazette';
   } else if (pathSlugMatch || params.has('yaprak') || params.has('sayi') || params.has('haber')) {
     state.layoutMode = 'gazette';
   }
@@ -337,6 +355,17 @@ function readUrlIntoState() {
 
   if (params.get('flash') === '1') {
     state.pendingFlashModal = true;
+  }
+
+  const yayin = (params.get('yayin') || '').toLowerCase();
+  if (yayin === 'gnome' || yayin === 'ciglisi' || yayin === PUBLICATION_GNOME) {
+    state.publicationMode = PUBLICATION_GNOME;
+  } else {
+    state.publicationMode = PUBLICATION_LAGIM;
+  }
+  const parsomen = Number.parseInt(params.get('parsomen') || '', 10);
+  if (Number.isFinite(parsomen) && parsomen > 0 && state.publicationMode === PUBLICATION_GNOME) {
+    state.gnomeEditionNumberHint = parsomen;
   }
 }
 
@@ -540,8 +569,57 @@ function renderFilters(types, typeCounts) {
   updateFilterToggleLabel();
 }
 
-function isMobileGazetteLayout() {
+function isMobileViewport() {
   return window.matchMedia('(max-width: 767px)').matches;
+}
+
+function mobileLagimLayoutFromPreference(fallback = 'stream') {
+  if (!isMobileViewport()) {
+    return fallback;
+  }
+  try {
+    const saved = localStorage.getItem('vs.gazette.layoutMode');
+    if (saved === 'gazette' || saved === 'web') {
+      return 'gazette';
+    }
+    if (saved === 'stream') {
+      return 'stream';
+    }
+  } catch (e) {
+    /* ignore */
+  }
+  return 'stream';
+}
+
+function rememberLagimLayoutBeforeGnome() {
+  state.lagimLayoutBeforeGnome = state.layoutMode;
+}
+
+function restoreLagimLayoutAfterGnome() {
+  if (isMobileViewport()) {
+    const remembered = state.lagimLayoutBeforeGnome;
+    const preferred = mobileLagimLayoutFromPreference('stream');
+    if (remembered === 'stream') {
+      state.layoutMode = 'stream';
+    } else if (
+      (remembered === 'gazette' || remembered === 'web')
+      && preferred === 'gazette'
+    ) {
+      state.layoutMode = 'gazette';
+    } else {
+      state.layoutMode = preferred;
+    }
+  } else if (state.lagimLayoutBeforeGnome) {
+    state.layoutMode = state.lagimLayoutBeforeGnome;
+  }
+  if (state.layoutMode === 'stream' && !state.streamReturnLayout) {
+    state.streamReturnLayout = 'gazette';
+  }
+  state.lagimLayoutBeforeGnome = null;
+}
+
+function isMobileGazetteLayout() {
+  return isMobileViewport() && state.layoutMode === 'gazette';
 }
 
 function isGazetteLayout() {
@@ -1351,7 +1429,11 @@ function renderGazette(items, meta) {
 }
 
 async function downloadGazettePagePng() {
-  const sheet = els.gazetteStage?.querySelector('.vs-gazette-sheet');
+  const gnomeSheet = gnomeCryCtrl?.isGnomePublication()
+    ? (els.gnomeCryStage?.querySelector('#gnomePrintSheet')
+      || els.gnomeCryFlow?.querySelector('.vs-gnome-cry-sheet'))
+    : null;
+  const sheet = gnomeSheet || els.gazetteStage?.querySelector('.vs-gazette-sheet');
   if (!sheet) {
     showToast('İndirilecek gazete yaprağı yüklenemedi.');
     return;
@@ -1421,7 +1503,9 @@ async function downloadGazettePagePng() {
     const objectUrl = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = objectUrl;
-    link.download = `lagimdan-sesler-sayi-${issueNumber}-yaprak-${pageNumber}.png`;
+    link.download = gnomeSheet
+      ? `gnome-ciglisi-${state.gnomeCurrentId || 'parsomen'}.png`
+      : `lagimdan-sesler-sayi-${issueNumber}-yaprak-${pageNumber}.png`;
     link.click();
     setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
   } catch (error) {
@@ -1451,9 +1535,9 @@ function placeIssueArchiveSelect() {
     if (
       desktop &&
       els.toolbarBarEnd &&
-      els.toggleGazetteLayoutBtn?.parentElement === els.toolbarBarEnd
+      els.togglePublicationToolbarBtn?.parentElement === els.toolbarBarEnd
     ) {
-      els.toolbarBarEnd.insertBefore(els.gazetteArchiveWrap, els.toggleGazetteLayoutBtn);
+      els.toolbarBarEnd.insertBefore(els.gazetteArchiveWrap, els.togglePublicationToolbarBtn);
     } else if (els.gazetteArchiveWrap.parentElement !== target) {
       target.appendChild(els.gazetteArchiveWrap);
     }
@@ -1481,6 +1565,12 @@ function syncSearchResultsLayout() {
 }
 
 function applyLayoutMode() {
+  if (gnomeCryCtrl?.isGnomePublication()) {
+    document.body.classList.remove('vs-layout-stream');
+    document.body.classList.add('vs-layout-gazette');
+    gnomeCryCtrl?.syncGnomeToolbarChrome?.();
+    return;
+  }
   const gazette = isGazetteLayout();
   const stream = isStreamLayout();
   const parchmentChrome = gazette || stream;
@@ -1510,15 +1600,7 @@ function applyLayoutMode() {
     els.newsSliderSection.hidden = gazette || stream;
   }
 
-  if (els.toggleGazetteLayoutBtn) {
-    els.toggleGazetteLayoutBtn.setAttribute('aria-pressed', gazette ? 'true' : 'false');
-    const layoutLabel = gazette ? 'Web görünümü' : 'Gazete görünümü';
-    els.toggleGazetteLayoutBtn.setAttribute('aria-label', layoutLabel);
-    els.toggleGazetteLayoutBtn.setAttribute('title', gazette ? 'Web kart listesine geç' : 'Basılı gazete sayfası. Sayfa sayfa gezin.');
-  }
-  if (els.toggleGazetteLayoutLabel) {
-    els.toggleGazetteLayoutLabel.textContent = gazette ? 'Web görünümü' : 'Gazete görünümü';
-  }
+  gnomeCryCtrl?.syncPublicationToolbarUi?.();
   if (els.printGazetteBtn) {
     els.printGazetteBtn.hidden = !gazette || stream;
   }
@@ -1597,6 +1679,14 @@ function renderGrid(items) {
   requestAnimationFrame(() => fitAllNewsMedia(els.newsGrid));
 }
 
+function contentLooksLikeHtml(text) {
+  const s = String(text || '').trim();
+  if (!s) {
+    return false;
+  }
+  return /<\/[a-z][\w:-]*>/i.test(s) || /<(?:p|br|div|ul|ol|li|h[1-6]|blockquote|strong|em|span)\b/i.test(s);
+}
+
 function streamCardBodyText(item) {
   const full = String(item.full_story || '').trim();
   const desc = String(item.description || '').trim();
@@ -1605,6 +1695,29 @@ function streamCardBodyText(item) {
     return text;
   }
   return `${text.slice(0, 2397)}…`;
+}
+
+function streamCardBodyContent(item, options = {}) {
+  const full = String(item.full_story || '').trim();
+  const desc = String(item.description || '').trim();
+  const rich = Boolean(options.richHtml) || (full && contentLooksLikeHtml(full));
+
+  if (rich) {
+    if (full) {
+      return full;
+    }
+    if (desc) {
+      return escapeHtml(desc).replace(/\n/g, '<br>');
+    }
+    return '';
+  }
+
+  return escapeHtml(streamCardBodyText(item));
+}
+
+function streamCardBodyUsesRichHtml(item, options = {}) {
+  const full = String(item.full_story || '').trim();
+  return Boolean(options.richHtml) || (full && contentLooksLikeHtml(full));
 }
 
 function renderStreamReactionButtons(item) {
@@ -1623,7 +1736,7 @@ function renderStreamReactionButtons(item) {
   }).join('');
 }
 
-function renderStreamCard(item) {
+function renderStreamCard(item, options = {}) {
   const placementRaw = String(item.gazette_placement_label || '').trim();
   const placement =
     placementRaw && placementRaw !== 'Haber'
@@ -1637,7 +1750,8 @@ function renderStreamCard(item) {
     ? `<span class="vs-stream-post__meta-dot" aria-hidden="true">·</span><span class="vs-stream-post__location">${escapeHtml(item.location_badge)}</span>`
     : '';
   const hasImage = Boolean(item.image_asset);
-  const body = escapeHtml(streamCardBodyText(item));
+  const richBody = streamCardBodyUsesRichHtml(item, options);
+  const body = streamCardBodyContent(item, options);
   const slugAttr = escapeHtml(item.slug || '');
   const views = Number(item.views_count ?? item.engagement?.views ?? 0);
   const viewsHtml =
@@ -1662,7 +1776,7 @@ function renderStreamCard(item) {
     </header>
     ${placement}
     <h2 class="vs-stream-post__title">${escapeHtml(item.title || '')}</h2>
-    <div class="vs-stream-post__body">${body}</div>
+    <div class="vs-stream-post__body${richBody ? ' vs-stream-post__body--rich' : ''}">${body}</div>
     <footer class="vs-stream-post__footer">
       <div class="vs-stream-post__reactions" data-stream-reactions="${item.id}">
         ${renderStreamReactionButtons(item)}
@@ -1821,6 +1935,9 @@ async function loadStream(reset = true) {
 }
 
 function toggleStreamLayoutMode() {
+  if (gnomeCryCtrl?.isGnomePublication()) {
+    return;
+  }
   if (isStreamLayout()) {
     leaveStreamMode();
     state.layoutMode = state.streamReturnLayout || 'gazette';
@@ -1843,7 +1960,7 @@ function toggleStreamLayoutMode() {
 
 function syncStreamToggleUi() {
   const active = isStreamLayout();
-  const title = active ? 'Gazete veya web görünümüne dön' : 'Yeniden eskiye, görselsiz akış okuma';
+  const title = active ? 'Gazete görünümüne dön' : 'Yeniden eskiye, görselsiz akış okuma';
   const label = active ? 'Kapat' : 'Akış';
   if (els.toggleStreamModeBtn) {
     els.toggleStreamModeBtn.setAttribute('aria-pressed', active ? 'true' : 'false');
@@ -1902,15 +2019,9 @@ function syncFilterPanelVisibility() {
     if (els.newsToolbar) {
       els.newsToolbar.classList.remove('vs-toolbar--filters-open');
     }
-    if (els.toggleGazetteLayoutBtn) {
-      els.toggleGazetteLayoutBtn.hidden = true;
-    }
     return;
   }
   els.toggleFiltersBtn.hidden = false;
-  if (els.toggleGazetteLayoutBtn) {
-    els.toggleGazetteLayoutBtn.hidden = false;
-  }
   if (!isMobileGazetteLayout() && state.viewMode === 'list') {
     state.viewMode = 'grid';
     applyViewModeClass();
@@ -1948,10 +2059,39 @@ function syncPageNavButtons(meta) {
   }
 }
 
+function enterMobileStreamAfterDeepLinkClose() {
+  state.layoutMode = 'stream';
+  if (!state.streamReturnLayout) {
+    state.streamReturnLayout = 'gazette';
+  }
+  try {
+    localStorage.setItem('vs.gazette.layoutMode', 'stream');
+  } catch (e) {
+    /* ignore */
+  }
+  applyLayoutMode();
+  state.suppressUrlSync = true;
+  const url = new URL('/', window.location.origin);
+  url.searchParams.set('gorunum', 'stream');
+  if (state.type && state.type !== 'all') {
+    url.searchParams.set('tur', state.type);
+  }
+  if (state.search) {
+    url.searchParams.set('q', state.search);
+  }
+  window.history.replaceState(null, '', `${url.pathname}${url.search}`);
+  loadFeed()
+    .catch(console.error)
+    .finally(() => {
+      state.suppressUrlSync = false;
+    });
+}
+
 function goGazetteHome() {
   closeModal();
   state.pendingArticleId = null;
   state.pendingArticleSlug = null;
+  state.articleOpenedFromDeepLink = false;
   state.openArticleId = null;
   state.page = 1;
   state.type = 'all';
@@ -2010,6 +2150,7 @@ async function bootstrapPendingArticle() {
     return;
   }
   const entryLayout = state.layoutMode;
+  state.articleOpenedFromDeepLink = true;
   state.pendingArticleSlug = null;
   state.pendingArticleId = null;
   state.articleBootstrapInFlight = true;
@@ -2104,6 +2245,10 @@ function renderPagination(meta) {
 }
 
 async function loadFeed() {
+  if (gnomeCryCtrl?.isGnomePublication()) {
+    await gnomeCryCtrl.loadGnomeCry();
+    return;
+  }
   if (isStreamLayout()) {
     await loadStream(true);
     if ((state.pendingArticleId || state.pendingArticleSlug) && !state.articleBootstrapInFlight) {
@@ -2172,6 +2317,9 @@ async function loadFeed() {
       state.lastFeedItems = await enrichGazetteItems(state.lastFeedItems);
     }
     renderGazette(state.lastFeedItems, payload.feed.meta);
+    if (els.newsGrid) {
+      els.newsGrid.innerHTML = '';
+    }
     if (els.gazetteFlip) {
       els.gazetteFlip.hidden = false;
     }
@@ -2254,6 +2402,9 @@ function renderStoryHtml(storyText) {
   const normalized = String(storyText || '').trim();
   if (!normalized) {
     return '';
+  }
+  if (contentLooksLikeHtml(normalized)) {
+    return `<div class="vs-article-story vs-article-story--rich">${normalized}</div>`;
   }
   const paragraphs = normalized.includes('\n\n')
     ? normalized.split('\n\n')
@@ -2759,6 +2910,18 @@ function closeModal() {
   document.body.classList.remove('vs-article-modal-open');
   state.openArticleId = null;
   state.openArticleSnapshot = null;
+
+  const mobileDeepLinkExit =
+    isMobileViewport()
+    && !gnomeCryCtrl?.isGnomePublication()
+    && state.articleOpenedFromDeepLink;
+
+  if (mobileDeepLinkExit) {
+    state.articleOpenedFromDeepLink = false;
+    enterMobileStreamAfterDeepLinkClose();
+    return;
+  }
+
   syncBrowserUrl();
 }
 
@@ -3362,29 +3525,6 @@ function bindEvents() {
     });
   }
 
-  if (els.toggleGazetteLayoutBtn) {
-    els.toggleGazetteLayoutBtn.addEventListener('click', () => {
-      if (isStreamLayout()) {
-        leaveStreamMode();
-        state.streamReturnLayout = null;
-        state.layoutMode = 'gazette';
-      }
-      const next = isGazetteLayout() ? 'web' : 'gazette';
-      state.layoutMode = next;
-      state.page = 1;
-      if (next === 'web' && isMobileGazetteLayout()) {
-        state.viewMode = 'grid';
-      }
-      try {
-        localStorage.setItem('vs.gazette.layoutMode', state.layoutMode);
-      } catch (e) {
-        /* ignore */
-      }
-      applyLayoutMode();
-      loadFeed().catch(console.error);
-    });
-  }
-
   if (els.gazetteArchiveSelect) {
     els.gazetteArchiveSelect.addEventListener('change', () => {
       const raw = els.gazetteArchiveSelect.value;
@@ -3439,11 +3579,12 @@ function bindEvents() {
 
   if (els.printGazetteBtn) {
     els.printGazetteBtn.addEventListener('click', () => {
-      if (!isGazetteLayout()) {
+      const gnome = gnomeCryCtrl?.isGnomePublication();
+      if (!isGazetteLayout() && !gnome) {
         return;
       }
-      document.body.classList.add('vs-printing');
-      const cleanup = () => document.body.classList.remove('vs-printing');
+      document.body.classList.add(gnome ? 'vs-printing-gnome' : 'vs-printing');
+      const cleanup = () => document.body.classList.remove('vs-printing', 'vs-printing-gnome');
       window.addEventListener('afterprint', cleanup, { once: true });
       window.print();
     });
@@ -3468,6 +3609,10 @@ function bindEvents() {
     searchTimer = setTimeout(() => {
       state.search = els.searchInput.value.trim();
       state.page = 1;
+      if (gnomeCryCtrl?.isGnomePublication()) {
+        gnomeCryCtrl.applySearch(state.search);
+        return;
+      }
       loadFeed().catch(console.error);
     }, 350);
   });
@@ -3519,10 +3664,15 @@ function bindEvents() {
       }
     }
     const streamPost = event.target.closest('.vs-stream-post');
+  const streamInLagim = streamPost && isStreamLayout() && els.newsStream?.contains(streamPost);
+  const streamInGnome =
+    streamPost
+    && gnomeCryCtrl?.isGnomePublication()
+    && isMobileViewport()
+    && els.gnomeCryFlow?.contains(streamPost);
     if (
       streamPost &&
-      isStreamLayout() &&
-      els.newsStream?.contains(streamPost) &&
+      (streamInLagim || streamInGnome) &&
       !event.target.closest(
         '.vs-stream-post__reactions, .vs-stream-post__reaction, .vs-stream-post__read-actions, [data-stream-image-open]',
       )
@@ -3535,7 +3685,10 @@ function bindEvents() {
     if (!openBtn) {
       return;
     }
-    if (isStreamLayout() && els.newsStream?.contains(openBtn)) {
+    if (
+      (isStreamLayout() && els.newsStream?.contains(openBtn))
+      || (gnomeCryCtrl?.isGnomePublication() && isMobileViewport() && els.gnomeCryFlow?.contains(openBtn))
+    ) {
       event.preventDefault();
       openArticleFromUi(openBtn.dataset.openId, openBtn.dataset.articleSlug).catch(console.error);
       return;
@@ -3582,7 +3735,10 @@ function bindEvents() {
   });
 
   document.addEventListener('keydown', (event) => {
-    if (!isGazetteLayout()) {
+    if (!isGazetteLayout() && !gnomeCryCtrl?.isGnomeDesktopSheet?.()) {
+      return;
+    }
+    if (gnomeCryCtrl?.isGnomePublication() && !gnomeCryCtrl.isGnomeDesktopSheet()) {
       return;
     }
     if (event.target.closest('input, textarea, select, [contenteditable="true"]')) {
@@ -3596,6 +3752,17 @@ function bindEvents() {
       event.preventDefault();
       goGazetteNext().catch(console.error);
     }
+  });
+
+  let gnomeViewportTimer;
+  window.addEventListener('resize', () => {
+    if (!gnomeCryCtrl?.isGnomePublication()) {
+      return;
+    }
+    clearTimeout(gnomeViewportTimer);
+    gnomeViewportTimer = setTimeout(() => {
+      gnomeCryCtrl.onViewportChange?.();
+    }, 160);
   });
 
   window.addEventListener('popstate', () => {
@@ -3753,8 +3920,7 @@ document.addEventListener('DOMContentLoaded', () => {
   els.toggleStreamNavLabel = qs('toggleStreamNavLabel');
   els.gazetteStage = qs('gazetteStage');
   els.newsSliderSection = document.querySelector('.vs-news-slider');
-  els.toggleGazetteLayoutBtn = qs('toggleGazetteLayoutBtn');
-  els.toggleGazetteLayoutLabel = qs('toggleGazetteLayoutLabel');
+  els.togglePublicationToolbarBtn = qs('togglePublicationToolbarBtn');
   els.printGazetteBtn = qs('printGazetteBtn');
   els.downloadGazettePngBtn = qs('downloadGazettePngBtn');
   els.pagination = qs('newsPagination');
@@ -3767,8 +3933,43 @@ document.addEventListener('DOMContentLoaded', () => {
   els.toolbarFiltersRow = qs('toolbarFiltersRow');
   els.toolbarBarEnd = qs('toolbarBarEnd');
   els.mobileIssueDock = qs('mobileIssueDock');
+  els.publicationLagimBtn = qs('publicationLagimBtn');
+  els.publicationGnomeBtn = qs('publicationGnomeBtn');
+  els.gnomeCryStage = qs('gnomeCryStage');
+  els.gnomeCryFlow = qs('gnomeCryFlow');
+  els.openGnomeCryModal = qs('openGnomeCryModal');
+  els.gnomeCryModalBackdrop = qs('gnomeCryModalBackdrop');
+  els.gnomeCryModalClose = qs('gnomeCryModalClose');
+  els.gnomeCryForm = qs('gnomeCryForm');
+  els.gnomeCryModalTitle = qs('gnomeCryModalTitle');
+  els.gnomeCryModalIntro = qs('gnomeCryModalIntro');
+  els.gnomeCryTitle = qs('gnomeCryTitle');
+  els.gnomeCryDeck = qs('gnomeCryDeck');
+  els.gnomeCryRumuz = qs('gnomeCryRumuz');
+  els.gnomeCryEditor = qs('gnomeCryEditor');
+  els.gnomeCryEditorToolbar = qs('gnomeCryEditorToolbar');
+  els.gnomeCryEditorHost = document.querySelector('#gnomeCryForm .vs-gnome-cry-editor-host');
+  els.gnomeCryFullStory = qs('gnomeCryFullStory');
+  els.gnomeCryBodyError = qs('gnomeCryBodyError');
+  els.gnomeCryCustomImage = qs('gnomeCryCustomImage');
+  els.gnomeCryImagePreviewWrap = qs('gnomeCryImagePreviewWrap');
+  els.gnomeCryImagePreview = qs('gnomeCryImagePreview');
+  els.gnomeCryRemoveImage = qs('gnomeCryRemoveImage');
+  els.gnomeCrySubmit = qs('gnomeCrySubmit');
 
   initNewsTypePicker(els.rumorTypePicker, els.rumorNewsType);
+  gnomeCryCtrl = createGnomeCryController({
+    els,
+    state,
+    escapeHtml,
+    showToast,
+    loadFeed,
+    applyLayoutMode,
+    renderStreamCard,
+    rememberLagimLayoutBeforeGnome,
+    restoreLagimLayoutAfterGnome,
+  });
+  gnomeCryCtrl.bind();
   rumorWizard = createRumorWizard({
     els,
     state,
@@ -3789,28 +3990,52 @@ document.addEventListener('DOMContentLoaded', () => {
     els.searchInput.value = state.search;
   }
   const urlParams = new URLSearchParams(window.location.search);
+  const articleDeepLink =
+    Boolean(state.pendingArticleSlug || state.pendingArticleId)
+    || Boolean(articleSlugFromPathname());
   const urlHasGazetteHints =
-    urlParams.has('gorunum') ||
-    urlParams.has('yaprak') ||
-    urlParams.has('sayi') ||
-    urlParams.has('haber');
+    urlParams.has('gorunum')
+    || urlParams.has('yaprak')
+    || urlParams.has('sayi')
+    || urlParams.has('haber')
+    || articleDeepLink;
   const onGazetteHost = document.body?.dataset?.gazetteSubdomain === '1';
   const layoutParam = urlParams.get('gorunum');
+  const explicitLayout = layoutParam === 'web' || layoutParam === 'gazette' || layoutParam === 'stream';
+  const normalizeLayout = (mode) => (mode === 'web' ? 'gazette' : mode);
+  const mobileDefaultStream =
+    !explicitLayout
+    && !urlHasGazetteHints
+    && !articleDeepLink
+    && state.publicationMode !== PUBLICATION_GNOME
+    && isMobileViewport();
+
   if (layoutParam === 'stream') {
     state.layoutMode = 'stream';
-  } else if (onGazetteHost && layoutParam !== 'web' && layoutParam !== 'stream') {
+    if (!state.streamReturnLayout) {
+      state.streamReturnLayout = 'gazette';
+    }
+  } else if (mobileDefaultStream) {
+    state.layoutMode = mobileLagimLayoutFromPreference('stream');
+    if (state.layoutMode === 'stream' && !state.streamReturnLayout) {
+      state.streamReturnLayout = 'gazette';
+    }
+  } else if (articleDeepLink && layoutParam !== 'stream') {
     state.layoutMode = 'gazette';
-  } else if (layoutParam === 'web') {
-    state.layoutMode = 'web';
+  } else if (onGazetteHost && layoutParam !== 'stream') {
+    state.layoutMode = 'gazette';
+  } else if (layoutParam === 'web' || layoutParam === 'gazette') {
+    state.layoutMode = 'gazette';
   }
   try {
     const savedLayout = localStorage.getItem('vs.gazette.layoutMode');
     if (
       !onGazetteHost &&
       !urlHasGazetteHints &&
+      !articleDeepLink &&
       (savedLayout === 'gazette' || savedLayout === 'web' || savedLayout === 'stream')
     ) {
-      state.layoutMode = savedLayout;
+      state.layoutMode = normalizeLayout(savedLayout);
     }
     if (isMobileGazetteLayout()) {
       const savedView = localStorage.getItem('vs.gazette.viewMode');
@@ -3823,9 +4048,17 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch (e) {
     /* ignore */
   }
-  if (state.layoutMode === 'stream' && !state.streamReturnLayout) {
-    state.streamReturnLayout = onGazetteHost || urlHasGazetteHints ? 'gazette' : 'web';
+  if (articleDeepLink && layoutParam !== 'stream') {
+    state.layoutMode = 'gazette';
   }
+  if (state.layoutMode === 'stream' && !state.streamReturnLayout) {
+    state.streamReturnLayout = 'gazette';
+  }
+  state.layoutMode = normalizeLayout(state.layoutMode);
+  if (state.streamReturnLayout) {
+    state.streamReturnLayout = normalizeLayout(state.streamReturnLayout);
+  }
+  gnomeCryCtrl.syncPublicationChrome();
   applyLayoutMode();
   syncFilterPanelVisibility();
   bindEvents();

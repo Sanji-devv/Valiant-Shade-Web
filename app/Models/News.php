@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\ValiantShade\Services\PublicNewsService;
+use App\ValiantShade\Support\NewsPublication;
 use App\ValiantShade\Support\NewsSlug;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\BaseModel;
@@ -19,6 +20,7 @@ class News extends BaseModel
         'slug',
         'category',
         'news_type',
+        'publication',
         'gazette_issue_id',
         'status',
         'badge_color',
@@ -65,7 +67,9 @@ class News extends BaseModel
 
         static::saved(function (News $news): void {
             app(PublicNewsService::class)->bumpCacheVersion();
-            app(\App\ValiantShade\Services\GazetteIssueService::class)->attachNewsToCurrentIssue($news);
+            if (! NewsPublication::isGnome($news)) {
+                app(\App\ValiantShade\Services\GazetteIssueService::class)->attachNewsToCurrentIssue($news);
+            }
         });
 
         static::deleted(function (): void {

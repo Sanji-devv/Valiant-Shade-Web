@@ -53,6 +53,7 @@ Route::prefix('api')->group(function () {
     Route::prefix('public/news')->group(function () {
         Route::get('/bootstrap', [PublicNewsController::class, 'bootstrap'])->name('api.public.news.bootstrap');
         Route::get('/featured', [PublicNewsController::class, 'featured'])->name('api.public.news.featured');
+        Route::get('/gnome-cry', [PublicNewsController::class, 'gnomeCry'])->name('api.public.news.gnome-cry');
         Route::get('/', [PublicNewsController::class, 'index'])->name('api.public.news.index');
         Route::get('/by-slug/{slug}', [PublicNewsController::class, 'showBySlug'])
             ->where('slug', '[a-z0-9](?:[a-z0-9\-]*[a-z0-9])?')
@@ -72,6 +73,9 @@ Route::prefix('api')->group(function () {
         Route::post('/flash-submissions', [PublicNewsController::class, 'submitFlash'])
             ->middleware('throttle:public.news.submissions')
             ->name('api.public.news.flash-submit');
+        Route::post('/gnome-cry-submissions', [PublicNewsController::class, 'submitGnomeCry'])
+            ->middleware('throttle:public.news.submissions')
+            ->name('api.public.news.gnome-cry-submit');
         Route::post('/extra-issues', [PublicNewsController::class, 'publishExtra'])
             ->middleware(['auth', 'throttle:public.news.submissions'])
             ->name('api.public.news.extra-issues');

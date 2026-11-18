@@ -128,6 +128,37 @@ return [
         'lonca' => 'static/valiant-shade/assets/img/gazette/news/guild_council.jpg',
     ],
 
+    /*
+    | Yayınlar — halka açık Lağımdan Sesler ile lonca temsilcisi parşömeni (Gnome'un Çığlığı).
+    */
+    'publications' => [
+        'lagimdan_sesler' => [
+            'key' => 'lagimdan_sesler',
+            'title' => 'Lağımdan Sesler',
+            'nav_short' => 'Lağım',
+        ],
+        'gnome_ciglisi' => [
+            'key' => 'gnome_ciglisi',
+            'title' => "Gnome'un Çığlığı",
+            'icon' => 'static/valiant-shade/assets/img/gazette/gnome-mirang.jpg',
+            'nav_short' => 'Çığlık',
+            'motto' => 'Lonca duvarına asılacak tek yaprak. Mühürlü, tek baskı.',
+            'tagline' => 'Lonca temsilcisinin Lağımdan Sesler ile anlaşmalı özel baskısı. Halka arz değildir; üyelere duyuru içindir.',
+            'press_name' => 'Gnome Basın Loncası — mühürlü tek nüsha',
+            'corner_title' => 'Köşe notu',
+            'admin_badge' => "Gnome'un Çığlığı",
+            'submission' => [
+                'modal_title' => 'Temsilci sözü gönder',
+                'modal_intro' => 'Onaydan sonra yalnızca lonca duyuru parşömeni olarak basılır; Lağımdan Sesler sayılarına girmez.',
+                'title_placeholder' => 'Parşömen başlığı…',
+                'deck_placeholder' => 'Kısa manşet satırı (isteğe bağlı)…',
+                'body_label' => 'Duyuru metni',
+                'body_placeholder' => 'Lonca üyelerine iletilecek tek sayfalık yazı…',
+                'rumuz_label' => 'Rumuz',
+            ],
+        ],
+    ],
+
     'default_news_images' => [
         'static/valiant-shade/assets/img/news/guild_arena_tournament.jpg',
         'static/valiant-shade/assets/img/news/guild_arcane_academy.jpg',

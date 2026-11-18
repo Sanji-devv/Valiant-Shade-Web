@@ -7,6 +7,8 @@
     $gazetteMotto = $gb['motto'] ?? '';
     $gazetteTagline = $gb['tagline'] ?? '';
     $gazetteCrest = $gb['crest'] ?? asset('static/valiant-shade/assets/img/gazette/lagimdan-sesler-crest.jpg');
+    $gnomeBrand = config('gazette.publications.gnome_ciglisi', []);
+    $gnomeIcon = asset($gnomeBrand['icon'] ?? 'static/valiant-shade/assets/img/gazette/gnome-mirang.jpg');
     $gazetteIssue = $gb['issue'] ?? [];
     $share = $shareMeta ?? [
         'title' => $gazetteTitle,
@@ -80,11 +82,14 @@
     @vite(['resources/css/valiant-shade/newspaper.css', 'resources/js/valiant-shade/newspaper.js'], 'static/valiant-shade/build')
 </head>
 <body
-    class="vs-newspaper-page{{ $isGazetteView ? ' vs-layout-gazette' : '' }}"
+    class="vs-newspaper-page vs-publication-lagim{{ $isGazetteView ? ' vs-layout-gazette' : '' }}"
     data-gazette-subdomain="{{ $onGazetteHost ? '1' : '0' }}"
     data-gazette-logo="{{ $gazetteCrest }}"
     data-gazette-name="{{ $gazetteTitle }}"
     data-gazette-motto="{{ $gazetteMotto }}"
+    data-gazette-tagline="{{ $gazetteTagline }}"
+    data-gazette-gnome-brand='@json(config("gazette.publications.gnome_ciglisi", []))'
+    data-gazette-gnome-icon="{{ $gnomeIcon }}"
     data-gazette-press="{{ $gb['press_name'] ?? 'Lağımdan Sesler Basın Bürosu' }}"
     data-gazette-issue-date="{{ $gazetteIssue['date_line'] ?? 'Leos ayının 1. günü, Vonyas · 631' }}"
     data-gazette-issue-number="{{ $gazetteIssue['number'] ?? 1 }}"
@@ -102,6 +107,11 @@
             <div class="vs-newspaper-header__brand">
                 <h1><button type="button" class="vs-gazette-home-link" data-gazette-home aria-label="Kapak sayfasına dön">{{ $gazetteTitle }}</button></h1>
                 <p class="vs-newspaper-header__tagline">{{ $gazetteTagline }}</p>
+                <div class="vs-publication-switch" role="tablist" aria-label="Yayın seçimi">
+                    <button type="button" class="vs-publication-switch__btn" id="publicationLagimBtn" role="tab" aria-pressed="true">Lağımdan Sesler</button>
+                    <span class="vs-publication-switch__sep" aria-hidden="true">·</span>
+                    <button type="button" class="vs-publication-switch__btn" id="publicationGnomeBtn" role="tab" aria-pressed="false">Gnome'un Çığlığı</button>
+                </div>
             </div>
             <div class="vs-newspaper-header__issue" id="gazetteHeaderIssue">
                 <label class="vs-gazette-archive-wrap" id="gazetteArchiveWrap" hidden>
@@ -139,6 +149,7 @@
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">PNG</span>
             </button>
             </div>
+            <p class="vs-newspaper-nav__title" id="mobileNavPublicationTitle">{{ $gazetteTitle }}</p>
             <div class="vs-newspaper-nav__cluster vs-newspaper-nav__cluster--actions">
             <button
                 type="button"
@@ -150,6 +161,11 @@
                 <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16"/><path d="M4 12h10"/><path d="M4 18h14"/><circle cx="19" cy="17" r="3"/></svg>
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">Akış</span>
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short" id="toggleStreamNavLabel">Akış</span>
+            </button>
+            <button type="button" class="vs-newspaper-nav__item vs-newspaper-nav__item--primary vs-newspaper-nav__item--gnome" id="openGnomeCryModal" hidden aria-label="Temsilci sözü gönder">
+                <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">Temsilci Sözü Gönder</span>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">Temsilci</span>
             </button>
             <button type="button" class="vs-newspaper-nav__item vs-newspaper-nav__item--primary" id="openRumorModal" aria-label="Söylenti Gönder">
                 <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8z"/></svg>
@@ -208,9 +224,33 @@
                 </div>
                 <input type="search" class="vs-search vs-toolbar__search" id="newsSearchInput" placeholder="Haber, söylenti veya kahraman ara…" aria-label="Haber ara" enterkeyhint="search">
                 <div class="vs-toolbar__bar-end" id="toolbarBarEnd">
-                    <button type="button" class="vs-layout-toggle vs-layout-toggle--icon vs-toolbar__layout-toggle" id="toggleGazetteLayoutBtn" aria-pressed="false" title="Basılı gazete sayfası. Sayfa sayfa gezin." aria-label="Gazete görünümü">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M8 4v16M16 4v16M4 8h16M4 16h16"/></svg>
-                        <span id="toggleGazetteLayoutLabel" hidden>Gazete görünümü</span>
+                    <button
+                        type="button"
+                        class="vs-publication-toggle vs-toolbar__publication-toggle"
+                        id="togglePublicationToolbarBtn"
+                        title="Gnome'un Çığlığı'na geç"
+                        aria-label="Gnome'un Çığlığı'na geç"
+                    >
+                        <span class="vs-publication-toggle__face" data-face="gnome">
+                            <img
+                                class="vs-publication-toggle__gnome-img"
+                                src="{{ $gnomeIcon }}"
+                                width="28"
+                                height="28"
+                                alt=""
+                                decoding="async"
+                            />
+                        </span>
+                        <span class="vs-publication-toggle__face" data-face="gazette" hidden>
+                            <img
+                                class="vs-publication-toggle__crest"
+                                src="{{ $gazetteCrest }}"
+                                width="26"
+                                height="26"
+                                alt=""
+                                decoding="async"
+                            />
+                        </span>
                     </button>
                 </div>
             </div>
@@ -219,6 +259,9 @@
         <section class="vs-news-feed vs-news-grid" id="newsGrid" aria-live="polite"></section>
 
         <section class="vs-news-stream" id="newsStream" hidden aria-live="polite" aria-label="Akış okuma"></section>
+
+        <section class="vs-gnome-cry-flow" id="gnomeCryFlow" hidden aria-label="Parşömen akışı"></section>
+        <section class="vs-gnome-cry-stage-wrap" id="gnomeCryStage" hidden aria-label="Gnome'un Çığlığı tek sayfa"></section>
 
         <div class="vs-gazette-flip" id="gazetteFlip" hidden>
             <button type="button" class="vs-gazette-flip__arrow vs-gazette-flip__arrow--prev" id="gazetteFlipPrev" aria-label="Önceki yaprak" disabled>
@@ -415,6 +458,63 @@
                             </div>
                     </form>
                 </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="vs-modal-backdrop vs-modal-backdrop--rumor vs-modal-backdrop--gazette-form vs-modal-backdrop--gnome" id="gnomeCryModalBackdrop" role="dialog" aria-modal="true" aria-labelledby="gnomeCryModalTitle" hidden>
+        <section class="vs-modal vs-modal--rumor-gazette vs-modal--rumor-gazette--active vs-modal--gnome-cry" id="gnomeCryModalPanel">
+            <header class="vs-rumor-toolbar" aria-label="Temsilci sözü gönder">
+                <h2 class="vs-rumor-toolbar__title" id="gnomeCryModalTitle">Temsilci sözü gönder</h2>
+                <button type="button" class="vs-rumor-toolbar__close vs-modal__close vs-modal__close--gazette" id="gnomeCryModalClose" aria-label="Kapat">×</button>
+            </header>
+            <div class="vs-modal__body vs-modal__body--rumor">
+                <p class="vs-rumor-modal__intro" id="gnomeCryModalIntro"></p>
+                <form id="gnomeCryForm" class="vs-form-grid vs-form-grid--rumor vs-form-grid--gnome-cry" enctype="multipart/form-data" novalidate>
+                    <label class="vs-rumor-form__span">
+                        <span class="vs-form-field__label">Başlık <span class="vs-form-field__req">*</span></span>
+                        <input type="text" name="title" id="gnomeCryTitle" minlength="8" maxlength="255" autocomplete="off">
+                        <p class="vs-field-inline-error" id="gnomeCryTitleFieldError" hidden role="alert"></p>
+                    </label>
+                    <label class="vs-rumor-form__span">
+                        <span class="vs-form-field__label">Manşet satırı (isteğe bağlı)</span>
+                        <input type="text" name="deck_line" id="gnomeCryDeck" maxlength="400" autocomplete="off">
+                    </label>
+                    <div class="vs-rumor-form__span vs-gnome-cry-editor-wrap">
+                        <span class="vs-form-field__label">Duyuru metni <span class="vs-form-field__req">*</span></span>
+                        <p class="vs-gnome-cry-editor-hint">Biçimlendirme, başlık ve liste ekleyebilirsiniz.</p>
+                        <div class="vs-gnome-cry-editor-host">
+                            <div class="vs-gnome-cry-editor-toolbar" id="gnomeCryEditorToolbar"></div>
+                            <div class="vs-gnome-cry-editor" id="gnomeCryEditor" aria-label="Duyuru metni editörü"></div>
+                        </div>
+                        <input type="hidden" name="full_story" id="gnomeCryFullStory" value="">
+                        <p class="vs-field-inline-error" id="gnomeCryBodyError" hidden role="alert"></p>
+                    </div>
+                    <div class="vs-rumor-form__span" id="gnomeCryImageSection">
+                        <span class="vs-form-field__label">Görsel (isteğe bağlı)</span>
+                        <div class="vs-submission-image-preview-wrap" id="gnomeCryImagePreviewWrap" hidden>
+                            <span class="vs-submission-image-preview__label">Görsel önizleme</span>
+                            <div class="vs-submission-image-preview">
+                                <img id="gnomeCryImagePreview" alt="Seçilen görsel önizlemesi" width="200" height="120">
+                            </div>
+                            <button type="button" class="vs-rumor-remove-image" id="gnomeCryRemoveImage">Görseli kaldır</button>
+                        </div>
+                        <label class="vs-rumor-upload-label">
+                            Dosya yükle
+                            <input type="file" name="custom_image" id="gnomeCryCustomImage" accept="image/jpeg,image/png,image/webp">
+                        </label>
+                        <p class="vs-rumor-upload-hint">JPEG, PNG veya WebP · en fazla 5 MB</p>
+                        <p class="vs-field-inline-error" id="gnomeCryImageFieldError" hidden role="alert"></p>
+                    </div>
+                    <div class="vs-rumor-form__actions vs-rumor-form__actions--gnome-cry vs-rumor-form__span">
+                        <label class="vs-gnome-cry-rumuz-field">
+                            <span class="vs-form-field__label">Rumuz <span class="vs-form-field__req">*</span></span>
+                            <input type="text" name="rumuz" id="gnomeCryRumuz" minlength="2" maxlength="80" autocomplete="off" placeholder="Temsilci rumuzu…">
+                            <p class="vs-field-inline-error" id="gnomeCryRumuzFieldError" hidden role="alert"></p>
+                        </label>
+                        <button type="submit" class="vs-rumor-submit vs-gnome-cry-submit" id="gnomeCrySubmit">Gönder</button>
+                    </div>
+                </form>
             </div>
         </section>
     </div>

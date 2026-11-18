@@ -77,7 +77,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['html2canvas'],
+    include: ['html2canvas', 'quill'],
   },
   json: {
     stringify: true,

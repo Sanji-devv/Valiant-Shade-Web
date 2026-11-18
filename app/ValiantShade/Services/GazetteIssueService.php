@@ -6,6 +6,7 @@ use App\Models\GazetteIssue;
 use App\Models\News;
 use App\ValiantShade\Support\GazetteNewsImage;
 use App\ValiantShade\Support\GazetteTypography;
+use App\ValiantShade\Support\NewsPublication;
 use App\ValiantShade\Support\WorldCalendar;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -623,6 +624,23 @@ class GazetteIssueService
 
     public function applySubmissionPlacement(News $news): void
     {
+        if (NewsPublication::isGnome($news)) {
+            GazetteNewsImage::applyToNews($news, false);
+            $stats = is_array($news->stats) ? $news->stats : [];
+            $editionNum = (int) News::query()
+                ->where('publication', NewsPublication::GNOME_CIGLISI)
+                ->where('status', 'published')
+                ->where('id', '!=', (int) $news->id)
+                ->count() + 1;
+            $stats['gnome_edition_number'] = $editionNum;
+            $news->stats = $stats;
+            $news->is_active = true;
+            $news->saveQuietly();
+            $this->publicNews->invalidatePublicFeed();
+
+            return;
+        }
+
         $stats = is_array($news->stats) ? $news->stats : [];
         $submission = is_array($stats['submission'] ?? null) ? $stats['submission'] : [];
         $kind = (string) ($submission['gazette_slot_kind'] ?? '');
@@ -1566,6 +1584,10 @@ class GazetteIssueService
 
     public function attachNewsToCurrentIssue(News $news): void
     {
+        if (NewsPublication::isGnome($news)) {
+            return;
+        }
+
         if ($news->gazette_issue_id) {
             return;
         }

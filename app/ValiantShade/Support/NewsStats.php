@@ -2,6 +2,8 @@
 
 namespace App\ValiantShade\Support;
 
+use App\Models\News;
+
 final class NewsStats
 {
     /**
@@ -90,6 +92,7 @@ final class NewsStats
             'corner' => 'Köşe yazısı',
             'flash' => 'Flash haber (ek sayı)',
             'extra' => 'Flash haber (ek sayı)',
+            'gnome_cry' => "Gnome'un Çığlığı (lonca parşömeni)",
         ];
 
         $kindLabel = $kindLabels[$kind] ?? null;
@@ -99,5 +102,14 @@ final class NewsStats
         }
 
         return $kindLabel ?? ($label !== '' ? $label : null);
+    }
+
+    public static function publicationBadge(object $news): ?string
+    {
+        if (! NewsPublication::isGnome($news)) {
+            return null;
+        }
+
+        return (string) (config('gazette.publications.gnome_ciglisi.admin_badge') ?? "Gnome'un Çığlığı");
     }
 }

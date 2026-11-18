@@ -31,6 +31,7 @@ return function (bool $registerNames = true): void {
         Route::prefix('public/news')->group(function () {
             Route::get('/bootstrap', [PublicNewsController::class, 'bootstrap']);
             Route::get('/gazette-issues', [PublicNewsController::class, 'gazetteIssues']);
+            Route::get('/gnome-cry', [PublicNewsController::class, 'gnomeCry']);
             Route::get('/featured', [PublicNewsController::class, 'featured']);
             Route::get('/', [PublicNewsController::class, 'index']);
             Route::get('/by-slug/{slug}', [PublicNewsController::class, 'showBySlug'])
@@ -45,6 +46,8 @@ return function (bool $registerNames = true): void {
             Route::post('/submissions', [PublicNewsController::class, 'submit'])
                 ->middleware('throttle:public.news.submissions');
             Route::post('/flash-submissions', [PublicNewsController::class, 'submitFlash'])
+                ->middleware('throttle:public.news.submissions');
+            Route::post('/gnome-cry-submissions', [PublicNewsController::class, 'submitGnomeCry'])
                 ->middleware('throttle:public.news.submissions');
             Route::post('/extra-issues', [PublicNewsController::class, 'publishExtra'])
                 ->middleware(['auth', 'throttle:public.news.submissions']);

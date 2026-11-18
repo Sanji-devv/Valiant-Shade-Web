@@ -310,6 +310,12 @@
               @php
                 $submissionBadge = \App\ValiantShade\Support\NewsStats::submissionBadge($pending->stats);
               @endphp
+              @php
+                $publicationBadge = \App\ValiantShade\Support\NewsStats::publicationBadge($pending);
+              @endphp
+              @if($publicationBadge)
+              <span class="badge bg-danger">{{ $publicationBadge }}</span>
+              @endif
               @if($submissionBadge)
               <span class="badge bg-label-info">{{ $submissionBadge }}</span>
               @elseif($pending->tag && str_contains($pending->tag, 'Gönderisi'))

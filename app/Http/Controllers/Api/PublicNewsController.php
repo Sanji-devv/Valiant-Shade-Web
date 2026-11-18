@@ -9,6 +9,7 @@ use App\ValiantShade\Support\GazetteEditorGate;
 use App\ValiantShade\Support\GazetteNewsImage;
 use App\ValiantShade\Support\GazetteSubmissionImageStore;
 use App\ValiantShade\Support\NewsEngagement;
+use App\ValiantShade\Support\NewsPublication;
 use App\ValiantShade\Services\GazetteIssueService;
 use App\ValiantShade\Services\PublicNewsService;
 use App\ValiantShade\Support\WorldCalendar;
@@ -486,6 +487,125 @@ class PublicNewsController extends Controller
             'message' => 'Flash haber editöre ulaştı. Onaylanınca ek sayı (ör. 2.1) olarak basılır.',
             'submission_id' => $news->id,
         ], 201);
+    }
+
+    public function gnomeCry(Request $request): JsonResponse
+    {
+        $editionId = $request->query('edition_id') ? (int) $request->query('edition_id') : null;
+        $editionNumber = $request->query('sayi') ? (int) $request->query('sayi') : null;
+        if (! $editionNumber && $request->query('edition_number')) {
+            $editionNumber = (int) $request->query('edition_number');
+        }
+
+        return $this->cachedJson([
+            'success' => true,
+            'data' => $this->news->gnomeCrySheet($editionId, $editionNumber),
+        ]);
+    }
+
+    public function submitGnomeCry(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|min:8|max:255',
+            'deck_line' => 'nullable|string|max:400',
+            'full_story' => 'required|string|min:30|max:50000',
+            'rumuz' => 'required|string|min:2|max:80',
+            'custom_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+        ], [
+            'title.required' => 'Başlık zorunludur.',
+            'title.min' => 'Başlık en az 8 karakter olmalıdır.',
+            'rumuz.required' => 'Rumuz zorunludur.',
+            'full_story.required' => 'Duyuru metnini yazın.',
+            'custom_image.image' => 'Yüklenen dosya geçerli bir görsel değil.',
+            'custom_image.max' => 'Görsel en fazla 5 MB olabilir.',
+            'custom_image.mimes' => 'Görsel yalnızca JPEG, PNG veya WebP olabilir.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lütfen parşömen alanlarını kontrol edin.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $data = $validator->validated();
+        $typeConfig = config('news.types.guild_news', config('news.types.local_news'));
+        $storyHtml = $this->sanitizeGnomeStoryHtml($data['full_story']);
+        $plain = trim(preg_replace('/\s+/u', ' ', strip_tags($storyHtml)) ?? '');
+        if (mb_strlen($plain) < 30) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Duyuru metni en az 30 karakter olmalı.',
+                'errors' => ['full_story' => ['Metin çok kısa.']],
+            ], 422);
+        }
+
+        $imageUrl = null;
+        try {
+            GazetteSubmissionImageStore::ensureDirectoryExists();
+            $imageUrl = GazetteSubmissionImageStore::resolveUploadedOrPreset(
+                $request->file('custom_image'),
+                null,
+                'static/valiant-shade/assets/img/news/guild_hall_council.jpg',
+                'gnome',
+            );
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'message' => $e instanceof \RuntimeException
+                    ? $e->getMessage()
+                    : 'Görsel yüklenemedi.',
+            ], 500);
+        }
+
+        $rumuz = trim((string) $data['rumuz']);
+        $deck = isset($data['deck_line']) ? trim((string) $data['deck_line']) : '';
+
+        $news = News::create([
+            'title' => $data['title'],
+            'category' => $typeConfig['label'],
+            'news_type' => 'guild_news',
+            'publication' => NewsPublication::GNOME_CIGLISI,
+            'badge_color' => $typeConfig['badge_color'],
+            'category_icon' => $typeConfig['category_icon'],
+            'tag' => "Gnome'un Çığlığı Gönderisi",
+            'tag_icon' => 'icon-base ti tabler-scroll',
+            'date_text' => WorldCalendar::formatNewsStamp(now()) ?? now()->locale(app()->getLocale())->translatedFormat('d M Y, H:i'),
+            'description' => mb_substr($plain, 0, 1200),
+            'full_story' => $storyHtml,
+            'testimony' => $deck !== '' ? $deck : null,
+            'image_url' => $imageUrl,
+            'author' => $rumuz,
+            'author_role' => 'Lonca temsilcisi',
+            'stats' => [
+                'submission' => [
+                    'gazette_slot_kind' => 'gnome_cry',
+                    'gazette_slot_label' => "Gnome'un Çığlığı",
+                    'rumuz' => $rumuz,
+                ],
+            ],
+            'status' => 'pending',
+            'is_active' => false,
+            'order' => (int) News::max('order') + 1,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Temsilci sözü editöre ulaştı. Onaylanınca yalnızca lonca duyuru parşömeni olarak basılır.',
+            'submission_id' => $news->id,
+        ], 201);
+    }
+
+    protected function sanitizeGnomeStoryHtml(string $html): string
+    {
+        $allowed = '<p><br><strong><b><em><i><u><ul><ol><li><h2><h3><blockquote>';
+        $clean = strip_tags($html, $allowed);
+        $clean = preg_replace('/\s(on\w+|style|class)\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)/iu', '', $clean) ?? $clean;
+
+        return trim($clean);
     }
 
     public function publishExtra(Request $request): JsonResponse
