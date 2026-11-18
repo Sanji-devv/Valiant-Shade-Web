@@ -4071,14 +4071,27 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!state.streamReturnLayout) {
       state.streamReturnLayout = 'gazette';
     }
+  } else if (articleDeepLink && layoutParam !== 'stream') {
+    state.layoutMode = 'gazette';
+  } else if (
+    isMobileViewport()
+    && state.publicationMode !== PUBLICATION_GNOME
+    && !articleDeepLink
+  ) {
+    const gazetteUrlBookmark =
+      layoutParam === 'gazette' || urlParams.has('yaprak') || urlParams.has('sayi');
+    state.layoutMode = gazetteUrlBookmark
+      ? 'stream'
+      : mobileLagimLayoutFromPreference('stream');
+    if (state.layoutMode === 'stream' && !state.streamReturnLayout) {
+      state.streamReturnLayout = 'gazette';
+    }
   } else if (mobileDefaultStream) {
     state.layoutMode = mobileLagimLayoutFromPreference('stream');
     if (state.layoutMode === 'stream' && !state.streamReturnLayout) {
       state.streamReturnLayout = 'gazette';
     }
-  } else if (articleDeepLink && layoutParam !== 'stream') {
-    state.layoutMode = 'gazette';
-  } else if (onGazetteHost && layoutParam !== 'stream') {
+  } else if (onGazetteHost && layoutParam !== 'stream' && !isMobileViewport()) {
     state.layoutMode = 'gazette';
   } else if (layoutParam === 'web' || layoutParam === 'gazette') {
     state.layoutMode = 'gazette';
@@ -4104,9 +4117,6 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch (e) {
     /* ignore */
   }
-  if (articleDeepLink && layoutParam !== 'stream') {
-    state.layoutMode = 'gazette';
-  }
   if (state.layoutMode === 'stream' && !state.streamReturnLayout) {
     state.streamReturnLayout = 'gazette';
   }
@@ -4116,6 +4126,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   gnomeCryCtrl.syncPublicationChrome();
   applyLayoutMode();
+  if (
+    isMobileViewport()
+    && isStreamLayout()
+    && state.publicationMode !== PUBLICATION_GNOME
+    && (layoutParam === 'gazette' || urlParams.has('yaprak') || urlParams.has('sayi'))
+  ) {
+    syncBrowserUrl();
+  }
   syncFilterPanelVisibility();
   bindEvents();
   initGazetteFlipSwipe();
