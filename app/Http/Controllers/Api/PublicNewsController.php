@@ -510,6 +510,8 @@ class PublicNewsController extends Controller
             'deck_line' => 'nullable|string|max:400',
             'full_story' => 'required|string|min:30|max:50000',
             'rumuz' => 'required|string|min:2|max:80',
+            'gnome_slot_kind' => 'required|string|in:main,corner',
+            'image_preset' => 'nullable|string|max:255',
             'custom_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
         ], [
             'title.required' => 'Başlık zorunludur.',
@@ -544,10 +546,14 @@ class PublicNewsController extends Controller
         $imageUrl = null;
         try {
             GazetteSubmissionImageStore::ensureDirectoryExists();
+            $defaultGnomeImage = ltrim((string) config(
+                'gazette.publications.gnome_ciglisi.icon',
+                'static/valiant-shade/assets/img/gazette/gnome-mirang.jpg'
+            ), '/');
             $imageUrl = GazetteSubmissionImageStore::resolveUploadedOrPreset(
                 $request->file('custom_image'),
-                null,
-                'static/valiant-shade/assets/img/news/guild_hall_council.jpg',
+                $data['image_preset'] ?? null,
+                $defaultGnomeImage,
                 'gnome',
             );
         } catch (\Throwable $e) {
@@ -583,6 +589,7 @@ class PublicNewsController extends Controller
             'stats' => [
                 'submission' => [
                     'gazette_slot_kind' => 'gnome_cry',
+                    'gnome_slot_kind' => $data['gnome_slot_kind'],
                     'gazette_slot_label' => "Gnome'un Çığlığı",
                     'rumuz' => $rumuz,
                 ],

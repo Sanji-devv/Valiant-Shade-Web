@@ -1249,8 +1249,22 @@ function formatRumuz(author) {
   return raw.length > 10 ? raw.slice(0, 9) + '…' : raw;
 }
 
+function isGenericGazetteStockImage(item) {
+  const path = String(item?.image_url || item?.image_asset || '').toLowerCase();
+  return path.includes('guild_dragon_quest') || path.includes('guild_tavern_whispers');
+}
+
+/** Haberde atanmış görsel varsa bas — yalnızca varsayılan stok placeholder gizlenir. */
+function shouldShowGazetteFigure(item) {
+  if (!item?.image_asset) {
+    return false;
+  }
+
+  return !isGenericGazetteStockImage(item);
+}
+
 function renderGazetteFigure(item) {
-  if (!item?.has_custom_gazette_image || !item.image_asset) {
+  if (!shouldShowGazetteFigure(item)) {
     return '';
   }
   const src = escapeHtml(item.image_asset);
@@ -1260,7 +1274,7 @@ function renderGazetteFigure(item) {
   return `
     <figure class="vs-gazette-figure">
       <button type="button" class="vs-gazette-figure__zoom" data-open-id="${openId}" aria-label="${altTitle}. Büyüt ve oku">
-        <img class="vs-gazette-figure__img" src="${src}" alt="" loading="lazy" decoding="async">
+        <img class="vs-gazette-figure__img" src="${src}" alt="" loading="lazy" decoding="async" onerror="this.closest('figure')?.remove()">
         <span class="vs-gazette-figure__hint" aria-hidden="true">Büyüt</span>
       </button>
       ${cap ? `<figcaption class="vs-gazette-figure__cap">${cap}</figcaption>` : ''}
@@ -1271,9 +1285,15 @@ function renderGazetteFigure(item) {
 function renderGazetteArticle(item, { lead = false } = {}) {
   const title = escapeHtml(item.title || '');
   const type = escapeHtml(item.news_type_label || item.category || '');
-  const body = paragraphsToHtml(articlePlainText(item), lead ? 16 : 9);
   const paras = splitParagraphs(articlePlainText(item));
-  const deck = paras[0] ? escapeHtml(truncateText(paras[0], lead ? 240 : 160)) : '';
+  const deckLimit = lead ? 240 : 160;
+  let deck = '';
+  let bodySource = paras;
+  if (paras.length > 1) {
+    deck = escapeHtml(truncateText(paras[0], deckLimit));
+    bodySource = paras.slice(1);
+  }
+  const body = paragraphsToHtml(bodySource.join('\n\n'), lead ? 16 : 9);
   const loc = item.location_badge ? escapeHtml(item.location_badge) : '';
   const rumuz = escapeHtml(formatRumuz(item.author));
   const authorTitle = escapeHtml(item.author || 'Anonim');
@@ -3336,6 +3356,19 @@ function updateRumorImagePreview() {
   );
 }
 
+let gnomeImageObjectUrl = null;
+
+function updateGnomeImagePreview() {
+  gnomeImageObjectUrl = updateSubmissionImagePreview(
+    els.gnomeCryCustomImage,
+    els.gnomeCryImagePreset,
+    els.gnomeCryImagePreviewWrap,
+    els.gnomeCryImagePreview,
+    els.gnomeCryImagePreviewHint,
+    gnomeImageObjectUrl,
+  );
+}
+
 async function submitRumor(formData) {
   const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
   const response = await fetch('/api/public/news/submissions', {
@@ -3686,6 +3719,14 @@ function bindEvents() {
       return;
     }
     if (
+      gnomeCryCtrl?.isGnomePublication()
+      && (els.gnomeCryStage?.contains(openBtn) || els.gnomeCryFlow?.contains(openBtn))
+    ) {
+      event.preventDefault();
+      openArticleFromUi(openBtn.dataset.openId, openBtn.dataset.articleSlug).catch(console.error);
+      return;
+    }
+    if (
       (isStreamLayout() && els.newsStream?.contains(openBtn))
       || (gnomeCryCtrl?.isGnomePublication() && isMobileViewport() && els.gnomeCryFlow?.contains(openBtn))
     ) {
@@ -3952,10 +3993,18 @@ document.addEventListener('DOMContentLoaded', () => {
   els.gnomeCryFullStory = qs('gnomeCryFullStory');
   els.gnomeCryBodyError = qs('gnomeCryBodyError');
   els.gnomeCryCustomImage = qs('gnomeCryCustomImage');
+  els.gnomeCryImagePreset = qs('gnomeCryImagePreset');
+  els.gnomeCryImagePreviewHint = qs('gnomeCryImagePreviewHint');
+  els.gnomeCrySlotKind = qs('gnomeCrySlotKind');
+  els.gnomeCrySlotMainBtn = qs('gnomeCrySlotMainBtn');
+  els.gnomeCrySlotCornerBtn = qs('gnomeCrySlotCornerBtn');
   els.gnomeCryImagePreviewWrap = qs('gnomeCryImagePreviewWrap');
   els.gnomeCryImagePreview = qs('gnomeCryImagePreview');
   els.gnomeCryRemoveImage = qs('gnomeCryRemoveImage');
   els.gnomeCrySubmit = qs('gnomeCrySubmit');
+  els.gnomeSealLightbox = qs('gnomeSealLightbox');
+  els.gnomeSealLightboxImg = qs('gnomeSealLightboxImg');
+  els.gnomeSealLightboxClose = qs('gnomeSealLightboxClose');
 
   initNewsTypePicker(els.rumorTypePicker, els.rumorNewsType);
   gnomeCryCtrl = createGnomeCryController({
@@ -3968,6 +4017,8 @@ document.addEventListener('DOMContentLoaded', () => {
     renderStreamCard,
     rememberLagimLayoutBeforeGnome,
     restoreLagimLayoutAfterGnome,
+    updateGnomeImagePreview,
+    openArticleFromUi,
   });
   gnomeCryCtrl.bind();
   rumorWizard = createRumorWizard({
@@ -3983,6 +4034,7 @@ document.addEventListener('DOMContentLoaded', () => {
     issueAllowsSubmissions,
     isGazetteLayout,
     updateRumorImagePreview,
+    updateGnomeImagePreview,
   });
   rumorWizard.bind();
   readUrlIntoState();

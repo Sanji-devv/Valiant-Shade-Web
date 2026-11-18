@@ -90,4 +90,24 @@ final class GazetteNewsImage
 
         return ! in_array($path, $defaults, true);
     }
+
+    /** Gönderi / seçilmiş görsel varken onayda otomatik woodcut ile değiştirme. */
+    public static function shouldPreserveSubmittedImage(News $news): bool
+    {
+        $path = ltrim(str_replace('\\', '/', (string) ($news->image_url ?? '')), '/');
+        if ($path === '') {
+            return false;
+        }
+
+        if (NewsPublication::isGnome($news)) {
+            $mirang = ltrim(str_replace('\\', '/', (string) config(
+                'gazette.publications.gnome_ciglisi.icon',
+                'static/valiant-shade/assets/img/gazette/gnome-mirang.jpg',
+            )), '/');
+
+            return $path !== $mirang;
+        }
+
+        return self::hasDistinctGazetteImage($news);
+    }
 }

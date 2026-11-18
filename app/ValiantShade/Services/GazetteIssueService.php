@@ -164,6 +164,46 @@ class GazetteIssueService
         return $upcoming && (int) $upcoming->id === (int) $issue->id;
     }
 
+    /**
+     * Gelecek haftalık sayılar yayına girene kadar (aktif sayı olana kadar) kamuya kapalı.
+     */
+    public function weeklyIssueShowsPublicArticles(GazetteIssue $issue): bool
+    {
+        if (! $issue->isWeekly()) {
+            return true;
+        }
+
+        if ($issue->is_current) {
+            return true;
+        }
+
+        $publishedOn = $issue->published_on;
+        if ($publishedOn === null) {
+            return false;
+        }
+
+        $currentSunday = WorldCalendar::anchorSunday(Carbon::now());
+        $issueSunday = WorldCalendar::anchorSunday(Carbon::parse($publishedOn));
+
+        return $issueSunday->lt($currentSunday);
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    public function weeklyIssueIdsHiddenUntilActive(): array
+    {
+        $currentSunday = WorldCalendar::anchorSunday(Carbon::now());
+
+        return GazetteIssue::query()
+            ->where('issue_kind', GazetteIssue::KIND_WEEKLY)
+            ->where('is_current', false)
+            ->whereDate('published_on', '>=', $currentSunday->toDateString())
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+    }
+
     protected function firstIssueSunday(): Carbon
     {
         $firstAt = News::query()
@@ -292,6 +332,9 @@ class GazetteIssueService
                         if ($linkedIssue?->isExtra()) {
                             continue;
                         }
+                        if ($linkedIssue?->isWeekly()) {
+                            continue;
+                        }
                     }
 
                     $stats = is_array($news->stats) ? $news->stats : [];
@@ -343,7 +386,9 @@ class GazetteIssueService
             return $this->gazetteBootstrapExtra($issue, $newsType, null);
         }
 
-        $allNews = $this->publicNews->publishedForIssue($issue->id, $newsType, $search);
+        $allNews = $this->weeklyIssueShowsPublicArticles($issue)
+            ? $this->publicNews->publishedForIssue($issue->id, $newsType, $search)
+            : collect();
         $issue = $this->ensureCoverLayoutMigrated($issue, $allNews);
         $this->sanitizeCoverLayout($issue, $allNews);
         $this->sanitizeCornerSlots($issue);
@@ -622,17 +667,76 @@ class GazetteIssueService
         ];
     }
 
+    protected function resolveGnomeEditionNumberForPlacement(News $news, string $slot): int
+    {
+        $map = $this->gnomePublishedEditionMap((int) $news->id);
+
+        if ($slot === 'corner') {
+            foreach (collect($map)->sortKeysDesc() as $num => $pair) {
+                if ($pair['main'] !== null && $pair['corner'] === null) {
+                    return (int) $num;
+                }
+            }
+
+            if ($map !== []) {
+                return (int) max(array_keys($map));
+            }
+
+            return 1;
+        }
+
+        foreach (collect($map)->sortKeys() as $num => $pair) {
+            if ($pair['main'] === null && $pair['corner'] !== null) {
+                return (int) $num;
+            }
+        }
+
+        return ($map === [] ? 0 : (int) max(array_keys($map))) + 1;
+    }
+
+    /**
+     * @return array<int, array{main: ?News, corner: ?News}>
+     */
+    protected function gnomePublishedEditionMap(int $excludingNewsId = 0): array
+    {
+        $map = [];
+
+        News::query()
+            ->where('publication', NewsPublication::GNOME_CIGLISI)
+            ->where('status', 'published')
+            ->when($excludingNewsId > 0, fn ($q) => $q->where('id', '!=', $excludingNewsId))
+            ->orderBy('id')
+            ->each(function (News $row) use (&$map) {
+                $stats = is_array($row->stats) ? $row->stats : [];
+                $num = (int) ($stats['gnome_edition_number'] ?? 0);
+                if ($num <= 0) {
+                    return;
+                }
+
+                $submission = is_array($stats['submission'] ?? null) ? $stats['submission'] : [];
+                $slot = strtolower(trim((string) ($submission['gnome_slot_kind'] ?? 'main')));
+                $slotKey = $slot === 'corner' ? 'corner' : 'main';
+
+                if (! isset($map[$num])) {
+                    $map[$num] = ['main' => null, 'corner' => null];
+                }
+
+                $map[$num][$slotKey] = $row;
+            });
+
+        return $map;
+    }
+
     public function applySubmissionPlacement(News $news): void
     {
         if (NewsPublication::isGnome($news)) {
-            GazetteNewsImage::applyToNews($news, false);
+            if (! GazetteNewsImage::shouldPreserveSubmittedImage($news)) {
+                GazetteNewsImage::applyToNews($news, false);
+            }
             $stats = is_array($news->stats) ? $news->stats : [];
-            $editionNum = (int) News::query()
-                ->where('publication', NewsPublication::GNOME_CIGLISI)
-                ->where('status', 'published')
-                ->where('id', '!=', (int) $news->id)
-                ->count() + 1;
-            $stats['gnome_edition_number'] = $editionNum;
+            $submission = is_array($stats['submission'] ?? null) ? $stats['submission'] : [];
+            $slot = strtolower(trim((string) ($submission['gnome_slot_kind'] ?? 'main')));
+            $stats['gnome_edition_number'] = $this->resolveGnomeEditionNumberForPlacement($news, $slot);
             $news->stats = $stats;
             $news->is_active = true;
             $news->saveQuietly();

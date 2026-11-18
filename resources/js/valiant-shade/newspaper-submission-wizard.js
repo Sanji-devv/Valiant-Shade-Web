@@ -1,3 +1,5 @@
+import { clearRumorDraft, loadRumorDraft, saveRumorDraft } from './submission-form-draft.js';
+
 const WIZARD_KINDS = [
   {
     id: 'flash',
@@ -66,6 +68,106 @@ export function createRumorWizard(deps) {
   let wizardFlow = null;
   let authorDraft = '';
   let placementLocked = false;
+  let rumorDraftSaveTimer = null;
+
+  function collectRumorDraftSnapshot() {
+    if (!els.rumorForm) {
+      return null;
+    }
+    const get = (name) => {
+      const field = els.rumorForm.elements.namedItem(name);
+      if (!field) {
+        return '';
+      }
+      if (field instanceof RadioNodeList) {
+        return field.value ?? '';
+      }
+      return field.value ?? '';
+    };
+    return {
+      wizardFlow,
+      wizardStep: els.rumorWizardForm?.hidden ? 'pick' : 'form',
+      placementLocked,
+      fields: {
+        gazette_slot_kind: get('gazette_slot_kind'),
+        gazette_slot_key: get('gazette_slot_key'),
+        gazette_slot_label: get('gazette_slot_label'),
+        gazette_issue_id: get('gazette_issue_id'),
+        news_type: get('news_type'),
+        title: get('title'),
+        description: get('description'),
+        author: get('author'),
+        location_badge: get('location_badge'),
+        rumuz: get('rumuz'),
+        image_preset: get('image_preset'),
+        anonymous: Boolean(els.rumorAnonymousInput?.checked),
+      },
+    };
+  }
+
+  function scheduleRumorDraftSave() {
+    if (!wizardFlow && els.rumorWizardForm?.hidden) {
+      return;
+    }
+    window.clearTimeout(rumorDraftSaveTimer);
+    rumorDraftSaveTimer = window.setTimeout(() => {
+      const snapshot = collectRumorDraftSnapshot();
+      if (snapshot) {
+        saveRumorDraft(snapshot);
+      }
+    }, 280);
+  }
+
+  function restoreRumorDraft() {
+    const draft = loadRumorDraft();
+    if (!draft) {
+      return false;
+    }
+    wizardFlow = draft.wizardFlow || null;
+    placementLocked = Boolean(draft.placementLocked);
+    if (els.rumorForm && draft.fields) {
+      Object.entries(draft.fields).forEach(([name, value]) => {
+        const field = els.rumorForm.elements.namedItem(name);
+        if (!field) {
+          return;
+        }
+        if (field instanceof RadioNodeList) {
+          field.value = value;
+        } else {
+          field.value = value;
+        }
+      });
+    }
+    if (els.rumorAnonymousInput) {
+      els.rumorAnonymousInput.checked = Boolean(draft.fields?.anonymous);
+    }
+    syncAnonymousAuthorField();
+    if (draft.wizardStep === 'form' && wizardFlow) {
+      showWizardStep('form');
+      applyFlowUi();
+      if (wizardFlow === 'corner' && draft.fields?.gazette_slot_key) {
+        renderCornerPicker(draft.fields.gazette_slot_key);
+      }
+    } else {
+      wizardFlow = null;
+      showWizardStep('pick');
+      renderWizardKinds();
+    }
+    deps.updateRumorImagePreview?.();
+    renderDemoPreview();
+    return true;
+  }
+
+  function resetRumorFormState() {
+    if (els.rumorForm) {
+      els.rumorForm.reset();
+    }
+    authorDraft = '';
+    clearNewsTypePicker();
+    clearFieldErrors();
+    deps.updateRumorImagePreview?.();
+    syncAnonymousAuthorField();
+  }
 
   function predictNextHotExtraLabel() {
     const weekly = (state.issueArchive || []).find((row) => row.is_current && !row.is_extra);
@@ -668,13 +770,10 @@ export function createRumorWizard(deps) {
       }
     }
 
-    if (els.rumorForm) {
-      els.rumorForm.reset();
+    const restored = !options.fromSlot && !options.flow && !options.slot && restoreRumorDraft();
+    if (!restored) {
+      resetRumorFormState();
     }
-    authorDraft = '';
-    clearNewsTypePicker();
-    clearFieldErrors();
-    deps.updateRumorImagePreview?.();
 
     if (options.flow) {
       wizardFlow = options.flow;
@@ -705,22 +804,24 @@ export function createRumorWizard(deps) {
     scrollRumorModalToTop();
   }
 
-  function closeWizard() {
+  function closeWizard({ clear = false } = {}) {
+    if (!clear) {
+      scheduleRumorDraftSave();
+      const snapshot = collectRumorDraftSnapshot();
+      if (snapshot) {
+        saveRumorDraft(snapshot);
+      }
+    } else {
+      clearRumorDraft();
+      resetRumorFormState();
+      wizardFlow = null;
+      placementLocked = false;
+      showWizardStep('pick');
+    }
     if (els.rumorModal) {
       els.rumorModal.classList.remove('is-open');
     }
     document.body.classList.remove('vs-rumor-modal-open');
-    wizardFlow = null;
-    placementLocked = false;
-    showWizardStep('pick');
-    if (els.rumorForm) {
-      els.rumorForm.reset();
-    }
-    authorDraft = '';
-    clearNewsTypePicker();
-    clearFieldErrors();
-    deps.updateRumorImagePreview?.();
-    syncAnonymousAuthorField();
   }
 
   function startFlow(flowId) {
@@ -728,16 +829,17 @@ export function createRumorWizard(deps) {
     showWizardStep('form');
     applyFlowUi();
     scrollRumorModalToTop();
+    scheduleRumorDraftSave();
   }
 
   function bind() {
     renderWizardKinds();
 
     els.openRumorBtn?.addEventListener('click', () => openWizard());
-    els.rumorClose?.addEventListener('click', closeWizard);
+    els.rumorClose?.addEventListener('click', () => closeWizard({ clear: false }));
     els.rumorModal?.addEventListener('click', (event) => {
       if (event.target === els.rumorModal) {
-        closeWizard();
+        closeWizard({ clear: false });
       }
     });
 
@@ -805,16 +907,25 @@ export function createRumorWizard(deps) {
       els.rumorTitleInput?.addEventListener(evt, () => {
         setFieldError('title', '');
         renderDemoPreview();
+        scheduleRumorDraftSave();
       });
       els.rumorBodyInput?.addEventListener(evt, () => {
         setFieldError('body', '');
         renderDemoPreview();
+        scheduleRumorDraftSave();
       });
-      els.rumorAuthorInput?.addEventListener(evt, renderDemoPreview);
-      els.rumorLocationInput?.addEventListener(evt, renderDemoPreview);
+      els.rumorAuthorInput?.addEventListener(evt, () => {
+        renderDemoPreview();
+        scheduleRumorDraftSave();
+      });
+      els.rumorLocationInput?.addEventListener(evt, () => {
+        renderDemoPreview();
+        scheduleRumorDraftSave();
+      });
       els.rumorRumuzInput?.addEventListener(evt, () => {
         setFieldError('rumuz', '');
         renderDemoPreview();
+        scheduleRumorDraftSave();
       });
     });
 
@@ -830,12 +941,14 @@ export function createRumorWizard(deps) {
       els.rumorImagePreset.addEventListener('change', () => {
         els.rumorCustomImageInput.value = '';
         deps.updateRumorImagePreview?.();
+        scheduleRumorDraftSave();
       });
       els.rumorCustomImageInput.addEventListener('change', () => {
         if (els.rumorCustomImageInput.files?.length) {
           els.rumorImagePreset.value = '__gazette_auto__';
         }
         deps.updateRumorImagePreview?.();
+        scheduleRumorDraftSave();
       });
     }
 
@@ -893,7 +1006,7 @@ export function createRumorWizard(deps) {
 
         const payload =
           wizardFlow === 'flash' ? await submitHotExtra(formData) : await submitRumor(formData);
-        closeWizard();
+        closeWizard({ clear: true });
         showToast(payload.message || 'Gönderiniz editöre ulaştı.', 'success');
       } catch (error) {
         clearFieldErrors();

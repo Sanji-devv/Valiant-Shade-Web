@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class PublicNewsService
 {
@@ -203,6 +204,7 @@ class PublicNewsService
             'gnome_edition_number' => NewsPublication::isGnome($item) && is_array($item->stats ?? null)
                 ? (int) ($item->stats['gnome_edition_number'] ?? 0)
                 : null,
+            'gnome_slot_kind' => $this->gnomeSlotKindFromItem($item),
         ];
     }
 
@@ -345,7 +347,19 @@ class PublicNewsService
             ->where('status', 'published')
             ->where('is_active', true);
 
-        return $this->scopeLagimdanSesler($query);
+        $query = $this->scopeLagimdanSesler($query);
+
+        if (Schema::hasTable('gazette_issues') && Schema::hasColumn('news', 'gazette_issue_id')) {
+            $hiddenIssueIds = app(GazetteIssueService::class)->weeklyIssueIdsHiddenUntilActive();
+            if ($hiddenIssueIds !== []) {
+                $query->where(function (Builder $q) use ($hiddenIssueIds) {
+                    $q->whereNull('gazette_issue_id')
+                        ->orWhereNotIn('gazette_issue_id', $hiddenIssueIds);
+                });
+            }
+        }
+
+        return $query;
     }
 
     protected function scopeLagimdanSesler(Builder $query): Builder
@@ -382,23 +396,19 @@ class PublicNewsService
                 ->orderBy('id')
                 ->get();
 
-            $editions = $rows->values()->map(function (News $row, int $index) {
-                $item = $this->transformItem($row);
-                $num = (int) (is_array($row->stats) ? ($row->stats['gnome_edition_number'] ?? 0) : 0);
-                $item['gnome_edition_number'] = $num > 0 ? $num : $index + 1;
-
-                return $item;
-            })->all();
+            $editions = $this->composeGnomeEditions($rows);
 
             $total = count($editions);
             $current = null;
             $currentIndex = -1;
 
             if ($editionId) {
-                $currentIndex = (int) collect($editions)->search(fn ($row) => (int) ($row['id'] ?? 0) === $editionId);
+                $currentIndex = (int) collect($editions)->search(
+                    fn (array $row) => $this->gnomeEditionMatchesNewsId($row, $editionId)
+                );
             } elseif ($editionNumber) {
                 $currentIndex = (int) collect($editions)->search(
-                    fn ($row) => (int) ($row['gnome_edition_number'] ?? 0) === $editionNumber
+                    fn (array $row) => (int) ($row['gnome_edition_number'] ?? 0) === $editionNumber
                 );
             } elseif ($total > 0) {
                 $currentIndex = $total - 1;
@@ -419,8 +429,8 @@ class PublicNewsService
                 'current_edition_number' => $current ? (int) ($current['gnome_edition_number'] ?? 0) : 0,
                 'navigation' => [
                     'index' => $currentIndex,
-                    'prev_id' => $prev['id'] ?? null,
-                    'next_id' => $next['id'] ?? null,
+                    'prev_id' => $prev ? $this->gnomeEditionNavId($prev) : null,
+                    'next_id' => $next ? $this->gnomeEditionNavId($next) : null,
                     'prev_number' => $prev['gnome_edition_number'] ?? null,
                     'next_number' => $next['gnome_edition_number'] ?? null,
                 ],
@@ -597,7 +607,14 @@ class PublicNewsService
 
     protected function publishedShowCandidate(News $model): ?News
     {
-        // Akış / kart listesi ile doğrudan okuma aynı kaydı hedeflemeli; is_active yalnızca feed’de gizler.
+        $issueId = (int) ($model->gazette_issue_id ?? 0);
+        if ($issueId > 0 && Schema::hasTable('gazette_issues')) {
+            $issue = \App\Models\GazetteIssue::query()->find($issueId);
+            if ($issue && ! app(GazetteIssueService::class)->weeklyIssueShowsPublicArticles($issue)) {
+                return null;
+            }
+        }
+
         return $model;
     }
 
@@ -644,17 +661,19 @@ class PublicNewsService
             return false;
         }
 
-        $defaults = collect(config('gazette.default_news_images', []))
-            ->map(fn (string $p) => ltrim(str_replace('\\', '/', $p), '/'))
-            ->all();
+        $generic = [
+            'static/valiant-shade/assets/img/news/guild_tavern_whispers.jpg',
+            'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg',
+        ];
 
-        if (in_array($path, $defaults, true)) {
-            return false;
+        foreach ($generic as $stock) {
+            $stock = ltrim(str_replace('\\', '/', $stock), '/');
+            if ($path === $stock || basename($path) === basename($stock)) {
+                return false;
+            }
         }
 
-        $basename = basename($path);
-
-        return ! in_array($basename, array_map('basename', $defaults), true);
+        return true;
     }
 
     protected function sanitizePublicLocationBadge(?string $badge): ?string
@@ -706,5 +725,103 @@ class PublicNewsService
         }
 
         return ltrim($url, '/');
+    }
+
+    protected function gnomeSlotKindFromItem(mixed $item): string
+    {
+        if (! NewsPublication::isGnome($item)) {
+            return 'main';
+        }
+        $stats = is_array($item->stats ?? null) ? $item->stats : [];
+        $submission = is_array($stats['submission'] ?? null) ? $stats['submission'] : [];
+        $kind = strtolower(trim((string) ($submission['gnome_slot_kind'] ?? 'main')));
+
+        return $kind === 'corner' ? 'corner' : 'main';
+    }
+
+    /**
+     * @param  Collection<int, News>  $rows
+     * @return array<int, array<string, mixed>>
+     */
+    protected function composeGnomeEditions(Collection $rows): array
+    {
+        /** @var array<int, array{main: ?News, corner: ?News}> $groups */
+        $groups = [];
+
+        foreach ($rows->values() as $index => $row) {
+            $stats = is_array($row->stats) ? $row->stats : [];
+            $num = (int) ($stats['gnome_edition_number'] ?? 0);
+            if ($num <= 0) {
+                $num = $index + 1;
+            }
+
+            $slot = $this->gnomeSlotKindFromItem($row);
+            $slotKey = $slot === 'corner' ? 'corner' : 'main';
+
+            if (! isset($groups[$num])) {
+                $groups[$num] = ['main' => null, 'corner' => null];
+            }
+
+            if ($groups[$num][$slotKey] === null) {
+                $groups[$num][$slotKey] = $row;
+            }
+        }
+
+        ksort($groups);
+
+        $editions = [];
+        foreach ($groups as $num => $pair) {
+            $editions[] = $this->composeGnomeEditionPayload((int) $num, $pair['main'], $pair['corner']);
+        }
+
+        return $editions;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function composeGnomeEditionPayload(int $number, ?News $main, ?News $corner): array
+    {
+        $mainPayload = $main ? $this->transformItem($main) : null;
+        $cornerPayload = $corner ? $this->transformItem($corner) : null;
+        $display = $mainPayload ?? $cornerPayload ?? [];
+
+        return array_merge($display, [
+            'gnome_edition_number' => $number,
+            'gnome_sheet_main' => $mainPayload,
+            'gnome_sheet_corner' => $cornerPayload,
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $edition
+     */
+    protected function gnomeEditionMatchesNewsId(array $edition, int $newsId): bool
+    {
+        if ($newsId <= 0) {
+            return false;
+        }
+
+        if ((int) ($edition['id'] ?? 0) === $newsId) {
+            return true;
+        }
+
+        return (int) ($edition['gnome_sheet_main']['id'] ?? 0) === $newsId
+            || (int) ($edition['gnome_sheet_corner']['id'] ?? 0) === $newsId;
+    }
+
+    /**
+     * @param  array<string, mixed>  $edition
+     */
+    protected function gnomeEditionNavId(array $edition): ?int
+    {
+        $mainId = (int) ($edition['gnome_sheet_main']['id'] ?? 0);
+        if ($mainId > 0) {
+            return $mainId;
+        }
+
+        $cornerId = (int) ($edition['gnome_sheet_corner']['id'] ?? 0);
+
+        return $cornerId > 0 ? $cornerId : (int) ($edition['id'] ?? 0);
     }
 }

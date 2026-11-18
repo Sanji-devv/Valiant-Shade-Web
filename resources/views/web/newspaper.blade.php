@@ -471,6 +471,20 @@
             <div class="vs-modal__body vs-modal__body--rumor">
                 <p class="vs-rumor-modal__intro" id="gnomeCryModalIntro"></p>
                 <form id="gnomeCryForm" class="vs-form-grid vs-form-grid--rumor vs-form-grid--gnome-cry" enctype="multipart/form-data" novalidate>
+                    <div class="vs-gnome-cry-slot-pick vs-rumor-form__span" role="radiogroup" aria-label="Parşömen yeri">
+                        <span class="vs-form-field__label">Nereye bassın? <span class="vs-form-field__req">*</span></span>
+                        <div class="vs-gnome-cry-slot-pick__grid">
+                            <button type="button" class="vs-gnome-cry-slot-pick__btn is-active" id="gnomeCrySlotMainBtn" data-gnome-slot="main" aria-pressed="true">
+                                Lonca haberi
+                                <span class="vs-gnome-cry-slot-pick__hint">Ana sütun; köşede kısa not</span>
+                            </button>
+                            <button type="button" class="vs-gnome-cry-slot-pick__btn" id="gnomeCrySlotCornerBtn" data-gnome-slot="corner" aria-pressed="false">
+                                Köşe notu
+                                <span class="vs-gnome-cry-slot-pick__hint">Metin köşe sütununda</span>
+                            </button>
+                        </div>
+                        <input type="hidden" name="gnome_slot_kind" id="gnomeCrySlotKind" value="main">
+                    </div>
                     <label class="vs-rumor-form__span">
                         <span class="vs-form-field__label">Başlık <span class="vs-form-field__req">*</span></span>
                         <input type="text" name="title" id="gnomeCryTitle" minlength="8" maxlength="255" autocomplete="off">
@@ -492,15 +506,24 @@
                     </div>
                     <div class="vs-rumor-form__span" id="gnomeCryImageSection">
                         <span class="vs-form-field__label">Görsel (isteğe bağlı)</span>
+                        <label>
+                            <select name="image_preset" id="gnomeCryImagePreset">
+                                <option value="__gazette_auto__">Varsayılan (Mirang / lonca)</option>
+                                @foreach (($gazetteImagePresets ?? []) as $presetPath => $presetLabel)
+                                <option value="{{ $presetPath }}">{{ $presetLabel }}</option>
+                                @endforeach
+                            </select>
+                        </label>
                         <div class="vs-submission-image-preview-wrap" id="gnomeCryImagePreviewWrap" hidden>
                             <span class="vs-submission-image-preview__label">Görsel önizleme</span>
                             <div class="vs-submission-image-preview">
                                 <img id="gnomeCryImagePreview" alt="Seçilen görsel önizlemesi" width="200" height="120">
                             </div>
+                            <p class="vs-submission-image-preview__hint" id="gnomeCryImagePreviewHint"></p>
                             <button type="button" class="vs-rumor-remove-image" id="gnomeCryRemoveImage">Görseli kaldır</button>
                         </div>
                         <label class="vs-rumor-upload-label">
-                            Dosya yükle
+                            Veya dosya yükle
                             <input type="file" name="custom_image" id="gnomeCryCustomImage" accept="image/jpeg,image/png,image/webp">
                         </label>
                         <p class="vs-rumor-upload-hint">JPEG, PNG veya WebP · en fazla 5 MB</p>
@@ -517,6 +540,13 @@
                 </form>
             </div>
         </section>
+    </div>
+
+    <div class="vs-gnome-seal-lightbox" id="gnomeSealLightbox" role="dialog" aria-modal="true" aria-label="Mirang mührü" hidden>
+        <button type="button" class="vs-gnome-seal-lightbox__close" id="gnomeSealLightboxClose" data-gnome-seal-close aria-label="Kapat">×</button>
+        <div class="vs-gnome-seal-lightbox__stage">
+            <img id="gnomeSealLightboxImg" class="vs-gnome-seal-lightbox__img" alt="Mirang mührü" width="320" height="320">
+        </div>
     </div>
 
     <div class="vs-toast" id="newsToast" role="status" aria-live="polite"></div>

@@ -1,5 +1,10 @@
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
+import {
+  clearGnomeDraft,
+  loadGnomeDraft,
+  saveGnomeDraft,
+} from './submission-form-draft.js';
 
 const PUBLICATION_GNOME = 'gnome_ciglisi';
 const PUBLICATION_LAGIM = 'lagimdan_sesler';
@@ -16,6 +21,8 @@ const GNOME_SERVER_FIELD_TO_CLIENT = {
   full_story: 'body',
   rumuz: 'rumuz',
   custom_image: 'image',
+  image_preset: 'image',
+  gnome_slot_kind: 'slot',
   deck_line: 'title',
 };
 
@@ -55,27 +62,63 @@ export function createGnomeCryController({
   renderStreamCard,
   rememberLagimLayoutBeforeGnome,
   restoreLagimLayoutAfterGnome,
+  updateGnomeImagePreview,
+  openArticleFromUi,
 }) {
   const brand = parseBrandFromDom();
   const submissionCopy = brand.submission || {};
 
-  function cornerRailHtml(item) {
+  function gnomeSlotKind(item) {
+    const kind = String(item?.gnome_slot_kind || item?.stats?.submission?.gnome_slot_kind || 'main')
+      .trim()
+      .toLowerCase();
+    return kind === 'corner' ? 'corner' : 'main';
+  }
+
+  function resolveGnomeSheetParts(sheet) {
+    if (!sheet) {
+      return { main: null, corner: null, edition: null };
+    }
+    if (sheet.gnome_sheet_main != null || sheet.gnome_sheet_corner != null) {
+      return {
+        main: sheet.gnome_sheet_main || null,
+        corner: sheet.gnome_sheet_corner || null,
+        edition: sheet.gnome_edition_number,
+      };
+    }
+    if (gnomeSlotKind(sheet) === 'corner') {
+      return { main: null, corner: sheet, edition: sheet.gnome_edition_number };
+    }
+
+    return { main: sheet, corner: null, edition: sheet.gnome_edition_number };
+  }
+
+  function cornerRailHtml(mainItem, cornerItem) {
     const railTitle = escapeHtml(brand.corner_title || 'Köşe notu');
-    const storyPlain = plainTextFromHtml(String(item?.full_story || item?.description || ''));
-    const deckPlain = plainTextFromHtml(String(item?.deck_line || ''));
-    let railText = '';
-    if (storyPlain.length > deckPlain.length + 120) {
-      const tail = storyPlain.slice(Math.min(380, Math.floor(storyPlain.length * 0.45)));
-      railText = tail.length > 40 ? tail.slice(0, 520) : '';
+
+    if (cornerItem) {
+      const storyHtml = String(cornerItem.full_story || '').trim();
+      const body = storyHtml
+        ? `<div class="vs-gnome-cry-sheet__rail-body vs-gnome-cry-sheet__rail-body--rich">${storyHtml}</div>`
+        : `<div class="vs-gnome-cry-sheet__rail-body">${escapeHtml(
+            plainTextFromHtml(String(cornerItem.description || '')).slice(0, 900),
+          ).replace(/\n/g, '<br>')}</div>`;
+      const cornerId = cornerItem.id;
+      const openAttrs =
+        cornerId != null
+          ? ` data-open-id="${escapeHtml(String(cornerId))}" data-article-slug="${escapeHtml(cornerItem.slug || '')}" role="button" tabindex="0"`
+          : '';
+      return `
+      <aside class="vs-gnome-cry-sheet__rail vs-gnome-cry-sheet__rail--corner vs-gnome-cry-sheet__rail--open"${openAttrs} aria-label="Köşe sütunu">
+        <p class="vs-gnome-cry-sheet__rail-kicker">${railTitle}</p>
+        ${body}
+      </aside>`;
     }
-    if (!railText && item?.description) {
-      railText = plainTextFromHtml(String(item.description)).slice(0, 480);
-    }
-    if (!railText) {
-      railText = brand.motto || 'Lonca duvarına asılacak tek yaprak.';
-    }
-    if (railText.length > 500) {
-      railText = `${railText.slice(0, 497)}…`;
+
+    const deck = plainTextFromHtml(String(mainItem?.deck_line || mainItem?.testimony || ''));
+    let railText = deck || brand.motto || 'Lonca duvarına asılacak tek yaprak.';
+    if (railText.length > 320) {
+      railText = `${railText.slice(0, 317)}…`;
     }
     return `
       <aside class="vs-gnome-cry-sheet__rail" aria-label="Köşe sütunu">
@@ -237,6 +280,8 @@ export function createGnomeCryController({
     gnomeQuill.on('text-change', () => {
       setGnomeFieldError('body', '');
       els.gnomeCryEditorHost?.classList.remove('vs-form-field--invalid');
+      syncQuillToHidden();
+      scheduleGnomeDraftSave();
     });
     return gnomeQuill;
   }
@@ -252,48 +297,146 @@ export function createGnomeCryController({
     return els.gnomeCryFullStory.value;
   }
 
-  function resetGnomeImagePreview() {
+  function revokeGnomeImageObjectUrl() {
     if (gnomeImageObjectUrl) {
       URL.revokeObjectURL(gnomeImageObjectUrl);
       gnomeImageObjectUrl = null;
     }
+  }
+
+  function resetGnomeImageSelection() {
+    revokeGnomeImageObjectUrl();
     if (els.gnomeCryImagePreviewWrap) {
       els.gnomeCryImagePreviewWrap.hidden = true;
     }
     if (els.gnomeCryCustomImage) {
       els.gnomeCryCustomImage.value = '';
     }
+    if (els.gnomeCryImagePreset) {
+      els.gnomeCryImagePreset.value = '__gazette_auto__';
+    }
+    updateGnomeImagePreview?.();
   }
 
-  function showGnomeImagePreview(file) {
-    if (!file || !els.gnomeCryImagePreview || !els.gnomeCryImagePreviewWrap) {
+  function syncGnomeSlotKindUi(kind) {
+    const resolved = kind === 'corner' ? 'corner' : 'main';
+    if (els.gnomeCrySlotKind) {
+      els.gnomeCrySlotKind.value = resolved;
+    }
+    els.gnomeCrySlotMainBtn?.classList.toggle('is-active', resolved === 'main');
+    els.gnomeCrySlotMainBtn?.setAttribute('aria-pressed', resolved === 'main' ? 'true' : 'false');
+    els.gnomeCrySlotCornerBtn?.classList.toggle('is-active', resolved === 'corner');
+    els.gnomeCrySlotCornerBtn?.setAttribute('aria-pressed', resolved === 'corner' ? 'true' : 'false');
+  }
+
+  function persistGnomeDraft() {
+    if (!els.gnomeCryForm) {
       return;
     }
-    resetGnomeImagePreview();
-    gnomeImageObjectUrl = URL.createObjectURL(file);
-    els.gnomeCryImagePreview.src = gnomeImageObjectUrl;
-    els.gnomeCryImagePreviewWrap.hidden = false;
+    saveGnomeDraft({
+      title: els.gnomeCryTitle?.value ?? '',
+      deck: els.gnomeCryDeck?.value ?? '',
+      rumuz: els.gnomeCryRumuz?.value ?? '',
+      fullStory: gnomeQuill ? gnomeQuill.root.innerHTML : els.gnomeCryFullStory?.value ?? '',
+      slotKind: els.gnomeCrySlotKind?.value || 'main',
+      imagePreset: els.gnomeCryImagePreset?.value || '__gazette_auto__',
+    });
+  }
+
+  let gnomeDraftSaveTimer = null;
+
+  function scheduleGnomeDraftSave() {
+    window.clearTimeout(gnomeDraftSaveTimer);
+    gnomeDraftSaveTimer = window.setTimeout(persistGnomeDraft, 280);
+  }
+
+  function restoreGnomeDraft() {
+    const draft = loadGnomeDraft();
+    if (!draft) {
+      return false;
+    }
+    if (els.gnomeCryTitle) {
+      els.gnomeCryTitle.value = draft.title || '';
+    }
+    if (els.gnomeCryDeck) {
+      els.gnomeCryDeck.value = draft.deck || '';
+    }
+    if (els.gnomeCryRumuz) {
+      els.gnomeCryRumuz.value = draft.rumuz || '';
+    }
+    if (els.gnomeCryImagePreset && draft.imagePreset) {
+      els.gnomeCryImagePreset.value = draft.imagePreset;
+    }
+    syncGnomeSlotKindUi(draft.slotKind || 'main');
+    ensureGnomeEditor();
+    if (gnomeQuill && draft.fullStory) {
+      gnomeQuill.root.innerHTML = draft.fullStory;
+      syncQuillToHidden();
+    }
+    updateGnomeImagePreview?.();
+    return true;
+  }
+
+  function clearGnomeFormAfterSubmit() {
+    els.gnomeCryForm?.reset();
+    gnomeQuill?.setText('');
+    resetGnomeImageSelection();
+    syncGnomeSlotKindUi('main');
+    clearGnomeFieldErrors();
+    clearGnomeDraft();
+  }
+
+  function gnomeSealMarkup() {
+    const gnomeIconUrl = String(document.body?.dataset?.gazetteGnomeIcon || brand.icon || '').trim();
+    if (!gnomeIconUrl) {
+      return '';
+    }
+    const src = escapeHtml(gnomeIconUrl);
+    return `<button type="button" class="vs-gnome-cry-sheet__wax vs-gnome-cry-sheet__wax--mirang" data-gnome-seal-zoom="${src}" aria-label="Mirang mührünü büyüt" title="Mirang">
+      <img src="${src}" alt="" width="52" height="52" decoding="async" loading="lazy">
+    </button>`;
+  }
+
+  function openGnomeSealLightbox(src) {
+    const url = String(src || '').trim();
+    if (!url || !els.gnomeSealLightbox || !els.gnomeSealLightboxImg) {
+      return;
+    }
+    els.gnomeSealLightboxImg.src = url;
+    els.gnomeSealLightbox.removeAttribute('hidden');
+    els.gnomeSealLightbox.classList.add('is-open');
+    document.body.classList.add('vs-gnome-seal-lightbox-open');
+  }
+
+  function closeGnomeSealLightbox() {
+    if (!els.gnomeSealLightbox) {
+      return;
+    }
+    els.gnomeSealLightbox.classList.remove('is-open');
+    els.gnomeSealLightbox.setAttribute('hidden', '');
+    document.body.classList.remove('vs-gnome-seal-lightbox-open');
+    if (els.gnomeSealLightboxImg) {
+      els.gnomeSealLightboxImg.removeAttribute('src');
+    }
   }
 
   function buildParchmentHtml(item, { empty = false, printId = null } = {}) {
     const press = escapeHtml(brand.press_name || 'Gnome Basın Loncası — mühürlü tek nüsha');
     const brandTitle = escapeHtml(brand.title || "Gnome'un Çığlığı");
-    const gnomeIconUrl = String(document.body?.dataset?.gazetteGnomeIcon || brand.icon || '').trim();
-    const mastLogo = gnomeIconUrl
-      ? `<img class="vs-gnome-cry-sheet__logo" src="${escapeHtml(gnomeIconUrl)}" width="44" height="44" alt="" decoding="async">`
-      : '';
+    const seal = gnomeSealMarkup();
+    const parts = resolveGnomeSheetParts(item);
+    const editionNum = parts.edition ?? item?.gnome_edition_number;
     const edition = item
-      ? `<p class="vs-gnome-cry-sheet__edition">Sayı ${escapeHtml(String(item.gnome_edition_number || '—'))}</p>`
+      ? `<p class="vs-gnome-cry-sheet__edition">Sayı ${escapeHtml(String(editionNum || '—'))}</p>`
       : '<p class="vs-gnome-cry-sheet__edition">Sayı —</p>';
 
     if (empty || !item) {
       return `
         <article class="vs-gnome-cry-sheet vs-gnome-cry-sheet--folio vs-gnome-cry-sheet--blank" ${printId ? `id="${printId}"` : ''}>
           <div class="vs-gnome-cry-sheet__frame" aria-hidden="true"></div>
-          <div class="vs-gnome-cry-sheet__wax" aria-hidden="true"></div>
+          ${seal}
           <header class="vs-gnome-cry-sheet__mast">
             <div class="vs-gnome-cry-sheet__mast-brand">
-              ${mastLogo}
               <p class="vs-gnome-cry-sheet__brand">${brandTitle}</p>
               <p class="vs-gnome-cry-sheet__press">${press}</p>
               ${edition}
@@ -308,29 +451,58 @@ export function createGnomeCryController({
         </article>`;
     }
 
-    const image = item.image_asset
-      ? `<figure class="vs-gnome-cry-sheet__figure"><img src="${escapeHtml(item.image_asset)}" alt="" loading="lazy" decoding="async"></figure>`
+    const mainItem = parts.main;
+    const cornerItem = parts.corner;
+    const displayMain = mainItem || cornerItem;
+    if (!displayMain) {
+      return buildParchmentHtml(null, { empty: true, printId });
+    }
+
+    const gnomeFigureSrc =
+      mainItem?.image_asset
+      && !String(mainItem.image_url || mainItem.image_asset || '')
+        .toLowerCase()
+        .match(/guild_dragon_quest|guild_tavern_whispers/)
+        ? mainItem.image_asset
+        : null;
+    const image = gnomeFigureSrc
+      ? `<figure class="vs-gnome-cry-sheet__figure"><img src="${escapeHtml(gnomeFigureSrc)}" alt="" loading="lazy" decoding="async"></figure>`
       : '';
-    const kicker = escapeHtml(item.news_type_label || item.category || 'Lonca duyurusu');
-    const deck = item.deck_line
-      ? `<p class="vs-gnome-cry-sheet__deck">${escapeHtml(item.deck_line)}</p>`
+    const kicker = escapeHtml(
+      (mainItem || cornerItem).news_type_label || (mainItem || cornerItem).category || 'Lonca duyurusu',
+    );
+    const deck = mainItem?.deck_line
+      ? `<p class="vs-gnome-cry-sheet__deck">${escapeHtml(mainItem.deck_line)}</p>`
       : '';
-    const storyHtml = String(item.full_story || '').trim();
-    const bodyBlock = storyHtml
-      ? `<div class="vs-gnome-cry-sheet__body vs-gnome-cry-sheet__body--rich">${storyHtml}</div>`
-      : `<div class="vs-gnome-cry-sheet__body">${escapeHtml(item.description || '').replace(/\n/g, '<br>')}</div>`;
-    const stamp = escapeHtml(item.world_date_text || item.date_text || '');
-    const author = escapeHtml(item.author || 'Lonca temsilcisi');
-    const role = escapeHtml(item.author_role || '');
-    const title = escapeHtml(item.title || '');
+    const storyHtml = mainItem ? String(mainItem.full_story || '').trim() : '';
+    let bodyBlock = '';
+    if (mainItem) {
+      bodyBlock = storyHtml
+        ? `<div class="vs-gnome-cry-sheet__body vs-gnome-cry-sheet__body--rich">${storyHtml}</div>`
+        : `<div class="vs-gnome-cry-sheet__body">${escapeHtml(mainItem.description || '').replace(/\n/g, '<br>')}</div>`;
+    } else {
+      bodyBlock =
+        '<p class="vs-gnome-cry-sheet__placeholder-main">Bu parşömende ana duyuru henüz yok. Köşe notu sağ sütunda.</p>';
+    }
+    const stamp = escapeHtml(displayMain.world_date_text || displayMain.date_text || '');
+    const author = escapeHtml(mainItem?.author || cornerItem?.author || 'Lonca temsilcisi');
+    const role = escapeHtml(mainItem?.author_role || cornerItem?.author_role || '');
+    const title = mainItem
+      ? escapeHtml(mainItem.title || '')
+      : `<span class="vs-gnome-cry-sheet__title-pending">Ana duyuru bekleniyor</span>`;
+    const openId = mainItem?.id ?? cornerItem?.id ?? item.id;
+    const mainOpenId = mainItem?.id;
+    const mainOpenAttrs =
+      mainOpenId != null
+        ? ` data-open-id="${escapeHtml(String(mainOpenId))}" data-article-slug="${escapeHtml(mainItem?.slug || '')}" role="button" tabindex="0"`
+        : '';
 
     return `
-      <article class="vs-gnome-cry-sheet vs-gnome-cry-sheet--folio" ${printId ? `id="${printId}"` : ''} data-edition-id="${item.id}">
+      <article class="vs-gnome-cry-sheet vs-gnome-cry-sheet--folio" ${printId ? `id="${printId}"` : ''} data-edition-id="${openId}">
         <div class="vs-gnome-cry-sheet__frame" aria-hidden="true"></div>
-        <div class="vs-gnome-cry-sheet__wax" aria-hidden="true"></div>
+        ${seal}
         <header class="vs-gnome-cry-sheet__mast">
           <div class="vs-gnome-cry-sheet__mast-brand">
-            ${mastLogo}
             <p class="vs-gnome-cry-sheet__brand">${brandTitle}</p>
             <p class="vs-gnome-cry-sheet__press">${press}</p>
             <p class="vs-gnome-cry-sheet__stamp">${stamp}</p>
@@ -338,14 +510,14 @@ export function createGnomeCryController({
           </div>
         </header>
         <div class="vs-gnome-cry-sheet__spread">
-          <div class="vs-gnome-cry-sheet__main">
+          <div class="vs-gnome-cry-sheet__main${mainOpenId != null ? ' vs-gnome-cry-sheet__main--open' : ''}"${mainOpenAttrs}>
             <p class="vs-gnome-cry-sheet__kicker">${kicker}</p>
             <h1 class="vs-gnome-cry-sheet__title">${title}</h1>
             ${deck}
             ${image}
             ${bodyBlock}
           </div>
-          ${cornerRailHtml(item)}
+          ${cornerRailHtml(mainItem, cornerItem)}
         </div>
         <footer class="vs-gnome-cry-sheet__foot">
           <p class="vs-gnome-cry-sheet__sign">${author}</p>
@@ -416,18 +588,59 @@ export function createGnomeCryController({
       return editions;
     }
     return editions.filter((row) => {
-      const hay = [
-        row.title,
-        row.deck_line,
-        row.description,
-        row.author,
-        row.full_story,
-      ]
+      const pool = [row, row.gnome_sheet_main, row.gnome_sheet_corner].filter(Boolean);
+      const hay = pool
+        .flatMap((piece) => [
+          piece.title,
+          piece.deck_line,
+          piece.description,
+          piece.author,
+          piece.full_story,
+        ])
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
       return hay.includes(q);
     });
+  }
+
+  /** Mobil akış: aynı parşömenin ana metni ve köşe notu ayrı kartlarda listelenir. */
+  function gnomeMobileFeedItems(editions) {
+    const cornerTitle = brand.corner_title || 'Köşe notu';
+    const items = [];
+    [...editions].reverse().forEach((sheet) => {
+      const num = sheet.gnome_edition_number;
+      const editionTag = num ? `Sayı ${num}` : '';
+      const main = sheet.gnome_sheet_main;
+      const corner = sheet.gnome_sheet_corner;
+
+      if (main) {
+        items.push({
+          ...main,
+          gazette_placement_label: editionTag ? `${editionTag} · Haber` : 'Lonca haberi',
+        });
+      }
+      if (corner) {
+        items.push({
+          ...corner,
+          gazette_placement_label: editionTag ? `${editionTag} · ${cornerTitle}` : cornerTitle,
+        });
+      }
+      if (!main && !corner) {
+        const slot = gnomeSlotKind(sheet);
+        const label =
+          slot === 'corner'
+            ? editionTag
+              ? `${editionTag} · ${cornerTitle}`
+              : cornerTitle
+            : editionTag
+              ? `${editionTag} · Haber`
+              : 'Lonca haberi';
+        items.push({ ...sheet, gazette_placement_label: label });
+      }
+    });
+
+    return items;
   }
 
   function renderGnomePagination(payload) {
@@ -483,8 +696,8 @@ export function createGnomeCryController({
           els.gnomeCryFlow.innerHTML =
             '<div class="vs-stream-loading">Aramanızla eşleşen parşömen yok.</div>';
         } else if (renderStreamCard) {
-          const ordered = [...editions].reverse();
-          els.gnomeCryFlow.innerHTML = ordered
+          const feedItems = gnomeMobileFeedItems(editions);
+          els.gnomeCryFlow.innerHTML = feedItems
             .map((row) => renderStreamCard(row, { richHtml: true }))
             .join('');
         } else {
@@ -709,13 +922,21 @@ export function createGnomeCryController({
   function openGnomeModal() {
     ensureGnomeEditor();
     clearGnomeFieldErrors();
+    const restored = restoreGnomeDraft();
+    if (!restored) {
+      syncGnomeSlotKindUi('main');
+    }
     if (els.gnomeCryModalBackdrop) {
       els.gnomeCryModalBackdrop.classList.add('is-open');
       els.gnomeCryModalBackdrop.removeAttribute('hidden');
     }
   }
 
-  function closeGnomeModal() {
+  function closeGnomeModal({ persist = true } = {}) {
+    if (persist) {
+      syncQuillToHidden();
+      persistGnomeDraft();
+    }
     if (!els.gnomeCryModalBackdrop) {
       return;
     }
@@ -750,11 +971,71 @@ export function createGnomeCryController({
     });
 
     els.openGnomeCryModal?.addEventListener('click', openGnomeModal);
-    els.gnomeCryModalClose?.addEventListener('click', closeGnomeModal);
+
+    function gnomeSheetContains(node) {
+      return Boolean(
+        node && (els.gnomeCryStage?.contains(node) || els.gnomeCryFlow?.contains(node)),
+      );
+    }
+
+    function handleGnomeArticleOpen(event) {
+      if (
+        event.target.closest('[data-gnome-seal-zoom]')
+        || event.target.closest('.vs-gnome-cry-sheet__wax')
+      ) {
+        return;
+      }
+      const hit = event.target.closest('[data-open-id]');
+      if (!hit?.dataset.openId || !gnomeSheetContains(hit)) {
+        return;
+      }
+      event.preventDefault();
+      openArticleFromUi?.(hit.dataset.openId, hit.dataset.articleSlug || '');
+    }
+
+    els.gnomeCryStage?.addEventListener('click', handleGnomeArticleOpen);
+    els.gnomeCryFlow?.addEventListener('click', handleGnomeArticleOpen);
+
+    document.body.addEventListener('click', (event) => {
+      const sealBtn = event.target.closest('[data-gnome-seal-zoom]');
+      if (sealBtn) {
+        event.preventDefault();
+        event.stopPropagation();
+        openGnomeSealLightbox(sealBtn.getAttribute('data-gnome-seal-zoom'));
+        return;
+      }
+      if (event.target === els.gnomeSealLightbox || event.target.closest('[data-gnome-seal-close]')) {
+        closeGnomeSealLightbox();
+      }
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && els.gnomeSealLightbox?.classList.contains('is-open')) {
+        closeGnomeSealLightbox();
+      }
+      if (event.key !== 'Enter' && event.key !== ' ') {
+        return;
+      }
+      const hit = event.target.closest('.vs-gnome-cry-sheet__main--open, .vs-gnome-cry-sheet__rail--open');
+      if (!hit?.dataset.openId || !gnomeSheetContains(hit)) {
+        return;
+      }
+      event.preventDefault();
+      openArticleFromUi?.(hit.dataset.openId, hit.dataset.articleSlug || '');
+    });
+    els.gnomeCryModalClose?.addEventListener('click', () => closeGnomeModal({ persist: true }));
     els.gnomeCryModalBackdrop?.addEventListener('click', (event) => {
       if (event.target === els.gnomeCryModalBackdrop) {
-        closeGnomeModal();
+        closeGnomeModal({ persist: true });
       }
+    });
+
+    els.gnomeCrySlotMainBtn?.addEventListener('click', () => {
+      syncGnomeSlotKindUi('main');
+      scheduleGnomeDraftSave();
+    });
+    els.gnomeCrySlotCornerBtn?.addEventListener('click', () => {
+      syncGnomeSlotKindUi('corner');
+      scheduleGnomeDraftSave();
     });
 
     const titleInput = els.gnomeCryTitle;
@@ -772,13 +1053,25 @@ export function createGnomeCryController({
       els.gnomeCryModalIntro.textContent = submissionCopy.modal_intro;
     }
 
-    els.gnomeCryCustomImage?.addEventListener('change', () => {
-      const file = els.gnomeCryCustomImage.files?.[0];
-      if (file) {
-        showGnomeImagePreview(file);
-      }
+    if (els.gnomeCryImagePreset && els.gnomeCryCustomImage) {
+      els.gnomeCryImagePreset.addEventListener('change', () => {
+        els.gnomeCryCustomImage.value = '';
+        updateGnomeImagePreview?.();
+        scheduleGnomeDraftSave();
+      });
+      els.gnomeCryCustomImage.addEventListener('change', () => {
+        if (els.gnomeCryCustomImage.files?.length && els.gnomeCryImagePreset) {
+          els.gnomeCryImagePreset.value = '__gazette_auto__';
+        }
+        updateGnomeImagePreview?.();
+        scheduleGnomeDraftSave();
+        clearGnomeFieldOnInput('image');
+      });
+    }
+    els.gnomeCryRemoveImage?.addEventListener('click', () => {
+      resetGnomeImageSelection();
+      scheduleGnomeDraftSave();
     });
-    els.gnomeCryRemoveImage?.addEventListener('click', resetGnomeImagePreview);
 
     const clearGnomeFieldOnInput = (key) => {
       setGnomeFieldError(key, '');
@@ -789,9 +1082,15 @@ export function createGnomeCryController({
       };
       inputMap[key]?.classList.remove('vs-form-field--invalid');
     };
-    els.gnomeCryTitle?.addEventListener('input', () => clearGnomeFieldOnInput('title'));
-    els.gnomeCryRumuz?.addEventListener('input', () => clearGnomeFieldOnInput('rumuz'));
-    els.gnomeCryCustomImage?.addEventListener('change', () => clearGnomeFieldOnInput('image'));
+    els.gnomeCryTitle?.addEventListener('input', () => {
+      clearGnomeFieldOnInput('title');
+      scheduleGnomeDraftSave();
+    });
+    els.gnomeCryDeck?.addEventListener('input', scheduleGnomeDraftSave);
+    els.gnomeCryRumuz?.addEventListener('input', () => {
+      clearGnomeFieldOnInput('rumuz');
+      scheduleGnomeDraftSave();
+    });
 
     els.gnomeCryForm?.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -838,11 +1137,8 @@ export function createGnomeCryController({
           return;
         }
         showToast(data.message || 'Temsilci sözü editöre ulaştı.', 'success');
-        els.gnomeCryForm.reset();
-        gnomeQuill?.setText('');
-        resetGnomeImagePreview();
-        clearGnomeFieldErrors();
-        closeGnomeModal();
+        clearGnomeFormAfterSubmit();
+        closeGnomeModal({ persist: false });
       } catch (error) {
         showToast(error.message || 'Gönderilemedi.', 'error');
       } finally {

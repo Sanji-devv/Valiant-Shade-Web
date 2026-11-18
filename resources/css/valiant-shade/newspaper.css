@@ -5125,6 +5125,7 @@ body.vs-layout-gazette .vs-gazette-flip {
 
 .vs-gazette-article__main {
   min-width: 0;
+  display: flow-root;
 }
 
 .vs-gazette-article__kicker {
@@ -5196,16 +5197,20 @@ body.vs-layout-gazette .vs-gazette-flip {
 .vs-gazette-article__body {
   font-family: 'Newsreader', Georgia, serif;
   font-size: 0.92rem;
-  line-height: 1.58;
-  column-count: 2;
-  column-gap: 1.1rem;
-  text-align: justify;
-  hyphens: auto;
+  line-height: 1.62;
+  column-count: 1;
+  text-align: left;
+  hyphens: manual;
+  overflow-wrap: break-word;
 }
 
 .vs-gazette-article--lead .vs-gazette-article__body {
-  column-count: 3;
   font-size: 0.94rem;
+}
+
+.vs-gazette-inner-layout .vs-gazette-article__body,
+.vs-gazette-inner-layout .vs-gazette-article--lead .vs-gazette-article__body {
+  column-count: 1;
 }
 
 .vs-gazette-article__body p {
@@ -5215,13 +5220,20 @@ body.vs-layout-gazette .vs-gazette-flip {
 }
 
 .vs-gazette-article__body p:first-child::first-letter {
-  float: left;
   font-family: Cinzel, Georgia, serif;
   font-size: 2.35rem;
   line-height: 0.88;
   font-weight: 700;
-  margin: 0.06rem 0.4rem 0 0;
+  margin: 0;
   color: var(--gz-accent, #6b3a12);
+}
+
+@supports (initial-letter: 2) {
+  .vs-gazette-article__body p:first-child::first-letter {
+    font-size: unset;
+    line-height: unset;
+    initial-letter: 2.35 2;
+  }
 }
 
 .vs-gazette-article-rule {
@@ -5237,13 +5249,30 @@ body.vs-layout-gazette .vs-gazette-flip {
 }
 
 .vs-gazette-figure {
-  float: right;
-  width: min(38%, 200px);
-  margin: 0 0 0.45rem 0.65rem;
+  float: none;
+  width: min(100%, 13.5rem);
+  max-width: 13.5rem;
+  margin: 0 0 0.65rem;
   border: 2px solid rgba(42, 31, 20, 0.4);
   padding: 0.25rem;
   background: rgba(255, 250, 240, 0.65);
   overflow: hidden;
+  clear: both;
+}
+
+.vs-gazette-inner-layout .vs-gazette-figure {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.vs-gazette-article--lead .vs-gazette-figure {
+  max-width: min(100%, 17.5rem);
+}
+
+@media (min-width: 720px) {
+  .vs-gazette-inner-layout .vs-gazette-article:not(.vs-gazette-article--lead) .vs-gazette-figure {
+    max-width: min(100%, 12.5rem);
+  }
 }
 
 .vs-gazette-figure__zoom {
@@ -5600,8 +5629,9 @@ body.vs-layout-gazette .vs-gazette-archive {
 }
 
 .vs-gazette-corner-rail__body {
-  text-align: justify;
-  hyphens: auto;
+  text-align: left;
+  hyphens: manual;
+  overflow-wrap: break-word;
 }
 
 .vs-gazette-corner-rail__sep {
@@ -5893,11 +5923,20 @@ body.vs-layout-gazette .vs-gazette-archive {
 .vs-gazette-body {
   font-family: 'Newsreader', Georgia, serif;
   font-size: 0.95rem;
-  line-height: 1.55;
-  column-count: 2;
-  column-gap: 1.25rem;
-  text-align: justify;
-  hyphens: auto;
+  line-height: 1.62;
+  column-count: 1;
+  text-align: left;
+  hyphens: manual;
+  overflow-wrap: break-word;
+}
+
+@media (min-width: 960px) {
+  .vs-gazette-cover .vs-gazette-body {
+    column-count: 2;
+    column-gap: 1.25rem;
+    text-align: justify;
+    hyphens: auto;
+  }
 }
 
 .vs-gazette-body p {
@@ -5907,13 +5946,20 @@ body.vs-layout-gazette .vs-gazette-archive {
 }
 
 .vs-gazette-body p:first-child::first-letter {
-  float: left;
   font-family: Cinzel, Georgia, serif;
   font-size: 2.75rem;
   line-height: 0.85;
   font-weight: 700;
-  margin: 0.08rem 0.45rem 0 0;
+  margin: 0;
   color: var(--gz-accent, #6b3a12);
+}
+
+@supports (initial-letter: 2) {
+  .vs-gazette-body p:first-child::first-letter {
+    font-size: unset;
+    line-height: unset;
+    initial-letter: 2.75 2;
+  }
 }
 
 .vs-gazette-byline {
@@ -6675,14 +6721,100 @@ body.vs-layout-gazette .vs-publication-switch__btn {
 
 .vs-gnome-cry-sheet__wax {
   position: absolute;
-  top: 1.25rem;
-  right: 1.5rem;
-  width: 3.25rem;
-  height: 3.25rem;
+  top: 1.15rem;
+  right: 1.35rem;
+  z-index: 2;
+  width: 3.35rem;
+  height: 3.35rem;
+  margin: 0;
+  padding: 0.12rem;
+  border: 2px solid rgba(92, 61, 30, 0.45);
   border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, #c45c4a, #6b1f14 70%);
-  opacity: 0.85;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  background: rgba(255, 250, 240, 0.92);
+  box-shadow:
+    0 3px 10px rgba(42, 31, 20, 0.22),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.65);
+  cursor: zoom-in;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.vs-gnome-cry-sheet__wax--mirang img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center 18%;
+  pointer-events: none;
+}
+
+.vs-gnome-cry-sheet__wax--mirang:hover,
+.vs-gnome-cry-sheet__wax--mirang:focus-visible {
+  transform: scale(1.06);
+  box-shadow:
+    0 6px 16px rgba(42, 31, 20, 0.28),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.75);
+  outline: none;
+}
+
+.vs-gnome-seal-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(18, 14, 10, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.vs-gnome-seal-lightbox.is-open {
+  display: flex;
+}
+
+.vs-gnome-seal-lightbox__stage {
+  max-width: min(92vw, 22rem);
+  max-height: min(88vh, 22rem);
+  padding: 0.65rem;
+  border-radius: 50%;
+  background: linear-gradient(165deg, #f6edd4, #dcc89a);
+  border: 3px solid rgba(92, 61, 30, 0.55);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45);
+}
+
+.vs-gnome-seal-lightbox__img {
+  display: block;
+  width: min(78vw, 18rem);
+  height: min(78vw, 18rem);
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center 18%;
+}
+
+.vs-gnome-seal-lightbox__close {
+  position: absolute;
+  top: max(0.75rem, env(safe-area-inset-top));
+  right: max(0.85rem, env(safe-area-inset-right));
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  background: rgba(42, 31, 20, 0.55);
+  color: #fff8eb;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+body.vs-printing-gnome .vs-gnome-cry-sheet__wax--mirang {
+  cursor: default;
+  pointer-events: none;
+}
+
+body.vs-printing-gnome .vs-gnome-seal-lightbox {
+  display: none !important;
 }
 
 .vs-gnome-cry-sheet__logo {
@@ -7239,7 +7371,7 @@ body.vs-publication-gnome .vs-gazette-stage {
 /* Gnome parşömen — tek sayfa gazete düzeni */
 .vs-gnome-cry-sheet--folio {
   min-height: min(82vh, 680px);
-  padding: 1.75rem 2rem 2.25rem;
+  padding: 1.15rem 2rem 2.25rem;
   background:
     radial-gradient(ellipse at 15% 0%, rgba(255, 255, 255, 0.5), transparent 52%),
     radial-gradient(ellipse at 85% 100%, rgba(107, 58, 18, 0.14), transparent 48%),
@@ -7248,9 +7380,15 @@ body.vs-publication-gnome .vs-gazette-stage {
 
 .vs-gnome-cry-sheet__mast {
   text-align: center;
-  padding-bottom: 0.85rem;
-  margin-bottom: 0.85rem;
+  padding-top: 0.05rem;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.75rem;
   border-bottom: 3px double rgba(74, 55, 40, 0.45);
+}
+
+.vs-gnome-cry-sheet__mast-brand {
+  max-width: calc(100% - 4.5rem);
+  margin: 0 auto;
 }
 
 .vs-gnome-cry-sheet__spread {
@@ -7258,6 +7396,30 @@ body.vs-publication-gnome .vs-gazette-stage {
   grid-template-columns: minmax(0, 1fr) minmax(7.5rem, 11.5rem);
   gap: 1.15rem 1.35rem;
   align-items: start;
+}
+
+.vs-gnome-cry-sheet__main--open,
+.vs-gnome-cry-sheet__rail--open {
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.vs-gnome-cry-sheet__main--open:focus-visible,
+.vs-gnome-cry-sheet__rail--open:focus-visible {
+  outline: 2px solid rgba(107, 58, 18, 0.45);
+  outline-offset: 3px;
+}
+
+.vs-gnome-cry-sheet__main--open:hover,
+.vs-gnome-cry-sheet__rail--open:hover {
+  background: rgba(107, 58, 18, 0.04);
+}
+
+.vs-gnome-cry-sheet__placeholder-main {
+  margin: 0.75rem 0 0;
+  font-style: italic;
+  opacity: 0.82;
+  line-height: 1.5;
 }
 
 .vs-gnome-cry-sheet__kicker {
@@ -7324,6 +7486,65 @@ body.vs-publication-gnome .vs-gazette-stage {
   font-family: 'IM Fell English', Newsreader, Georgia, serif;
   font-style: italic;
   hyphens: auto;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.vs-gnome-cry-sheet__rail-body--rich {
+  font-style: normal;
+}
+
+.vs-gnome-cry-sheet__rail-body--rich p {
+  margin: 0 0 0.55rem;
+}
+
+.vs-gnome-cry-sheet__rail--corner {
+  max-height: min(62vh, 560px);
+  overflow-y: auto;
+}
+
+.vs-gnome-cry-sheet__corner-lead {
+  margin: 0;
+  font-style: italic;
+  opacity: 0.88;
+}
+
+.vs-gnome-cry-slot-pick__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin-top: 0.35rem;
+}
+
+.vs-gnome-cry-slot-pick__btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid rgba(42, 31, 20, 0.24);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.5);
+  color: #2a1f14;
+  font-family: Newsreader, Georgia, serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.vs-gnome-cry-slot-pick__btn.is-active,
+.vs-gnome-cry-slot-pick__btn[aria-pressed='true'] {
+  border-color: rgba(92, 61, 30, 0.55);
+  background: rgba(107, 58, 18, 0.1);
+  color: #5c3d1e;
+}
+
+.vs-gnome-cry-slot-pick__hint {
+  font-size: 0.72rem;
+  font-weight: 400;
+  opacity: 0.82;
+  line-height: 1.25;
 }
 
 @media (max-width: 720px) {
