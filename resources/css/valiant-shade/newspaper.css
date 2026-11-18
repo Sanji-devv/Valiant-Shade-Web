@@ -5248,6 +5248,15 @@ body.vs-layout-gazette .vs-gazette-flip {
   );
 }
 
+.vs-gazette-article__story {
+  display: flow-root;
+  margin-top: 0.2rem;
+}
+
+.vs-gazette-article__story--has-figure .vs-gazette-article__body {
+  min-width: 0;
+}
+
 .vs-gazette-figure {
   float: none;
   width: min(100%, 13.5rem);
@@ -5257,22 +5266,29 @@ body.vs-layout-gazette .vs-gazette-flip {
   padding: 0.25rem;
   background: rgba(255, 250, 240, 0.65);
   overflow: hidden;
-  clear: both;
 }
 
-.vs-gazette-inner-layout .vs-gazette-figure {
-  margin-left: 0;
-  margin-right: auto;
+.vs-gazette-inner-layout .vs-gazette-article__story--has-figure .vs-gazette-figure {
+  float: right;
+  width: min(38%, 11.25rem);
+  max-width: 11.25rem;
+  margin: 0.08rem 0 0.55rem 0.7rem;
+  shape-margin: 0.45rem;
 }
 
-.vs-gazette-article--lead .vs-gazette-figure {
-  max-width: min(100%, 17.5rem);
+.vs-gazette-inner-layout .vs-gazette-article--lead .vs-gazette-article__story--has-figure .vs-gazette-figure {
+  width: min(40%, 13.25rem);
+  max-width: 13.25rem;
 }
 
-@media (min-width: 720px) {
-  .vs-gazette-inner-layout .vs-gazette-article:not(.vs-gazette-article--lead) .vs-gazette-figure {
-    max-width: min(100%, 12.5rem);
-  }
+.vs-gazette-inner-layout .vs-gazette-figure__img {
+  max-height: 13.5rem;
+  object-fit: cover;
+  object-position: center 35%;
+}
+
+.vs-gazette-inner-layout .vs-gazette-article--lead .vs-gazette-figure__img {
+  max-height: 15rem;
 }
 
 .vs-gazette-figure__zoom {
@@ -6346,7 +6362,13 @@ body.vs-layout-gazette .vs-page-hint {
     width: 100%;
   }
 
-  .vs-gazette-figure {
+  .vs-gazette-article__story {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .vs-gazette-article__story--has-figure .vs-gazette-figure {
     float: none;
     width: 100%;
     max-width: 100%;
@@ -6354,10 +6376,17 @@ body.vs-layout-gazette .vs-page-hint {
     order: 5;
   }
 
+  .vs-gazette-article__story--has-figure .vs-gazette-article__body {
+    order: 6;
+  }
+
+  .vs-gazette-article__story--has-figure .vs-gazette-figure__img {
+    max-height: none;
+  }
+
   .vs-gazette-article__body,
   .vs-gazette-article--lead .vs-gazette-article__body {
     column-count: 1;
-    order: 6;
   }
 
   .vs-gazette-article-rule {

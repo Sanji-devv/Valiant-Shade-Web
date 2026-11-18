@@ -1304,6 +1304,11 @@ function renderGazetteArticle(item, { lead = false } = {}) {
     ? ` <span class="vs-gazette-article__kicker-sep" aria-hidden="true">·</span> <span class="vs-gazette-article__kicker-rumuz" title="${authorTitle}">${rumuz}</span>`
     : '';
 
+  const figureHtml = renderGazetteFigure(item);
+  const bodyBlock = figureHtml
+    ? `<div class="vs-gazette-article__story vs-gazette-article__story--has-figure">${figureHtml}<div class="vs-gazette-article__body">${body}</div></div>`
+    : `<div class="vs-gazette-article__body">${body}</div>`;
+
   return `
     <article class="vs-gazette-article vs-gazette-article--open${leadClass}" data-open-id="${openId}">
       <div class="vs-gazette-article__rumuz" title="${authorTitle}">
@@ -1318,8 +1323,7 @@ function renderGazetteArticle(item, { lead = false } = {}) {
         </h2>
         ${deck ? `<p class="vs-gazette-article__deck">${deck}</p>` : ''}
         ${loc ? `<p class="vs-gazette-article__place">${loc}</p>` : ''}
-        ${renderGazetteFigure(item)}
-        <div class="vs-gazette-article__body">${body}</div>
+        ${bodyBlock}
       </div>
     </article>
   `;
