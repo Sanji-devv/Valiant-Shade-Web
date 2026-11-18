@@ -12,7 +12,7 @@ final class WorldCalendarCatalog
 {
     public static function yearOffset(): int
     {
-        return 631 - 2026;
+        return 652 - 2026;
     }
 
     /**

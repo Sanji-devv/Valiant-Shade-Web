@@ -91,12 +91,12 @@
     data-gazette-gnome-brand='@json(config("gazette.publications.gnome_ciglisi", []))'
     data-gazette-gnome-icon="{{ $gnomeIcon }}"
     data-gazette-press="{{ $gb['press_name'] ?? 'Lağımdan Sesler Basın Bürosu' }}"
-    data-gazette-issue-date="{{ $gazetteIssue['date_line'] ?? 'Leos ayının 1. günü, Vonyas · 631' }}"
+    data-gazette-issue-date="{{ $gazetteIssue['date_line'] ?? 'Leos ayının 1. günü, Vonyas · 652' }}"
     data-gazette-issue-number="{{ $gazetteIssue['number'] ?? 1 }}"
     data-gazette-issue-label="{{ $gazetteIssue['label'] ?? 'İlk sayı' }}"
     data-gazette-issue-month="{{ $gazetteIssue['month'] ?? 'Leos' }}"
     data-gazette-issue-day="{{ $gazetteIssue['day'] ?? 1 }}"
-    data-gazette-issue-year="{{ $gazetteIssue['year'] ?? 631 }}"
+    data-gazette-issue-year="{{ $gazetteIssue['year'] ?? 652 }}"
     data-gazette-calendar='@json($gb["calendar"] ?? [])'
     data-gazette-submission-slots='@json(config("gazette.submission_slots", []))'
     data-gazette-corner-slots='@json(config("gazette.corner_slots", []))'

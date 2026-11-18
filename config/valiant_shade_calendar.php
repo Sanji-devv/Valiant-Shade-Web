@@ -8,7 +8,7 @@ use App\ValiantShade\Support\WorldCalendarCatalog;
 |--------------------------------------------------------------------------
 |
 | Gün ve ay adları enum sınıflarından üretilir (InWorldWeekday, InWorldMonth).
-| Yıl: gregorian + year_offset → evren yılı (ör. 2026 → 631).
+| Yıl: gregorian + year_offset → evren yılı (ör. 2026 → 652).
 |
 | Pazar-Vonyas · Kasım-Leos · … tam liste: app/ValiantShade/Enums/
 |

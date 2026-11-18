@@ -577,18 +577,36 @@ function mobileLagimLayoutFromPreference(fallback = 'stream') {
   if (!isMobileViewport()) {
     return fallback;
   }
+
+  return 'stream';
+}
+
+function shouldForceMobileLagimStream() {
+  return isMobileViewport() && state.publicationMode === PUBLICATION_LAGIM;
+}
+
+/** Mobilde Lağımdan Sesler her zaman akış modunda kalır (URL / sorgu parametrelerinden bağımsız). */
+function enforceMobileLagimStreamMode({ syncUrl = false } = {}) {
+  if (!shouldForceMobileLagimStream()) {
+    document.body.classList.remove('vs-mobile-lagim-stream-lock');
+    return false;
+  }
+  document.body.classList.add('vs-mobile-lagim-stream-lock');
+  const changed = state.layoutMode !== 'stream';
+  if (!state.streamReturnLayout) {
+    state.streamReturnLayout = 'gazette';
+  }
+  state.layoutMode = 'stream';
   try {
-    const saved = localStorage.getItem('vs.gazette.layoutMode');
-    if (saved === 'gazette' || saved === 'web') {
-      return 'gazette';
-    }
-    if (saved === 'stream') {
-      return 'stream';
-    }
+    localStorage.setItem('vs.gazette.layoutMode', 'stream');
   } catch (e) {
     /* ignore */
   }
-  return 'stream';
+  if (syncUrl && !state.suppressUrlSync) {
+    const shareSlug = resolveShareArticleSlug({ includeArticle: true });
+    syncBrowserUrl(shareSlug ? { articleSlug: shareSlug } : {});
+  }
+  return changed;
 }
 
 function rememberLagimLayoutBeforeGnome() {
@@ -597,18 +615,7 @@ function rememberLagimLayoutBeforeGnome() {
 
 function restoreLagimLayoutAfterGnome() {
   if (isMobileViewport()) {
-    const remembered = state.lagimLayoutBeforeGnome;
-    const preferred = mobileLagimLayoutFromPreference('stream');
-    if (remembered === 'stream') {
-      state.layoutMode = 'stream';
-    } else if (
-      (remembered === 'gazette' || remembered === 'web')
-      && preferred === 'gazette'
-    ) {
-      state.layoutMode = 'gazette';
-    } else {
-      state.layoutMode = preferred;
-    }
+    enforceMobileLagimStreamMode();
   } else if (state.lagimLayoutBeforeGnome) {
     state.layoutMode = state.lagimLayoutBeforeGnome;
   }
@@ -700,12 +707,12 @@ function inWorldCalendar() {
   const body = document.body;
   return {
     dateLine:
-      gazetteScrub(body.dataset.gazetteIssueDate || 'Leos ayının 1. günü, Vonyas · 631'),
+      gazetteScrub(body.dataset.gazetteIssueDate || 'Leos ayının 1. günü, Vonyas · 652'),
     issueNumber: body.dataset.gazetteIssueNumber || '1',
     issueLabel: body.dataset.gazetteIssueLabel || 'İlk sayı',
     month: body.dataset.gazetteIssueMonth || 'Leos',
     day: body.dataset.gazetteIssueDay || '1',
-    year: body.dataset.gazetteIssueYear || '631',
+    year: body.dataset.gazetteIssueYear || '652',
   };
 }
 
@@ -1590,11 +1597,12 @@ function syncSearchResultsLayout() {
 
 function applyLayoutMode() {
   if (gnomeCryCtrl?.isGnomePublication()) {
-    document.body.classList.remove('vs-layout-stream');
+    document.body.classList.remove('vs-layout-stream', 'vs-mobile-lagim-stream-lock');
     document.body.classList.add('vs-layout-gazette');
     gnomeCryCtrl?.syncGnomeToolbarChrome?.();
     return;
   }
+  enforceMobileLagimStreamMode();
   const gazette = isGazetteLayout();
   const stream = isStreamLayout();
   const parchmentChrome = gazette || stream;
@@ -1962,6 +1970,9 @@ function toggleStreamLayoutMode() {
   if (gnomeCryCtrl?.isGnomePublication()) {
     return;
   }
+  if (shouldForceMobileLagimStream()) {
+    return;
+  }
   if (isStreamLayout()) {
     leaveStreamMode();
     state.layoutMode = state.streamReturnLayout || 'gazette';
@@ -2131,9 +2142,15 @@ function goGazetteHome() {
     allBtn.classList.add('is-selected');
   }
   state.pageTurnDir = 'back';
+  enforceMobileLagimStreamMode();
   applyLayoutMode();
   const url = new URL(window.location.pathname, window.location.origin);
-  if (state.layoutMode === 'gazette') {
+  if (state.layoutMode === 'stream') {
+    url.searchParams.set('gorunum', 'stream');
+    url.searchParams.delete('yaprak');
+    url.searchParams.delete('sayi');
+    url.searchParams.delete('sayfa');
+  } else if (state.layoutMode === 'gazette') {
     url.searchParams.set('gorunum', 'gazette');
     const issue = state.currentIssue || {};
     if (issue.issue_number) {
@@ -2196,7 +2213,7 @@ async function bootstrapPendingArticle() {
     const streamEntry = entryLayout === 'stream';
     if (issueId && Number(state.issueId) !== Number(issueId)) {
       state.issueId = issueId;
-      if (!streamEntry) {
+      if (!streamEntry && !shouldForceMobileLagimStream()) {
         state.layoutMode = 'gazette';
         applyLayoutMode();
         await loadFeed();
@@ -2272,6 +2289,9 @@ async function loadFeed() {
   if (gnomeCryCtrl?.isGnomePublication()) {
     await gnomeCryCtrl.loadGnomeCry();
     return;
+  }
+  if (enforceMobileLagimStreamMode()) {
+    applyLayoutMode();
   }
   if (isStreamLayout()) {
     await loadStream(true);
@@ -2459,7 +2479,7 @@ async function openCornerReader(slotKey) {
   const targetPage = innerPageForCornerKey(slotKey);
   const prevPage = Number(state.page) || 1;
   const onCoverOrOtherPage = !isGazetteLayout() || prevPage !== targetPage;
-  if (onCoverOrOtherPage) {
+  if (onCoverOrOtherPage && !shouldForceMobileLagimStream()) {
     state.layoutMode = 'gazette';
     state.pageTurnDir = targetPage >= prevPage ? 'fwd' : 'back';
     state.page = targetPage;
@@ -3636,6 +3656,10 @@ function bindEvents() {
     placeIssueArchiveSelect();
     syncSearchResultsLayout();
     syncFilterPanelVisibility();
+    if (enforceMobileLagimStreamMode({ syncUrl: true })) {
+      applyLayoutMode();
+      loadFeed().catch(console.error);
+    }
     clearTimeout(mediaFitTimer);
     mediaFitTimer = setTimeout(() => fitAllNewsMedia(document), 120);
   });
@@ -3813,6 +3837,7 @@ function bindEvents() {
   window.addEventListener('popstate', () => {
     state.suppressUrlSync = true;
     readUrlIntoState();
+    enforceMobileLagimStreamMode({ syncUrl: true });
     if (els.searchInput && state.search !== els.searchInput.value.trim()) {
       els.searchInput.value = state.search;
     }
@@ -4066,26 +4091,15 @@ document.addEventListener('DOMContentLoaded', () => {
     && state.publicationMode !== PUBLICATION_GNOME
     && isMobileViewport();
 
-  if (layoutParam === 'stream') {
+  if (shouldForceMobileLagimStream()) {
+    enforceMobileLagimStreamMode();
+  } else if (layoutParam === 'stream') {
     state.layoutMode = 'stream';
     if (!state.streamReturnLayout) {
       state.streamReturnLayout = 'gazette';
     }
   } else if (articleDeepLink && layoutParam !== 'stream') {
     state.layoutMode = 'gazette';
-  } else if (
-    isMobileViewport()
-    && state.publicationMode !== PUBLICATION_GNOME
-    && !articleDeepLink
-  ) {
-    const gazetteUrlBookmark =
-      layoutParam === 'gazette' || urlParams.has('yaprak') || urlParams.has('sayi');
-    state.layoutMode = gazetteUrlBookmark
-      ? 'stream'
-      : mobileLagimLayoutFromPreference('stream');
-    if (state.layoutMode === 'stream' && !state.streamReturnLayout) {
-      state.streamReturnLayout = 'gazette';
-    }
   } else if (mobileDefaultStream) {
     state.layoutMode = mobileLagimLayoutFromPreference('stream');
     if (state.layoutMode === 'stream' && !state.streamReturnLayout) {
@@ -4099,10 +4113,11 @@ document.addEventListener('DOMContentLoaded', () => {
   try {
     const savedLayout = localStorage.getItem('vs.gazette.layoutMode');
     if (
-      !onGazetteHost &&
-      !urlHasGazetteHints &&
-      !articleDeepLink &&
-      (savedLayout === 'gazette' || savedLayout === 'web' || savedLayout === 'stream')
+      !shouldForceMobileLagimStream()
+      && !onGazetteHost
+      && !urlHasGazetteHints
+      && !articleDeepLink
+      && (savedLayout === 'gazette' || savedLayout === 'web' || savedLayout === 'stream')
     ) {
       state.layoutMode = normalizeLayout(savedLayout);
     }
@@ -4124,16 +4139,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (state.streamReturnLayout) {
     state.streamReturnLayout = normalizeLayout(state.streamReturnLayout);
   }
+  enforceMobileLagimStreamMode({ syncUrl: true });
   gnomeCryCtrl.syncPublicationChrome();
   applyLayoutMode();
-  if (
-    isMobileViewport()
-    && isStreamLayout()
-    && state.publicationMode !== PUBLICATION_GNOME
-    && (layoutParam === 'gazette' || urlParams.has('yaprak') || urlParams.has('sayi'))
-  ) {
-    syncBrowserUrl();
-  }
   syncFilterPanelVisibility();
   bindEvents();
   initGazetteFlipSwipe();

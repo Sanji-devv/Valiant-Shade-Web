@@ -114,7 +114,7 @@ class WorldCalendar
 
     public static function defaultDisplayYear(): int
     {
-        return (int) config('gazette.issue.year', 631);
+        return (int) config('gazette.issue.year', 652);
     }
 
     public static function fromDateTime(?CarbonInterface $at): ?array

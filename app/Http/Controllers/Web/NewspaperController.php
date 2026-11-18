@@ -57,7 +57,7 @@ class NewspaperController extends Controller
                     [
                         'number' => (int) ($issue['number'] ?? 1),
                         'label' => (string) ($issue['label'] ?? 'İlk sayı'),
-                        'year' => (int) ($issue['year'] ?? 631),
+                        'year' => (int) ($issue['year'] ?? 652),
                         'month' => (string) ($issue['month'] ?? 'Leos'),
                         'weekday' => (string) ($issue['weekday'] ?? 'Vonyas'),
                         'day' => (int) ($issue['day'] ?? 1),

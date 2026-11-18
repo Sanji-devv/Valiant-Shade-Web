@@ -35,7 +35,7 @@ return [
     'issue' => [
         'number' => 1,
         'label' => 'İlk sayı',
-        'year' => 631,
+        'year' => 652,
         'month' => 'Leos',
         'weekday' => 'Vonyas',
         'day' => 1,

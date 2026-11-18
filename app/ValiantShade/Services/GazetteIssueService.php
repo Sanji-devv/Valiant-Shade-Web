@@ -374,6 +374,15 @@ class GazetteIssueService
         ?string $search = null,
     ): array {
         $issue = $this->findIssue($issueId) ?? $this->ensureDefaultIssue();
+        if ($issue->isWeekly() && ! $this->weeklyIssueShowsPublicArticles($issue)) {
+            $current = GazetteIssue::query()
+                ->where('issue_kind', GazetteIssue::KIND_WEEKLY)
+                ->where('is_current', true)
+                ->first();
+            if ($current) {
+                $issue = $current;
+            }
+        }
         $this->assignNewsToIssueWeeks();
 
         $searchTerm = $search !== null ? trim($search) : '';
@@ -529,7 +538,11 @@ class GazetteIssueService
         $acceptsSubmissions = $this->issueAcceptsSubmissions($issue);
         $isSelectable = $issue->isExtra()
             ? $isPublished
-            : ($isPublished || $isCurrent || $isLocked);
+            : (
+                $isCurrent
+                || ($isLocked && $articleCount > 0)
+                || ($isPublished && $this->weeklyIssueShowsPublicArticles($issue))
+            );
 
         $dateShort = WorldCalendar::formatShort(
             $issue->month,
