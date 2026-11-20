@@ -228,7 +228,13 @@ class UserProfile extends Controller
       ], 401);
     }
 
-    $isAdmin = (strcasecmp($user->email, 'admin@valiantshade.com') === 0 || (method_exists($user, 'hasRole') && $user->hasRole('admin')));
+    return $this->createCharacterForUser($request, $user);
+  }
+
+  public function createCharacterForUser(Request $request, \App\Models\User $user)
+  {
+    $actor = Auth::user();
+    $isAdmin = $actor && ($actor->isAdmin() || strcasecmp($actor->email, 'admin@valiantshade.com') === 0 || $actor->hasRole('admin'));
 
     if (!$isAdmin) {
       $existingCount = \App\Models\CharacterProfile::where('user_id', $user->id)->count();

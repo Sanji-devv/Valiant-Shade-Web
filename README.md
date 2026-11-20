@@ -24,6 +24,20 @@ The gods table and profiles are publicly editable. Add domains and subdomains in
 
 Deploy the gods profile-fields migration and ensure the public disk is writable and linked with `php artisan storage:link`. Back up the database and uploaded files before deployment; existing god overrides are preserved.
 
+## Feats and character editing
+
+Only administrators can create a character from the Feats and Traits page, assigning it to a selected player. Feat creation, editing and deletion use the corresponding HR permissions; character details require HR update permission. Characters with ranks other than Üye, Kıdemli and Uzman remain visible, with a warning shown only to administrators.
+
+Race choices use the existing race enum's primary numeric RP value, capped at 20; races without that value are not offered. Class choices use the existing class enum. Site-wide character deletion from this page is currently disabled to prevent leaving XP and quest records inconsistent.
+
+## Inventory sales
+
+Market sales and character sales are recorded in the inventory sales history and financial ledger. Character sales cost 55% of the item's total price, rounded per unit, and transfer the price from the character's allowance to the guild vault. Character-owned inventory is shown separately on a uniquely matching character sheet; the sheet's free-form gear remains independent.
+
+Authorized inventory users can reverse a sale once. Reversal subtracts the sale proceeds from the current vault balance, returns the items, and refunds the character's current allowance without changing pocket money or later transactions. Matching XP Tracker allowances are rounded to whole SP, as in existing transfers; ambiguous tracker matches block the transaction. Reversal is blocked when the vault lacks funds, the buyer no longer exists, or an item is missing, changed, or has subsequently been assigned or used. Inventory reset is blocked while sales history or character-owned items exist. Sales that were never logged cannot be reconstructed; older incomplete or altered records may not be reversible.
+
+Back up the database and run `php artisan migrate --force` during deployment before using these features. The migration also extends PostgreSQL's financial ledger transaction-type constraint. Rolling it back requires resolving any ledger records with the new transaction types first.
+
 ## Player XP Tracker import
 
 Administrators can upload the JSON using **Import Data** on the XP Tracker, or run `php artisan xp:import "C:\path\to\Player XP Tracker.json"` to import both tables. Existing characters and users are matched by name; unmatched records, including Unknown entries, remain visible. The page shows their count, and the command lists them. The import does not create users or characters or change existing character XP. Re-running it updates imported tracker values; the transaction rolls back if a record has distributed quest-report XP. XP values are rounded to the nearest integer for tracker fields. Resetting the tracker to defaults replaces imported records with sample data.

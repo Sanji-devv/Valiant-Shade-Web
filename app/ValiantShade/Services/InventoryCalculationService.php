@@ -6,7 +6,7 @@ use App\ValiantShade\Contracts\InventoryCalculationServiceInterface;
 
 class InventoryCalculationService implements InventoryCalculationServiceInterface
 {
-    public const DEFAULT_RESALE_RATE = 0.55; // 55% as seen in the master dataset
+    public const DEFAULT_RESALE_RATE = 0.50;
 
     public const MAX_WAND_CHARGES = 50;
 
@@ -64,7 +64,8 @@ class InventoryCalculationService implements InventoryCalculationServiceInterfac
 
         $marketValue = round($totalPrice * $resaleRate, 2);
         $buyPrice = $quantity > 0 ? round($marketValue / $quantity, 2) : 0;
-        $sellPrice = $quantity > 0 ? round(($totalPrice * 0.50) / $quantity, 2) : 0;
+        // sell_price: oyuncuya piyasa satış fiyatı (%55)
+        $sellPrice = $quantity > 0 ? round(($totalPrice * 0.55) / $quantity, 2) : 0;
 
         return [
             'total_price' => $totalPrice,

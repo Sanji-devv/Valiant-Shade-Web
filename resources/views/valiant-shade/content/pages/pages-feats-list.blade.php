@@ -411,6 +411,81 @@
     background: #30363d !important;
     color: #ffffff !important;
   }
+
+  /* Match the theme-aware Vuexy surfaces used by Quest Reports. */
+  .feats-hero-banner,
+  .char-dossier-card,
+  .card-master-table-container {
+    background: var(--bs-card-bg);
+    border-color: var(--bs-border-color);
+    box-shadow: none;
+  }
+  .feat-stat-card,
+  .stat-pill-box {
+    background: linear-gradient(135deg, rgba(115, 103, 240, 0.12), var(--bs-card-bg) 85%);
+    border-color: var(--bs-border-color);
+    box-shadow: none;
+  }
+  .char-dossier-header {
+    background: rgba(115, 103, 240, 0.08);
+    border-color: var(--bs-border-color);
+  }
+  .view-pill-btn,
+  .prog-filter-pill { color: var(--bs-body-color); }
+  .view-pill-btn:hover,
+  .prog-filter-pill:hover {
+    color: var(--bs-heading-color);
+    background: var(--bs-body-bg);
+    border-color: var(--bs-border-color);
+  }
+  .prog-filter-pill { border-color: var(--bs-border-color); }
+  .table-progression { --bs-table-color: var(--bs-body-color); }
+  .table-progression thead th {
+    background: var(--bs-body-bg) !important;
+    color: var(--bs-heading-color) !important;
+    border-color: var(--bs-border-color) !important;
+  }
+  .table-progression tbody td { border-color: var(--bs-border-color) !important; }
+  .table-progression tbody tr.row-active-level,
+  .table-progression tbody tr.row-active-level:hover {
+    background: rgba(115, 103, 240, 0.08) !important;
+    box-shadow: none;
+  }
+  .table-progression tbody tr.row-active-level td { color: var(--bs-body-color) !important; }
+  .table-progression tbody tr.row-future-level,
+  .table-progression tbody tr.row-future-level:hover {
+    opacity: 1;
+    background: transparent !important;
+  }
+  .table-progression tbody tr.row-future-level .lvl-badge {
+    background: var(--bs-body-bg) !important;
+    color: var(--bs-body-color) !important;
+    border-color: var(--bs-border-color) !important;
+  }
+  .feat-slot { background: var(--bs-body-bg); }
+  #modalTraitCatalog .modal-content,
+  #modalTraitCatalog .modal-body {
+    background: var(--bs-modal-bg, var(--bs-card-bg)) !important;
+    color: var(--bs-body-color) !important;
+  }
+  #modalTraitCatalog .modal-header,
+  #modalTraitCatalog .modal-footer,
+  #modalTraitCatalog .trait-search-wrapper,
+  #modalTraitCatalog .btn-trait-cat-filter,
+  #modalTraitCatalog .trait-card-item,
+  #modalTraitCatalog .trait-btn-close {
+    background: var(--bs-body-bg) !important;
+    border-color: var(--bs-border-color) !important;
+    color: var(--bs-body-color) !important;
+  }
+  #modalTraitCatalog .modal-title,
+  #modalTraitCatalog #traitCatalogSearchInput,
+  #modalTraitCatalog .trait-card-title,
+  #modalTraitCatalog .trait-card-desc { color: var(--bs-heading-color) !important; }
+  #modalTraitCatalog .btn-trait-cat-filter.active {
+    background: var(--bs-primary) !important;
+    color: #fff !important;
+  }
 </style>
 @endsection
 
@@ -422,11 +497,19 @@
       Feat başlangıç dosyası bulunamadı. Mevcut karakter verileri içe aktarılmadı; yönetici başlangıç dosyasını sunucuya yüklemelidir.
     </div>
   @endif
+  @if($isAdmin && $invalidRankCharacters->isNotEmpty())
+    <div class="alert alert-warning" role="alert">
+      Üye, Kıdemli veya Uzman olmayan karakterler:
+      @foreach($invalidRankCharacters as $character)
+        {{ $character->character_name }} ({{ $character->rank ?: 'Rütbe yok' }}){{ !$loop->last ? ', ' : '' }}
+      @endforeach
+    </div>
+  @endif
 
   <!-- ====================================================
        1. HERO KPI BANNER & METRICS (VUEXY DEMO STYLE)
        ==================================================== -->
-  <div class="feats-hero-banner p-3 p-md-4 mb-4">
+  <div class="card feats-hero-banner p-3 p-md-4 mb-4">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
       <div>
         <div class="d-flex align-items-center gap-2 mb-1">
@@ -446,20 +529,16 @@
       </div>
 
       <div class="d-flex align-items-center gap-2 flex-wrap">
+        @if($isAdmin)
+        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalCreateFeatCharacter">Karakter Ekle</button>
+        @endif
         <!-- Add Feat Button -->
+        @if($canCreateFeat)
         <button type="button" class="btn btn-primary fw-bold d-flex align-items-center gap-1 shadow-xs" id="btnOpenAddFeatModal">
           <i class="icon-base ti tabler-plus fs-5"></i>
           <span>{{ __('Add Feat') }}</span>
         </button>
-
-        <!-- Reset Defaults Button -->
-        <button type="button" class="btn btn-outline-warning btn-sm" id="btnResetFeatsExcel" title="{{ __('Reset to Original Master Sheet Data') }}">
-          <i class="icon-base ti tabler-rotate-clockwise me-1"></i> {{ __('Reset') }}
-        </button>
-
-        <a href="{{ route('valiant-shade.pages-xp-tracker') }}" class="btn btn-outline-primary btn-sm">
-          <i class="icon-base ti tabler-award me-1"></i> {{ __('Player XP Tracker') }}
-        </a>
+        @endif
       </div>
     </div>
 
@@ -515,10 +594,77 @@
     </div>
   </div>
 
+  @if($isAdmin)
+  <div class="modal fade" id="modalCreateFeatCharacter" tabindex="-1" aria-labelledby="createFeatCharacterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="createFeatCharacterTitle">Karakter Ekle</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('Close') }}"></button>
+        </div>
+        <form id="formCreateFeatCharacter">
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label" for="newFeatCharacterOwner">Oyuncu</label>
+                <select class="form-select" id="newFeatCharacterOwner" name="owner_id" required>
+                  <option value="">Oyuncu seçin</option>
+                  @foreach($owners as $owner)
+                    <option value="{{ $owner->id }}">{{ $owner->name }}</option>
+                  @endforeach
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="newFeatCharacterName">Karakter Adı</label>
+                <input class="form-control" id="newFeatCharacterName" name="character_name" minlength="2" maxlength="50" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="newFeatCharacterRace">Irk</label>
+                <select class="form-select" id="newFeatCharacterRace" name="race" required>
+                  <option value="">Irk seçin</option>
+                  @foreach($races as $race)
+                    <option value="{{ $race['name'] }}">{{ $race['name'] }} ({{ $race['race_points'] }} RP)</option>
+                  @endforeach
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="newFeatCharacterClass">Sınıf</label>
+                <select class="form-select" id="newFeatCharacterClass" name="class_name" required>
+                  <option value="">Sınıf seçin</option>
+                  @foreach($classes as $class)
+                    <option value="{{ $class['name'] }}">{{ $class['name'] }}</option>
+                  @endforeach
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="newFeatCharacterType">Karakter Türü</label>
+                <select class="form-select" id="newFeatCharacterType" name="rank">
+                  <option value="Main">Main</option>
+                  <option value="Clerk">Clerk</option>
+                </select>
+              </div>
+              @foreach(['str', 'dex', 'con', 'int', 'wis', 'cha'] as $ability)
+                <div class="col-4 col-md-2">
+                  <label class="form-label text-uppercase" for="newFeatCharacter{{ $ability }}">{{ $ability }}</label>
+                  <input type="number" class="form-control" id="newFeatCharacter{{ $ability }}" name="{{ $ability }}" value="10" min="1" max="30" required>
+                </div>
+              @endforeach
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+            <button type="submit" class="btn btn-primary">Karakter Ekle</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  @endif
+
   <!-- ====================================================
        2. TOOLBAR: CHARACTER SELECTOR, SORTING & VIEW TOGGLE
        ==================================================== -->
-  <div class="card mb-4 bg-dark bg-opacity-75 border-secondary border-opacity-25 shadow-sm">
+  <div class="card mb-4 border-secondary border-opacity-25 shadow-sm">
     <div class="card-body p-3 d-flex align-items-center justify-content-between flex-wrap gap-3">
       
       <!-- Character Selection Form & Quick Search -->
@@ -526,7 +672,7 @@
         <label for="charSelectDropdown" class="text-body-secondary small fw-bold text-nowrap">
           <i class="icon-base ti tabler-user me-1 text-primary"></i> {{ __("Character:") }}
         </label>
-        <select class="form-select text-heading bg-dark border-secondary border-opacity-50" id="charSelectDropdown" onchange="switchCharacter(this.value)">
+        <select class="form-select text-heading border-secondary border-opacity-50" id="charSelectDropdown" onchange="switchCharacter(this.value)">
           @foreach($characters as $c)
             <option value="{{ $c->character_name }}" {{ $c->character_name === $selectedChar ? 'selected' : '' }}>
               {{ $c->character_name }} ({{ $c->class_name }} Lvl {{ $c->level }} &bull; {{ $c->feats_count ?? 0 }} Feat)
@@ -535,44 +681,20 @@
         </select>
       </div>
 
-      <!-- Sorting Dropdown -->
-      <div class="d-flex align-items-center gap-2">
-        <label for="toolbarSortSelect" class="text-body-secondary small fw-bold text-nowrap">
-          <i class="icon-base ti tabler-arrows-sort me-1 text-primary"></i> {{ __("Sort By:") }}
-        </label>
-        <select class="form-select form-select-sm text-heading bg-dark border-secondary border-opacity-50" id="toolbarSortSelect" onchange="changeSorting(this.value)" style="width: auto;">
-          <option value="name_asc" {{ ($sortBy ?? 'name_asc') === 'name_asc' ? 'selected' : '' }}>{{ __('Name (A &rarr; Z)') }}</option>
-          <option value="name_desc" {{ ($sortBy ?? '') === 'name_desc' ? 'selected' : '' }}>{{ __('Name (Z &rarr; A)') }}</option>
-          <option value="level_desc" {{ ($sortBy ?? '') === 'level_desc' ? 'selected' : '' }}>{{ __('Level (Highest &darr;)') }}</option>
-          <option value="level_asc" {{ ($sortBy ?? '') === 'level_asc' ? 'selected' : '' }}>{{ __('Level (Lowest &uarr;)') }}</option>
-          <option value="feats_desc" {{ ($sortBy ?? '') === 'feats_desc' ? 'selected' : '' }}>{{ __('Feats Count (Most &darr;)') }}</option>
-          <option value="feats_asc" {{ ($sortBy ?? '') === 'feats_asc' ? 'selected' : '' }}>{{ __('Feats Count (Least &uarr;)') }}</option>
-        </select>
-      </div>
-
-      <!-- View Switcher Tabs (Dossier vs Master Table) -->
-      <div class="d-flex align-items-center gap-1 bg-dark bg-opacity-75 p-1 rounded-3 border border-secondary border-opacity-25 ms-auto" id="viewModeToggleGroup">
-        <button type="button" class="view-pill-btn {{ $activeView === 'dossier' ? 'active' : '' }}" id="btnViewDossier" onclick="switchViewMode('dossier')">
-          <i class="icon-base ti tabler-id me-1"></i> {{ __('Character Dossier View') }}
-        </button>
-        <button type="button" class="view-pill-btn {{ $activeView === 'table' ? 'active' : '' }}" id="btnViewTable" onclick="switchViewMode('table')">
-          <i class="icon-base ti tabler-table me-1"></i> {{ __('Master Feats Archive Table') }}
-        </button>
-      </div>
     </div>
   </div>
 
   <!-- ====================================================
        3. VIEW 1: CHARACTER DOSSIER (VUEXY DEMO THEMED)
        ==================================================== -->
-  <div id="viewDossierContainer" class="{{ $activeView === 'table' ? 'd-none' : '' }}">
+  <div id="viewDossierContainer">
     @if($dossier && $dossier['profile'])
       @php
         $prof = $dossier['profile'];
       @endphp
 
       <!-- Character Info Card (Top Dossier Banner) -->
-      <div class="card mb-4 border-secondary border-opacity-25 bg-dark bg-opacity-75 shadow-sm">
+      <div class="card mb-4 border-secondary border-opacity-25 shadow-sm">
         <div class="card-body p-3 p-md-4">
           <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
             <div class="d-flex align-items-center gap-3">
@@ -598,12 +720,11 @@
 
             <!-- Action Buttons: Edit Stats & Delete Character -->
             <div class="d-flex align-items-center gap-2">
+              @if($canUpdateFeat)
               <button type="button" class="btn btn-sm btn-outline-primary" id="btnOpenEditStatsModal">
-                <i class="icon-base ti tabler-edit me-1"></i> {{ __('Edit Character Stats') }}
+                <i class="icon-base ti tabler-edit me-1"></i> Karakter Değiştir / Irk Ekle
               </button>
-              <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteCharacterConfirm('{{ addslashes($prof->character_name) }}')">
-                <i class="icon-base ti tabler-trash me-1"></i> Karakteri Sil
-              </button>
+              @endif
             </div>
           </div>
 
@@ -683,7 +804,7 @@
       <!-- ====================================================
            TRAITS MINI TABLE (GUILD RANK PROGRESSION: MEMBER, SENIOR, EXPERT)
            ==================================================== -->
-      <div class="card mb-4 shadow-sm" id="cardGuildTraits" style="background: #2f3349; border: 1px solid rgba(255, 171, 0, 0.35);">
+      <div class="card mb-4 shadow-sm border border-warning border-opacity-25" id="cardGuildTraits">
         <div class="card-header d-flex align-items-center justify-content-between p-3 border-bottom border-secondary border-opacity-20 flex-wrap gap-2">
           <div class="d-flex align-items-center gap-2">
             <span class="avatar avatar-sm bg-label-warning rounded-circle d-flex align-items-center justify-content-center">
@@ -703,7 +824,7 @@
 
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0" id="traitsTable" style="font-size: 0.84rem;">
-            <thead class="table-dark">
+            <thead>
               <tr class="font-monospace text-uppercase" style="font-size: 0.72rem;">
                 <th style="width: 190px;">{{ __('Slot / Rank') }}</th>
                 <th style="width: 110px;">{{ __('Status') }}</th>
@@ -765,24 +886,7 @@
                     </div>
                   </td>
                   <td class="text-end">
-                    @if($isUnlocked)
-                      <div class="d-flex align-items-center justify-content-end gap-1">
-                        <button type="button" class="btn btn-xs btn-label-warning rounded-pill px-2 btn-open-trait-modal"
-                                data-slot="{{ $sKey }}"
-                                data-slot-label="{{ $sData['slot_label'] ?? $sKey }}"
-                                data-char="{{ $prof->character_name }}">
-                          <i class="icon-base ti tabler-sparkles me-1"></i> {{ !empty($tName) ? __('Change') : __('Select Trait') }}
-                        </button>
-                        @if(!empty($tName))
-                          <button type="button" class="btn btn-icon btn-text-danger btn-xs btn-clear-trait"
-                                  data-slot="{{ $sKey }}"
-                                  data-char="{{ $prof->character_name }}"
-                                  title="{{ __('Remove Trait') }}">
-                            <i class="icon-base ti tabler-x"></i>
-                          </button>
-                        @endif
-                      </div>
-                    @else
+                    @if(!$isUnlocked)
                       <span class="text-muted small font-monospace"><i class="icon-base ti tabler-lock fs-6 me-1"></i>Kilitli</span>
                     @endif
                   </td>
@@ -794,7 +898,7 @@
       </div>
 
       <!-- Progression Table Card with Sorting & Filters -->
-      <div class="char-dossier-card mb-4">
+      <div class="card char-dossier-card mb-4">
         <div class="char-dossier-header d-flex align-items-center justify-content-between flex-wrap gap-2">
           <div class="d-flex align-items-center gap-2">
             <i class="icon-base ti tabler-file-text fs-3 text-primary"></i>
@@ -803,19 +907,6 @@
             </h4>
           </div>
           
-          <!-- Progression Filter & Sort Toolbar -->
-          <div class="d-flex align-items-center gap-2 flex-wrap">
-            <!-- Filter Pills inside Progression -->
-            <div class="d-flex align-items-center gap-1 flex-wrap">
-              <button type="button" class="prog-filter-pill active" data-filter="all" onclick="filterProgression('all', this)">{{ __('All (1-20)') }}</button>
-              <button type="button" class="prog-filter-pill" data-filter="populated" onclick="filterProgression('populated', this)">Dolu Seviyeler</button>
-              <button type="button" class="prog-filter-pill" data-filter="current" onclick="filterProgression('current', this)">Aktif Seviyeler (1-{{ $prof->level }})</button>
-            </div>
-
-            <button type="button" class="btn btn-xs btn-outline-secondary" id="btnToggleLevelSort" onclick="toggleProgressionSort()">
-              <i class="icon-base ti tabler-arrows-sort me-1"></i> <span id="sortDirectionLabel">1 &rarr; 20</span>
-            </button>
-          </div>
         </div>
 
         <div class="table-responsive">
@@ -863,7 +954,7 @@
                     @if(!empty($slot['slots']) || $slot['extra_feats']->isNotEmpty())
                       <div class="d-flex flex-column gap-1">
                         @foreach($slot['slots'] as $progressionSlot)
-                          <div class="d-flex align-items-center justify-content-between gap-2 p-2 rounded bg-dark {{ $progressionSlot['is_empty'] ? 'bg-opacity-25 border border-secondary border-opacity-25' : 'bg-opacity-60 border border-secondary border-opacity-25' }}">
+                          <div class="feat-slot d-flex align-items-center justify-content-between gap-2 p-2 rounded border border-secondary border-opacity-25">
                             <div class="min-w-0">
                               <span class="badge {{ $progressionSlot['badge'] }} me-1">{{ $progressionSlot['name'] }}</span>
                               @if($progressionSlot['feat'])
@@ -894,15 +985,19 @@
                             </div>
                             @if($progressionSlot['feat'])
                               <div class="d-flex align-items-center gap-1">
+                                @if($canUpdateFeat)
                                 <button type="button" class="btn btn-xs btn-icon btn-text-secondary btn-row-action" title="{{ __("Edit") }}" onclick="openEditFeatModal({{ $feat->id }}, '{{ addslashes($feat->feat_name) }}', {{ $feat->level }}, '{{ $feat->slot_type }}', '{{ addslashes($feat->category ?? '') }}', '{{ addslashes($feat->prerequisites ?? '') }}', '{{ addslashes($feat->notes ?? '') }}', {{ $feat->is_class_feat ? 1 : 0 }})">
                                   <i class="icon-base ti tabler-edit {{ in_array($feat->slot_type, ['class_talent', 'class_bonus']) || $feat->is_class_feat ? 'text-success' : 'text-primary' }}"></i>
                                 </button>
+                                @endif
+                                @if($canDeleteFeat)
                                 <button type="button" class="btn btn-xs btn-icon btn-text-danger btn-row-action" title="Sil" onclick="deleteFeatConfirm({{ $feat->id }}, '{{ addslashes($feat->feat_name) }}')">
                                   <i class="icon-base ti tabler-trash"></i>
                                 </button>
+                                @endif
                               </div>
-                            @else
-                              <button type="button" class="btn btn-xs btn-outline-primary flex-shrink-0" onclick="quickAddFeatToSlot({{ $lvl }}, @json($progressionSlot['type']), @json($progressionSlot['name']))">
+                            @elseif($canCreateFeat)
+                              <button type="button" class="btn btn-xs btn-outline-primary flex-shrink-0" onclick='quickAddFeatToSlot({{ $lvl }}, @json($progressionSlot['type']), @json($progressionSlot['name']))'>
                                 <i class="icon-base ti tabler-plus me-1"></i> Doldur
                               </button>
                             @endif
@@ -910,7 +1005,7 @@
                         @endforeach
 
                         @foreach($slot['extra_feats'] as $feat)
-                          <div class="d-flex align-items-center justify-content-between gap-2 p-2 rounded bg-dark {{ $feat->slot_type === 'reserve' ? 'bg-opacity-40 border border-secondary border-opacity-20' : 'bg-opacity-60 border border-secondary border-opacity-25' }}">
+                          <div class="feat-slot d-flex align-items-center justify-content-between gap-2 p-2 rounded border border-secondary border-opacity-25">
                             <div>
                               <span class="{{ $feat->slot_type === 'reserve' ? 'text-warning fst-italic' : 'fw-bold text-heading' }}" style="font-size: 0.88rem;">{{ $feat->feat_name }}</span>
                               @if($feat->slot_type === 'reserve')
@@ -931,12 +1026,16 @@
                               @endif
                             </div>
                             <div class="d-flex align-items-center gap-1">
+                              @if($canUpdateFeat)
                               <button type="button" class="btn btn-xs btn-icon btn-text-secondary btn-row-action" title="{{ __("Edit") }}" onclick="openEditFeatModal({{ $feat->id }}, '{{ addslashes($feat->feat_name) }}', {{ $feat->level }}, '{{ $feat->slot_type }}', '{{ addslashes($feat->category ?? '') }}', '{{ addslashes($feat->prerequisites ?? '') }}', '{{ addslashes($feat->notes ?? '') }}', {{ $feat->is_class_feat ? 1 : 0 }})">
                                 <i class="icon-base ti tabler-edit {{ $feat->slot_type === 'reserve' ? 'text-warning' : 'text-primary' }}"></i>
                               </button>
+                              @endif
+                              @if($canDeleteFeat)
                               <button type="button" class="btn btn-xs btn-icon btn-text-danger btn-row-action" title="Sil" onclick="deleteFeatConfirm({{ $feat->id }}, '{{ addslashes($feat->feat_name) }}')">
                                 <i class="icon-base ti tabler-trash"></i>
                               </button>
+                              @endif
                             </div>
                           </div>
                         @endforeach
@@ -948,9 +1047,11 @@
 
                   <!-- EKLE Column -->
                   <td class="text-end">
+                    @if($canCreateFeat)
                     <button type="button" class="btn btn-sm btn-outline-primary px-3" title="Feat Ekle (Seviye {{ $lvl }})" onclick="quickAddFeatToLevel({{ $lvl }})">
                       <i class="icon-base ti tabler-plus me-1"></i> Ekle
                     </button>
+                    @endif
                   </td>
                 </tr>
               @endforeach
@@ -964,9 +1065,9 @@
   <!-- ====================================================
        4. VIEW 2: MASTER FEATS ARCHIVE TABLE (IMAGE 1 STYLE)
        ==================================================== -->
-  <div id="viewTableContainer" class="{{ $activeView === 'table' ? '' : 'd-none' }}">
+  <div id="viewTableContainer" class="d-none">
     <div class="card card-master-table-container shadow-sm mb-4">
-      <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-3 py-3 px-4 bg-dark bg-opacity-50 border-bottom border-secondary border-opacity-25">
+      <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-3 py-3 px-4 border-bottom border-secondary border-opacity-25">
         <div>
           <h5 class="mb-0 fw-bold text-heading">
             <i class="icon-base ti tabler-table me-2 text-primary"></i>{{ __('Master Feats Archive Table') }}
@@ -986,9 +1087,9 @@
       </div>
 
       <div class="table-responsive text-nowrap">
-        <table class="table table-dark table-hover mb-0" id="masterSheetTable" style="font-size: 0.85rem;">
+        <table class="table table-hover mb-0" id="masterSheetTable" style="font-size: 0.85rem;">
           <thead>
-            <tr style="background: rgba(37, 41, 60, 0.95);">
+            <tr>
               <th class="th-sortable" onclick="sortMasterTableByColumn(0)">{{ __("Rank") }} <i class="icon-base ti tabler-arrows-sort small text-muted"></i></th>
               <th class="th-sortable" onclick="sortMasterTableByColumn(1)">{{ __("Character Name") }} <i class="icon-base ti tabler-arrows-sort small text-muted"></i></th>
               <th class="th-sortable" onclick="sortMasterTableByColumn(2)">Oyuncu <i class="icon-base ti tabler-arrows-sort small text-muted"></i></th>
@@ -1015,7 +1116,7 @@
                 <td>{{ $row['player_name'] }}</td>
                 <td>{{ $row['race'] }}</td>
                 <td class="text-info">{{ $row['class'] }}</td>
-                <td><span class="badge bg-dark text-warning border border-warning">{{ $row['level'] }}</span></td>
+                <td><span class="badge bg-label-warning">{{ $row['level'] }}</span></td>
                 <td>{{ $row['lvl_1_standard'] }}</td>
                 <td>{{ $row['lvl_1_class_bonus'] }}</td>
                 <td>{{ $row['lvl_1_racial_bonus'] }}</td>
@@ -1047,13 +1148,13 @@
 <div class="modal fade" id="modalFeatAction" tabindex="-1" aria-labelledby="modalFeatActionTitle" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border border-secondary border-opacity-50 shadow-lg">
-      <div class="modal-header border-bottom border-secondary border-opacity-25 bg-dark">
+      <div class="modal-header border-bottom border-secondary border-opacity-25">
         <h5 class="modal-title text-heading fw-bold" id="modalFeatActionTitle">
           <i class="icon-base ti tabler-award me-1 text-primary"></i> <span id="featModalModeText">{{ __('Add Feat') }}</span>
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('Close') }}"></button>
       </div>
-      <form id="formFeatAction" onsubmit="return false;">
+      <form id="formFeatAction">
         <input type="hidden" id="editFeatId" value="" />
         <input type="hidden" id="featInputClassSlot" value="" />
         <div class="modal-body p-3 p-md-4">
@@ -1061,13 +1162,11 @@
           <!-- Character Name -->
           <div class="mb-3">
             <label class="form-label fw-semibold" for="featInputCharName">Karakter <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="featInputCharName" value="{{ $selectedChar }}" list="knownCharacterNames" maxlength="100" required />
-            <datalist id="knownCharacterNames">
+            <select class="form-select" id="featInputCharName" required>
               @foreach($characters as $character)
-                <option value="{{ $character->character_name }}">
+                <option value="{{ $character->character_name }}" {{ $character->character_name === $selectedChar ? 'selected' : '' }}>{{ $character->character_name }}</option>
               @endforeach
-            </datalist>
-            <small class="form-text text-body-secondary">Listede olmayan yeni bir karakter adını da yazabilirsiniz.</small>
+            </select>
           </div>
 
           <!-- Level & Slot Type -->
@@ -1094,22 +1193,17 @@
           </div>
 
           <!-- Level 1 Special Slot Selector (Normal Feat + {{ __('Human Bonus') }} + Fighter/{{ __('Class Bonus') }}) -->
-          <div id="modalLevel1Helper" class="mb-3 p-2 rounded bg-dark border border-primary border-opacity-35" style="display: none;">
+          <div id="modalLevel1Helper" class="mb-3 p-2 rounded bg-body-tertiary border border-primary border-opacity-35" style="display: none;">
             <div class="d-flex align-items-center justify-content-between mb-2">
               <span class="text-primary small fw-bold text-uppercase" style="font-size: 0.75rem;">{{ __('Level 1 Slot Type:') }}</span>
               <span class="text-body-secondary small" style="font-size: 0.72rem;">Normal Feat + {{ __('Human Bonus') }} + {{ __('Class Bonus') }}</span>
-            </div>
-            <div class="d-flex gap-2 flex-wrap">
-              <button type="button" class="btn btn-xs btn-outline-primary" onclick="setModalSlotType('standard')">Normal Feat</button>
-              <button type="button" class="btn btn-xs btn-outline-info" onclick="setModalSlotType('racial_bonus')">+ {{ __('Human Bonus') }}</button>
-              <button type="button" class="btn btn-xs btn-outline-warning" onclick="setModalSlotType('class_bonus')">+ {{ __('Class Bonus') }} (Fighter / vb.)</button>
             </div>
           </div>
 
           <!-- Feat Name -->
           <div class="mb-3">
             <label class="form-label fw-semibold" for="featInputName">{{ __('Feat Name') }} <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="featInputName" placeholder="{{ __("e.g., Power Attack, Weapon Focus (Rapier)...") }}" list="commonFeatsList" required />
+            <input type="text" class="form-control" id="featInputName" placeholder="{{ __("e.g., Power Attack, Weapon Focus (Rapier)...") }}" list="commonFeatsList" maxlength="255" required />
             <small class="form-text text-body-secondary">Katalog önerileri isteğe bağlıdır; özel feat adını doğrudan yazabilirsiniz.</small>
             <datalist id="commonFeatsList">
               @foreach($library as $lf)
@@ -1141,18 +1235,18 @@
           <div class="row g-2 mb-2">
             <div class="col-12">
               <label class="form-label fw-semibold" for="featInputPreq">{{ __('Prerequisites') }}</label>
-              <input type="text" class="form-control" id="featInputPreq" placeholder="{{ __("e.g., Preq(Spell Focus(evocation), -) or Str 13, BAB +1") }}" />
+              <input type="text" class="form-control" id="featInputPreq" maxlength="255" placeholder="{{ __("e.g., Preq(Spell Focus(evocation), -) or Str 13, BAB +1") }}" />
             </div>
             <div class="col-12 mt-2">
               <label class="form-label fw-semibold" for="featInputNotes">{{ __('Description / Notes') }}</label>
-              <input type="text" class="form-control" id="featInputNotes" placeholder="{{ __("Optional additional notes...") }}" />
+              <input type="text" class="form-control" id="featInputNotes" maxlength="500" placeholder="{{ __("Optional additional notes...") }}" />
             </div>
           </div>
         </div>
 
-        <div class="modal-footer border-top border-secondary border-opacity-25 bg-dark">
+        <div class="modal-footer border-top border-secondary border-opacity-25">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
-          <button type="button" class="btn btn-primary fw-bold" id="btnSaveFeatSubmit">
+          <button type="submit" class="btn btn-primary fw-bold" id="btnSaveFeatSubmit">
             <i class="icon-base ti tabler-check me-1"></i> {{ __('Save') }}
           </button>
         </div>
@@ -1167,7 +1261,7 @@
 <div class="modal fade" id="modalEditStats" tabindex="-1" aria-labelledby="modalEditStatsTitle" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content border border-secondary border-opacity-50 shadow-lg">
-      <div class="modal-header border-bottom border-secondary border-opacity-25 bg-dark">
+      <div class="modal-header border-bottom border-secondary border-opacity-25">
         <h5 class="modal-title text-heading fw-bold" id="modalEditStatsTitle">
           <i class="icon-base ti tabler-user-cog me-1 text-primary"></i> {{ __('Edit Character Stats') }}
         </h5>
@@ -1182,11 +1276,25 @@
             <div class="row g-3 mb-3">
               <div class="col-md-3">
                 <label class="form-label fw-semibold" for="statsRace">Irk</label>
-                <input type="text" class="form-control" id="statsRace" value="{{ $dossier['profile']->race }}" required />
+                <select class="form-select" id="statsRace" required>
+                  @if(!$races->contains('name', $dossier['profile']->race))
+                    <option value="{{ $dossier['profile']->race }}" selected>{{ $dossier['profile']->race }} (mevcut)</option>
+                  @endif
+                  @foreach($races as $race)
+                    <option value="{{ $race['name'] }}" {{ $race['name'] === $dossier['profile']->race ? 'selected' : '' }}>{{ $race['name'] }} ({{ $race['race_points'] }} RP)</option>
+                  @endforeach
+                </select>
               </div>
               <div class="col-md-3">
                 <label class="form-label fw-semibold" for="statsClass">{{ __("Class") }}</label>
-                <input type="text" class="form-control" id="statsClass" value="{{ $dossier['profile']->class_name }}" required />
+                <select class="form-select" id="statsClass" required>
+                  @if(!$classes->contains('name', $dossier['profile']->class_name))
+                    <option value="{{ $dossier['profile']->class_name }}" selected>{{ $dossier['profile']->class_name }} (mevcut)</option>
+                  @endif
+                  @foreach($classes as $class)
+                    <option value="{{ $class['name'] }}" {{ $class['name'] === $dossier['profile']->class_name ? 'selected' : '' }}>{{ $class['name'] }}</option>
+                  @endforeach
+                </select>
               </div>
               <div class="col-md-3">
                 <label class="form-label fw-semibold" for="statsArchetype">Archetype</label>
@@ -1241,7 +1349,7 @@
           @endif
         </div>
 
-        <div class="modal-footer border-top border-secondary border-opacity-25 bg-dark">
+        <div class="modal-footer border-top border-secondary border-opacity-25">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
           <button type="button" class="btn btn-primary fw-bold" id="btnSaveStatsSubmit">
             <i class="icon-base ti tabler-check me-1"></i> Nitelikleri Kaydet
@@ -1273,7 +1381,7 @@
             </div>
           </div>
         </div>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
       <div class="modal-body p-3 p-md-4">
@@ -1330,6 +1438,33 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+  const createCharacterForm = document.getElementById('formCreateFeatCharacter');
+  if (createCharacterForm) {
+    createCharacterForm.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      const submit = createCharacterForm.querySelector('button[type="submit"]');
+      submit.disabled = true;
+      try {
+        const response = await fetch('{{ route("valiant-shade.pages-featntrait.character.create") }}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+          body: JSON.stringify(Object.fromEntries(new FormData(createCharacterForm))),
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          const errors = data.errors ? Object.values(data.errors).flat().join('\n') : '';
+          Swal.fire({ icon: 'error', title: '{{ __("Error") }}', text: errors || data.message });
+          return;
+        }
+        switchCharacter(data.character.character_name);
+      } catch (error) {
+        Swal.fire({ icon: 'error', title: '{{ __("Error") }}', text: '{{ __("Could not reach the server.") }}' });
+      } finally {
+        submit.disabled = false;
+      }
+    });
+  }
 
   // Switch Character in dropdown
   window.switchCharacter = function(charName) {
@@ -1504,6 +1639,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Modals
   const featModalEl = document.getElementById('modalFeatAction');
   const featModal = featModalEl ? new bootstrap.Modal(featModalEl) : null;
+  const featForm = document.getElementById('formFeatAction');
 
   const statsModalEl = document.getElementById('modalEditStats');
   const statsModal = statsModalEl ? new bootstrap.Modal(statsModalEl) : null;
@@ -1531,8 +1667,10 @@ document.addEventListener('DOMContentLoaded', function () {
   const btnOpenAddFeat = document.getElementById('btnOpenAddFeatModal');
   if (btnOpenAddFeat) {
     btnOpenAddFeat.addEventListener('click', function () {
+      featForm.reset();
+      document.getElementById('featInputCharName').value = @json($selectedChar);
       document.getElementById('editFeatId').value = '';
-      document.getElementById('featInputCharName').readOnly = false;
+      document.getElementById('featInputCharName').disabled = false;
       document.getElementById('featInputClassSlot').value = '';
       document.getElementById('featModalModeText').textContent = "{{ __('Add Feat') }}";
       document.getElementById('featInputName').value = '';
@@ -1547,8 +1685,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Quick Add for specific level
   window.quickAddFeatToLevel = function(level) {
+    featForm.reset();
+    document.getElementById('featInputCharName').value = @json($selectedChar);
     document.getElementById('editFeatId').value = '';
-    document.getElementById('featInputCharName').readOnly = false;
+    document.getElementById('featInputCharName').disabled = false;
     document.getElementById('featInputClassSlot').value = '';
     document.getElementById('featModalModeText').textContent = `{{ __("Add Feat for Level") }} ${level}`;
     document.getElementById('featInputLevel').value = level;
@@ -1569,8 +1709,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Open Edit Feat Modal
   window.openEditFeatModal = function(id, name, level, slotType, category, preq, notes, isClassFeat) {
+    featForm.reset();
+    document.getElementById('featInputCharName').value = @json($selectedChar);
     document.getElementById('editFeatId').value = id;
-    document.getElementById('featInputCharName').readOnly = true;
+    document.getElementById('featInputCharName').disabled = true;
     document.getElementById('featInputClassSlot').value = '';
     document.getElementById('featModalModeText').textContent = "{{ __('Edit Feat') }}";
     document.getElementById('featInputLevel').value = level;
@@ -1585,8 +1727,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Save Feat Submit
   const btnSaveFeat = document.getElementById('btnSaveFeatSubmit');
-  if (btnSaveFeat) {
-    btnSaveFeat.addEventListener('click', function () {
+  if (btnSaveFeat && featForm) {
+    featForm.addEventListener('submit', function (event) {
+      event.preventDefault();
       const featId = document.getElementById('editFeatId').value;
       const charName = document.getElementById('featInputCharName').value;
       const level = parseInt(document.getElementById('featInputLevel').value);
@@ -1634,10 +1777,10 @@ document.addEventListener('DOMContentLoaded', function () {
         },
         body: JSON.stringify(payload)
       })
-      .then(res => res.json())
-      .then(data => {
+      .then(async res => {
+        const data = await res.json();
         btnSaveFeat.disabled = false;
-        if (data.success) {
+        if (res.ok && data.success) {
           featModal.hide();
           Swal.fire({
             icon: 'success',
@@ -1645,9 +1788,10 @@ document.addEventListener('DOMContentLoaded', function () {
             text: data.message,
             timer: 1200,
             showConfirmButton: false
-          }).then(() => location.reload());
+          }).then(() => switchCharacter(data.feat.character_name));
         } else {
-          Swal.fire({ icon: 'error', title: '{{ __('Error') }}', text: data.message || '{{ __('An error occurred during save.') }}' });
+          const validationMessage = data.errors ? Object.values(data.errors).flat().join('\n') : '';
+          Swal.fire({ icon: 'error', title: '{{ __('Error') }}', text: validationMessage || data.message || '{{ __('An error occurred during save.') }}' });
         }
       })
       .catch(err => {

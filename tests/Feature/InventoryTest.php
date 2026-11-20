@@ -4,7 +4,11 @@ namespace Tests\Feature;
 
 use App\Models\Character;
 use App\Models\CharacterInfo;
+use App\Models\CharacterInventoryAssignment;
+use App\Models\CharacterProfile;
+use App\Models\GuildVault;
 use App\Models\InventoryItem;
+use App\Models\InventorySaleLog;
 use App\Models\PlayerXp;
 use App\Models\User;
 use App\ValiantShade\Services\InventoryService;
@@ -255,6 +259,146 @@ class InventoryTest extends TestCase
         $this->assertSoftDeleted('inventory_items', ['id' => $firstItem->id]);
         $this->assertSoftDeleted('inventory_items', ['id' => $secondItem->id]);
         $this->assertDatabaseHas('guild_vaults', ['id' => 1, 'balance_sp' => 31300]);
+    }
+
+    public function test_market_sale_is_logged_and_can_be_reversed_once(): void
+    {
+        $admin = User::factory()->create(['role' => 'Admin']);
+        $item = app(InventoryService::class)->createItem([
+            'name' => 'Sale reversal sword', 'type' => 'Weapon', 'quantity' => 2, 'unit_price' => 100,
+            'uses_remaining' => 5,
+        ]);
+        $response = $this->actingAs($admin)->postJson('/valiant-shade/pages/inventory/sell', ['ids' => [$item->id]]);
+        $response->assertOk()->assertJsonPath('proceedsSp', 1100);
+        $logId = $response->json('saleLogId');
+        $this->assertDatabaseHas('inventory_sale_logs', ['id' => $logId, 'destination' => 'market', 'sold_by' => $admin->id]);
+        $this->actingAs($admin)->get('/valiant-shade/pages/inventory')
+            ->assertOk()->assertSee('Sale reversal sword')->assertSee('sell-revert/'.$logId, false);
+
+        $this->actingAs($admin)->postJson("/valiant-shade/pages/inventory/sell-revert/{$logId}")
+            ->assertOk()->assertJsonPath('restoredCount', 1);
+        $this->assertDatabaseHas('inventory_items', ['id' => $item->id, 'deleted_at' => null, 'uses_remaining' => 5]);
+        $this->assertDatabaseHas('guild_vaults', ['id' => 1, 'balance_sp' => 30000]);
+        $this->actingAs($admin)->postJson("/valiant-shade/pages/inventory/sell-revert/{$logId}")
+            ->assertUnprocessable();
+        $this->assertDatabaseHas('financial_ledger', ['transaction_type' => 'ITEM_SALE_REVERT', 'amount_sp' => -1100]);
+    }
+
+    public function test_character_sale_and_reversal_preserve_later_balance_changes(): void
+    {
+        $admin = User::factory()->create(['role' => 'Admin']);
+        $owner = User::factory()->create();
+        $character = Character::create(['user_id' => $owner->id, 'name' => 'Sale Hero', 'status' => 'ACTIVE', 'allowance_sp' => 2000]);
+        CharacterProfile::create(['user_id' => $owner->id, 'character_name' => 'Sale Hero', 'class_name' => 'Fighter', 'rank' => 'Üye']);
+        $info = CharacterInfo::create(['character_id' => $character->id, 'pocket_money' => ['gp' => 12, 'sp' => 3]]);
+        PlayerXp::create(['user_id' => $owner->id, 'character_name' => 'Sale Hero', 'allowance_sp' => 2000]);
+        $item = app(InventoryService::class)->createItem(['name' => 'Purchased Blade', 'type' => 'Weapon', 'quantity' => 2, 'unit_price' => 100]);
+        $item->update(['sell_price' => 50]);
+
+        $response = $this->actingAs($admin)->postJson('/valiant-shade/pages/inventory/sell', ['ids' => [$item->id], 'character_id' => $character->id]);
+        $response->assertOk()->assertJsonPath('proceedsSp', 1100);
+        $logId = $response->json('saleLogId');
+        $this->assertDatabaseHas('inventory_sale_logs', ['id' => $logId, 'destination' => 'character', 'buyer_character_id' => $character->id]);
+        $this->assertDatabaseHas('inventory_items', ['id' => $item->id, 'character_id' => $character->id, 'deleted_at' => null]);
+        $this->assertDatabaseHas('characters', ['id' => $character->id, 'allowance_sp' => 900]);
+        $this->assertDatabaseHas('guild_vaults', ['id' => 1, 'balance_sp' => 31100]);
+        $this->assertDatabaseHas('financial_ledger', ['character_id' => $character->id, 'transaction_type' => 'ITEM_SALE', 'amount_sp' => -1100]);
+        $this->assertSame(['gp' => 12, 'sp' => 3], $info->fresh()->pocket_money);
+        $this->actingAs($owner)->get('/valiant-shade/character/sheet?name=Sale%20Hero')->assertOk()->assertSee('Purchased Blade');
+
+        Character::whereKey($character->id)->update(['allowance_sp' => 1100]);
+        PlayerXp::where('character_name', 'Sale Hero')->update(['allowance_sp' => 1100]);
+        GuildVault::whereKey(1)->update(['balance_sp' => 30600]);
+        $this->actingAs($admin)->postJson("/valiant-shade/pages/inventory/sell-revert/{$logId}")->assertOk();
+        $this->assertDatabaseHas('characters', ['id' => $character->id, 'allowance_sp' => 2200]);
+        $this->assertDatabaseHas('player_xps', ['character_name' => 'Sale Hero', 'allowance_sp' => 2200]);
+        $this->assertDatabaseHas('guild_vaults', ['id' => 1, 'balance_sp' => 29500]);
+        $this->assertDatabaseHas('inventory_items', ['id' => $item->id, 'character_id' => null]);
+        $this->actingAs($owner)->get('/valiant-shade/character/sheet?name=Sale%20Hero')->assertDontSee('Purchased Blade');
+    }
+
+    public function test_sale_reversal_rejects_changed_items_and_insufficient_vault(): void
+    {
+        $admin = User::factory()->create(['role' => 'Admin']);
+        $owner = User::factory()->create();
+        $character = Character::create(['user_id' => $owner->id, 'name' => 'Buyer', 'status' => 'ACTIVE', 'allowance_sp' => 1000]);
+        $item = app(InventoryService::class)->createItem(['name' => 'Changed item', 'type' => 'Gear', 'quantity' => 1, 'unit_price' => 100]);
+        $response = $this->actingAs($admin)->postJson('/valiant-shade/pages/inventory/sell', ['ids' => [$item->id], 'character_id' => $character->id]);
+        $logId = $response->json('saleLogId');
+        $response->assertOk();
+        $item->refresh()->update(['quantity' => 2]);
+        $this->actingAs($admin)->postJson("/valiant-shade/pages/inventory/sell-revert/{$logId}")->assertUnprocessable();
+        $this->assertDatabaseHas('inventory_sale_logs', ['id' => $logId, 'reverted_at' => null]);
+        $this->assertDatabaseHas('characters', ['id' => $character->id, 'allowance_sp' => 450]);
+        $item->update(['quantity' => 1]);
+        GuildVault::whereKey(1)->update(['balance_sp' => 0]);
+        $this->actingAs($admin)->postJson("/valiant-shade/pages/inventory/sell-revert/{$logId}")->assertUnprocessable();
+        $this->assertDatabaseHas('inventory_items', ['id' => $item->id, 'character_id' => $character->id]);
+    }
+
+    public function test_character_sale_requires_funds_and_sale_history_is_paginated(): void
+    {
+        $admin = User::factory()->create(['role' => 'Admin']);
+        $buyer = Character::create(['user_id' => $admin->id, 'name' => 'Poor buyer', 'status' => 'ACTIVE', 'allowance_sp' => 5]);
+        $item = app(InventoryService::class)->createItem(['name' => 'Expensive sale', 'type' => 'Gear', 'quantity' => 1, 'unit_price' => 100]);
+        $this->actingAs($admin)->postJson('/valiant-shade/pages/inventory/sell', ['ids' => [$item->id], 'character_id' => $buyer->id])
+            ->assertUnprocessable();
+        $this->assertDatabaseHas('inventory_items', ['id' => $item->id, 'character_id' => null, 'deleted_at' => null]);
+        $this->assertDatabaseCount('inventory_sale_logs', 0);
+
+        for ($i = 1; $i <= 21; $i++) {
+            InventorySaleLog::create(['sold_by' => $admin->id, 'proceeds_sp' => 1, 'items_snapshot' => [['name' => "Historic sale {$i}", 'quantity' => 1]]]);
+        }
+        $this->actingAs($admin)->get('/valiant-shade/pages/inventory?sales_page=2')
+            ->assertOk()->assertSee('Historic sale 1')->assertDontSee('Historic sale 21');
+    }
+
+    public function test_reversal_rejects_items_used_after_sale_and_unauthorized_requests(): void
+    {
+        $admin = User::factory()->create(['role' => 'Admin']);
+        $owner = User::factory()->create(['role' => 'User']);
+        $buyer = Character::create(['user_id' => $owner->id, 'name' => 'Item user', 'status' => 'ACTIVE', 'allowance_sp' => 1000]);
+        $item = app(InventoryService::class)->createItem(['name' => 'Used item', 'type' => 'Gear', 'quantity' => 1, 'unit_price' => 100]);
+        $this->actingAs($owner)->postJson('/valiant-shade/pages/inventory/sell', ['ids' => [$item->id], 'character_id' => $buyer->id])->assertForbidden();
+        $logId = $this->actingAs($admin)->postJson('/valiant-shade/pages/inventory/sell', ['ids' => [$item->id], 'character_id' => $buyer->id])
+            ->assertOk()->json('saleLogId');
+        $this->actingAs($owner)->postJson("/valiant-shade/pages/inventory/sell-revert/{$logId}")->assertForbidden();
+        CharacterInventoryAssignment::create([
+            'character_id' => $buyer->id, 'inventory_item_id' => $item->id,
+            'custody_status' => CharacterInventoryAssignment::STATUS_CONSUMED,
+            'assigned_at' => now(), 'returned_at' => now(),
+        ]);
+        $this->actingAs($admin)->postJson("/valiant-shade/pages/inventory/sell-revert/{$logId}")->assertUnprocessable();
+        $this->assertDatabaseHas('inventory_sale_logs', ['id' => $logId, 'reverted_at' => null]);
+        $this->actingAs($admin)->postJson('/valiant-shade/pages/inventory/reset-defaults')->assertUnprocessable();
+        $this->assertDatabaseHas('inventory_items', ['id' => $item->id, 'character_id' => $buyer->id]);
+    }
+
+    public function test_old_market_sale_snapshot_can_be_reversed(): void
+    {
+        $admin = User::factory()->create(['role' => 'Admin']);
+        $item = app(InventoryService::class)->createItem(['name' => 'Legacy item', 'type' => 'Gear', 'quantity' => 1, 'unit_price' => 100]);
+        $log = InventorySaleLog::create([
+            'sold_by' => $admin->id,
+            'proceeds_sp' => 550,
+            'items_snapshot' => [$item->only(['id', 'name', 'quality', 'type', 'quantity', 'unit_price', 'total_price', 'market_value', 'buy_price', 'sell_price', 'notes'])],
+        ]);
+        $item->delete();
+        $this->actingAs($admin)->postJson("/valiant-shade/pages/inventory/sell-revert/{$log->id}")->assertOk();
+        $this->assertDatabaseHas('inventory_items', ['id' => $item->id, 'deleted_at' => null]);
+    }
+
+    public function test_character_sheet_does_not_mix_ambiguous_characters_in_inventory(): void
+    {
+        $admin = User::factory()->create(['role' => 'Admin']);
+        $owner = User::factory()->create();
+        $buyer = Character::create(['user_id' => $owner->id, 'name' => 'Duplicate buyer', 'status' => 'ACTIVE', 'allowance_sp' => 1000]);
+        CharacterProfile::create(['user_id' => $owner->id, 'character_name' => 'Duplicate buyer', 'class_name' => 'Fighter', 'rank' => 'Üye']);
+        $item = app(InventoryService::class)->createItem(['name' => 'Ambiguous purchase', 'type' => 'Gear', 'quantity' => 1, 'unit_price' => 100]);
+        $this->actingAs($admin)->postJson('/valiant-shade/pages/inventory/sell', ['ids' => [$item->id], 'character_id' => $buyer->id])->assertOk();
+        Character::create(['user_id' => $owner->id, 'name' => 'Duplicate buyer', 'status' => 'ACTIVE']);
+        $this->actingAs($owner)->get('/valiant-shade/character/sheet?name=Duplicate%20buyer')
+            ->assertOk()->assertSee('Karakter eşleşmesi belirsiz')->assertDontSee('Ambiguous purchase');
     }
 
     public function test_admin_can_update_inventory_item(): void

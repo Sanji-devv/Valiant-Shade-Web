@@ -5,8 +5,12 @@ namespace App\ValiantShade\Http\Controllers;
 use App\ValiantShade\Http\Controllers\Controller;
 use App\ValiantShade\Services\CharacterTraitsService;
 use App\ValiantShade\Services\PathfinderFeatsService;
+use App\Models\CharacterProfile;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class FeatsListController extends Controller
 {
@@ -40,6 +44,18 @@ class FeatsListController extends Controller
         $masterTable = $this->featsService->getMasterFeatsTable($sortBy);
         $library = $this->featsService->getCommonFeatsLibrary();
         $activeView = $request->query('view', 'dossier'); // 'dossier' (orange sheet) or 'table' (google sheet)
+        $isAdmin = $request->user()->isAdmin();
+        $invalidRankCharacters = $isAdmin
+            ? $characters->filter(fn ($character) => ! in_array(mb_strtolower(trim((string) $character->rank)), ['üye', 'uye', 'kıdemli', 'kidemli', 'uzman'], true))
+            : collect();
+        $races = collect(require config_path('enums/races.php'))
+            ->filter(fn ($race) => isset($race['race_points']) && is_numeric($race['race_points']) && (float) $race['race_points'] <= 20)
+            ->sortBy('name');
+        $classes = collect(require config_path('enums/classes.php'))->sortBy('name');
+        $canCreateFeat = $request->user()->hasPermission('hr.create');
+        $canUpdateFeat = $request->user()->hasPermission('hr.update');
+        $canDeleteFeat = $request->user()->hasPermission('hr.delete');
+        $owners = $isAdmin ? User::query()->orderBy('name')->get(['id', 'name']) : collect();
 
         return view('valiant-shade.content.pages.pages-feats-list', compact(
             'characters',
@@ -50,8 +66,33 @@ class FeatsListController extends Controller
             'masterTable',
             'library',
             'activeView',
-            'sortBy'
+            'sortBy',
+            'isAdmin',
+            'invalidRankCharacters',
+            'races',
+            'classes',
+            'canCreateFeat',
+            'canUpdateFeat',
+            'canDeleteFeat',
+            'owners'
         ));
+    }
+
+    public function createCharacter(Request $request, UserProfile $userProfile): JsonResponse
+    {
+        abort_unless($request->user()->isAdmin(), 403);
+        $races = collect(require config_path('enums/races.php'))
+            ->filter(fn ($race) => isset($race['race_points']) && is_numeric($race['race_points']) && (float) $race['race_points'] <= 20)
+            ->pluck('name')->all();
+        $classes = collect(require config_path('enums/classes.php'))->pluck('name')->all();
+        $validated = $request->validate([
+            'owner_id' => ['required', 'integer', Rule::exists('users', 'id')],
+            'race' => ['required', 'string', Rule::in($races)],
+            'class_name' => ['required', 'string', Rule::in($classes)],
+        ]);
+        $owner = User::findOrFail($validated['owner_id']);
+
+        return DB::transaction(fn () => $userProfile->createCharacterForUser($request, $owner));
     }
 
     /**
@@ -59,8 +100,9 @@ class FeatsListController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        abort_unless($request->user()->hasPermission('hr.create'), 403);
         $validated = $request->validate([
-            'character_name' => ['required', 'string', 'max:100'],
+            'character_name' => ['required', 'string', 'max:100', Rule::exists('character_profiles', 'character_name')->whereNull('deleted_at')],
             'level'          => ['required', 'integer', 'min:1', 'max:20'],
             'slot_type'      => ['required', 'string', 'in:standard,racial_bonus,class_bonus,class_talent,trait,reserve'],
             'feat_name'      => ['required', 'string', 'max:255'],
@@ -85,6 +127,7 @@ class FeatsListController extends Controller
      */
     public function update(Request $request, int $id): JsonResponse
     {
+        abort_unless($request->user()->hasPermission('hr.update'), 403);
         $validated = $request->validate([
             'level'          => ['sometimes', 'integer', 'min:1', 'max:20'],
             'slot_type'      => ['sometimes', 'string', 'in:standard,racial_bonus,class_bonus,class_talent,trait,reserve'],
@@ -108,8 +151,9 @@ class FeatsListController extends Controller
     /**
      * Delete a feat.
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
+        abort_unless($request->user()->hasPermission('hr.delete'), 403);
         $deleted = $this->featsService->deleteFeat($id);
 
         return response()->json([
@@ -123,10 +167,16 @@ class FeatsListController extends Controller
      */
     public function updateStats(Request $request): JsonResponse
     {
+        abort_unless($request->user()->hasPermission('hr.update'), 403);
+        $profile = CharacterProfile::where('character_name', $request->input('character_name'))->firstOrFail();
+        $races = collect(require config_path('enums/races.php'))
+            ->filter(fn ($race) => isset($race['race_points']) && is_numeric($race['race_points']) && (float) $race['race_points'] <= 20)
+            ->pluck('name')->push($profile->race)->filter()->all();
+        $classes = collect(require config_path('enums/classes.php'))->pluck('name')->push($profile->class_name)->filter()->all();
         $validated = $request->validate([
             'character_name' => ['required', 'string', 'max:100'],
-            'race'           => ['nullable', 'string', 'max:100'],
-            'class_name'     => ['nullable', 'string', 'max:100'],
+            'race'           => ['nullable', 'string', 'max:100', Rule::in($races)],
+            'class_name'     => ['nullable', 'string', 'max:100', Rule::in($classes)],
             'archetype'      => ['nullable', 'string', 'max:100'],
             'level'          => ['required', 'integer', 'min:1', 'max:20'],
             'rank'           => ['nullable', 'string', 'max:50'],
@@ -178,27 +228,11 @@ class FeatsListController extends Controller
      */
     public function deleteCharacter(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'character_name' => ['required', 'string'],
-        ]);
-
-        $charName = $validated['character_name'];
-        $deleted = $this->featsService->deleteCharacter($charName);
-
-        if (!$deleted) {
-            return response()->json([
-                'success' => false,
-                'message' => __('Character not found or could not be deleted.'),
-            ], 404);
-        }
-
-        $nextChar = $this->featsService->getCharactersList()->first()?->character_name ?? '';
-
+        abort_unless($request->user()->isAdmin(), 403);
         return response()->json([
-            'success' => true,
-            'message' => __('Character and all associated feats deleted successfully.'),
-            'next_character' => $nextChar,
-        ]);
+            'success' => false,
+            'message' => __('Site genelinde karakter silme henüz desteklenmiyor; ilişkili kayıtlar korunuyor.'),
+        ], 409);
     }
 
     /**

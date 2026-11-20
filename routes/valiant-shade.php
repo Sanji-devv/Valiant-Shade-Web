@@ -99,6 +99,8 @@ Route::post('/character/set-active', [UserProfile::class, 'setActiveCharacter'])
 Route::get('/pages/inventory', [Inventory::class, 'index'])->name('valiant-shade.pages-inventory');
 Route::delete('/pages/inventory/bulk', [Inventory::class, 'destroyMany'])->name('valiant-shade.pages-inventory.bulk-destroy');
 Route::post('/pages/inventory/sell', [Inventory::class, 'sellMany'])->name('valiant-shade.pages-inventory.sell');
+Route::post('/pages/inventory/sell-revert/{logId}', [Inventory::class, 'revertSale'])->name('valiant-shade.pages-inventory.sell-revert');
+Route::get('/pages/inventory/sale-logs', [Inventory::class, 'saleLogs'])->name('valiant-shade.pages-inventory.sale-logs');
 Route::post('/pages/inventory', [Inventory::class, 'store'])->name('valiant-shade.pages-inventory.store');
 Route::put('/pages/inventory/{id}', [Inventory::class, 'update'])->name('valiant-shade.pages-inventory.update');
 Route::delete('/pages/inventory/{id}', [Inventory::class, 'destroy'])->name('valiant-shade.pages-inventory.destroy');
@@ -237,6 +239,7 @@ Route::get('/pages/feat-and-traits', function (Request $request) {
 Route::post('/pages/featntrait', [FeatsListController::class, 'store'])->name('valiant-shade.pages-featntrait.store');
 Route::put('/pages/featntrait/{id}', [FeatsListController::class, 'update'])->name('valiant-shade.pages-featntrait.update');
 Route::delete('/pages/featntrait/{id}', [FeatsListController::class, 'destroy'])->name('valiant-shade.pages-featntrait.destroy');
+Route::post('/pages/featntrait/character/create', [FeatsListController::class, 'createCharacter'])->name('valiant-shade.pages-featntrait.character.create');
 Route::delete('/pages/featntrait/character/delete', [FeatsListController::class, 'deleteCharacter'])->name('valiant-shade.pages-featntrait.character.destroy');
 Route::post('/pages/featntrait/stats', [FeatsListController::class, 'updateStats'])->name('valiant-shade.pages-featntrait.stats');
 Route::post('/pages/featntrait/reset-excel', [FeatsListController::class, 'resetExcel'])->name('valiant-shade.pages-featntrait.reset-excel');

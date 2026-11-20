@@ -66,6 +66,7 @@ class Inventory extends Controller
         $vault = $this->inventoryService->getVault();
         $characters = $this->inventoryService->getPlayableCharacters();
         $recentTransactions = $this->inventoryService->getRecentVaultTransactions(10);
+        $saleLogs = $this->inventoryService->paginateSaleLogs();
         $user = auth()->user();
         $canCreate = $user?->hasPermission('inventory.create') ?? false;
         $canUpdate = $user?->hasPermission('inventory.update') ?? false;
@@ -90,20 +91,21 @@ class Inventory extends Controller
         }
 
         return view('valiant-shade.content.pages.pages-inventory', [
-            'items' => $items,
-            'metrics' => $metrics,
-            'vault' => $vault,
-            'characters' => $characters,
+            'items'              => $items,
+            'metrics'            => $metrics,
+            'vault'              => $vault,
+            'characters'         => $characters,
             'recentTransactions' => $recentTransactions,
-            'categories' => $categories,
-            'currencies' => $currencies,
-            'currentCurrency' => $currency,
-            'currentType' => $filters['type'] ?? 'all',
-            'search' => $filters['search'] ?? '',
-            'isAdmin' => $canManageItems,
-            'canCreate' => $canCreate,
-            'canUpdate' => $canUpdate,
-            'canDelete' => $canDelete,
+            'saleLogs'           => $saleLogs,
+            'categories'         => $categories,
+            'currencies'         => $currencies,
+            'currentCurrency'    => $currency,
+            'currentType'        => $filters['type'] ?? 'all',
+            'search'             => $filters['search'] ?? '',
+            'isAdmin'            => $canManageItems,
+            'canCreate'          => $canCreate,
+            'canUpdate'          => $canUpdate,
+            'canDelete'          => $canDelete,
         ]);
     }
 
@@ -285,7 +287,7 @@ class Inventory extends Controller
 
         $validated = $request->validate([
             'ids' => ['required', 'array', 'min:1', 'max:1000'],
-            'ids.*' => ['required', 'integer', 'distinct', Rule::exists('inventory_items', 'id')->whereNull('deleted_at')],
+            'ids.*' => ['required', 'integer', 'distinct', Rule::exists('inventory_items', 'id')->whereNull('deleted_at')->whereNull('character_id')],
         ]);
 
         $deletedCount = $this->inventoryService->deleteItems($validated['ids']);
@@ -311,26 +313,74 @@ class Inventory extends Controller
 
         $validated = $request->validate([
             'ids' => ['required', 'array', 'min:1', 'max:1000'],
-            'ids.*' => ['required', 'integer', 'distinct', Rule::exists('inventory_items', 'id')->whereNull('deleted_at')],
+            'ids.*' => ['required', 'integer', 'distinct', Rule::exists('inventory_items', 'id')->whereNull('deleted_at')->whereNull('character_id')],
+            'character_id' => ['nullable', 'integer', Rule::exists('characters', 'id')->whereNull('deleted_at')],
         ]);
 
-        $sale = $this->inventoryService->sellItems($validated['ids']);
+        $sale = $this->inventoryService->sellItems($validated['ids'], $validated['character_id'] ?? null);
         $message = __('Sale completed: :amount SP added to the Guild Vault.', [
             'amount' => number_format($sale['proceeds_sp'], 2, '.', ','),
         ]);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
-                'success' => true,
-                'message' => $message,
-                'soldCount' => $sale['sold_count'],
-                'proceedsSp' => $sale['proceeds_sp'],
-                'vault' => $sale['vault'],
-                'metrics' => $this->inventoryService->getMetrics('SP'),
+                'success'      => true,
+                'message'      => $message,
+                'soldCount'    => $sale['sold_count'],
+                'proceedsSp'   => $sale['proceeds_sp'],
+                'vault'        => $sale['vault'],
+                'saleLogId'    => $sale['sale_log_id'],
+                'saleLogUuid'  => $sale['sale_log_uuid'],
+                'metrics'      => $this->inventoryService->getMetrics('SP'),
             ]);
         }
 
         return redirect()->route('valiant-shade.pages-inventory')->with('success', $message);
+    }
+
+    /**
+     * Bir satışı geri al: itemları envantere geri yükle, kasadan parayı düş.
+     */
+    public function revertSale(Request $request, int $logId): JsonResponse|RedirectResponse
+    {
+        if ($forbidden = $this->checkAdmin($request, 'delete')) {
+            return $forbidden;
+        }
+
+        $result = $this->inventoryService->revertSale($logId);
+        $message = __('Satış geri alındı: :count eşya envantere eklendi, :amount SP kasadan düşüldü.', [
+            'count'  => $result['restored_count'],
+            'amount' => number_format($result['proceeds_sp'], 2, '.', ','),
+        ]);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success'        => true,
+                'message'        => $message,
+                'restoredCount'  => $result['restored_count'],
+                'proceedsSp'     => $result['proceeds_sp'],
+                'vault'          => $result['vault'],
+                'metrics'        => $this->inventoryService->getMetrics('SP'),
+                'saleLogs'       => $this->inventoryService->getSaleLogs(20),
+            ]);
+        }
+
+        return redirect()->route('valiant-shade.pages-inventory')->with('success', $message);
+    }
+
+    /**
+     * Satış loglarını JSON olarak döndür.
+     */
+    public function saleLogs(Request $request): JsonResponse
+    {
+        if ($forbidden = $this->checkAdmin($request, 'read')) {
+            return $forbidden;
+        }
+
+        return response()->json([
+            'success'  => true,
+            'saleLogs' => $this->inventoryService->getSaleLogs(20),
+        ]);
     }
 
     /**

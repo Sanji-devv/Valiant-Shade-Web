@@ -3,12 +3,13 @@
 namespace App\ValiantShade\Services;
 
 use App\Models\CharacterFeat;
+use App\Models\Character;
+use App\Models\CharacterInfo;
 use App\Models\CharacterProfile;
 use App\Models\CharacterTrait;
 use App\Models\Feat;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use JsonException;
@@ -183,15 +184,7 @@ class PathfinderFeatsService
         $characterName = trim($data['character_name']);
         $level = (int) $data['level'];
 
-        CharacterProfile::query()->firstOrCreate(
-            ['character_name' => $characterName],
-            [
-                'user_id' => Auth::id(),
-                'class_name' => 'Adventurer',
-                'level' => $level,
-                'rank' => 'Üye',
-            ]
-        );
+        CharacterProfile::query()->where('character_name', $characterName)->firstOrFail();
 
         $featName = trim($data['feat_name']);
         $slotType = $data['slot_type'];
@@ -237,18 +230,45 @@ class PathfinderFeatsService
 
     public function updateProfileStats(string $characterName, array $data): CharacterProfile
     {
-        $profile = CharacterProfile::query()->firstOrCreate(
-            ['character_name' => $characterName],
-            [
-                'user_id' => Auth::id(),
-                'class_name' => 'Adventurer',
-                'rank' => 'Üye',
-            ]
-        );
+        return DB::transaction(function () use ($characterName, $data): CharacterProfile {
+            $profile = CharacterProfile::query()->where('character_name', $characterName)->firstOrFail();
+            $profile->fill($data);
 
-        $profile->fill($data)->save();
+            $sheet = $profile->sheet_data ?? [];
+            $classes = require config_path('enums/classes.php');
+            foreach ($classes as $key => $class) {
+                if (($class['name'] ?? null) === $profile->class_name) {
+                    $sheet['classKey'] = $key;
+                    break;
+                }
+            }
+            $sheet['className'] = $profile->class_name;
+            $sheet['race'] = $profile->race;
+            if (isset($sheet['sheetData']) && is_array($sheet['sheetData'])) {
+                $sheet['sheetData']['className'] = $profile->class_name;
+                $sheet['sheetData']['race'] = $profile->race;
+                if (isset($sheet['classKey'])) {
+                    $sheet['sheetData']['classKey'] = $sheet['classKey'];
+                }
+            }
+            $profile->sheet_data = $sheet;
+            $profile->save();
 
-        return $profile->fresh();
+            $characters = Character::query()->where('name', $characterName)->get();
+            if ($characters->count() > 1) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'character_name' => __('Multiple character records have this name.'),
+                ]);
+            }
+            if ($character = $characters->first()) {
+                CharacterInfo::query()->where('character_id', $character->id)->update([
+                    'race' => $profile->race,
+                    'class_and_level' => $profile->class_name.' '.$profile->level,
+                ]);
+            }
+
+            return $profile->fresh();
+        });
     }
 
     public function deleteCharacter(string $characterName): bool

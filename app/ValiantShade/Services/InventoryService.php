@@ -7,6 +7,7 @@ use App\Models\CharacterInfo;
 use App\Models\FinancialLedger;
 use App\Models\GuildVault;
 use App\Models\InventoryItem;
+use App\Models\InventorySaleLog;
 use App\Models\PlayerXp;
 use App\ValiantShade\Contracts\GuildVaultRepositoryInterface;
 use App\ValiantShade\Contracts\InventoryCalculationServiceInterface;
@@ -140,6 +141,8 @@ class InventoryService
                 ]);
             }
 
+            $vault = $this->getVault();
+            $vault = GuildVault::query()->whereKey($vault->id)->lockForUpdate()->firstOrFail();
             $character = Character::query()->whereKey($characterId)->lockForUpdate()->firstOrFail();
             $currentCharBalance = (float) ($character->allowance_sp ?? 0);
             if ($currentCharBalance < $amountSp) {
@@ -147,9 +150,6 @@ class InventoryService
                     'amount' => "Character {$character->name} has insufficient funds. Current allowance: ".number_format($currentCharBalance, 2, '.', ',').' SP.',
                 ]);
             }
-
-            $vault = $this->getVault();
-            $vault = GuildVault::query()->whereKey($vault->id)->lockForUpdate()->firstOrFail();
 
             $newCharBalance = round($currentCharBalance - $amountSp, 2);
             $character->allowance_sp = $newCharBalance;
@@ -210,6 +210,8 @@ class InventoryService
                 ]);
             }
 
+            $vault = $this->getVault();
+            $vault = GuildVault::query()->whereKey($vault->id)->lockForUpdate()->firstOrFail();
             $charactersQuery = Character::query()->whereNotIn('status', ['KIA', 'MIA']);
             if (! empty($characterIds)) {
                 $charactersQuery->whereIn('id', $characterIds);
@@ -223,8 +225,6 @@ class InventoryService
                 ]);
             }
 
-            $vault = $this->getVault();
-            $vault = GuildVault::query()->whereKey($vault->id)->lockForUpdate()->firstOrFail();
             if ((float) $vault->balance_sp < $totalAmountSp) {
                 throw ValidationException::withMessages([
                     'amount' => 'Insufficient guild vault funds. Current balance: '.number_format($vault->balance_sp, 2, '.', ',').' SP.',
@@ -373,35 +373,262 @@ class InventoryService
         return DB::transaction(fn () => $this->repository->deleteMany($ids));
     }
 
-    public function sellItems(array $ids): array
+    public function sellItems(array $ids, ?int $characterId = null): array
     {
-        return DB::transaction(function () use ($ids) {
+        return DB::transaction(function () use ($ids, $characterId) {
+            $vault = $this->vaultRepository->getVault();
+            $vault = GuildVault::query()->whereKey($vault->id)->lockForUpdate()->firstOrFail();
+            $vaultBefore = (float) $vault->balance_sp;
+            $character = $characterId === null ? null : Character::query()
+                ->whereNotIn('status', ['KIA', 'MIA'])
+                ->whereKey($characterId)->lockForUpdate()->first();
+            if ($characterId !== null && ! $character) {
+                throw ValidationException::withMessages(['character_id' => 'Karakter mevcut değil veya aktif değil.']);
+            }
             $items = $this->repository->findManyForUpdate($ids);
-            if ($items->count() !== count(array_unique($ids))) {
+            if ($items->isEmpty() || $items->count() !== count(array_unique($ids))
+                || $items->contains(fn (InventoryItem $item) => $item->quantity < 1 || $item->assignments()->active()->exists())) {
                 throw ValidationException::withMessages([
                     'ids' => 'One or more selected items are no longer available for sale.',
                 ]);
             }
 
-            $proceedsGp = $items->sum(
-                fn (InventoryItem $item) => (float) $item->sell_price * (int) $item->quantity
+            $proceedsGp = $items->sum(fn (InventoryItem $item) => $characterId === null
+                ? (float) $item->sell_price * (int) $item->quantity
+                : round((float) $item->total_price * 0.55 / (int) $item->quantity, 2) * (int) $item->quantity
             );
             $proceedsSp = round($proceedsGp * 10, 2);
-            $soldCount = $this->repository->deleteMany($items->modelKeys());
-            if ($soldCount !== $items->count()) {
+
+            $characterBefore = $character ? (float) $character->allowance_sp : null;
+            if ($character && $characterBefore < $proceedsSp) {
                 throw ValidationException::withMessages([
-                    'ids' => 'One or more selected items are no longer available for sale.',
+                    'character_id' => 'Karakterin ödeneği bu satış için yeterli değil.',
                 ]);
             }
 
-            $vault = $this->adjustVaultBalance($proceedsSp);
+            $snapshot = $items->map(function (InventoryItem $item) {
+                $data = $item->only([
+                    'id', 'inventory_id', 'inventory_item_type_id', 'character_id', 'name',
+                    'display_name', 'slug', 'quality', 'uses_remaining', 'type', 'quantity',
+                    'unit_price', 'total_price', 'market_value', 'buy_price', 'sell_price',
+                    'notes', 'status',
+                ]);
+                $data['_assignments'] = $item->assignments()->orderBy('id')->get()->toArray();
+                return $data;
+            })->values()->all();
+
+            if ($character) {
+                foreach ($items as $item) {
+                    $item->character_id = $character->id;
+                    $item->save();
+                }
+                $this->setCharacterAllowance($character, round($characterBefore - $proceedsSp, 2));
+            } else {
+                $soldCount = $this->repository->deleteMany($items->modelKeys());
+                if ($soldCount !== $items->count()) {
+                    throw ValidationException::withMessages([
+                        'ids' => 'One or more selected items are no longer available for sale.',
+                    ]);
+                }
+            }
+
+            $soldCount = $items->count();
+            $vault->balance_sp = round($vaultBefore + $proceedsSp, 2);
+            $vault->save();
+            $vaultAfter = (float) $vault->balance_sp;
+
+            $saleLog = InventorySaleLog::create([
+                'sold_by'                 => auth()->id(),
+                'proceeds_sp'             => $proceedsSp,
+                'vault_balance_before_sp' => $vaultBefore,
+                'vault_balance_after_sp'  => $vaultAfter,
+                'items_snapshot'          => $snapshot,
+                'destination'             => $character ? 'character' : 'market',
+                'buyer_character_id'      => $character?->id,
+                'character_balance_before_sp' => $characterBefore,
+                'character_balance_after_sp' => $character ? round($characterBefore - $proceedsSp, 2) : null,
+            ]);
+
+            FinancialLedger::create([
+                'character_id'     => null,
+                'guild_vault_id'   => $vault->id,
+                'entity_type'      => FinancialLedger::ENTITY_GUILD_RESERVE,
+                'amount_sp'        => $proceedsSp,
+                'balance_after_sp' => $vaultAfter,
+                'transaction_type' => 'ITEM_SALE',
+                'description'      => "Envanter satışı: {$soldCount} eşya, {$proceedsSp} SP (Log #{$saleLog->id})",
+            ]);
+            if ($character) {
+                FinancialLedger::create([
+                    'character_id' => $character->id,
+                    'guild_vault_id' => $vault->id,
+                    'entity_type' => FinancialLedger::ENTITY_CHARACTER,
+                    'amount_sp' => -$proceedsSp,
+                    'balance_after_sp' => round($characterBefore - $proceedsSp, 2),
+                    'transaction_type' => 'ITEM_SALE',
+                    'description' => "Karaktere eşya satışı (Log #{$saleLog->id})",
+                ]);
+            }
 
             return [
-                'sold_count' => $soldCount,
+                'sold_count'  => $soldCount,
                 'proceeds_sp' => $proceedsSp,
-                'vault' => $vault,
+                'vault'       => $vault,
+                'sale_log_id' => $saleLog->id,
+                'sale_log_uuid' => $saleLog->uuid,
             ];
         });
+    }
+
+    public function revertSale(int $logId): array
+    {
+        return DB::transaction(function () use ($logId) {
+            $log = InventorySaleLog::lockForUpdate()->findOrFail($logId);
+
+            if ($log->isReverted()) {
+                throw ValidationException::withMessages([
+                    'log_id' => 'Bu satış zaten geri alınmış.',
+                ]);
+            }
+
+            $vault = $this->vaultRepository->getVault();
+            $vault = GuildVault::query()->whereKey($vault->id)->lockForUpdate()->firstOrFail();
+            $vaultBalance = (float) $vault->balance_sp;
+
+            if ($vaultBalance < $log->proceeds_sp) {
+                throw ValidationException::withMessages([
+                    'log_id' => 'Kasada yeterli bakiye yok. Satış geliri kasadan geri alınamıyor.',
+                ]);
+            }
+
+            if (! is_array($log->items_snapshot) || count($log->items_snapshot) === 0) {
+                throw ValidationException::withMessages(['log_id' => 'Satıştaki eşya kayıtları eksik.']);
+            }
+            $character = null;
+            if ($log->destination === 'character') {
+                $character = Character::query()->whereKey($log->buyer_character_id)->lockForUpdate()->first();
+                if (! $character) {
+                    throw ValidationException::withMessages(['log_id' => 'Satışın karakteri artık bulunamıyor.']);
+                }
+            } elseif ($log->destination !== 'market') {
+                throw ValidationException::withMessages(['log_id' => 'Satışın hedefi geçersiz.']);
+            }
+            $items = InventoryItem::withTrashed()->whereIn('id', array_column($log->items_snapshot, 'id'))
+                ->lockForUpdate()->get()->keyBy('id');
+            foreach ($log->items_snapshot as $snap) {
+                $item = $items->get($snap['id'] ?? null);
+                if (! $item || ($character ? $item->trashed() || $item->character_id !== $character->id : ! $item->trashed())
+                    || $item->assignments()->active()->exists()
+                    || (array_key_exists('_assignments', $snap)
+                        ? $item->assignments()->orderBy('id')->get()->toArray() !== $snap['_assignments']
+                        : $item->assignments()->where(function ($query) use ($log) {
+                            $query->whereNull('updated_at')->orWhere('updated_at', '>=', $log->created_at);
+                        })->exists())
+                    || ! $this->matchesSaleSnapshot($item, $snap, $character !== null)) {
+                    throw ValidationException::withMessages([
+                        'log_id' => 'Satılan eşya değişmiş, kullanılmış veya artık bulunamıyor; satış geri alınamadı.',
+                    ]);
+                }
+            }
+
+            $newVaultBalance = round($vaultBalance - $log->proceeds_sp, 2);
+            $vault->balance_sp = $newVaultBalance;
+            $vault->save();
+
+            $restoredCount = 0;
+            foreach ($log->items_snapshot as $snap) {
+                $item = $items->get($snap['id']);
+                if ($character) {
+                    $item->character_id = null;
+                    $item->save();
+                } else {
+                    $item->restore();
+                }
+                $restoredCount++;
+            }
+            if ($character) {
+                $newAllowance = round((float) $character->allowance_sp + $log->proceeds_sp, 2);
+                $this->setCharacterAllowance($character, $newAllowance);
+                FinancialLedger::create([
+                    'character_id' => $character->id,
+                    'guild_vault_id' => $vault->id,
+                    'entity_type' => FinancialLedger::ENTITY_CHARACTER,
+                    'amount_sp' => $log->proceeds_sp,
+                    'balance_after_sp' => $newAllowance,
+                    'transaction_type' => 'ITEM_SALE_REVERT',
+                    'description' => "Karakter satışı geri alındı (Log #{$log->id})",
+                ]);
+            }
+
+            // Log'u reverted olarak işaretle
+            $log->reverted_at = now();
+            $log->reverted_by = auth()->id();
+            $log->save();
+
+            // FinancialLedger geri alma kaydı
+            FinancialLedger::create([
+                'character_id'     => null,
+                'guild_vault_id'   => $vault->id,
+                'entity_type'      => FinancialLedger::ENTITY_GUILD_RESERVE,
+                'amount_sp'        => -$log->proceeds_sp,
+                'balance_after_sp' => $newVaultBalance,
+                'transaction_type' => 'ITEM_SALE_REVERT',
+                'description'      => "Satış geri alındı (Log #{$log->id}): {$restoredCount} eşya envantere geri eklendi",
+            ]);
+
+            return [
+                'restored_count' => $restoredCount,
+                'proceeds_sp'    => $log->proceeds_sp,
+                'vault'          => $vault,
+                'log'            => $log,
+            ];
+        });
+    }
+
+    public function getSaleLogs(int $limit = 20): \Illuminate\Database\Eloquent\Collection
+    {
+        return InventorySaleLog::with(['soldBy', 'revertedBy', 'buyer'])
+            ->latest('id')
+            ->limit($limit)
+            ->get();
+    }
+
+    public function paginateSaleLogs(int $perPage = 20): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        return InventorySaleLog::with(['soldBy', 'revertedBy', 'buyer'])
+            ->latest('id')->paginate($perPage, ['*'], 'sales_page')->withQueryString();
+    }
+
+    private function matchesSaleSnapshot(InventoryItem $item, array $snapshot, bool $characterSale): bool
+    {
+        foreach ($snapshot as $field => $value) {
+            if ($field === 'id' || $field === '_assignments' || ($field === 'character_id' && $characterSale)) {
+                continue;
+            }
+            $current = $item->getAttribute($field);
+            if (in_array($field, ['unit_price', 'total_price', 'market_value', 'buy_price', 'sell_price'], true)) {
+                if ((float) $current !== (float) $value) {
+                    return false;
+                }
+            } elseif ($current !== $value) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function setCharacterAllowance(Character $character, float $amount): void
+    {
+        $players = PlayerXp::query()->where('character_name', $character->name)->lockForUpdate()->get();
+        if ($players->count() > 1 || $players->contains(fn (PlayerXp $player) => $player->user_id !== null && (int) $player->user_id !== (int) $character->user_id)) {
+            throw ValidationException::withMessages(['character_id' => 'Karakterin XP kaydı belirsiz veya farklı bir oyuncuya ait.']);
+        }
+        Character::query()->whereKey($character->id)->update(['allowance_sp' => $amount]);
+        if ($players->isNotEmpty()) {
+            $players->first()->update(['allowance_sp' => (int) round($amount)]);
+        }
+        $character->allowance_sp = $amount;
     }
 
     public function getMetrics(string $currency = 'SP'): array
@@ -438,13 +665,27 @@ class InventoryService
 
     public function ensureSampleDataSeeded(): void
     {
-        if ($this->repository->count() === 0 && ! InventoryItem::withTrashed()->exists()) {
+        if ($this->repository->count() === 0 && ! InventoryItem::withTrashed()->exists() && ! InventorySaleLog::query()->exists()) {
             $this->resetToDefaults();
         }
     }
 
     public function resetToDefaults(): void
     {
+        DB::transaction(function () {
+            $vault = $this->vaultRepository->getVault();
+            GuildVault::query()->whereKey($vault->id)->lockForUpdate()->firstOrFail();
+            $this->resetInventoryContents();
+        });
+    }
+
+    private function resetInventoryContents(): void
+    {
+        if (InventorySaleLog::query()->exists() || InventoryItem::query()->whereNotNull('character_id')->exists()) {
+            throw ValidationException::withMessages([
+                'inventory' => 'Satış geçmişi veya karaktere ait eşyalar varken envanter sıfırlanamaz.',
+            ]);
+        }
         $this->vaultRepository->resetToDefault();
         $this->repository->truncate();
 

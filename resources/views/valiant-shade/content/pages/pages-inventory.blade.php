@@ -16,6 +16,11 @@
 @endsection
 
 @section('content')
+@if($errors->any())
+  <div class="alert alert-danger" role="alert">
+    @foreach($errors->all() as $error)<div>{{ $error }}</div>@endforeach
+  </div>
+@endif
 <!-- Header & Actions -->
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
   <div>
@@ -149,13 +154,13 @@
     </div>
   </div>
 
-  <!-- Card 3: Sale / Market Value (55%) -->
+  <!-- Card 3: Sale / Market Value (50%) -->
   <div class="col-12 col-sm-6 col-xl-3">
     <div class="card h-100 shadow-none border">
       <div class="card-body p-4">
         <div class="d-flex align-items-start justify-content-between mb-2">
           <div class="content-left">
-            <span class="text-heading fw-semibold">Market Value (55%)</span>
+            <span class="text-heading fw-semibold">Piyasa Satış (%50)</span>
             <div class="d-flex align-items-baseline gap-2 my-1">
               <h3 class="mb-0 fw-bold text-success font-monospace" id="statMarketValue" data-base-val="{{ $metrics['grand_total_market_value'] ?? 0 }}">
                 {{ number_format(($metrics['grand_total_market_value'] ?? 0) * 10, 2, '.', ',') }}
@@ -170,7 +175,7 @@
           </div>
         </div>
         <div class="mt-2 pt-2 border-top">
-          <small class="text-body-secondary">Merchant liquidation cash yield</small>
+          <small class="text-body-secondary">Piyasa satış tahmini (eşyaların %50'si)</small>
         </div>
       </div>
     </div>
@@ -197,7 +202,7 @@
           </div>
         </div>
         <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top">
-          <small class="text-body-secondary">Cash + 55% Item Value</small>
+          <small class="text-body-secondary">Nakit + %50 Eşya Değeri</small>
           <span class="badge bg-label-secondary font-monospace" id="statQtyCount">{{ $metrics['total_items_count'] ?? 0 }} Types / {{ $metrics['total_quantity'] ?? 0 }} Items</span>
         </div>
       </div>
@@ -225,9 +230,10 @@
           </button>
         @endif
         @if($canDelete)
-          <button type="button" class="btn btn-success btn-sm rounded-pill waves-effect shadow-xs" id="btnSellSelected" title="{{ __('Sell selected items') }} (50%)" aria-label="{{ __('Sell selected items') }}" disabled>
+          <button type="button" class="btn btn-success btn-sm rounded-pill waves-effect shadow-xs" id="btnSellSelected" title="{{ __('Sell selected items') }}" aria-label="{{ __('Sell selected items') }}" disabled>
             <i class="icon-base ti tabler-coins"></i>
           </button>
+          <button type="button" class="btn btn-label-primary btn-sm rounded-pill" id="btnSellToCharacter" data-bs-toggle="modal" data-bs-target="#modalSellToCharacter" disabled>Karaktere Sat</button>
           <button type="button" class="btn btn-danger btn-sm rounded-pill waves-effect shadow-xs" id="btnDeleteSelected" title="{{ __('Delete selected items') }}" aria-label="{{ __('Delete selected items') }}" disabled>
             <i class="icon-base ti tabler-minus"></i>
           </button>
@@ -280,8 +286,8 @@
           <th style="width: 70px;" class="text-center">Qty</th>
           <th style="width: 130px;" class="text-end col-header-unit">Unit (<span class="curr-col-label">SP</span>)</th>
           <th style="width: 140px;" class="text-end col-header-total">Total (<span class="curr-col-label">SP</span>)</th>
-          <th style="width: 130px;" class="text-end col-header-buy">Buy (55% / unit <span class="curr-col-label">SP</span>)</th>
-          <th style="width: 130px;" class="text-end col-header-sell">Sell (50% / unit <span class="curr-col-label">SP</span>)</th>
+          <th style="width: 130px;" class="text-end col-header-buy">Piyasa Satış (%50 / unit <span class="curr-col-label">SP</span>)</th>
+          <th style="width: 130px;" class="text-end col-header-sell">Piyasa Satış (unit <span class="curr-col-label">SP</span>)</th>
           @if($canUpdate)
             <th style="width: 90px;" class="text-center">Actions</th>
           @endif
@@ -398,6 +404,124 @@
   </div>
 </div>
 
+@if($canDelete)
+{{-- ======================================================== --}}
+{{-- SATIŞ GEÇMİŞİ & GERİ AL KARTI --}}
+{{-- ======================================================== --}}
+<div class="card shadow-none border mt-4" id="saleLogsCard">
+  <div class="card-header border-bottom py-3 px-4 d-flex align-items-center justify-content-between">
+    <div>
+      <h5 class="card-title mb-0 fw-semibold d-flex align-items-center gap-2">
+        <i class="icon-base ti tabler-history text-warning fs-4"></i>
+        Satış Geçmişi
+      </h5>
+      <small class="text-body-secondary">Kayıtlı satışlar — geri alındığında eşya ve satış tutarı iade edilir.</small>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <div id="saleLogsTableWrap" class="table-responsive">
+      <table class="table table-sm align-middle mb-0" id="saleLogsTable">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">#</th>
+            <th>Tarih</th>
+            <th>Satıcı</th>
+            <th>Alıcı</th>
+            <th>Eşyalar</th>
+            <th class="text-end">Gelir (SP)</th>
+            <th class="text-center">Durum</th>
+            <th class="text-center">İşlem</th>
+          </tr>
+        </thead>
+        <tbody id="saleLogsBody">
+          @forelse ($saleLogs as $saleLog)
+            <tr data-log-id="{{ $saleLog->id }}" id="saleLogRow{{ $saleLog->id }}">
+              <td class="ps-4 font-monospace text-body-secondary">{{ $saleLog->id }}</td>
+              <td class="text-nowrap">
+                <span title="{{ $saleLog->created_at->format('d.m.Y H:i:s') }}">
+                  {{ $saleLog->created_at->format('d.m.Y H:i') }}
+                </span>
+              </td>
+              <td>{{ $saleLog->soldBy?->name ?? '—' }}</td>
+              <td>{{ $saleLog->destination === 'character' ? ($saleLog->buyer?->name ?? 'Karakter bulunamadı') : 'Piyasa' }}</td>
+              <td>
+                @foreach($saleLog->items_snapshot as $item)
+                  <div>{{ $item['name'] ?? 'Bilinmeyen eşya' }} &times; {{ $item['quantity'] ?? 0 }}</div>
+                @endforeach
+              </td>
+              <td class="text-end font-monospace fw-semibold text-success">
+                +{{ number_format($saleLog->proceeds_sp, 2, '.', ',') }} SP
+              </td>
+              <td class="text-center">
+                @if($saleLog->isReverted())
+                  <span class="badge bg-label-danger rounded-pill">
+                    <i class="icon-base ti tabler-arrow-back-up me-1"></i>Geri Alındı
+                  </span>
+                  <small class="d-block text-body-secondary" style="font-size:0.72rem;">
+                    {{ $saleLog->reverted_at?->format('d.m.Y H:i') }} — {{ $saleLog->revertedBy?->name ?? '?' }}
+                  </small>
+                @else
+                  <span class="badge bg-label-success rounded-pill">
+                    <i class="icon-base ti tabler-check me-1"></i>Aktif
+                  </span>
+                @endif
+              </td>
+              <td class="text-center">
+                @if(!$saleLog->isReverted())
+                  <form method="POST" action="{{ route('valiant-shade.pages-inventory.sell-revert', $saleLog->id) }}" onsubmit="return confirm('Bu satışı geri almak istiyor musunuz?')">
+                    @csrf
+                    <button type="submit" class="btn btn-sm btn-label-warning rounded-pill">
+                      <i class="icon-base ti tabler-arrow-back-up me-1"></i>Geri Al
+                    </button>
+                  </form>
+                @else
+                  <span class="text-body-secondary opacity-50">—</span>
+                @endif
+              </td>
+            </tr>
+          @empty
+            <tr id="saleLogsEmpty">
+              <td colspan="8" class="text-center py-5 text-body-secondary">
+                <i class="icon-base ti tabler-history-off d-block fs-1 mb-2 opacity-25"></i>
+                Henüz satış kaydı yok.
+              </td>
+            </tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="p-3">{{ $saleLogs->links() }}</div>
+</div>
+
+<div class="modal fade" id="modalSellToCharacter" tabindex="-1" aria-labelledby="sellToCharacterTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="sellToCharacterTitle">Karaktere Sat</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('Close') }}"></button>
+      </div>
+      <form id="formSellToCharacter">
+        <div class="modal-body">
+          <label class="form-label" for="saleCharacter">Karakter</label>
+          <select class="form-select" id="saleCharacter" required>
+            <option value="">Karakter seçin</option>
+            @foreach($characters as $character)
+              <option value="{{ $character->id }}">{{ $character->name }} — {{ number_format($character->allowance_sp, 2) }} SP</option>
+            @endforeach
+          </select>
+          <small class="text-body-secondary">Seçilen tüm eşyalar %55 fiyatla satılır; tutar ödenekten düşülüp kasaya eklenir.</small>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+          <button type="submit" class="btn btn-primary">Sat</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+@endif
+
 @if($canCreate)
 <!-- MODAL: Add Items -->
 <div class="modal fade" id="modalAddItems" tabindex="-1" aria-labelledby="modalAddItemsLabel" aria-hidden="true">
@@ -412,12 +536,12 @@
       <form method="POST" action="{{ route('valiant-shade.pages-inventory.store') }}" id="formAddItems">
         @csrf
         <div class="modal-body">
-          <p class="text-body-secondary small">Add as many items as needed. Prices are entered in GP; totals and 55% buy / 50% sell prices are calculated automatically.</p>
+          <p class="text-body-secondary small">Add as many items as needed. Prices are entered in GP; totals and %50 Piyasa Satış / %55 Piyasa Satış (Oyuncuya) prices are calculated automatically.</p>
           <div class="table-responsive">
             <table class="table table-sm align-middle">
               <thead>
                 <tr>
-                  <th>Item Name</th><th>Quality</th><th>Type</th><th>Qty</th><th>Unit Price (GP)</th><th>Total (GP)</th><th>Buy 55% / unit</th><th>Sell 50% / unit</th><th></th>
+                  <th>Item Name</th><th>Quality</th><th>Type</th><th>Qty</th><th>Unit Price (GP)</th><th>Total (GP)</th><th>Piyasa Satış %50 / unit</th><th>Piyasa Satış %55 / unit</th><th></th>
                 </tr>
               </thead>
               <tbody id="itemRows"></tbody>
@@ -519,15 +643,15 @@
               <strong class="font-monospace text-heading" id="editPreviewTotal">0 SP</strong>
             </div>
             <div class="d-flex align-items-center justify-content-between mb-1" style="font-size: 0.82rem;">
-              <span>New Market Value (55%):</span>
+              <span>Yeni Piyasa Değeri (%50):</span>
               <strong class="font-monospace text-success" id="editPreviewEderi">0 SP</strong>
             </div>
             <div class="d-flex align-items-center justify-content-between" style="font-size: 0.82rem;">
-              <span>Buy Price (55% / unit):</span>
+              <span>Piyasa Satış (%55 / unit):</span>
               <strong class="font-monospace text-primary" id="editPreviewAlim">0 SP</strong>
             </div>
             <div class="d-flex align-items-center justify-content-between" style="font-size: 0.82rem;">
-              <span>Sell Price (50% / unit):</span>
+              <span>Piyasa Satış (%55 / unit):</span>
               <strong class="font-monospace text-info" id="editPreviewSell">0 SP</strong>
             </div>
             <div class="text-body-secondary border-top pt-1 mt-1 d-none font-monospace" id="editPreviewFormulaHint" style="font-size: 0.74rem;"></div>
@@ -1214,8 +1338,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const quality = row.querySelector('[data-field="quality"]').value;
     const total = type === 'Wand' ? (parseWandCharges(quality) / 50) * unitPrice * quantity : unitPrice * quantity;
     row.querySelector('[data-preview="total"]').textContent = total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    row.querySelector('[data-preview="buy"]').textContent = (quantity ? total * 0.55 / quantity : 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    row.querySelector('[data-preview="sell"]').textContent = (quantity ? total * 0.5 / quantity : 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    row.querySelector('[data-preview="buy"]').textContent = (quantity ? total * 0.50 / quantity : 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    row.querySelector('[data-preview="sell"]').textContent = (quantity ? total * 0.55 / quantity : 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   function addItemRow() {
@@ -1252,6 +1376,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const selectAllItems = document.getElementById('selectAllItems');
   const selectedDeleteButton = document.getElementById('btnDeleteSelected');
   const selectedSellButton = document.getElementById('btnSellSelected');
+  const sellToCharacterButton = document.getElementById('btnSellToCharacter');
   const selectedItemCount = document.getElementById('selectedItemCount');
   const itemCheckboxes = Array.from(document.querySelectorAll('.item-select-checkbox'));
   function updateSelectedItems() {
@@ -1259,6 +1384,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (selectedItemCount) selectedItemCount.textContent = checkedCount;
     if (selectedDeleteButton) selectedDeleteButton.disabled = checkedCount === 0;
     if (selectedSellButton) selectedSellButton.disabled = checkedCount === 0;
+    if (sellToCharacterButton) sellToCharacterButton.disabled = checkedCount === 0;
     if (selectAllItems) {
       const visibleCheckboxes = itemCheckboxes.filter(checkbox => checkbox.closest('tr').style.display !== 'none');
       selectAllItems.checked = visibleCheckboxes.length > 0 && visibleCheckboxes.every(checkbox => checkbox.checked);
@@ -1274,7 +1400,7 @@ document.addEventListener('DOMContentLoaded', function () {
       updateSelectedItems();
     });
   }
-  function submitSelectedItems(action, selected, methodOverride = null) {
+  function submitSelectedItems(action, selected, methodOverride = null, characterId = null) {
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = action;
@@ -1290,6 +1416,13 @@ document.addEventListener('DOMContentLoaded', function () {
       methodInput.value = methodOverride;
       form.appendChild(methodInput);
     }
+    if (characterId) {
+      const characterInput = document.createElement('input');
+      characterInput.type = 'hidden';
+      characterInput.name = 'character_id';
+      characterInput.value = characterId;
+      form.appendChild(characterInput);
+    }
     selected.forEach(checkbox => {
       const idInput = document.createElement('input');
       idInput.type = 'hidden';
@@ -1300,10 +1433,20 @@ document.addEventListener('DOMContentLoaded', function () {
     document.body.appendChild(form);
     form.submit();
   }
+  const sellToCharacterForm = document.getElementById('formSellToCharacter');
+  if (sellToCharacterForm) {
+    sellToCharacterForm.addEventListener('submit', event => {
+      event.preventDefault();
+      const selected = itemCheckboxes.filter(checkbox => checkbox.checked);
+      const characterId = document.getElementById('saleCharacter').value;
+      if (!selected.length || !characterId || !confirm('Seçilen eşyalar bu karaktere satılsın mı?')) return;
+      submitSelectedItems(`{{ route('valiant-shade.pages-inventory.sell') }}`, selected, null, characterId);
+    });
+  }
   if (selectedSellButton) {
     selectedSellButton.addEventListener('click', () => {
       const selected = itemCheckboxes.filter(checkbox => checkbox.checked);
-      if (!selected.length || !confirm(@json(__('Sell selected items for 50% of their value and add proceeds to the Guild Vault?')))) return;
+      if (!selected.length || !confirm('Seçilen eşyalar listelenen satış fiyatlarından satılıp gelir kasaya eklensin mi?')) return;
       submitSelectedItems(`{{ route('valiant-shade.pages-inventory.sell') }}`, selected);
     });
   }
@@ -1395,7 +1538,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (editPreviewFormulaHint) editPreviewFormulaHint.classList.add('d-none');
     }
 
-    const ederiGP = totalGP * 0.55;
+    const ederiGP = totalGP * 0.50;
     const alimGP = qty > 0 ? (ederiGP / qty) : 0;
 
     const totalConverted = totalGP * rate;
@@ -1405,7 +1548,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (editPrevTotal) editPrevTotal.textContent = totalConverted.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + sym;
     if (editPrevEderi) editPrevEderi.textContent = ederiConverted.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + sym;
     if (editPrevAlim) editPrevAlim.textContent = alimConverted.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + sym;
-    if (editPrevSell) editPrevSell.textContent = (totalGP * 0.5 / qty * rate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + sym;
+    if (editPrevSell) editPrevSell.textContent = (totalGP * 0.55 / qty * rate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + sym;
   }
 
   if (editQtyInput && editPriceInput) {

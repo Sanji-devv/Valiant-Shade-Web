@@ -1249,6 +1249,17 @@
               </div>
             </div>
 
+            @if($purchasedItemsAmbiguous)
+              <div class="alert alert-warning mt-3 mb-0">Karakter eşleşmesi belirsiz olduğu için loncadan alınan eşyalar gösterilemiyor.</div>
+            @elseif($purchasedItems->isNotEmpty())
+              <div class="mt-3 pt-2 border-top">
+                <strong class="small text-heading">Karakter Envanteri (Lonca)</strong>
+                @foreach($purchasedItems as $purchasedItem)
+                  <div class="small text-body">{{ $purchasedItem->name }} @if($purchasedItem->quality) ({{ $purchasedItem->quality }}) @endif &times; {{ $purchasedItem->quantity }}</div>
+                @endforeach
+              </div>
+            @endif
+
             <div class="d-flex align-items-center justify-content-between p-2 rounded bg-body border mt-2 font-monospace">
               <strong class="text-heading small">{{ __('TOTAL WEIGHT') }}:</strong>
               <span class="badge bg-label-primary fs-6" id="lblTotalGearWeight">74 lbs</span>

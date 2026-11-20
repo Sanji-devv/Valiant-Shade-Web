@@ -10,7 +10,7 @@ class InventoryRepository implements InventoryRepositoryInterface
 {
     public function all(array $filters = []): Collection
     {
-        $query = InventoryItem::query();
+        $query = InventoryItem::query()->whereNull('character_id');
 
         if (!empty($filters['type'])) {
             $query->ofType($filters['type']);
@@ -35,7 +35,7 @@ class InventoryRepository implements InventoryRepositoryInterface
 
     public function find(int $id): ?InventoryItem
     {
-        return InventoryItem::find($id);
+        return InventoryItem::whereNull('character_id')->find($id);
     }
 
     public function create(array $data): InventoryItem
@@ -45,25 +45,26 @@ class InventoryRepository implements InventoryRepositoryInterface
 
     public function update(int $id, array $data): InventoryItem
     {
-        $item = InventoryItem::findOrFail($id);
+        $item = InventoryItem::whereNull('character_id')->findOrFail($id);
         $item->update($data);
         return $item;
     }
 
     public function delete(int $id): bool
     {
-        $item = InventoryItem::find($id);
+        $item = InventoryItem::whereNull('character_id')->find($id);
         return $item ? (bool) $item->delete() : false;
     }
 
     public function deleteMany(array $ids): int
     {
-        return InventoryItem::query()->whereIn('id', $ids)->delete();
+        return InventoryItem::query()->whereNull('character_id')->whereIn('id', $ids)->delete();
     }
 
     public function findManyForUpdate(array $ids): Collection
     {
         return InventoryItem::query()
+            ->whereNull('character_id')
             ->whereIn('id', $ids)
             ->lockForUpdate()
             ->get();

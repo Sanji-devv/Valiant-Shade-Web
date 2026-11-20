@@ -300,7 +300,7 @@ $configData = \App\ValiantShade\Helpers\Helpers::appClasses();
             </div>
           </div>
           <div class="text-end">
-            <small class="text-body-secondary d-block">{{ __('Market Sale (55%)') }}</small>
+            <small class="text-body-secondary d-block">{{ __('Market Sale (50%)') }}</small>
             <strong class="text-heading font-monospace fs-6">~{{ number_format($currentInventoryMarketGp ?? 0, 0) }} GP</strong>
           </div>
         </div>
@@ -318,7 +318,7 @@ $configData = \App\ValiantShade\Helpers\Helpers::appClasses();
 
         <div class="px-3 pt-3 border-top mx-1 d-flex align-items-center justify-content-between flex-wrap gap-2 small text-body-secondary mt-auto">
           <span><i class="icon-base ti tabler-chart-line text-primary me-1"></i>{{ __('30-Day Total Inflow') }}: <strong class="text-heading font-monospace">{{ number_format($inventoryLast30Sp ?? 0, 0) }} SP</strong></span>
-          <span><i class="icon-base ti tabler-scale text-warning me-1"></i>{{ __('Market Value (55%)') }}: <strong class="text-warning font-monospace">~{{ number_format($inventoryLast30MarketGp ?? 0, 0) }} GP</strong></span>
+          <span><i class="icon-base ti tabler-scale text-warning me-1"></i>{{ __('Market Value (50%)') }}: <strong class="text-warning font-monospace">~{{ number_format($inventoryLast30MarketGp ?? 0, 0) }} GP</strong></span>
           <span><i class="icon-base ti tabler-package text-info me-1"></i>{{ __('Total Items') }}: <strong class="text-primary font-monospace">{{ $inventoryLast30Count ?? 0 }}</strong></span>
         </div>
       </div>

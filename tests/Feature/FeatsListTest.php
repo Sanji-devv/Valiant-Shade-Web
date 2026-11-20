@@ -98,6 +98,56 @@ class FeatsListTest extends TestCase
         ]);
     }
 
+    public function test_only_admin_can_create_a_character_for_a_selected_owner(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        $owner = User::factory()->create(['role' => 'User']);
+        $payload = [
+            'owner_id' => $owner->id,
+            'character_name' => 'Owned Hero',
+            'rank' => 'Main',
+            'race' => 'Human',
+            'class_name' => 'Fighter',
+            'str' => 10, 'dex' => 10, 'con' => 10,
+            'int' => 10, 'wis' => 10, 'cha' => 10,
+        ];
+
+        $this->actingAs($this->user)->postJson('/valiant-shade/pages/featntrait/character/create', $payload)
+            ->assertForbidden();
+        $this->actingAs($admin)->postJson('/valiant-shade/pages/featntrait/character/create', $payload)
+            ->assertOk()->assertJsonPath('character.character_name', 'Owned Hero');
+
+        $this->assertDatabaseHas('character_profiles', ['character_name' => 'Owned Hero', 'user_id' => $owner->id]);
+        $this->assertDatabaseHas('characters', ['name' => 'Owned Hero', 'user_id' => $owner->id]);
+        $this->assertDatabaseHas('player_xps', ['character_name' => 'Owned Hero', 'user_id' => $owner->id]);
+
+        $this->actingAs($this->user)->postJson('/valiant-shade/pages/featntrait/stats', [
+            'character_name' => 'Owned Hero', 'level' => 1,
+            'race' => 'Elf', 'class_name' => 'Wizard',
+        ])->assertOk();
+        $profile = CharacterProfile::where('character_name', 'Owned Hero')->firstOrFail();
+        $this->assertSame('Elf', $profile->sheet_data['race']);
+        $this->assertSame('wizard', $profile->sheet_data['classKey']);
+        $this->assertDatabaseHas('character_info', ['race' => 'Elf', 'class_and_level' => 'Wizard 1']);
+    }
+
+    public function test_race_limits_and_rank_warnings_are_applied(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        CharacterProfile::create(['character_name' => 'Rank Warning Hero', 'class_name' => 'Fighter', 'rank' => 'Aday']);
+
+        $this->actingAs($admin)->get('/valiant-shade/pages/featntrait?character=Rank%20Warning%20Hero')
+            ->assertOk()->assertSee('Üye, Kıdemli veya Uzman olmayan karakterler')
+            ->assertSee('Human (10 RP)')->assertDontSee('Drider (31 RP)');
+        $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait?character=Rank%20Warning%20Hero')
+            ->assertOk()->assertDontSee('Üye, Kıdemli veya Uzman olmayan karakterler');
+
+        $this->actingAs($this->user)->postJson('/valiant-shade/pages/featntrait/stats', [
+            'character_name' => 'Rank Warning Hero', 'level' => 1,
+            'race' => 'Drider', 'class_name' => 'Fighter',
+        ])->assertUnprocessable()->assertJsonValidationErrors('race');
+    }
+
     public function test_legacy_feats_page_redirects_to_featntrait(): void
     {
         $response = $this->actingAs($this->user)->get('/valiant-shade/pages/feats');
@@ -161,7 +211,32 @@ class FeatsListTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('1. Level Class Bonus Feat');
         $response->assertSee('Boş slot');
-        $response->assertSee('quickAddFeatToSlot(1,', false);
+        $previous = libxml_use_internal_errors(true);
+        try {
+            $document = new \DOMDocument();
+            $document->loadHTML($response->getContent());
+            $buttons = (new \DOMXPath($document))->query('//button[contains(@onclick, "quickAddFeatToSlot")]');
+            $this->assertNotFalse($buttons);
+            $this->assertGreaterThan(0, $buttons->length);
+            $this->assertStringContainsString('quickAddFeatToSlot(1, "standard",', $buttons->item(0)->getAttribute('onclick'));
+            $this->assertStringEndsWith(')', $buttons->item(0)->getAttribute('onclick'));
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previous);
+        }
+    }
+
+    public function test_feat_cannot_create_a_new_character(): void
+    {
+        $response = $this->actingAs($this->user)->postJson('/valiant-shade/pages/featntrait', [
+            'character_name' => 'New Feat Hero',
+            'level' => 3,
+            'slot_type' => 'standard',
+            'feat_name' => 'New Hero Feat',
+        ]);
+
+        $response->assertUnprocessable()->assertJsonValidationErrors('character_name');
+        $this->assertDatabaseMissing('character_profiles', ['character_name' => 'New Feat Hero']);
     }
 
     public function test_can_assign_a_feat_to_a_specific_progression_slot(): void
@@ -379,7 +454,7 @@ class FeatsListTest extends TestCase
         ]);
     }
 
-    public function test_can_delete_character_and_their_feats(): void
+    public function test_character_deletion_is_admin_only_and_blocks_unsafe_partial_deletion(): void
     {
         $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait'); // initialize
 
@@ -390,11 +465,15 @@ class FeatsListTest extends TestCase
             'character_name' => 'Aeris Spellborn',
         ]);
 
-        $response->assertStatus(200);
-        $response->assertJson(['success' => true]);
+        $response->assertForbidden();
 
-        $this->assertDatabaseMissing('character_profiles', ['character_name' => 'Aeris Spellborn']);
-        $this->assertEquals(0, CharacterFeat::where('character_name', 'Aeris Spellborn')->count());
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        $this->actingAs($admin)->deleteJson('/valiant-shade/pages/featntrait/character/delete', [
+            'character_name' => 'Aeris Spellborn',
+        ])->assertStatus(409);
+
+        $this->assertDatabaseHas('character_profiles', ['character_name' => 'Aeris Spellborn']);
+        $this->assertGreaterThan(0, CharacterFeat::where('character_name', 'Aeris Spellborn')->count());
     }
 
     public function test_character_sorting_by_name_and_level(): void
@@ -762,6 +841,7 @@ class FeatsListTest extends TestCase
 
     public function test_legacy_feats_post_and_put_endpoints_remain_functional(): void
     {
+        $this->actingAs($this->user)->get('/valiant-shade/pages/featntrait');
         // Test legacy POST /valiant-shade/pages/feats
         $postRes = $this->actingAs($this->user)->postJson('/valiant-shade/pages/feats', [
             'character_name' => 'Aeris Spellborn',

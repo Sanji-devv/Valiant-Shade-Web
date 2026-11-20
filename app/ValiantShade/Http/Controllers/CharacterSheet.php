@@ -2,9 +2,11 @@
 
 namespace App\ValiantShade\Http\Controllers;
 
+use App\Models\Character;
 use App\Models\CharacterFeat;
 use App\Models\CharacterProfile;
 use App\Models\CharacterTrait;
+use App\Models\InventoryItem;
 use App\ValiantShade\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -171,6 +173,20 @@ class CharacterSheet extends Controller
       $allDbCharacters = collect();
     }
 
+    $purchasedItems = collect();
+    $purchasedItemsAmbiguous = false;
+    if ($dbCharacter && $dbCharacter->user_id) {
+      $characters = Character::query()->where('name', $dbCharacter->character_name)
+        ->where('user_id', $dbCharacter->user_id)->get();
+      $profileCount = CharacterProfile::query()->where('character_name', $dbCharacter->character_name)
+        ->where('user_id', $dbCharacter->user_id)->count();
+      $purchasedItemsAmbiguous = $characters->count() > 1 || $profileCount > 1;
+      if (! $purchasedItemsAmbiguous && $characters->count() === 1) {
+        $purchasedItems = InventoryItem::query()->where('character_id', $characters->first()->id)
+          ->orderBy('name')->get();
+      }
+    }
+
     return view('valiant-shade.content.pages.pages-character-sheet', compact(
       'user',
       'pfRaces',
@@ -182,7 +198,9 @@ class CharacterSheet extends Controller
       'armors',
       'saveItems',
       'dbCharacter',
-      'allDbCharacters'
+      'allDbCharacters',
+      'purchasedItems',
+      'purchasedItemsAmbiguous'
     ));
   }
 
