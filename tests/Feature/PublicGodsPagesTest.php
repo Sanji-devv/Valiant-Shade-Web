@@ -42,12 +42,14 @@ class PublicGodsPagesTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_home_displays_nine_portals_with_gods_and_two_empty_locked_cells(): void
+    public function test_home_places_archive_in_the_middle_and_monster_database_last(): void
     {
         $response = $this->get(route('web.home'));
 
         $response->assertOk()
             ->assertSee(route('valiant-shade.gods.index'), false)
+            ->assertSee(route('valiant-shade.pages-archive'), false)
+            ->assertSee(\App\Support\PublicSiteUrls::monsterDatabase(), false)
             ->assertSee('Tanrılar')
             ->assertSee('grid-template-columns: repeat(3, minmax(0, 1fr));', false);
 
@@ -55,7 +57,10 @@ class PublicGodsPagesTest extends TestCase
 
         $this->assertIsString($content);
         $this->assertSame(9, preg_match_all('/class="vs-quad__cell(?:\s|")/', $content));
-        $this->assertSame(2, preg_match_all('/<div class="vs-quad__cell vs-quad__cell--locked" aria-hidden="true"><\/div>/', $content));
+        $this->assertSame(1, preg_match_all('/<div class="vs-quad__cell vs-quad__cell--locked" aria-hidden="true"><\/div>/', $content));
+        preg_match_all('/class="vs-quad__cell vs-quad__cell--([a-z]+)(?:\s|")/', $content, $matches);
+        $this->assertSame('archive', $matches[1][4]);
+        $this->assertSame('monster', $matches[1][8]);
     }
 
     public function test_public_gods_index_and_detail_pages_render_catalog_content(): void

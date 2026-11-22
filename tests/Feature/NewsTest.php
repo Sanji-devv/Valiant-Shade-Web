@@ -32,6 +32,21 @@ class NewsTest extends TestCase
         $response->assertSee('href="'.\App\Support\PublicSiteUrls::gazette('/son-sayi').'"', false);
     }
 
+    public function test_turkish_sample_news_is_valid_utf8_and_reaches_the_page_script(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->withSession(['locale' => 'tr'])
+            ->get('/valiant-shade/pages/news');
+
+        $response->assertOk()
+            ->assertSee('Gölge Dehlizleri Seferinde Ağır Kayıp')
+            ->assertSee('const masterNewsStore = [', false);
+
+        $news = $response->viewData('allNewsJson');
+        $this->assertNotEmpty(json_encode($news, JSON_THROW_ON_ERROR));
+        $this->assertStringContainsString('Şehit Düştü', $news->first()['title']);
+    }
+
     public function test_can_create_news(): void
     {
         $payload = [

@@ -38,6 +38,12 @@ Authorized inventory users can reverse a sale once. Reversal subtracts the sale 
 
 Back up the database and run `php artisan migrate --force` during deployment before using these features. The migration also extends PostgreSQL's financial ledger transaction-type constraint. Rolling it back requires resolving any ledger records with the new transaction types first.
 
+## Quest narrative archive
+
+The home-page Archive opens a separate narrative quest report archive. Active signed-in members can read and add reports; these records do not change quest finances or XP. Search matches titles first, then report contents and metadata, ignoring Turkish character accents and case.
+
+Back up the database and run `php artisan migrate --force` during deployment to create the narrative archive table. The narrative archive starts empty and does not import the existing financial reports.
+
 ## Player XP Tracker import
 
 Administrators can upload the JSON using **Import Data** on the XP Tracker, or run `php artisan xp:import "C:\path\to\Player XP Tracker.json"` to import both tables. Existing characters and users are matched by name; unmatched records, including Unknown entries, remain visible. The page shows their count, and the command lists them. The import does not create users or characters or change existing character XP. Re-running it updates imported tracker values; the transaction rolls back if a record has distributed quest-report XP. XP values are rounded to the nearest integer for tracker fields. Resetting the tracker to defaults replaces imported records with sample data.

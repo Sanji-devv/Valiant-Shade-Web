@@ -18,6 +18,7 @@ use App\ValiantShade\Http\Controllers\Inventory;
 use App\ValiantShade\Http\Controllers\language\LanguageController;
 use App\ValiantShade\Http\Controllers\NewsController;
 use App\ValiantShade\Http\Controllers\PlayerXpController;
+use App\ValiantShade\Http\Controllers\QuestArchiveController;
 use App\ValiantShade\Http\Controllers\QuestBoardController;
 use App\ValiantShade\Http\Controllers\QuestReportsController;
 use App\ValiantShade\Http\Controllers\UserConnections;
@@ -176,6 +177,10 @@ Route::middleware(['throttle:valiant-shade.quest-mutations'])->group(function ()
 });
 
 // Quest Reports (Görev Raporları) Routes
+Route::get('/pages/archive', [QuestArchiveController::class, 'index'])->name('valiant-shade.pages-archive');
+Route::post('/pages/archive', [QuestArchiveController::class, 'store'])->name('valiant-shade.pages-archive.store');
+Route::get('/pages/archive/{report}', [QuestArchiveController::class, 'show'])->name('valiant-shade.pages-archive.show');
+
 Route::get('/pages/quest-reports', [QuestReportsController::class, 'index'])->name('valiant-shade.pages-quest-reports');
 Route::get('/pages/gorev-raporlari', [QuestReportsController::class, 'index'])->name('valiant-shade.pages-gorev-raporlari');
 Route::middleware(LockQuestReportMutations::class)->group(function () {
