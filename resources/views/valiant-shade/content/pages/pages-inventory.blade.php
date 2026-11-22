@@ -404,6 +404,225 @@
   </div>
 </div>
 
+{{-- ======================================================== --}}
+{{-- KARAKTER ÖDENEKLERİ GÖRÜNÜM TABLOSU (ALLOWANCES TABLE) --}}
+{{-- ======================================================== --}}
+@php
+  $fundedCharacters = collect($characters ?? [])->filter(function ($char) {
+    $pocket = is_array($char->info?->pocket_money) ? $char->info->pocket_money : [];
+
+    return (float) ($char->allowance_sp ?? 0) > 0
+      || (float) ($pocket['pp'] ?? 0) > 0
+      || (float) ($pocket['gp'] ?? 0) > 0
+      || (float) ($pocket['sp'] ?? 0) > 0
+      || (float) ($pocket['cp'] ?? 0) > 0;
+  })->values();
+  $totalCharAllowanceSp = $fundedCharacters->sum('allowance_sp');
+  $totalCharCount = $fundedCharacters->count();
+  $avgCharAllowanceSp = $totalCharCount > 0 ? round($totalCharAllowanceSp / $totalCharCount) : 0;
+@endphp
+<div class="card shadow-none border mt-4" id="characterAllowancesCard">
+  <div class="card-header border-bottom py-3 px-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+      <div>
+        <h5 class="card-title mb-0 fw-semibold d-flex align-items-center gap-2">
+          <i class="icon-base ti tabler-wallet text-primary fs-4"></i>
+          {{ __('Character Allowances & Wallets') }}
+        </h5>
+        <small class="text-body-secondary">{{ __('Current allowances (SP), pocket money holdings, and vault transfer shortcuts for active adventurers.') }}</small>
+      </div>
+
+      <!-- Quick summary pills -->
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <span class="badge bg-label-warning rounded-pill py-2 px-3 font-monospace">
+          <i class="icon-base ti tabler-coins me-1"></i>{{ __('Total:') }} <strong>{{ number_format($totalCharAllowanceSp, 0, '.', ',') }} SP</strong> <small class="opacity-75">(~{{ number_format(round($totalCharAllowanceSp / 10), 0, '.', ',') }} GP)</small>
+        </span>
+        <span class="badge bg-label-primary rounded-pill py-2 px-3 font-monospace">
+          <i class="icon-base ti tabler-users me-1"></i><span id="allowanceVisibleCount">{{ $totalCharCount }}</span> / {{ $totalCharCount }} {{ __('Adventurers') }}
+        </span>
+        <span class="badge bg-label-success rounded-pill py-2 px-3 font-monospace">
+          <i class="icon-base ti tabler-chart-bar me-1"></i>{{ __('Average:') }} <strong>{{ number_format($avgCharAllowanceSp, 0, '.', ',') }} SP</strong>
+        </span>
+      </div>
+    </div>
+
+    <!-- Filter & Action toolbar -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3 pt-2 border-top">
+      <div class="input-group input-group-merge input-group-sm" style="max-width: 340px;">
+        <span class="input-group-text"><i class="icon-base ti tabler-search fs-6"></i></span>
+        <input type="text" class="form-control" id="searchAllowanceTable" placeholder="{{ __('Search character, player or rank...') }}">
+        <button class="btn btn-outline-secondary" type="button" id="btnClearAllowanceSearch" title="{{ __('Clear Search') }}">
+          <i class="icon-base ti tabler-x fs-6"></i>
+        </button>
+      </div>
+
+      <div class="d-flex align-items-center gap-2 ms-auto">
+        @if($canUpdate)
+          <button type="button" class="btn btn-sm btn-outline-primary rounded-pill btn-vault-trigger" data-vault-tab="transfer" data-direction="distribute" title="{{ __('Split funds equally to all active players from vault') }}">
+            <i class="icon-base ti tabler-users-group me-1"></i> {{ __('Split to All Players') }}
+          </button>
+          <button type="button" class="btn btn-sm btn-primary rounded-pill btn-vault-trigger" data-vault-tab="transfer" title="{{ __('Transfer cash between vault and characters') }}">
+            <i class="icon-base ti tabler-arrows-left-right me-1"></i> {{ __('Transfer (⇄)') }}
+          </button>
+        @endif
+      </div>
+    </div>
+  </div>
+
+  <div class="card-body p-0">
+    <div class="table-responsive text-nowrap">
+      <table class="table table-hover align-middle mb-0" id="tableAllowancesList">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4" style="width: 50px;">#</th>
+            <th>{{ __('Character Name') }}</th>
+            <th>{{ __('Player') }}</th>
+            <th class="text-center">{{ __('Rank') }}</th>
+            <th class="text-center">{{ __('Level') }}</th>
+            <th class="text-end">{{ __('Allowance (SP)') }}</th>
+            <th class="text-end">{{ __('GP Equivalent') }}</th>
+            <th class="text-center">{{ __('Wallet Breakdown') }}</th>
+            <th class="text-center pe-4" style="width: 140px;">{{ __('Actions') }}</th>
+          </tr>
+        </thead>
+        <tbody id="allowancesTableBody">
+          @forelse($fundedCharacters as $idx => $char)
+            @php
+              $charRank = $char->rank?->name ?? 'Aday';
+              $rankBadgeClass = match($charRank) {
+                'Uzman' => 'bg-label-success',
+                'Kıdemli' => 'bg-label-warning',
+                'Üye' => 'bg-label-primary',
+                'Clerk' => 'bg-label-info',
+                'Gezgin' => 'bg-label-info',
+                default => 'bg-label-secondary'
+              };
+              $charPocket = is_array($char->info?->pocket_money) ? $char->info->pocket_money : [];
+              $hasPocket = !empty($charPocket) && (($charPocket['pp'] ?? 0) > 0 || ($charPocket['gp'] ?? 0) > 0 || ($charPocket['sp'] ?? 0) > 0 || ($charPocket['cp'] ?? 0) > 0);
+            @endphp
+            <tr class="allowance-item-row"
+                data-name="{{ strtolower($char->name) }}"
+                data-player="{{ strtolower($char->user?->name ?? '') }}"
+                data-rank="{{ strtolower($charRank) }}"
+                id="allowanceRow{{ $char->id }}">
+              <td class="ps-4 font-monospace text-body-secondary">{{ $idx + 1 }}</td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="avatar avatar-sm rounded-circle bg-label-primary text-primary d-flex align-items-center justify-content-center fw-bold">
+                    {{ strtoupper(substr($char->name, 0, 1)) }}
+                  </div>
+                  <div>
+                    <a href="{{ route('valiant-shade.character-sheet', ['name' => $char->name]) }}" class="fw-semibold text-heading hover-primary text-decoration-none" title="{{ __('View character sheet') }}">
+                      {{ $char->name }}
+                    </a>
+                    @if($char->status && $char->status !== 'ACTIVE')
+                      <span class="badge bg-label-warning rounded-pill px-1_5 py-0 font-monospace" style="font-size: 0.65rem;">{{ $char->status }}</span>
+                    @endif
+                  </div>
+                </div>
+              </td>
+              <td>
+                @if($char->user)
+                  <span class="text-heading small"><i class="icon-base ti tabler-user me-1 text-body-secondary"></i>{{ $char->user->name }}</span>
+                @else
+                  <span class="text-body-secondary small opacity-50">{{ __('Unassigned') }}</span>
+                @endif
+              </td>
+              <td class="text-center">
+                <span class="badge {{ $rankBadgeClass }} rounded-pill px-2_5 py-1 font-monospace" style="font-size: 0.74rem;">
+                  {{ $charRank }}
+                </span>
+              </td>
+              <td class="text-center font-monospace">
+                <span class="badge bg-label-secondary rounded-pill px-2 py-0_5 font-monospace" style="font-size: 0.72rem;">
+                  Lv. {{ $char->current_level ?? 1 }}
+                </span>
+              </td>
+              <td class="text-end font-monospace">
+                <strong class="text-heading fs-6">{{ number_format($char->allowance_sp ?? 0, 2, '.', ',') }}</strong>
+                <small class="text-body-secondary">SP</small>
+              </td>
+              <td class="text-end font-monospace text-success fw-semibold">
+                ~{{ number_format(round(($char->allowance_sp ?? 0) / 10, 1), 1, '.', ',') }} GP
+              </td>
+              <td class="text-center">
+                @if($hasPocket)
+                  <div class="d-inline-flex flex-wrap gap-1 justify-content-center" style="max-width: 180px;">
+                    @if(($charPocket['pp'] ?? 0) > 0)
+                      <span class="badge bg-label-info rounded-pill px-1_5 py-0 font-monospace" style="font-size: 0.70rem;" title="Platinum">
+                        {{ $charPocket['pp'] }} PP
+                      </span>
+                    @endif
+                    @if(($charPocket['gp'] ?? 0) > 0)
+                      <span class="badge bg-label-warning rounded-pill px-1_5 py-0 font-monospace" style="font-size: 0.70rem;" title="Gold">
+                        {{ $charPocket['gp'] }} GP
+                      </span>
+                    @endif
+                    @if(($charPocket['sp'] ?? 0) > 0)
+                      <span class="badge bg-label-secondary rounded-pill px-1_5 py-0 font-monospace" style="font-size: 0.70rem;" title="Silver">
+                        {{ $charPocket['sp'] }} SP
+                      </span>
+                    @endif
+                    @if(($charPocket['cp'] ?? 0) > 0)
+                      <span class="badge bg-label-danger rounded-pill px-1_5 py-0 font-monospace" style="font-size: 0.70rem;" title="Copper">
+                        {{ $charPocket['cp'] }} CP
+                      </span>
+                    @endif
+                  </div>
+                @else
+                  <span class="text-body-secondary small opacity-50 font-monospace">&mdash;</span>
+                @endif
+              </td>
+              <td class="text-center pe-4">
+                <div class="d-inline-flex align-items-center gap-1">
+                  @if($canUpdate)
+                    <button type="button" class="btn btn-icon btn-text-primary btn-sm rounded-pill btn-vault-trigger" data-vault-tab="transfer" data-char-id="{{ $char->id }}" title="{{ __('Transfer cash to/from this character') }}">
+                      <i class="icon-base ti tabler-arrows-left-right"></i>
+                    </button>
+                    <button type="button" class="btn btn-icon btn-text-success btn-sm rounded-pill btn-open-sell-char" data-char-id="{{ $char->id }}" title="{{ __('Sell inventory item to this character') }}">
+                      <i class="icon-base ti tabler-shopping-cart"></i>
+                    </button>
+                  @endif
+                  <a href="{{ route('valiant-shade.character-sheet', ['name' => $char->name]) }}" class="btn btn-icon btn-text-secondary btn-sm rounded-pill" title="{{ __('View character sheet') }}" target="_blank">
+                    <i class="icon-base ti tabler-external-link"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+          @empty
+            <tr>
+              <td colspan="9" class="text-center py-5 text-body-secondary">
+                <i class="icon-base ti tabler-users-off d-block fs-1 mb-2 opacity-25"></i>
+                {{ __('No characters with funds found.') }}
+              </td>
+            </tr>
+          @endforelse
+          <tr id="emptyAllowanceRow" class="d-none">
+            <td colspan="9" class="text-center py-4 text-body-secondary">
+              <i class="icon-base ti tabler-search-off fs-2 d-block mb-1 opacity-50"></i>
+              {{ __('No characters match your search criteria.') }}
+            </td>
+          </tr>
+        </tbody>
+        <tfoot class="table-light border-top">
+          <tr>
+            <th colspan="5" class="ps-4 fw-bold text-heading">{{ __('TOTAL ACTIVE ALLOWANCE') }}:</th>
+            <th class="text-end font-monospace fw-bold text-warning fs-6">
+              {{ number_format($totalCharAllowanceSp, 2, '.', ',') }} SP
+            </th>
+            <th class="text-end font-monospace text-success fw-semibold">
+              ~{{ number_format(round($totalCharAllowanceSp / 10, 1), 1, '.', ',') }} GP
+            </th>
+            <th colspan="2" class="pe-4 text-end text-body-secondary small">
+              {{ $totalCharCount }} {{ __('Characters Listed') }}
+            </th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
 @if($canDelete)
 {{-- ======================================================== --}}
 {{-- SATIŞ GEÇMİŞİ & GERİ AL KARTI --}}
@@ -1637,10 +1856,34 @@ document.addEventListener('DOMContentLoaded', function () {
       btn.addEventListener('click', function (e) {
         e.preventDefault();
         const targetTab = this.getAttribute('data-vault-tab') || 'deposit';
+        const targetCharId = this.getAttribute('data-char-id');
+        const targetDirection = this.getAttribute('data-direction');
+
         const tabBtn = document.getElementById('tab-btn-' + targetTab);
         if (tabBtn) {
           bootstrap.Tab.getOrCreateInstance(tabBtn).show();
         }
+
+        if (targetTab === 'transfer') {
+          if (targetDirection === 'distribute') {
+            const dirDistributeAll = document.getElementById('dirDistributeAll');
+            if (dirDistributeAll) {
+              dirDistributeAll.checked = true;
+              dirDistributeAll.dispatchEvent(new Event('change'));
+            }
+          } else {
+            const dirVaultToChar = document.getElementById('dirVaultToChar');
+            if (dirVaultToChar) {
+              dirVaultToChar.checked = true;
+              dirVaultToChar.dispatchEvent(new Event('change'));
+            }
+            if (targetCharId && charSelect) {
+              charSelect.value = targetCharId;
+              charSelect.dispatchEvent(new Event('change'));
+            }
+          }
+        }
+
         vaultModal.show();
         setTimeout(() => {
           if (targetTab === 'deposit') document.getElementById('depositAmount')?.focus();
@@ -1871,6 +2114,64 @@ document.addEventListener('DOMContentLoaded', function () {
     updateWithdrawPreview();
     updateCharacterTransferPreview();
   }
+
+  // 7. Character Allowances Table Live Filter & Quick Actions
+  const searchAllowanceInput = document.getElementById('searchAllowanceTable');
+  const btnClearAllowanceSearch = document.getElementById('btnClearAllowanceSearch');
+  const allowanceRows = document.querySelectorAll('.allowance-item-row');
+  const emptyAllowanceRow = document.getElementById('emptyAllowanceRow');
+  const allowanceCountBadge = document.getElementById('allowanceVisibleCount');
+
+  function filterAllowanceTable() {
+    if (!searchAllowanceInput) return;
+    const query = searchAllowanceInput.value.toLowerCase().trim();
+    let visibleCount = 0;
+
+    allowanceRows.forEach(row => {
+      const name = (row.getAttribute('data-name') || '').toLowerCase();
+      const player = (row.getAttribute('data-player') || '').toLowerCase();
+      const rank = (row.getAttribute('data-rank') || '').toLowerCase();
+
+      const match = !query || name.includes(query) || player.includes(query) || rank.includes(query);
+      row.style.display = match ? '' : 'none';
+      if (match) visibleCount++;
+    });
+
+    if (emptyAllowanceRow) {
+      emptyAllowanceRow.classList.toggle('d-none', visibleCount > 0);
+    }
+    if (allowanceCountBadge) {
+      allowanceCountBadge.textContent = visibleCount;
+    }
+  }
+
+  if (searchAllowanceInput) {
+    searchAllowanceInput.addEventListener('input', filterAllowanceTable);
+  }
+  if (btnClearAllowanceSearch && searchAllowanceInput) {
+    btnClearAllowanceSearch.addEventListener('click', function () {
+      searchAllowanceInput.value = '';
+      filterAllowanceTable();
+      searchAllowanceInput.focus();
+    });
+  }
+
+  // Quick Open "Sell to Character" Modal with preselected character
+  document.querySelectorAll('.btn-open-sell-char').forEach(btn => {
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      const charId = this.getAttribute('data-char-id');
+      const sellModalEl = document.getElementById('modalSellToCharacter');
+      if (sellModalEl) {
+        const charSelect = document.getElementById('saleCharacter');
+        if (charSelect && charId) {
+          charSelect.value = charId;
+          charSelect.dispatchEvent(new Event('change'));
+        }
+        bootstrap.Modal.getOrCreateInstance(sellModalEl).show();
+      }
+    });
+  });
 
   // Initialize with Silver (SP) on page load
   switchCurrency('SP');

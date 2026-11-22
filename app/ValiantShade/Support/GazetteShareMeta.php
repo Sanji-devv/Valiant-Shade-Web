@@ -122,6 +122,22 @@ final class GazetteShareMeta
             return $root.PublicNewsPaths::gazetteArticlePath($slug);
         }
 
+        $issue = $request->route('issue');
+        $sheet = $request->route('sheet');
+        if (is_string($issue) && is_string($sheet)) {
+            return $root.'/sayi/'.$issue.'/yaprak/'.$sheet;
+        }
+
+        $issue = $request->query('sayi');
+        $sheet = $request->query('yaprak', '1');
+        if ($request->query('gorunum') !== 'stream'
+            && ! $request->query('yayin')
+            && ! $request->query('haber')
+            && is_string($issue) && preg_match('/^[1-9][0-9]*(?:\.[1-9][0-9]*)?$/D', $issue)
+            && is_string($sheet) && preg_match('/^[1-9][0-9]*$/D', $sheet)) {
+            return $root.'/sayi/'.$issue.'/yaprak/'.$sheet;
+        }
+
         $query = [];
         $gorunum = $request->query('gorunum');
         if ($gorunum !== null && $gorunum !== '') {

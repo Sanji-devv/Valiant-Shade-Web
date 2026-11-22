@@ -116,9 +116,9 @@ Route::post('/pages/news', [NewsController::class, 'store'])->name('valiant-shad
 Route::post('/pages/guild-news', [NewsController::class, 'store'])->name('valiant-shade.pages-guild-news.store');
 Route::post('/pages/news/reset-defaults', [NewsController::class, 'resetDefaults'])->name('valiant-shade.pages-news.reset-defaults');
 Route::post('/pages/guild-news/reset-defaults', [NewsController::class, 'resetDefaults'])->name('valiant-shade.pages-guild-news.reset-defaults');
+Route::post('/pages/news/reorder', [NewsController::class, 'reorder'])->name('valiant-shade.pages-news.reorder');
 Route::post('/pages/news/{id}', [NewsController::class, 'update'])->name('valiant-shade.pages-news.update');
 Route::post('/pages/guild-news/{id}', [NewsController::class, 'update'])->name('valiant-shade.pages-guild-news.update');
-Route::post('/pages/news/reorder', [NewsController::class, 'reorder'])->name('valiant-shade.pages-news.reorder');
 Route::delete('/pages/news/{id}', [NewsController::class, 'destroy'])->name('valiant-shade.pages-news.destroy');
 Route::delete('/pages/guild-news/{id}', [NewsController::class, 'destroy'])->name('valiant-shade.pages-guild-news.destroy');
 Route::post('/pages/news/{id}/toggle', [NewsController::class, 'toggleActive'])->name('valiant-shade.pages-news.toggle');

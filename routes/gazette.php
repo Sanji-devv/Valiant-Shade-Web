@@ -19,6 +19,18 @@ return function (bool $registerNames = true): void {
         $newspaper->name('web.newspaper');
     }
 
+    $latest = Route::get('/son-sayi', [NewspaperController::class, 'latestIssue']);
+    if ($registerNames) {
+        $latest->name('web.newspaper.latest');
+    }
+
+    $issue = Route::get('/sayi/{issue}/yaprak/{sheet}', [NewspaperController::class, 'show'])
+        ->where('issue', '[1-9][0-9]*(?:\.[1-9][0-9]*)?')
+        ->where('sheet', '[1-9][0-9]*');
+    if ($registerNames) {
+        $issue->name('web.newspaper.issue');
+    }
+
     $article = Route::get('/haber/{slug}', [NewspaperController::class, 'show'])
         ->where('slug', '[a-z0-9](?:[a-z0-9\-]*[a-z0-9])?');
     if ($registerNames) {

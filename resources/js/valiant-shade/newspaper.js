@@ -1,5 +1,6 @@
 import { createRumorWizard } from './newspaper-submission-wizard.js';
 import { createGnomeCryController, PUBLICATION_GNOME, PUBLICATION_LAGIM } from './newspaper-gnome-cry.js';
+import { findGazetteIssue, gazettePath, parseGazettePath } from './newspaper-urls.js';
 
 const WEB_ITEMS_PER_PAGE = 9;
 const STREAM_ITEMS_PER_PAGE = 12;
@@ -262,8 +263,7 @@ function resolvePendingIssueNumber() {
   if (!state.pendingIssueNumber) {
     return false;
   }
-  const target = Number(state.pendingIssueNumber);
-  const row = (state.issueArchive || []).find((issue) => Number(issue.issue_number) === target);
+  const row = findGazetteIssue(state.issueArchive || [], state.pendingIssueNumber);
   state.pendingIssueNumber = null;
   if (!row?.id) {
     return false;
@@ -312,27 +312,30 @@ function resolveShareArticleSlug({ articleSlug = null, includeArticle = false } 
 function readUrlIntoState() {
   const params = new URLSearchParams(window.location.search);
   const gorunum = params.get('gorunum');
+  const gazetteLocation = parseGazettePath(window.location.pathname);
   const pathSlugMatch = window.location.pathname.match(/^\/haber\/([a-z0-9][a-z0-9-]*)$/i);
   if (pathSlugMatch) {
     state.pendingArticleSlug = pathSlugMatch[1].toLowerCase();
   }
   if (gorunum === 'web' || gorunum === 'gazette' || gorunum === 'stream') {
     state.layoutMode = gorunum === 'stream' ? 'stream' : 'gazette';
-  } else if (pathSlugMatch || params.has('yaprak') || params.has('sayi') || params.has('haber')) {
+  } else if (gazetteLocation || pathSlugMatch || params.has('yaprak') || params.has('sayi') || params.has('haber')) {
     state.layoutMode = 'gazette';
   }
 
-  const yaprak = Number.parseInt(params.get('yaprak') || '', 10);
+  const yaprak = gazetteLocation?.sheet ?? Number.parseInt(params.get('yaprak') || '', 10);
   if (Number.isFinite(yaprak) && yaprak >= 1) {
     state.page = yaprak;
   }
   const sayfa = Number.parseInt(params.get('sayfa') || '', 10);
-  if (!params.has('yaprak') && Number.isFinite(sayfa) && sayfa >= 1) {
+  if (!gazetteLocation && !params.has('yaprak') && Number.isFinite(sayfa) && sayfa >= 1) {
     state.page = sayfa;
   }
 
-  const sayi = Number.parseInt(params.get('sayi') || '', 10);
-  if (Number.isFinite(sayi) && sayi >= 1) {
+  const legacySayi = params.get('sayi') || '';
+  const sayi = gazetteLocation?.issue
+    ?? (/^[1-9]\d*\.[1-9]\d*$/.test(legacySayi) ? legacySayi : Number.parseInt(legacySayi, 10));
+  if (sayi && (typeof sayi === 'string' || (Number.isFinite(sayi) && sayi >= 1))) {
     state.pendingIssueNumber = sayi;
   }
 
@@ -369,8 +372,8 @@ function readUrlIntoState() {
   }
 }
 
-function buildShareUrl({ articleId = null, articleSlug = null, includeArticle = false } = {}) {
-  const slug = resolveShareArticleSlug({ articleSlug, includeArticle });
+function buildShareUrl({ articleId = null, articleSlug = null, includeArticle = false, skipArticle = false } = {}) {
+  const slug = skipArticle ? '' : resolveShareArticleSlug({ articleSlug, includeArticle });
   const snapshot = state.openArticleSnapshot;
   if (slug) {
     const articlePath = articlePathFromSlug(slug);
@@ -390,17 +393,17 @@ function buildShareUrl({ articleId = null, articleSlug = null, includeArticle = 
     }
   }
 
-  const layoutPath = window.location.pathname.match(/^\/haber\//) ? '/' : window.location.pathname;
+  const layoutPath = window.location.pathname.match(/^\/haber\//) || parseGazettePath(window.location.pathname)
+    ? '/'
+    : window.location.pathname;
   const url = new URL(layoutPath, window.location.origin);
   const layout = state.layoutMode;
   if (layout === 'stream') {
     url.searchParams.set('gorunum', 'stream');
   } else if (layout === 'gazette') {
-    url.searchParams.set('gorunum', 'gazette');
     const issue = state.currentIssue || {};
-    const issueNum = issue.issue_number ?? inWorldCalendar().issueNumber;
-    url.searchParams.set('sayi', String(issueNum));
-    url.searchParams.set('yaprak', String(state.page));
+    const issueNum = issue.display_issue_number || issue.issue_number || inWorldCalendar().issueNumber;
+    url.pathname = gazettePath(issueNum, state.page);
   } else {
     url.searchParams.set('gorunum', 'web');
     url.searchParams.set('sayfa', String(state.page));
@@ -2144,19 +2147,16 @@ function goGazetteHome() {
   state.pageTurnDir = 'back';
   enforceMobileLagimStreamMode();
   applyLayoutMode();
-  const url = new URL(window.location.pathname, window.location.origin);
+  const url = new URL('/', window.location.origin);
   if (state.layoutMode === 'stream') {
     url.searchParams.set('gorunum', 'stream');
     url.searchParams.delete('yaprak');
     url.searchParams.delete('sayi');
     url.searchParams.delete('sayfa');
   } else if (state.layoutMode === 'gazette') {
-    url.searchParams.set('gorunum', 'gazette');
     const issue = state.currentIssue || {};
-    if (issue.issue_number) {
-      url.searchParams.set('sayi', String(issue.issue_number));
-    }
-    url.searchParams.set('yaprak', '1');
+    const issueNum = issue.display_issue_number || issue.issue_number || inWorldCalendar().issueNumber;
+    url.pathname = gazettePath(issueNum, 1);
   } else {
     url.searchParams.set('gorunum', 'web');
     url.searchParams.set('sayfa', '1');
@@ -2966,7 +2966,7 @@ function closeModal() {
     return;
   }
 
-  syncBrowserUrl();
+  syncBrowserUrl({ skipArticle: true });
 }
 
 function showToast(message, variant = 'success') {
@@ -4076,6 +4076,7 @@ document.addEventListener('DOMContentLoaded', () => {
     || Boolean(articleSlugFromPathname());
   const urlHasGazetteHints =
     urlParams.has('gorunum')
+    || Boolean(parseGazettePath(window.location.pathname))
     || urlParams.has('yaprak')
     || urlParams.has('sayi')
     || urlParams.has('haber')

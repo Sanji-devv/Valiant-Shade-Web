@@ -43,6 +43,83 @@ class PublicNewspaperTest extends TestCase
             ->assertSee(config('seo.gazette.title_suffix'), false);
     }
 
+    public function test_latest_issue_redirect_skips_future_issues_and_tracks_new_extra_issues(): void
+    {
+        News::query()->update(['is_active' => false]);
+        $service = app(\App\ValiantShade\Services\GazetteIssueService::class);
+        $current = $service->ensureDefaultIssue();
+        $upcoming = $service->upcomingWeeklyIssue();
+        $this->assertNotNull($upcoming);
+
+        $attributes = [
+            'category' => 'Yerel Haberler',
+            'news_type' => 'local_news',
+            'status' => 'published',
+            'description' => 'Gazete sayısı testi.',
+            'image_url' => 'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg',
+            'is_active' => true,
+        ];
+        News::create([...$attributes, 'title' => 'Güncel gazete haberi', 'gazette_issue_id' => $current->id]);
+        News::create([...$attributes, 'title' => 'Gelecek gazete haberi', 'gazette_issue_id' => $upcoming->id]);
+
+        $root = \App\Support\PublicSiteUrls::gazette();
+        $latestUrl = \App\Support\PublicSiteUrls::gazette('/son-sayi');
+        $this->get($latestUrl)
+            ->assertRedirect($root.'sayi/'.$current->displayIssueNumber().'/yaprak/1')
+            ->assertHeader('Cache-Control', 'no-store, private');
+
+        $flash = News::create([...$attributes, 'title' => 'Son dakika gazete haberi', 'gazette_issue_id' => $current->id]);
+        $extra = $service->promoteFlashNewsToExtraIssue($flash);
+
+        $this->get($latestUrl)
+            ->assertRedirect($root.'sayi/'.$extra->displayIssueNumber().'/yaprak/1');
+    }
+
+    public function test_latest_issue_returns_not_found_when_no_issue_is_published(): void
+    {
+        News::query()->update(['is_active' => false]);
+
+        $this->get(\App\Support\PublicSiteUrls::gazette('/son-sayi'))
+            ->assertNotFound()
+            ->assertSee(__('No published newspaper issues found.'));
+    }
+
+    public function test_issue_and_extra_issue_paths_are_public_and_have_canonical_urls(): void
+    {
+        $host = config('gazette.domain');
+        $root = \App\ValiantShade\Support\GazetteShareMeta::siteRoot();
+
+        foreach (['/sayi/4/yaprak/1', '/sayi/4.2/yaprak/3'] as $path) {
+            $this->withServerVariables(['HTTP_HOST' => $host])
+                ->get('http://'.$host.$path)
+                ->assertOk()
+                ->assertSee('rel="canonical" href="'.$root.$path.'"', false)
+                ->assertSee('class="vs-newspaper-page vs-publication-lagim vs-layout-gazette"', false);
+        }
+    }
+
+    public function test_legacy_issue_url_still_works_and_has_clean_canonical_url(): void
+    {
+        $host = config('gazette.domain');
+        $root = \App\ValiantShade\Support\GazetteShareMeta::siteRoot();
+
+        $this->withServerVariables(['HTTP_HOST' => $host])
+            ->get('http://'.$host.'/?gorunum=gazette&sayi=4&yaprak=1')
+            ->assertOk()
+            ->assertSee('rel="canonical" href="'.$root.'/sayi/4/yaprak/1"', false);
+    }
+
+    public function test_issue_paths_reject_invalid_numbers(): void
+    {
+        $host = config('gazette.domain');
+
+        foreach (['/sayi/0/yaprak/1', '/sayi/4.0/yaprak/1', '/sayi/4/yaprak/0'] as $path) {
+            $this->withServerVariables(['HTTP_HOST' => $host])
+                ->get('http://'.$host.$path)
+                ->assertNotFound();
+        }
+    }
+
     public function test_local_home_page_links_to_gazete_subdomain(): void
     {
         $gazetteUrl = \App\Support\PublicSiteUrls::gazette();

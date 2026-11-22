@@ -42,7 +42,7 @@ class InventoryService
     public function getPlayableCharacters(): Collection
     {
         return Character::query()
-            ->with(['user', 'info'])
+            ->with(['user', 'info', 'rank'])
             ->whereNotIn('status', ['KIA', 'MIA'])
             ->orderBy('name')
             ->get();

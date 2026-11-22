@@ -29,6 +29,7 @@ class NewsTest extends TestCase
         $response = $this->actingAs($this->user)->get('/valiant-shade/pages/news');
         $response->assertStatus(200);
         $response->assertSee('Lonca Haberleri &amp; Duyuru Yönetimi', false);
+        $response->assertSee('href="'.\App\Support\PublicSiteUrls::gazette('/son-sayi').'"', false);
     }
 
     public function test_can_create_news(): void
@@ -82,6 +83,45 @@ class NewsTest extends TestCase
         $response->assertSee('confirmDeleteNews', false);
         $response->assertSee('tabler-edit', false);
         $response->assertSee('tabler-trash', false);
+    }
+
+    public function test_reordering_news_saves_the_requested_order(): void
+    {
+        $attributes = [
+            'category' => 'Lonca Haberi',
+            'status' => 'published',
+            'description' => 'Sıralama testi.',
+            'image_url' => 'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg',
+            'is_active' => true,
+        ];
+        $first = News::create([...$attributes, 'title' => 'İlk haber']);
+        $second = News::create([...$attributes, 'title' => 'İkinci haber']);
+
+        $this->actingAs($this->user)
+            ->postJson(route('valiant-shade.pages-news.reorder'), ['ids' => [$second->id, $first->id]])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertSame(2, (int) $second->fresh()->order);
+        $this->assertSame(1, (int) $first->fresh()->order);
+    }
+
+    public function test_editorial_reaction_is_recorded_via_news_page_route(): void
+    {
+        $news = News::create([
+            'title' => 'Tepki testi',
+            'category' => 'Lonca Haberi',
+            'status' => 'published',
+            'description' => 'Editör tepkisi testi.',
+            'image_url' => 'static/valiant-shade/assets/img/news/guild_dragon_quest.jpg',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($this->user)
+            ->postJson(route('valiant-shade.pages-news.editorial-reaction', $news->id), ['reaction' => 'victory'])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+        $this->assertSame(1, \App\ValiantShade\Support\NewsEngagement::reactionMetrics($news->fresh()->stats)['victory']);
     }
 
     public function test_only_admins_see_the_publish_action_for_pending_news(): void

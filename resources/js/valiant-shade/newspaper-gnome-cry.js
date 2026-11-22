@@ -1,5 +1,6 @@
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
+import { parseGazettePath } from './newspaper-urls.js';
 import {
   clearGnomeDraft,
   loadGnomeDraft,
@@ -889,6 +890,9 @@ export function createGnomeCryController({
     applyLayoutMode?.();
     const url = new URL(window.location.href);
     if (state.publicationMode === PUBLICATION_GNOME) {
+      if (parseGazettePath(url.pathname)) {
+        url.pathname = '/';
+      }
       url.searchParams.set('yayin', 'gnome');
       url.searchParams.delete('gorunum');
       url.searchParams.delete('yaprak');

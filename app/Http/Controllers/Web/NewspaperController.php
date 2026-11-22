@@ -6,15 +6,32 @@ use App\Http\Controllers\Controller;
 use App\Models\News;
 use App\Support\PublicNewsPaths;
 use App\Support\PublicSiteUrls;
+use App\ValiantShade\Services\GazetteIssueService;
 use App\ValiantShade\Support\GazetteImageLibrary;
 use App\ValiantShade\Support\GazetteShareMeta;
 use App\ValiantShade\Support\WorldCalendar;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 class NewspaperController extends Controller
 {
+    public function latestIssue(GazetteIssueService $issues): RedirectResponse|Response
+    {
+        $latest = collect($issues->archiveList())
+            ->first(fn (array $issue) => $issue['is_published'] && $issue['is_selectable']);
+
+        if ($latest === null) {
+            return response(__('No published newspaper issues found.'), 404)
+                ->header('Content-Type', 'text/plain; charset=UTF-8')
+                ->header('Cache-Control', 'no-store');
+        }
+
+        return redirect()->away(PublicSiteUrls::gazette('/sayi/'.$latest['display_issue_number'].'/yaprak/1'))
+            ->header('Cache-Control', 'no-store');
+    }
+
     public function show(Request $request): View|RedirectResponse
     {
         $legacyId = (int) $request->query('haber', 0);

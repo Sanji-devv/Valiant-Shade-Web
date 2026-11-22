@@ -13,22 +13,24 @@
     border-radius: 14px;
     position: relative;
     overflow: hidden;
-    min-height: 380px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    min-height: 400px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
     background-size: cover;
     background-position: center;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
   }
   .news-hero-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.65);
+    border-color: rgba(255, 255, 255, 0.25);
   }
   .news-hero-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(15, 23, 42, 0.3) 0%, rgba(15, 23, 42, 0.85) 60%, rgba(15, 23, 42, 0.98) 100%),
-                radial-gradient(circle at 80% 20%, rgba(220, 38, 38, 0.25), transparent 50%);
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.35) 0%, rgba(15, 23, 42, 0.85) 60%, rgba(15, 23, 42, 0.98) 100%),
+                radial-gradient(circle at 85% 20%, rgba(220, 38, 38, 0.28), transparent 55%);
+    pointer-events: none;
   }
   .news-hero-content {
     position: relative;
@@ -40,32 +42,60 @@
     justify-content: flex-end;
   }
 
+  /* Quick Category Metric Cards (Interactive) */
+  .news-stat-counter-card {
+    cursor: pointer;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(22, 32, 49, 0.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+  .news-stat-counter-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(var(--bs-primary-rgb), 0.45);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+  .news-stat-counter-card.is-active-filter {
+    border-color: var(--bs-primary) !important;
+    background: rgba(var(--bs-primary-rgb), 0.12) !important;
+    box-shadow: 0 0 15px rgba(var(--bs-primary-rgb), 0.3);
+  }
+
   /* News Grid Cards */
   .news-feed-card {
     border-radius: 12px;
-    background: #182234;
+    background: rgba(22, 32, 49, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    transition: all 0.25s ease;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
     overflow: hidden;
     display: flex;
     flex-direction: column;
   }
   .news-feed-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
-    border-color: rgba(255, 255, 255, 0.22);
+    transform: translateY(-5px);
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45);
+    border-color: rgba(var(--bs-primary-rgb), 0.45);
   }
   .news-thumb-box {
-    height: 200px;
+    height: 210px;
     background-size: cover;
     background-position: center;
     position: relative;
     overflow: hidden;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .news-feed-card:hover .news-thumb-box {
+    transform: scale(1.03);
   }
   .news-thumb-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to top, #182234 0%, rgba(24, 34, 52, 0.3) 65%, transparent 100%);
+    background: linear-gradient(to top, rgba(22, 32, 49, 0.98) 0%, rgba(22, 32, 49, 0.4) 60%, transparent 100%);
+    pointer-events: none;
   }
   .news-tag-badge {
     background: rgba(15, 23, 42, 0.85);
@@ -82,9 +112,13 @@
   }
   .news-stat-pill {
     background: rgba(15, 23, 42, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 6px;
-    padding: 0.35rem 0.6rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 0.4rem 0.65rem;
+    transition: border-color 0.2s ease;
+  }
+  .news-feed-card:hover .news-stat-pill {
+    border-color: rgba(255, 255, 255, 0.15);
   }
   .category-filter-btn {
     transition: all 0.2s ease;
@@ -98,17 +132,22 @@
     background-color: var(--bs-primary) !important;
     border-color: var(--bs-primary) !important;
     color: #ffffff !important;
-    box-shadow: 0 4px 12px rgba(var(--bs-primary-rgb), 0.35);
+    box-shadow: 0 4px 14px rgba(var(--bs-primary-rgb), 0.4);
   }
   .gazette-filter-btn.active {
-    background-color: rgba(var(--bs-primary-rgb), 0.18) !important;
+    background-color: rgba(var(--bs-primary-rgb), 0.22) !important;
     border-color: var(--bs-primary) !important;
-    color: #e2e8f0 !important;
+    color: #f1f5f9 !important;
+    box-shadow: 0 0 10px rgba(var(--bs-primary-rgb), 0.25);
   }
   .news-drag-handle {
     cursor: grab;
     opacity: 0.55;
     touch-action: none;
+    transition: opacity 0.2s ease;
+  }
+  .news-drag-handle:hover {
+    opacity: 0.95;
   }
   .news-drag-handle:active {
     cursor: grabbing;
@@ -123,16 +162,17 @@
 
   /* Detail Reader Modal */
   #newsDetailModal .modal-dialog {
-    max-width: 860px;
+    max-width: 880px;
   }
   #newsDetailModal .modal-content {
     background-color: #111a28;
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 14px;
     overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
   }
   .modal-hero-cover {
-    height: 280px;
+    height: 300px;
     background-size: cover;
     background-position: center;
     position: relative;
@@ -140,12 +180,13 @@
   .modal-hero-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to top, #111a28 0%, rgba(17, 26, 40, 0.5) 60%, rgba(17, 26, 40, 0.2) 100%);
+    background: linear-gradient(to top, #111a28 0%, rgba(17, 26, 40, 0.55) 60%, rgba(17, 26, 40, 0.25) 100%);
+    pointer-events: none;
   }
   .fantasy-quote-box {
     border-left: 4px solid #f59e0b;
     background: rgba(245, 158, 11, 0.08);
-    padding: 1rem 1.25rem;
+    padding: 1.1rem 1.35rem;
     border-radius: 0 8px 8px 0;
     font-style: italic;
     color: #e2e8f0;
@@ -162,15 +203,15 @@
   }
   .article-body-p {
     font-size: 1.02rem;
-    line-height: 1.75;
+    line-height: 1.8;
     color: #cbd5e1;
     margin-bottom: 1.25rem;
   }
   .article-body-p:first-of-type::first-letter {
-    font-size: 2.6rem;
+    font-size: 2.7rem;
     float: left;
     line-height: 1;
-    margin-right: 0.5rem;
+    margin-right: 0.6rem;
     font-weight: 700;
     color: #f59e0b;
     font-family: serif;
@@ -242,8 +283,12 @@
       </p>
     </div>
     <div class="col-lg-5 col-md-6 text-md-end d-flex gap-2 justify-content-md-end flex-wrap">
+      <a href="{{ \App\Support\PublicSiteUrls::gazette('/son-sayi') }}" class="btn btn-warning d-inline-flex align-items-center gap-1 shadow-sm">
+        <i class="icon-base ti tabler-news"></i>
+        <span>{{ __('Read Latest Newspaper Issue') }}</span>
+      </a>
       @if($canManageNews ?? false)
-      <button type="button" class="btn btn-success d-inline-flex align-items-center gap-1" onclick="openEditNewsModal(null)">
+      <button type="button" class="btn btn-success d-inline-flex align-items-center gap-1 shadow-sm" onclick="openEditNewsModal(null)">
         <i class="icon-base ti tabler-plus"></i>
         <span>{{ __('Add News') }}</span>
       </button>
@@ -256,7 +301,7 @@
         <i class="icon-base ti tabler-message-2-share"></i>
         <span>{{ __('Send Tavern Whisper') }}</span>
       </button>
-      <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-1" onclick="window.scrollTo({ top: document.getElementById('newsFeedGrid').offsetTop - 80, behavior: 'smooth' })">
+      <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-1 shadow-sm" onclick="window.scrollTo({ top: document.getElementById('newsFeedGrid').offsetTop - 80, behavior: 'smooth' })">
         <i class="icon-base ti tabler-book-2"></i>
         <span>{{ __('Explore News') }}</span>
       </button>
@@ -264,7 +309,7 @@
   </div>
 
   @if(($canManageNews ?? false) && !($usesDatabaseNews ?? false))
-  <div class="alert alert-warning d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
+  <div class="alert alert-warning d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4 shadow-sm">
     <div>
       <strong>{{ __('Demo bulletin content') }}</strong>
       <span class="d-block small">{{ __('Articles are shown from built-in samples. Load them into the database to enable edit and delete on each card.') }}</span>
@@ -279,7 +324,7 @@
   @endif
 
   @if(isset($pendingNews) && $pendingNews->isNotEmpty())
-  <div class="card border border-warning border-opacity-50 mb-4">
+  <div class="card border border-warning border-opacity-50 mb-4 shadow-sm">
     <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
       <div>
         <h5 class="mb-0 text-warning d-flex align-items-center gap-2">
@@ -292,8 +337,8 @@
         $gazettePublicUrl = \App\Support\PublicSiteUrls::gazette();
       @endphp
       <div class="d-flex flex-wrap gap-2">
-        <a href="{{ $gazettePublicUrl }}?flash=1" class="btn btn-sm btn-danger" target="_blank" rel="noopener" title="Halka aÃ§Ä±k flash haber formu">
-          <i class="icon-base ti tabler-flame me-1"></i> Flash haber gÃ¶nder
+        <a href="{{ $gazettePublicUrl }}?flash=1" class="btn btn-sm btn-danger" target="_blank" rel="noopener" title="{{ __('Public hot news submission form') }}">
+          <i class="icon-base ti tabler-flame me-1"></i> {{ __('Submit Hot News') }}
         </a>
         <a href="{{ $gazettePublicUrl }}" class="btn btn-sm btn-label-primary" target="_blank" rel="noopener">
           <i class="icon-base ti tabler-world me-1"></i> {{ __('Open Public Newspaper') }}
@@ -309,8 +354,6 @@
               <span class="badge bg-label-warning">{{ $pending->news_type ? (config('news.types.'.$pending->news_type.'.label') ?? $pending->category) : $pending->category }}</span>
               @php
                 $submissionBadge = \App\ValiantShade\Support\NewsStats::submissionBadge($pending->stats);
-              @endphp
-              @php
                 $publicationBadge = \App\ValiantShade\Support\NewsStats::publicationBadge($pending);
               @endphp
               @if($publicationBadge)
@@ -318,7 +361,7 @@
               @endif
               @if($submissionBadge)
               <span class="badge bg-label-info">{{ $submissionBadge }}</span>
-              @elseif($pending->tag && str_contains($pending->tag, 'GÃ¶nderisi'))
+              @elseif($pending->tag && str_contains($pending->tag, 'Gönderisi'))
               <span class="badge bg-label-secondary">{{ $pending->tag }}</span>
               @endif
               <span class="text-body-secondary small">{{ $pending->date_text }}</span>
@@ -359,7 +402,7 @@
 
   <!-- Featured Headlines / Breaking News Banner -->
   @if($featuredNews)
-  <div class="card border-0 mb-5 overflow-hidden">
+  <div class="card border-0 mb-5 overflow-hidden shadow-lg">
     <div class="news-hero-card" style="background-image: url('{{ $featuredNews->image_asset }}');">
       <div class="news-hero-overlay"></div>
       <div class="news-hero-content">
@@ -428,55 +471,67 @@
   </div>
   @endif
 
-  <!-- Quick Category Counter Badges -->
+  <!-- Quick Category Counter Badges (Interactive Filter Cards) -->
   <div class="row g-3 mb-4">
     <div class="col-lg-3 col-sm-6">
-      <div class="card border-0 shadow-sm">
+      <div class="card news-stat-counter-card h-100 js-category-stat-card" data-filter-cat="casualties" title="{{ __('Click to filter casualty notices') }}">
         <div class="card-body d-flex align-items-center gap-3 py-3">
-          <div class="avatar avatar-md bg-label-danger rounded p-2">
+          <div class="avatar avatar-md bg-label-danger rounded p-2 flex-shrink-0">
             <i class="icon-base ti tabler-skull fs-3"></i>
           </div>
-          <div>
-            <h5 class="mb-0 fw-bold text-danger">{{ $statsSummary['deaths'] ?? 2 }}</h5>
+          <div class="flex-grow-1">
+            <div class="d-flex align-items-baseline justify-content-between">
+              <h5 class="mb-0 fw-bold text-danger">{{ $statsSummary['deaths'] ?? 2 }}</h5>
+              <i class="icon-base ti tabler-arrow-narrow-right text-danger opacity-50 small"></i>
+            </div>
             <small class="text-body-secondary">{{ __('Casualty & Memorial Notice') }}</small>
           </div>
         </div>
       </div>
     </div>
     <div class="col-lg-3 col-sm-6">
-      <div class="card border-0 shadow-sm">
+      <div class="card news-stat-counter-card h-100 js-category-stat-card" data-filter-cat="rumors" title="{{ __('Click to filter rumors and whispers') }}">
         <div class="card-body d-flex align-items-center gap-3 py-3">
-          <div class="avatar avatar-md bg-label-warning rounded p-2">
+          <div class="avatar avatar-md bg-label-warning rounded p-2 flex-shrink-0">
             <i class="icon-base ti tabler-flame fs-3"></i>
           </div>
-          <div>
-            <h5 class="mb-0 fw-bold text-warning">{{ $statsSummary['rumors'] ?? 2 }}</h5>
+          <div class="flex-grow-1">
+            <div class="d-flex align-items-baseline justify-content-between">
+              <h5 class="mb-0 fw-bold text-warning">{{ $statsSummary['rumors'] ?? 2 }}</h5>
+              <i class="icon-base ti tabler-arrow-narrow-right text-warning opacity-50 small"></i>
+            </div>
             <small class="text-body-secondary">{{ __('Tavern & City Gossip') }}</small>
           </div>
         </div>
       </div>
     </div>
     <div class="col-lg-3 col-sm-6">
-      <div class="card border-0 shadow-sm">
+      <div class="card news-stat-counter-card h-100 js-category-stat-card" data-filter-cat="expedition" title="{{ __('Click to filter expedition victories') }}">
         <div class="card-body d-flex align-items-center gap-3 py-3">
-          <div class="avatar avatar-md bg-label-success rounded p-2">
+          <div class="avatar avatar-md bg-label-success rounded p-2 flex-shrink-0">
             <i class="icon-base ti tabler-trophy fs-3"></i>
           </div>
-          <div>
-            <h5 class="mb-0 fw-bold text-success">{{ $statsSummary['victories'] ?? 1 }}</h5>
+          <div class="flex-grow-1">
+            <div class="d-flex align-items-baseline justify-content-between">
+              <h5 class="mb-0 fw-bold text-success">{{ $statsSummary['victories'] ?? 1 }}</h5>
+              <i class="icon-base ti tabler-arrow-narrow-right text-success opacity-50 small"></i>
+            </div>
             <small class="text-body-secondary">{{ __('Expedition Victory & Loot') }}</small>
           </div>
         </div>
       </div>
     </div>
     <div class="col-lg-3 col-sm-6">
-      <div class="card border-0 shadow-sm">
+      <div class="card news-stat-counter-card h-100 js-category-stat-card" data-filter-cat="council" title="{{ __('Click to filter council decrees') }}">
         <div class="card-body d-flex align-items-center gap-3 py-3">
-          <div class="avatar avatar-md bg-label-primary rounded p-2">
+          <div class="avatar avatar-md bg-label-primary rounded p-2 flex-shrink-0">
             <i class="icon-base ti tabler-gavel fs-3"></i>
           </div>
-          <div>
-            <h5 class="mb-0 fw-bold text-primary">{{ $statsSummary['decrees'] ?? 1 }}</h5>
+          <div class="flex-grow-1">
+            <div class="d-flex align-items-baseline justify-content-between">
+              <h5 class="mb-0 fw-bold text-primary">{{ $statsSummary['decrees'] ?? 1 }}</h5>
+              <i class="icon-base ti tabler-arrow-narrow-right text-primary opacity-50 small"></i>
+            </div>
             <small class="text-body-secondary">{{ __('Court Decree & Bounty') }}</small>
           </div>
         </div>
@@ -512,16 +567,19 @@
           </div>
         </div>
 
-        <!-- Live Search Input -->
+        <!-- Live Search Input & Result Pill -->
         <div class="col-lg-4 col-12">
-          <div class="input-group">
-            <span class="input-group-text bg-transparent border-end-0">
-              <i class="icon-base ti tabler-search text-body-secondary"></i>
-            </span>
-            <input type="text" id="liveSearchInput" class="form-control border-start-0 ps-0" placeholder="{{ __('Search news, rumors, or heroes...') }}" value="{{ $searchQuery }}">
-            <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn" title="{{ __('Clear') }}">
-              <i class="icon-base ti tabler-x"></i>
-            </button>
+          <div class="d-flex align-items-center gap-2">
+            <div class="input-group">
+              <span class="input-group-text bg-transparent border-end-0">
+                <i class="icon-base ti tabler-search text-body-secondary"></i>
+              </span>
+              <input type="text" id="liveSearchInput" class="form-control border-start-0 ps-0" placeholder="{{ __('Search news, rumors, or heroes...') }}" value="{{ $searchQuery }}">
+              <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn" title="{{ __('Clear') }}">
+                <i class="icon-base ti tabler-x"></i>
+              </button>
+            </div>
+            <span id="newsResultsCount" class="badge bg-label-secondary small flex-shrink-0" style="display: none;"></span>
           </div>
         </div>
       </div>
@@ -584,7 +642,7 @@
          data-location="{{ mb_strtolower($item->location_badge ?? '') }}"
          data-author="{{ mb_strtolower($item->author ?? '') }}">
 
-      <div class="card news-feed-card h-100 position-relative">
+      <div class="card news-feed-card h-100 position-relative shadow-sm">
         @if(($canUpdateNews ?? false) && ($item instanceof \App\Models\News))
         <div class="position-absolute top-0 end-0 p-2 news-drag-handle" style="z-index: 4;" title="{{ __('Drag to reorder') }}" aria-hidden="true">
           <i class="icon-base ti tabler-grip-vertical text-white"></i>
@@ -596,17 +654,17 @@
 
           <!-- Top Category & Tag Badges -->
           <div class="position-absolute top-0 start-0 p-3 d-flex align-items-center gap-1 flex-wrap" style="z-index: 2;">
-            <span class="badge bg-{{ $item->badge_color ?? 'primary' }} text-white fw-bold">
+            <span class="badge bg-{{ $item->badge_color ?? 'primary' }} text-white fw-bold shadow-sm">
               <i class="{{ $item->category_icon ?: 'icon-base ti tabler-shield' }} me-1"></i> {{ $item->category }}
             </span>
             @if($item->tag)
-            <span class="news-tag-badge">
+            <span class="news-tag-badge shadow-sm">
               <i class="{{ $item->tag_icon ?: 'icon-base ti tabler-sparkles' }} me-1 text-{{ $item->badge_color ?? 'warning' }}"></i>
               {{ $item->tag }}
             </span>
             @endif
             @if($gazetteBadge)
-            <span class="news-tag-badge border-warning border-opacity-50">
+            <span class="news-tag-badge border-warning border-opacity-50 shadow-sm">
               <i class="icon-base ti tabler-news me-1 text-warning"></i> {{ $gazetteBadge }}
             </span>
             @endif
@@ -697,7 +755,7 @@
                 <i class="icon-base ti tabler-trash"></i>
               </button>
               @endif
-              <button type="button" class="btn btn-outline-{{ $item->button_color ?? 'primary' }} btn-sm px-3 d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#newsDetailModal" onclick="openNewsDetail({{ $item->id }})">
+              <button type="button" class="btn btn-outline-{{ $item->button_color ?? 'primary' }} btn-sm px-3 d-inline-flex align-items-center gap-1 shadow-sm" data-bs-toggle="modal" data-bs-target="#newsDetailModal" onclick="openNewsDetail({{ $item->id }})">
                 <i class="{{ $item->button_icon ?: 'icon-base ti tabler-book-2' }}"></i>
                 <span>{{ __('Read More') }}</span>
               </button>
@@ -715,6 +773,18 @@
       <p class="text-body-secondary">{{ __('No news or whisper records match your search criteria.') }}</p>
     </div>
     @endforelse
+  </div>
+
+  <!-- Empty state placeholder for JS live filter -->
+  <div id="noJsResultsPlaceholder" class="col-12 text-center py-5 d-none">
+    <div class="avatar avatar-xl bg-label-secondary mx-auto mb-3">
+      <i class="icon-base ti tabler-search-off fs-1"></i>
+    </div>
+    <h5 class="text-white">{{ __('No Matching News Found') }}</h5>
+    <p class="text-body-secondary">{{ __('No bulletins match the current filter or search criteria.') }}</p>
+    <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="resetAllNewsFilters()">
+      <i class="icon-base ti tabler-refresh me-1"></i> {{ __('Reset Filters') }}
+    </button>
   </div>
 
 </div>
@@ -811,7 +881,7 @@
 @if($canManageNews ?? false)
 <div class="modal fade" id="newsEditModal" tabindex="-1" aria-labelledby="newsEditModalTitle" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
-    <form method="post" id="newsEditForm" enctype="multipart/form-data" class="modal-content" style="background: #182234; border: 1px solid rgba(255,255,255,0.15);">
+    <form method="post" id="newsEditForm" enctype="multipart/form-data" class="modal-content" style="background: #111a28; border: 1px solid rgba(255,255,255,0.15);">
       @csrf
       <div class="modal-header border-bottom border-white border-opacity-10">
         <h5 class="modal-title fw-bold text-white" id="newsEditModalTitle">{{ __('Edit News') }}</h5>
@@ -829,7 +899,7 @@
           </div>
           <div class="col-md-6">
             <label class="form-label text-white small fw-medium" for="newsEditDateText">{{ __('Date label') }}</label>
-            <input type="text" class="form-control" id="newsEditDateText" name="date_text" maxlength="100" placeholder="Leos 1, 652 â€” Vonyas">
+            <input type="text" class="form-control" id="newsEditDateText" name="date_text" maxlength="100" placeholder="Leos 1, 652 — Vonyas">
           </div>
           <div class="col-12">
             <label class="form-label text-white small fw-medium" for="newsEditDescription">{{ __('Summary / description') }}</label>
@@ -852,7 +922,7 @@
                     $gazetteImagePresets[$path] = (string) ($entry['label'] ?? basename($path, '.jpg'));
                 }
               @endphp
-              <option value="__gazette_auto__" selected>BaÅŸlÄ±k ve Ã¶zetten otomatik</option>
+              <option value="__gazette_auto__" selected>{{ __('Automatic from title and summary') }}</option>
               @foreach ($gazetteImagePresets as $preset => $presetLabel)
               <option value="{{ $preset }}">{{ $presetLabel }}</option>
               @endforeach
@@ -890,7 +960,7 @@
 <!-- Send Whisper Tip Modal (Roleplay Feature) -->
 <div class="modal fade" id="whisperTipModal" tabindex="-1" aria-labelledby="whisperTipModalTitle" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="background: #182234; border: 1px solid rgba(255,255,255,0.15);">
+    <div class="modal-content" style="background: #111a28; border: 1px solid rgba(255,255,255,0.15);">
       <div class="modal-header border-bottom border-white border-opacity-10">
         <h5 class="modal-title fw-bold text-white d-flex align-items-center gap-2" id="whisperTipModalTitle">
           <i class="icon-base ti tabler-message-2-question text-warning"></i>
@@ -1174,14 +1244,19 @@
         ? item.stats.filter(st => st && typeof st === 'object' && 'value' in st && 'label' in st)
         : [];
     if (typeof item.views_count === 'number' && item.views_count > 0) {
-      statPills.unshift({ value: item.views_count, label: 'okunma', color: 'text-secondary' });
+      statPills.unshift({ value: item.views_count, label: @json(__('Views')), color: 'text-secondary' });
     }
-    const reactionLabels = { victory: 'Zafer', mourning: 'Yas', whisper: 'Han fÄ±sÄ±ltÄ±sÄ±', bounty: 'Ferman' };
+    const reactionLabels = {
+      victory: @json(__('Victory')),
+      mourning: @json(__('Mourning')),
+      whisper: @json(__('Tavern whisper')),
+      bounty: @json(__('Decree'))
+    };
     const reactionMetrics = item.reaction_metrics || {};
     Object.keys(reactionLabels).forEach((key) => {
       const count = Number(reactionMetrics[key] || 0);
       if (count > 0) {
-        statPills.push({ value: count, label: reactionLabels[key] + ' (okuyucu)', color: 'text-info' });
+        statPills.push({ value: count, label: reactionLabels[key] + ' (' + @json(__('readers')) + ')', color: 'text-info' });
       }
     });
     if (statPills.length > 0) {
@@ -1202,17 +1277,17 @@
     if (canUpdateNews && isManageableNewsItem(item)) {
       dynamicActions.innerHTML = `
         <div class="d-flex flex-wrap gap-2">
-          <button type="button" class="btn btn-outline-success d-inline-flex align-items-center gap-1" onclick="sendEditorialReaction(${itemId}, 'victory', '${String(item.title).replace(/'/g, "\\'")}')">
-            <i class="icon-base ti tabler-trophy"></i><span>Zafer kutla</span>
+          <button type="button" class="btn btn-outline-success btn-sm d-inline-flex align-items-center gap-1" onclick="sendEditorialReaction(${itemId}, 'victory', '${String(item.title).replace(/'/g, "\\'")}')">
+            <i class="icon-base ti tabler-trophy"></i><span>{{ __('Celebrate Victory') }}</span>
           </button>
-          <button type="button" class="btn btn-outline-danger d-inline-flex align-items-center gap-1" onclick="sendEditorialReaction(${itemId}, 'mourning', '${String(item.title).replace(/'/g, "\\'")}')">
-            <i class="icon-base ti tabler-candle"></i><span>Yas tut</span>
+          <button type="button" class="btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-1" onclick="sendEditorialReaction(${itemId}, 'mourning', '${String(item.title).replace(/'/g, "\\'")}')">
+            <i class="icon-base ti tabler-candle"></i><span>{{ __('Mourn') }}</span>
           </button>
-          <button type="button" class="btn btn-outline-warning d-inline-flex align-items-center gap-1" onclick="sendEditorialReaction(${itemId}, 'whisper', '${String(item.title).replace(/'/g, "\\'")}')">
-            <i class="icon-base ti tabler-beer"></i><span>Han fÄ±sÄ±ltÄ±sÄ±</span>
+          <button type="button" class="btn btn-outline-warning btn-sm d-inline-flex align-items-center gap-1" onclick="sendEditorialReaction(${itemId}, 'whisper', '${String(item.title).replace(/'/g, "\\'")}')">
+            <i class="icon-base ti tabler-beer"></i><span>{{ __('Tavern whisper') }}</span>
           </button>
-          <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center gap-1" onclick="sendEditorialReaction(${itemId}, 'bounty', '${String(item.title).replace(/'/g, "\\'")}')">
-            <i class="icon-base ti tabler-file-text"></i><span>Ferman kaydÄ±</span>
+          <button type="button" class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1" onclick="sendEditorialReaction(${itemId}, 'bounty', '${String(item.title).replace(/'/g, "\\'")}')">
+            <i class="icon-base ti tabler-file-text"></i><span>{{ __('Decree record') }}</span>
           </button>
         </div>`;
     } else {
@@ -1251,7 +1326,7 @@
   async function sendEditorialReaction(newsId, reaction, title) {
     const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     try {
-      const response = await fetch(`/pages/news/${newsId}/editorial-reaction`, {
+      const response = await fetch(`${newsDeleteUrlBase}/${newsId}/editorial-reaction`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1266,7 +1341,7 @@
       }
     } catch (error) {
       if (typeof Swal !== 'undefined') {
-        Swal.fire({ title: 'Hata', text: error.message || 'Tepki kaydedilemedi.', icon: 'error' });
+        Swal.fire({ title: @json(__('Error')), text: error.message || @json(__('Reaction could not be recorded.')), icon: 'error' });
       } else {
         alert(error.message || 'Tepki kaydedilemedi.');
       }
@@ -1278,66 +1353,66 @@
       bounty: fermanKayit,
       victory: zaferKutla,
     };
-  (handlers[reaction] || zaferKutla)(title);
+    (handlers[reaction] || zaferKutla)(title);
   }
 
   function taziyeBirak(title) {
     if (typeof Swal !== 'undefined') {
       Swal.fire({
-        title: 'ğŸ•¯ï¸ {{ __("Memorial & Moment of Silence") }}',
-        text: '{{ __("You lit a candle in memory of our fallen heroes. Their names have been inscribed into the Valiant Shade Book of Honor.") }}',
+        title: '🕯️ ' + @json(__('Memorial & Moment of Silence')),
+        text: @json(__('You lit a candle in memory of our fallen heroes. Their names have been inscribed into the Valiant Shade Book of Honor.')),
         icon: 'info',
-        confirmButtonText: '{{ __("May Their Souls Rest in Glory") }}',
+        confirmButtonText: @json(__('May Their Souls Rest in Glory')),
         customClass: { confirmButton: 'btn btn-danger' },
         buttonsStyling: false
       });
     } else {
-      alert('{{ __("Tribute paid to fallen heroes.") }}');
+      alert(@json(__('Tribute paid to fallen heroes.')));
     }
   }
 
   function fisiltiYay(title) {
     if (typeof Swal !== 'undefined') {
       Swal.fire({
-        title: 'ğŸº {{ __("Tavern Whisper") }}',
-        text: '{{ __("You bought a round of ales at the Red Inn and whispered the rumor into eager ears. Suspicion in the city has increased!") }}',
+        title: '🍺 ' + @json(__('Tavern Whisper')),
+        text: @json(__('You bought a round of ales at the Red Inn and whispered the rumor into eager ears. Suspicion in the city has increased!')),
         icon: 'warning',
-        confirmButtonText: '{{ __("Keep it Between Us") }}',
+        confirmButtonText: @json(__('Keep it Between Us')),
         customClass: { confirmButton: 'btn btn-warning' },
         buttonsStyling: false
       });
     } else {
-      alert('{{ __("Rumor spread through the tavern.") }}');
+      alert(@json(__('Rumor spread through the tavern.')));
     }
   }
 
   function fermanKayit(title) {
     if (typeof Swal !== 'undefined') {
       Swal.fire({
-        title: 'ğŸ“œ {{ __("Decree Signed") }}',
-        text: '{{ __("You have enlisted for the bounty expedition. Your share will await you in the guild coffers once the targets are delivered alive or dead!") }}',
+        title: '📜 ' + @json(__('Decree Signed')),
+        text: @json(__('You have enlisted for the bounty expedition. Your share will await you in the guild coffers once the targets are delivered alive or dead!')),
         icon: 'success',
-        confirmButtonText: '{{ __("My Blade is Ready") }}',
+        confirmButtonText: @json(__('My Blade is Ready')),
         customClass: { confirmButton: 'btn btn-primary' },
         buttonsStyling: false
       });
     } else {
-      alert('{{ __("Enlistment confirmed.") }}');
+      alert(@json(__('Enlistment confirmed.')));
     }
   }
 
   function zaferKutla(title) {
     if (typeof Swal !== 'undefined') {
       Swal.fire({
-        title: 'ğŸ† {{ __("Victory Celebration!") }}',
-        text: '{{ __("Steins were raised in honor of the grand victory. The Guild Council granted you +50 XP bonus honor points!") }}',
+        title: '🏆 ' + @json(__('Victory Celebration!')),
+        text: @json(__('Steins were raised in honor of the grand victory. The Guild Council granted you +50 XP bonus honor points!')),
         icon: 'success',
-        confirmButtonText: '{{ __("For Valiant Shade!") }}',
+        confirmButtonText: @json(__('For Valiant Shade!')),
         customClass: { confirmButton: 'btn btn-success' },
         buttonsStyling: false
       });
     } else {
-      alert('{{ __("Victory celebrated!") }}');
+      alert(@json(__('Victory celebrated!')));
     }
   }
 
@@ -1356,14 +1431,37 @@
     });
   }
 
+  window.resetAllNewsFilters = function () {
+    const searchInput = document.getElementById('liveSearchInput');
+    if (searchInput) searchInput.value = '';
+
+    const filterButtons = document.querySelectorAll('#categoryFilterGroup .category-filter-btn');
+    filterButtons.forEach(b => b.classList.remove('active'));
+    document.querySelector('#categoryFilterGroup [data-cat="all"]')?.classList.add('active');
+
+    const gazetteFilterButtons = document.querySelectorAll('#gazetteSlotFilterGroup .gazette-filter-btn');
+    gazetteFilterButtons.forEach(b => b.classList.remove('active'));
+    document.querySelector('#gazetteSlotFilterGroup [data-gazette-slot="all"]')?.classList.add('active');
+
+    const statCards = document.querySelectorAll('.js-category-stat-card');
+    statCards.forEach(c => c.classList.remove('is-active-filter'));
+
+    if (window.runNewsCardFilter) {
+      window.runNewsCardFilter('all', 'all');
+    }
+  };
+
   // DOM Loaded Event Bindings
   document.addEventListener('DOMContentLoaded', function () {
     initNewsTypePicker(document.getElementById('whisperTypePicker'), document.getElementById('whisperNewsType'));
     const cards = document.querySelectorAll('.news-item-col');
     const filterButtons = document.querySelectorAll('#categoryFilterGroup .category-filter-btn');
     const gazetteFilterButtons = document.querySelectorAll('#gazetteSlotFilterGroup .gazette-filter-btn');
+    const statCards = document.querySelectorAll('.js-category-stat-card');
     const searchInput = document.getElementById('liveSearchInput');
     const clearBtn = document.getElementById('clearSearchBtn');
+    const resultsCountBadge = document.getElementById('newsResultsCount');
+    const noResultsPlaceholder = document.getElementById('noJsResultsPlaceholder');
     const newsGrid = document.getElementById('newsCardsContainer');
     const reorderUrl = newsGrid?.getAttribute('data-reorder-url') || '';
 
@@ -1372,9 +1470,9 @@
 
     function filterCards() {
       const query = (searchInput.value || '').trim().toLowerCase();
+      let visibleCount = 0;
 
       cards.forEach(card => {
-        const cat = card.getAttribute('data-category') || '';
         const title = card.getAttribute('data-title') || '';
         const desc = card.getAttribute('data-desc') || '';
         const location = card.getAttribute('data-location') || '';
@@ -1396,11 +1494,37 @@
 
         if (matchCategory && matchGazette && matchQuery) {
           card.style.display = '';
+          visibleCount++;
         } else {
           card.style.display = 'none';
         }
       });
+
+      // Update Result Count Badge
+      if (resultsCountBadge) {
+        if (query || currentFilter !== 'all' || currentGazetteSlot !== 'all') {
+          resultsCountBadge.style.display = 'inline-block';
+          resultsCountBadge.textContent = `${visibleCount} / ${cards.length}`;
+        } else {
+          resultsCountBadge.style.display = 'none';
+        }
+      }
+
+      // Show/hide empty placeholder
+      if (noResultsPlaceholder) {
+        if (visibleCount === 0 && cards.length > 0) {
+          noResultsPlaceholder.classList.remove('d-none');
+        } else {
+          noResultsPlaceholder.classList.add('d-none');
+        }
+      }
     }
+
+    window.runNewsCardFilter = function(cat, slot) {
+      if (cat !== undefined) currentFilter = cat;
+      if (slot !== undefined) currentGazetteSlot = slot;
+      filterCards();
+    };
 
     // Category Button Clicks
     filterButtons.forEach(btn => {
@@ -1408,7 +1532,44 @@
         filterButtons.forEach(b => b.classList.remove('active'));
         this.classList.add('active');
         currentFilter = this.getAttribute('data-cat') || 'all';
+
+        // Sync with stat cards highlight
+        statCards.forEach(c => {
+          c.classList.toggle('is-active-filter', c.getAttribute('data-filter-cat') === currentFilter);
+        });
+
         filterCards();
+      });
+    });
+
+    // Interactive Quick Stat Cards
+    statCards.forEach(card => {
+      card.addEventListener('click', function () {
+        const cat = this.getAttribute('data-filter-cat');
+        if (!cat) return;
+
+        // If already active, toggle back to 'all'
+        if (currentFilter === cat) {
+          currentFilter = 'all';
+          this.classList.remove('is-active-filter');
+          filterButtons.forEach(b => b.classList.toggle('active', b.getAttribute('data-cat') === 'all'));
+        } else {
+          currentFilter = cat;
+          statCards.forEach(c => c.classList.remove('is-active-filter'));
+          this.classList.add('is-active-filter');
+
+          filterButtons.forEach(b => {
+            b.classList.toggle('active', b.getAttribute('data-cat') === cat);
+          });
+        }
+
+        filterCards();
+
+        // Smooth scroll to feed
+        const target = document.getElementById('newsFeedGrid');
+        if (target) {
+          window.scrollTo({ top: target.offsetTop - 75, behavior: 'smooth' });
+        }
       });
     });
 
@@ -1421,72 +1582,75 @@
       });
     });
 
-  function visibleNewsIdsInDomOrder() {
-    return Array.from(cards)
-      .filter((card) => card.style.display !== 'none')
-      .map((card) => parseInt(card.getAttribute('data-id') || '0', 10))
-      .filter((id) => Number.isFinite(id) && id > 0);
-  }
-
-  let dragSource = null;
-
-  async function saveNewsOrder() {
-    if (!reorderUrl || !canUpdateNews) return;
-    const ids = visibleNewsIdsInDomOrder();
-    if (!ids.length) return;
-    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-    try {
-      await fetch(reorderUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-CSRF-TOKEN': token || '',
-        },
-        body: JSON.stringify({ ids }),
-      });
-    } catch (error) {
-      console.error(error);
+    function newsIdsInDomOrder() {
+      return Array.from(newsGrid.querySelectorAll('.news-item-col[draggable="true"]'))
+        .map((card) => parseInt(card.getAttribute('data-id') || '0', 10))
+        .filter((id) => Number.isFinite(id) && id > 0);
     }
-  }
 
-  if (reorderUrl && canUpdateNews && newsGrid) {
-    cards.forEach((card) => {
-      card.addEventListener('dragstart', (event) => {
-        dragSource = card;
-        card.classList.add('news-item-col--dragging');
-        event.dataTransfer.effectAllowed = 'move';
-      });
-      card.addEventListener('dragend', () => {
-        card.classList.remove('news-item-col--dragging');
-        cards.forEach((c) => c.classList.remove('news-item-col--drag-over'));
-        dragSource = null;
-      });
-      card.addEventListener('dragover', (event) => {
-        if (!dragSource || dragSource === card) return;
-        event.preventDefault();
-        card.classList.add('news-item-col--drag-over');
-      });
-      card.addEventListener('dragleave', () => {
-        card.classList.remove('news-item-col--drag-over');
-      });
-      card.addEventListener('drop', (event) => {
-        event.preventDefault();
-        card.classList.remove('news-item-col--drag-over');
-        if (!dragSource || dragSource === card) return;
-        const all = Array.from(newsGrid.querySelectorAll('.news-item-col'));
-        const targetIdx = all.indexOf(card);
-        const sourceIdx = all.indexOf(dragSource);
-        if (targetIdx < 0 || sourceIdx < 0) return;
-        if (sourceIdx < targetIdx) {
-          card.after(dragSource);
-        } else {
-          card.before(dragSource);
+    let dragSource = null;
+
+    async function saveNewsOrder() {
+      if (!reorderUrl || !canUpdateNews) return;
+      const ids = newsIdsInDomOrder();
+      if (!ids.length) return;
+      const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      try {
+        const response = await fetch(reorderUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': token || '',
+          },
+          body: JSON.stringify({ ids }),
+        });
+        if (!response.ok) {
+          throw new Error(@json(__('News order could not be saved.')));
         }
-        saveNewsOrder();
+      } catch (error) {
+        console.error(error);
+        alert(@json(__('News order could not be saved.')));
+      }
+    }
+
+    if (reorderUrl && canUpdateNews && newsGrid) {
+      cards.forEach((card) => {
+        card.addEventListener('dragstart', (event) => {
+          dragSource = card;
+          card.classList.add('news-item-col--dragging');
+          event.dataTransfer.effectAllowed = 'move';
+        });
+        card.addEventListener('dragend', () => {
+          card.classList.remove('news-item-col--dragging');
+          cards.forEach((c) => c.classList.remove('news-item-col--drag-over'));
+          dragSource = null;
+        });
+        card.addEventListener('dragover', (event) => {
+          if (!dragSource || dragSource === card) return;
+          event.preventDefault();
+          card.classList.add('news-item-col--drag-over');
+        });
+        card.addEventListener('dragleave', () => {
+          card.classList.remove('news-item-col--drag-over');
+        });
+        card.addEventListener('drop', (event) => {
+          event.preventDefault();
+          card.classList.remove('news-item-col--drag-over');
+          if (!dragSource || dragSource === card) return;
+          const all = Array.from(newsGrid.querySelectorAll('.news-item-col'));
+          const targetIdx = all.indexOf(card);
+          const sourceIdx = all.indexOf(dragSource);
+          if (targetIdx < 0 || sourceIdx < 0) return;
+          if (sourceIdx < targetIdx) {
+            card.after(dragSource);
+          } else {
+            card.before(dragSource);
+          }
+          saveNewsOrder();
+        });
       });
-    });
-  }
+    }
 
     // Search Input
     searchInput.addEventListener('input', filterCards);
@@ -1551,10 +1715,10 @@
 
           if (typeof Swal !== 'undefined') {
             Swal.fire({
-              title: 'ğŸ¤« {{ __("Whisper Received!") }}',
+              title: '🤫 ' + @json(__('Whisper Received!')),
               text: result.message,
               icon: 'success',
-              confirmButtonText: '{{ __("Understood") }}',
+              confirmButtonText: @json(__('Understood')),
               customClass: { confirmButton: 'btn btn-warning' },
               buttonsStyling: false
             }).then(() => window.location.reload());
@@ -1572,4 +1736,3 @@
   });
 </script>
 @endsection
-

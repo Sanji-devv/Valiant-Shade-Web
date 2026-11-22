@@ -114,9 +114,9 @@ class InventoryTest extends TestCase
             'quantity' => 2,
             'unit_price' => 50000,
             'total_price' => 100000,
-            'market_value' => 55000, // 55% of 100,000
-            'buy_price' => 27500,    // 55,000 / 2
-            'sell_price' => 25000,   // 50% / unit
+            'market_value' => 50000, // 50% of 100,000
+            'buy_price' => 25000,    // 50,000 / 2
+            'sell_price' => 27500,   // 55% / unit
         ]);
     }
 
@@ -132,7 +132,7 @@ class InventoryTest extends TestCase
             ->assertSee('id="btnAddItemRow"', false)
             ->assertSee('aria-label="Delete selected items"', false)
             ->assertSee('id="btnSellSelected"', false)
-            ->assertSee('Sell (50% / unit');
+            ->assertSee('Piyasa Satış (%55 / unit');
 
         $response = $this->actingAs($bailiff)->postJson('/valiant-shade/pages/inventory', [
             'items' => [
@@ -158,14 +158,14 @@ class InventoryTest extends TestCase
             'name' => 'Bulk Shield',
             'quality' => null,
             'total_price' => 2000,
-            'buy_price' => 550,
-            'sell_price' => 500,
+            'buy_price' => 500,
+            'sell_price' => 550,
         ]);
         $this->assertDatabaseHas('inventory_items', [
             'name' => 'Bulk Wand',
             'total_price' => 1000,
-            'buy_price' => 275,
-            'sell_price' => 250,
+            'buy_price' => 250,
+            'sell_price' => 275,
         ]);
 
         $ids = InventoryItem::whereIn('name', ['Bulk Shield', 'Bulk Wand'])->pluck('id')->all();
@@ -255,10 +255,10 @@ class InventoryTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('soldCount', 2)
-            ->assertJsonPath('proceedsSp', 1300);
+            ->assertJsonPath('proceedsSp', 1430);
         $this->assertSoftDeleted('inventory_items', ['id' => $firstItem->id]);
         $this->assertSoftDeleted('inventory_items', ['id' => $secondItem->id]);
-        $this->assertDatabaseHas('guild_vaults', ['id' => 1, 'balance_sp' => 31300]);
+        $this->assertDatabaseHas('guild_vaults', ['id' => 1, 'balance_sp' => 31430]);
     }
 
     public function test_market_sale_is_logged_and_can_be_reversed_once(): void
@@ -427,7 +427,7 @@ class InventoryTest extends TestCase
             'quantity' => 3,
             'unit_price' => 10000,
             'total_price' => 30000,
-            'market_value' => 16500,
+            'market_value' => 15000,
         ]);
     }
 
@@ -606,8 +606,8 @@ class InventoryTest extends TestCase
         $this->assertDatabaseHas('inventory_items', [
             'name' => 'Wand of Cure Light Wounds (50 charges)',
             'total_price' => 750,
-            'market_value' => 412.5,
-            'buy_price' => 412.5,
+            'market_value' => 375,
+            'buy_price' => 375,
         ]);
 
         // 2. 25 charges: 750 GP base, qty 1 -> 375 GP
@@ -622,8 +622,8 @@ class InventoryTest extends TestCase
         $this->assertDatabaseHas('inventory_items', [
             'name' => 'Wand of Cure Light Wounds (25 charges)',
             'total_price' => 375,
-            'market_value' => 206.25,
-            'buy_price' => 206.25,
+            'market_value' => 187.5,
+            'buy_price' => 187.5,
         ]);
 
         // 3. 10 charges with quantity 2: 1000 GP base -> (10/50)*1000*2 = 400 GP
@@ -638,8 +638,8 @@ class InventoryTest extends TestCase
         $this->assertDatabaseHas('inventory_items', [
             'name' => 'Wand of Magic Missile (10 charges)',
             'total_price' => 400,
-            'market_value' => 220,
-            'buy_price' => 110,
+            'market_value' => 200,
+            'buy_price' => 100,
         ]);
 
         // 4. 1 charge (Min 1): 750 GP base, qty 1 -> (1/50)*750 = 15 GP
@@ -654,8 +654,8 @@ class InventoryTest extends TestCase
         $this->assertDatabaseHas('inventory_items', [
             'name' => 'Wand of Shocking Grasp (1 charge)',
             'total_price' => 15,
-            'market_value' => 8.25,
-            'buy_price' => 8.25,
+            'market_value' => 7.5,
+            'buy_price' => 7.5,
         ]);
 
         // 5. 0 charges: price is 0
@@ -701,7 +701,7 @@ class InventoryTest extends TestCase
         $this->assertDatabaseHas('inventory_items', [
             'name' => 'Necklace of Fireballs',
             'total_price' => 58500,
-            'market_value' => 32175,
+            'market_value' => 29250,
         ]);
     }
 
@@ -716,8 +716,8 @@ class InventoryTest extends TestCase
             'quantity' => 1,
             'unit_price' => 11250,
             'total_price' => 11250,
-            'market_value' => 6187.5,
-            'buy_price' => 6187.5,
+            'market_value' => 5625,
+            'buy_price' => 5625,
         ]);
 
         // Update to 20 charges: (20/50) * 11250 = 4500 GP
@@ -734,8 +734,8 @@ class InventoryTest extends TestCase
             'id' => $wand->id,
             'quality' => '20 charges',
             'total_price' => 4500,
-            'market_value' => 2475,
-            'buy_price' => 2475,
+            'market_value' => 2250,
+            'buy_price' => 2250,
         ]);
     }
 
@@ -946,5 +946,29 @@ class InventoryTest extends TestCase
         ]);
 
         $response->assertStatus(403);
+    }
+
+    public function test_inventory_page_displays_character_allowances_table_with_metrics_and_actions(): void
+    {
+        $admin = User::factory()->create(['role' => 'Admin']);
+        $player = User::factory()->create(['name' => 'Sir Player']);
+        $character = Character::create([
+            'user_id' => $player->id,
+            'name' => 'Galahad the Bold',
+            'status' => 'ACTIVE',
+            'current_level' => 7,
+            'allowance_sp' => 1250,
+        ]);
+
+        $response = $this->actingAs($admin)->get('/valiant-shade/pages/inventory');
+
+        $response->assertOk()
+            ->assertSee('id="characterAllowancesCard"', false)
+            ->assertSee('id="tableAllowancesList"', false)
+            ->assertSee('id="searchAllowanceTable"', false)
+            ->assertSee('Galahad the Bold')
+            ->assertSee('Sir Player')
+            ->assertSee('1,250.00')
+            ->assertSee('data-char-id="'.$character->id.'"', false);
     }
 }
