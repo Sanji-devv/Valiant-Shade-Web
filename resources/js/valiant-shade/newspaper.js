@@ -3083,13 +3083,14 @@ async function downloadArticleModalPng() {
     const articleOverflow = articleBody
       ? Math.max(0, articleBody.scrollHeight - articleBody.clientHeight)
       : 0;
+    const panelContentHeight = Math.max(panel.scrollHeight, panel.clientHeight);
     const captureWindowHeight = Math.max(
       window.innerHeight,
-      Math.ceil(panelBounds.height + articleOverflow),
+      Math.ceil(panelContentHeight + articleOverflow + 64),
     );
     const canvas = await html2canvas(panel, {
       backgroundColor: null,
-      scale: Math.min(2, window.devicePixelRatio || 1.5),
+      scale: Math.min(2, Math.max(1.5, window.devicePixelRatio || 1.5)),
       useCORS: true,
       windowWidth: window.innerWidth,
       windowHeight: captureWindowHeight,
