@@ -3077,14 +3077,58 @@ async function downloadArticleModalPng() {
   try {
     await document.fonts.ready;
     const html2canvas = await loadHtml2Canvas();
+    const panelBounds = panel.getBoundingClientRect();
+    const exportWidth = Math.ceil(panelBounds.width);
+    const exportHeight = Math.ceil(panelBounds.height);
+    const articleScrollTop = panel.querySelector('.vs-modal__body--article')?.scrollTop || 0;
     const canvas = await html2canvas(panel, {
       backgroundColor: null,
       scale: Math.min(2, window.devicePixelRatio || 1.5),
       useCORS: true,
-      // Use the browser's SVG foreignObject renderer for the split reader.
-      // The default canvas renderer can mis-composite the fixed modal backdrop
-      // over the scrollable article column in this layout.
-      foreignObjectRendering: true,
+      onclone: (clonedDocument) => {
+        const clonedPanel = clonedDocument.querySelector('#newsDetailModalPanel');
+        if (!clonedPanel) {
+          return;
+        }
+
+        // The live reader sits inside a viewport-sized, dark fixed backdrop.
+        // Move only the panel into an isolated export wrapper so that backdrop
+        // cannot be composited over the article column in the PNG.
+        const exportRoot = clonedDocument.createElement('div');
+        exportRoot.className = 'vs-modal-backdrop vs-modal-backdrop--article vs-modal-backdrop--gazette-read is-open';
+        Object.assign(exportRoot.style, {
+          position: 'static',
+          inset: 'auto',
+          display: 'block',
+          alignItems: 'initial',
+          justifyContent: 'initial',
+          width: `${exportWidth}px`,
+          height: `${exportHeight}px`,
+          padding: '0',
+          background: 'transparent',
+          zIndex: 'auto',
+        });
+
+        Object.assign(clonedPanel.style, {
+          position: 'relative',
+          top: '0',
+          left: '0',
+          margin: '0',
+          transform: 'none',
+          width: `${exportWidth}px`,
+          height: `${exportHeight}px`,
+          maxHeight: 'none',
+        });
+        clonedPanel.style.removeProperty('--vs-modal-drag-y');
+
+        const clonedArticleBody = clonedPanel.querySelector('.vs-modal__body--article');
+        if (clonedArticleBody) {
+          clonedArticleBody.scrollTop = articleScrollTop;
+        }
+
+        exportRoot.appendChild(clonedPanel);
+        clonedDocument.body.appendChild(exportRoot);
+      },
     });
     const blob = await new Promise((resolve, reject) => {
       canvas.toBlob((result) => (result ? resolve(result) : reject(new Error('PNG oluşturulamadı'))), 'image/png');
