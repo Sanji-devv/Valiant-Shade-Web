@@ -3081,6 +3081,15 @@ async function downloadArticleModalPng() {
       backgroundColor: null,
       scale: Math.min(2, window.devicePixelRatio || 1.5),
       useCORS: true,
+      onclone: (clonedDocument) => {
+        // The reader backdrop is an ancestor of the panel. html2canvas can
+        // composite its dark overlay over part of the captured panel, so keep
+        // the backdrop transparent in the export clone only.
+        const backdrop = clonedDocument.querySelector('#newsDetailModal');
+        if (backdrop) {
+          backdrop.style.background = 'transparent';
+        }
+      },
     });
     const blob = await new Promise((resolve, reject) => {
       canvas.toBlob((result) => (result ? resolve(result) : reject(new Error('PNG oluşturulamadı'))), 'image/png');
