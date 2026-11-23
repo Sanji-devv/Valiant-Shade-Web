@@ -3091,6 +3091,10 @@ async function downloadArticleModalPng() {
           return;
         }
 
+        // Reader controls belong to the live UI, not the downloaded article.
+        clonedPanel.querySelector('.vs-modal__chrome')?.remove();
+        clonedPanel.querySelector('.vs-modal__grabber')?.remove();
+
         const clonedBackdrop = clonedDocument.querySelector('#newsDetailModal');
         if (clonedBackdrop) {
           clonedBackdrop.style.background = 'transparent';
