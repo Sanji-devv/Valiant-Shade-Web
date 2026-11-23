@@ -3079,12 +3079,20 @@ async function downloadArticleModalPng() {
     const html2canvas = await loadHtml2Canvas();
     const panelBounds = panel.getBoundingClientRect();
     const exportWidth = Math.ceil(panelBounds.width);
-    const exportHeight = Math.ceil(panelBounds.height);
-    const articleScrollTop = panel.querySelector('.vs-modal__body--article')?.scrollTop || 0;
+    const articleBody = panel.querySelector('.vs-modal__body--article');
+    const articleOverflow = articleBody
+      ? Math.max(0, articleBody.scrollHeight - articleBody.clientHeight)
+      : 0;
+    const captureWindowHeight = Math.max(
+      window.innerHeight,
+      Math.ceil(panelBounds.height + articleOverflow),
+    );
     const canvas = await html2canvas(panel, {
       backgroundColor: null,
       scale: Math.min(2, window.devicePixelRatio || 1.5),
       useCORS: true,
+      windowWidth: window.innerWidth,
+      windowHeight: captureWindowHeight,
       onclone: (clonedDocument) => {
         const clonedPanel = clonedDocument.querySelector('#newsDetailModalPanel');
         if (!clonedPanel) {
@@ -3112,22 +3120,28 @@ async function downloadArticleModalPng() {
           margin: '0',
           transform: 'none',
           width: `${exportWidth}px`,
-          height: `${exportHeight}px`,
+          height: 'auto',
           maxHeight: 'none',
+          overflow: 'visible',
           backgroundColor: '#e8d5b0',
           backgroundImage: 'none',
           opacity: '1',
           filter: 'none',
           mixBlendMode: 'normal',
+          gridTemplateRows: 'auto auto',
         });
         clonedPanel.style.removeProperty('--vs-modal-drag-y');
 
         const clonedArticleBody = clonedPanel.querySelector('.vs-modal__body--article');
         if (clonedArticleBody) {
-          clonedArticleBody.scrollTop = articleScrollTop;
+          clonedArticleBody.scrollTop = 0;
           Object.assign(clonedArticleBody.style, {
             position: 'relative',
             zIndex: '1',
+            height: 'auto',
+            maxHeight: 'none',
+            minHeight: 'auto',
+            overflow: 'visible',
             backgroundColor: '#e8d5b0',
             backgroundImage: 'none',
             opacity: '1',
