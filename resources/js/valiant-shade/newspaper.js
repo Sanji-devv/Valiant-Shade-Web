@@ -3091,24 +3091,16 @@ async function downloadArticleModalPng() {
           return;
         }
 
-        // The live reader sits inside a viewport-sized, dark fixed backdrop.
-        // Move only the panel into an isolated export wrapper so that backdrop
-        // cannot be composited over the article column in the PNG.
-        const exportRoot = clonedDocument.createElement('div');
-        exportRoot.className = 'vs-modal-backdrop vs-modal-backdrop--article vs-modal-backdrop--gazette-read is-open';
-        Object.assign(exportRoot.style, {
-          position: 'static',
-          inset: 'auto',
-          display: 'block',
-          alignItems: 'initial',
-          justifyContent: 'initial',
-          width: `${exportWidth}px`,
-          height: `${exportHeight}px`,
-          padding: '0',
-          background: 'transparent',
-          zIndex: 'auto',
-        });
+        const clonedBackdrop = clonedDocument.querySelector('#newsDetailModal');
+        if (clonedBackdrop) {
+          clonedBackdrop.style.background = 'transparent';
+          clonedBackdrop.style.backdropFilter = 'none';
+          clonedBackdrop.style.webkitBackdropFilter = 'none';
+        }
 
+        // The gazette reader uses a transparent scrolling column over a
+        // gradient panel. Give the export its own opaque parchment surface so
+        // the full-screen backdrop cannot show through during rasterization.
         Object.assign(clonedPanel.style, {
           position: 'relative',
           top: '0',
@@ -3118,16 +3110,27 @@ async function downloadArticleModalPng() {
           width: `${exportWidth}px`,
           height: `${exportHeight}px`,
           maxHeight: 'none',
+          backgroundColor: '#e8d5b0',
+          backgroundImage: 'none',
+          opacity: '1',
+          filter: 'none',
+          mixBlendMode: 'normal',
         });
         clonedPanel.style.removeProperty('--vs-modal-drag-y');
 
         const clonedArticleBody = clonedPanel.querySelector('.vs-modal__body--article');
         if (clonedArticleBody) {
           clonedArticleBody.scrollTop = articleScrollTop;
+          Object.assign(clonedArticleBody.style, {
+            position: 'relative',
+            zIndex: '1',
+            backgroundColor: '#e8d5b0',
+            backgroundImage: 'none',
+            opacity: '1',
+            filter: 'none',
+            mixBlendMode: 'normal',
+          });
         }
-
-        exportRoot.appendChild(clonedPanel);
-        clonedDocument.body.appendChild(exportRoot);
       },
     });
     const blob = await new Promise((resolve, reject) => {
