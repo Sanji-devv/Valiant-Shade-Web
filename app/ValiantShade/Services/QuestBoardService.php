@@ -2,8 +2,10 @@
 
 namespace App\ValiantShade\Services;
 
+use App\Models\Character;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 
 class QuestBoardService
 {
@@ -324,32 +326,78 @@ class QuestBoardService
     }
 
     /**
-     * Get Guild Demographics from Columns K, L in Görev Listesi.
+     * Build live Guild roster totals from the current character records.
      */
     public function getGuildInfo(): array
     {
         $isTr = app()->getLocale() === 'tr';
+        $rankCounts = [
+            'expert' => 0,
+            'senior' => 0,
+            'member' => 0,
+            'candidate' => 0,
+            'clerk' => 0,
+            'traveler' => 0,
+            'inactive' => 0,
+        ];
+
+        try {
+            if (Schema::hasTable('characters') && Schema::hasTable('ranks')) {
+                $rankCounts = array_fill_keys(array_keys($rankCounts), 0);
+                $roster = Character::query()
+                    ->whereIn('status', ['ACTIVE', 'INACTIVE', 'TRAVELER'])
+                    ->with('rank:id,hierarchy_order')
+                    ->get(['id', 'rank_id', 'status', 'character_type']);
+
+                foreach ($roster as $character) {
+                    $status = strtoupper((string) $character->status);
+                    if ($status === 'INACTIVE') {
+                        $rankCounts['inactive']++;
+                    } elseif ($status === 'TRAVELER') {
+                        $rankCounts['traveler']++;
+                    } elseif (strtoupper((string) $character->character_type) === 'CLERK'
+                        || (int) ($character->rank?->hierarchy_order ?? 0) === 2) {
+                        $rankCounts['clerk']++;
+                    } else {
+                        $rankKey = match ((int) ($character->rank?->hierarchy_order ?? 1)) {
+                            3 => 'member',
+                            4 => 'senior',
+                            5, 6, 7, 8 => 'expert',
+                            default => 'candidate',
+                        };
+                        $rankCounts[$rankKey]++;
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Keep the counters safe at zero if roster tables are unavailable.
+        }
+
+        $rankDefinitions = [
+            ['key' => 'expert', 'rank' => $isTr ? 'Uzman' : 'Expert', 'badge' => 'bg-label-success'],
+            ['key' => 'senior', 'rank' => $isTr ? "K\u{0131}demli" : 'Senior', 'badge' => 'bg-label-warning'],
+            ['key' => 'member', 'rank' => $isTr ? "\u{00DC}ye" : 'Member', 'badge' => 'bg-label-primary'],
+            ['key' => 'candidate', 'rank' => $isTr ? 'Aday' : 'Candidate', 'badge' => 'bg-label-secondary'],
+            ['key' => 'clerk', 'rank' => 'Clerk', 'badge' => 'bg-label-info'],
+            ['key' => 'traveler', 'rank' => $isTr ? 'Gezgin' : 'Wanderer', 'badge' => 'bg-label-dark'],
+            ['key' => 'inactive', 'rank' => $isTr ? 'Inaktif' : 'Inactive', 'badge' => 'bg-label-danger'],
+        ];
+        $ranks = array_map(static function (array $definition) use ($rankCounts): array {
+            $definition['count'] = $rankCounts[$definition['key']];
+            return $definition;
+        }, $rankDefinitions);
 
         return [
-            'ranks' => [
-                ['rank' => $isTr ? 'Uzman' : 'Expert',       'count' => 22,  'badge' => 'bg-label-success'],
-                ['rank' => $isTr ? 'Kıdemli' : 'Senior',     'count' => 22,  'badge' => 'bg-label-warning'],
-                ['rank' => $isTr ? 'Üye' : 'Member',         'count' => 18,  'badge' => 'bg-label-primary'],
-                ['rank' => $isTr ? 'Aday' : 'Candidate',     'count' => 273, 'badge' => 'bg-label-secondary'],
-                ['rank' => 'Clerk',                          'count' => 60,  'badge' => 'bg-label-info'],
-                ['rank' => $isTr ? 'Gezgin' : 'Wanderer',    'count' => 9,   'badge' => 'bg-label-dark'],
-                ['rank' => $isTr ? 'Inaktif' : 'Inactive',   'count' => 214, 'badge' => 'bg-label-danger'],
-            ],
-            'total_adventurers' => 618,
+            'ranks' => $ranks,
+            'total_adventurers' => array_sum($rankCounts),
             'status_legend' => [
                 ['color' => 'success', 'name' => $isTr ? 'Aktif' : 'Active', 'desc' => $isTr ? 'Maceracı kabul eden açık görevler' : 'Open quests accepting adventurers'],
-                ['color' => 'danger',  'name' => $isTr ? 'Kırmızı (Görev Bitti)' : 'Red (Completed)', 'desc' => $isTr ? 'Tamamlanmış ve arşive kaldırılan görevler' : 'Completed and archived quests'],
-                ['color' => 'info',    'name' => $isTr ? 'Mavi/Mor (Görev Askıda)' : 'Blue/Purple (On Hold)', 'desc' => $isTr ? 'İkinci bir emre kadar askıya alınanlar' : 'Suspended until further notice'],
-                ['color' => 'secondary','name' => $isTr ? 'Gri (Görev İptal)' : 'Gray (Cancelled)',   'desc' => $isTr ? 'İptal edilen lonca talepleri' : 'Cancelled guild requests'],
+                ['color' => 'danger', 'name' => $isTr ? 'Kırmızı (Görev Bitti)' : 'Red (Completed)', 'desc' => $isTr ? 'Tamamlanmış ve arşive kaldırılmış görevler' : 'Completed and archived quests'],
+                ['color' => 'info', 'name' => $isTr ? 'Mavi (Görev Askıda)' : 'Blue (On Hold)', 'desc' => $isTr ? 'İkinci bir emre kadar askıya alınanlar' : 'Suspended until further notice'],
+                ['color' => 'secondary', 'name' => $isTr ? 'Gri (Görev İptal)' : 'Gray (Cancelled)', 'desc' => $isTr ? 'İptal edilen lonca talepleri' : 'Cancelled guild requests'],
             ],
         ];
     }
-
     /**
      * Master dataset derived directly from the Görev Listesi tab.
      * English by default; Turkish if locale is 'tr'.

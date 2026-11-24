@@ -91,6 +91,15 @@ class QuestBoardController extends Controller
         ));
     }
 
+    /** Return fresh roster totals for the board's live counter. */
+    public function guildInfo(): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'guild_info' => $this->service->getGuildInfo(),
+        ])->header('Cache-Control', 'no-store, no-cache, must-revalidate');
+    }
+
     /**
      * Admin pins a new parchment quest onto the notice board (with optional Discord broadcast).
      */

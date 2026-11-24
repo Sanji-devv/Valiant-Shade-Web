@@ -4,7 +4,6 @@
 
 @section('vendor-style')
 @vite([
-  'resources/valiant-shade/assets/vendor/libs/animate-css/animate.scss',
   'resources/valiant-shade/assets/vendor/libs/sweetalert2/sweetalert2.scss'
 ], 'static/valiant-shade/build')
 <style>
@@ -336,7 +335,7 @@
     font-weight: 700;
   }
   .badge-status-onhold {
-    background: #1565c0;
+    background: #0891b2;
     color: #ffffff;
     font-size: 0.72rem;
     padding: 4px 10px;
@@ -444,6 +443,179 @@
   .preset-card:hover, .preset-card.active {
     border-color: #d6984e !important;
     transform: scale(1.02);
+  }
+
+  /* Quest board polish: consistent controls, compact rendering, responsive layout. */
+  #medievalBoardElement {
+    border: 8px solid #392713;
+    border-radius: 20px;
+    padding: clamp(1rem, 2.2vw, 2rem);
+    background: linear-gradient(145deg, #2a2117, #17130f);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+    transition: none;
+  }
+  .medieval-banner { padding: clamp(1rem, 2vw, 1.5rem); border-radius: 16px; box-shadow: none; }
+  .medieval-banner::before,
+  .medieval-banner::after { content: none; }
+  .wooden-placard {
+    border-radius: 16px;
+    padding: 1rem;
+    background: #25202a;
+    border: 1px solid rgba(214, 152, 78, 0.28);
+    box-shadow: none;
+  }
+  .parchment-card {
+    width: 100%;
+    padding: 1.25rem;
+    border-radius: 16px;
+    border-width: 1px;
+    box-shadow: 0 5px 14px rgba(20, 14, 7, 0.16);
+    transition: box-shadow 0.16s ease, border-color 0.16s ease;
+  }
+  .parchment-card:hover {
+    transform: none;
+    box-shadow: 0 9px 20px rgba(20, 14, 7, 0.22);
+    border-color: #c69b5f;
+  }
+  .iron-pin::after { display: none; }
+  .stamp-tag,
+  .badge-meta,
+  .badge-eligibility,
+  .badge-member-tag,
+  .badge-status-active,
+  .badge-status-onhold,
+  .badge-status-completed,
+  .badge-status-cancelled { box-shadow: none !important; }
+  .badge-meta,
+  .badge-eligibility,
+  .badge-member-tag { transition: none; }
+  .badge-meta > i,
+  .badge-meta > span:first-child { display: inline-grid; place-items: center; flex: 0 0 auto; line-height: 1; }
+  .quest-status-dot { display: inline-block; width: 0.5rem; height: 0.5rem; border-radius: 50%; vertical-align: middle; }
+  .quest-status-dot.status-onhold-dot { background-color: #0891b2 !important; }
+  .medieval-tabs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 148px), 1fr));
+    align-items: stretch;
+    gap: 0.55rem !important;
+    margin: 0;
+    padding: 0;
+  }
+  .medieval-tabs .nav-item { min-width: 0; }
+  .medieval-tabs .nav-link {
+    min-height: 44px;
+    height: 100%;
+    padding: 0.55rem 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    text-align: center;
+    line-height: 1.25;
+    border-radius: 12px;
+    transition: background-color 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+  }
+  .medieval-tabs .nav-link > i { display: inline-grid; place-items: center; flex: 0 0 auto; line-height: 1; margin-inline: 0 !important; }
+  #medievalBoardElement i.icon-base { vertical-align: middle; }
+  .quest-board-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 1rem;
+    margin-inline: 0;
+  }
+  .quest-board-controls > [class*="col-"] { width: auto; max-width: none; flex: initial; padding: 0; }
+  .quest-board-action-group { display: flex; align-items: center; justify-content: flex-end; gap: 0.55rem; flex-wrap: wrap; }
+  .quest-board-filters .quest-board-filter-grid {
+    display: grid;
+    grid-template-columns: minmax(220px, 1.8fr) minmax(170px, 1fr) minmax(170px, 1fr) 44px;
+    align-items: center;
+    gap: 0.65rem;
+    margin: 0;
+  }
+  .quest-board-filter-grid > [class*="col-"] { width: auto; max-width: none; flex: initial; padding: 0; }
+  #btnResetFilters { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; }
+  .container-xxl.flex-grow-1 .btn,
+  .modal .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.42rem;
+    line-height: 1.2;
+  }
+  .container-xxl.flex-grow-1 .btn > i,
+  .modal .btn > i { display: inline-grid; place-items: center; flex: 0 0 auto; line-height: 1; margin-inline: 0 !important; }
+  .quest-board-controls .btn,
+  .quest-board-filters .btn,
+  .modal .btn { min-height: 40px; }
+  .quest-board-action-group .btn { padding-inline: 0.8rem; }
+  .quest-card-footer { gap: 0.65rem; flex-wrap: wrap; }
+  .quest-card-actions { display: flex; align-items: center; justify-content: flex-end; gap: 0.45rem; }
+  .quest-card-actions .btn-broadcast-discord,
+  .quest-card-actions .btn-edit-quest,
+  .quest-card-actions .btn-delete-quest {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px;
+    padding: 0 !important;
+    border-radius: 11px !important;
+  }
+  .quest-card-actions .btn-inspect-quest { min-height: 38px; padding: 0.45rem 0.75rem; white-space: nowrap; }
+  .quest-card-item { display: flex; }
+  .quest-card-item > .parchment-card { flex: 1 1 auto; }
+  .ledger-table { border-radius: 16px; box-shadow: none !important; }
+  .ledger-table td,
+  .ledger-table th { vertical-align: middle; }
+  .ledger-table td:last-child .d-inline-flex { justify-content: center; gap: 0.4rem !important; }
+  .ledger-table td:last-child .btn:not(.btn-inspect-quest) {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px;
+    padding: 0 !important;
+    border-radius: 11px !important;
+  }
+  .ledger-table td:last-child .btn-inspect-quest { width: 40px; height: 38px; padding: 0; }
+  .preset-card { transition: border-color 0.14s ease, background-color 0.14s ease; }
+  .preset-card:hover,
+  .preset-card.active { transform: none; }
+  @media (max-width: 991.98px) {
+    #medievalBoardElement { border-width: 6px; }
+    .quest-board-controls { grid-template-columns: minmax(0, 1fr); }
+    .quest-board-action-group { justify-content: flex-start; }
+    .quest-board-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+    .quest-board-filter-grid > :first-child,
+    .quest-board-filter-grid > :last-child { grid-column: 1 / -1; }
+    #btnResetFilters { width: 100%; }
+  }
+  @media (max-width: 575.98px) {
+    #medievalBoardElement { padding: 0.85rem; border-width: 5px; border-radius: 16px; }
+    .medieval-banner { padding: 0.9rem 0.65rem; }
+    .medieval-banner h2 { font-size: clamp(1rem, 5vw, 1.35rem); letter-spacing: 0.02em !important; }
+    .medieval-banner .d-flex { gap: 0.5rem !important; }
+    .medieval-banner .d-flex > i { font-size: 1.35rem !important; }
+    .wooden-placard { padding: 0.85rem; }
+    .quest-board-action-group { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
+    .quest-board-action-group > .btn,
+    .quest-board-action-group > .btn-group,
+    .quest-board-action-group > .dropdown { width: 100%; }
+    .quest-board-action-group > .btn-group > .btn { flex: 1 1 0; }
+    .quest-board-action-group > .dropdown > .btn { width: 100%; }
+    .quest-board-action-group > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+    .quest-board-action-group .btn { min-height: 44px; padding-inline: 0.45rem; white-space: normal; }
+    .medieval-tabs .nav-item:last-child:nth-child(odd) { grid-column: 1 / -1; }
+    .quest-board-filter-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; gap: 0.55rem; }
+    .quest-board-filter-grid > :first-child,
+    .quest-board-filter-grid > :last-child { grid-column: 1 / -1; }
+    .parchment-card { padding: 1rem; }
+    .parchment-card .quest-title { font-size: 1.05rem; }
+    .quest-card-footer { align-items: flex-start !important; }
+    .quest-card-actions { width: 100%; justify-content: flex-end; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #medievalBoardElement *,
+    #medievalBoardElement *::before,
+    #medievalBoardElement *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
   }
 </style>
 @endsection
@@ -556,8 +728,8 @@
             <i class="icon-base ti tabler-users me-1"></i> {{ __('Guild Roster:') }}
           </span>
           @foreach($guildInfo['ranks'] as $r)
-            <span class="badge {{ $r['badge'] }} rounded-pill font-monospace" title="{{ __($r['rank']) }} {{ __('Roster') }}">
-              {{ __($r['rank']) }}: {{ $r['count'] }}
+            <span class="badge {{ $r['badge'] }} rounded-pill font-monospace" title="{{ __($r['rank']) }} {{ __('Roster') }}" data-guild-roster-rank="{{ $r['key'] }}">
+              {{ __($r['rank']) }}: <span data-guild-roster-count>{{ $r['count'] }}</span>
             </span>
           @endforeach
         </div>
@@ -566,16 +738,17 @@
       <div class="col-12 col-lg-5">
         <div class="d-flex align-items-center justify-content-lg-end gap-3 flex-wrap small">
           <span class="fw-semibold text-light-emphasis" style="color: #cbb493 !important;">{{ __('Sign Legend:') }}</span>
-          <span class="badge bg-danger rounded-pill">{{ __('Red: Completed') }}</span>
-          <span class="badge bg-primary rounded-pill">{{ __('Blue: On Hold') }}</span>
-          <span class="badge bg-secondary rounded-pill">{{ __('Gray: Cancelled') }}</span>
+          <span class="badge badge-status-active rounded-pill">{{ __('Green: Active') }}</span>
+          <span class="badge badge-status-completed rounded-pill">{{ __('Red: Completed') }}</span>
+          <span class="badge badge-status-onhold rounded-pill">{{ __('Blue: On Hold') }}</span>
+          <span class="badge badge-status-cancelled rounded-pill">{{ __('Gray: Cancelled') }}</span>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Board Controls & Filter Toolbar -->
-  <div class="row g-3 align-items-center justify-content-between mb-4">
+  <div class="row g-3 align-items-center justify-content-between mb-4 quest-board-controls">
     <!-- Category Tabs -->
     <div class="col-12 col-xl-7">
       <ul class="nav nav-pills medieval-tabs flex-wrap gap-2" id="questCategoryTabs">
@@ -609,7 +782,7 @@
 
     <!-- Actions, Appearance Settings & View Switcher -->
     <div class="col-12 col-xl-5">
-      <div class="d-flex align-items-center justify-content-xl-end gap-2 flex-wrap">
+      <div class="d-flex align-items-center justify-content-xl-end gap-2 flex-wrap quest-board-action-group">
         <!-- Appearance Customizer Button -->
         <button type="button" class="btn btn-outline-warning btn-sm rounded-pill shadow-xs" data-bs-toggle="modal" data-bs-target="#modalBoardAppearance" title="{{ __('Customize Parchment and Font Colors') }}">
           <i class="icon-base ti tabler-color-swatch me-1"></i> {{ __('Color Settings') }}
@@ -626,19 +799,6 @@
         </div>
 
         @if($isAdmin)
-          <!-- Discord Settings Button -->
-          <button type="button" class="btn btn-outline-warning btn-sm rounded-pill shadow-xs" data-bs-toggle="modal" data-bs-target="#modalDiscordSettings" title="{{ __('Discord Webhook Ferman Ayarları') }}">
-            <i class="icon-base ti tabler-brand-discord me-1"></i> {{ __('Discord') }}
-            @if(!empty($discordConfig['configured']) && !empty($discordConfig['enabled']))
-              <span class="badge bg-success rounded-pill ms-1 p-1" style="font-size: 0.6rem;" title="{{ __('Discord Aktif') }}">●</span>
-            @endif
-          </button>
-
-          <!-- Reset Defaults Button -->
-          <button type="button" class="btn btn-outline-danger btn-sm rounded-pill shadow-xs" id="btnResetQuestDefaults" title="{{ __('Varsayılan Görev Listesine Sıfırla') }}">
-            <i class="icon-base ti tabler-rotate me-1"></i> {{ __('Sıfırla') }}
-          </button>
-
           <!-- Pin New Quest Button -->
           <button type="button" class="btn btn-warning btn-sm rounded-pill waves-effect shadow-xs fw-bold" data-bs-toggle="modal" data-bs-target="#modalPinQuest">
             <i class="icon-base ti tabler-plus me-1"></i> {{ __('Pin New Quest') }}
@@ -649,8 +809,8 @@
   </div>
 
   <!-- Search & Secondary Filters Bar -->
-  <div class="wooden-placard mb-4 py-2 px-3">
-    <div class="row g-2 align-items-center">
+  <div class="wooden-placard quest-board-filters mb-4 py-2 px-3">
+    <div class="row g-2 align-items-center quest-board-filter-grid">
       <!-- Search Input -->
       <div class="col-12 col-md-5">
         <div class="input-group input-group-sm">
@@ -699,18 +859,7 @@
       @forelse($quests as $q)
         @php
           $isCharacterSpecific = !empty($q['character']) && $q['character'] !== 'Lonca';
-          $sealClass = match($q['seal_color']) {
-            'red' => 'seal-red',
-            'blue' => 'seal-blue',
-            'gold' => 'seal-gold',
-            default => 'seal-bronze'
-          };
-          $sealIcon = match($q['category']) {
-            'main' => '🐉',
-            'side' => '📜',
-            'recurring' => '🛡️',
-            default => '⚔️'
-          };
+
           $stampClass = match($q['category']) {
             'character' => 'stamp-member',
             'main' => 'stamp-main',
@@ -799,8 +948,7 @@
                 @if(!empty($q['location']))
                   <div class="d-flex align-items-center gap-1.5 text-truncate">
                     <span class="meta-label">{{ __('Location:') }}</span>
-                    <span class="badge-meta badge-meta-location text-truncate" title="{{ $q['location'] }}">
-                      <span>📍</span> <span class="text-truncate">{{ $q['location'] }}</span>
+                    <span class="badge-meta badge-meta-location text-truncate" title="{{ $q['location'] }}"><i class="icon-base ti tabler-map-pin" aria-hidden="true"></i> <span class="text-truncate">{{ $q['location'] }}</span>
                     </span>
                   </div>
                 @endif
@@ -809,15 +957,14 @@
                 @if(!empty($q['reward']))
                   <div class="d-flex align-items-center gap-1.5 text-truncate">
                     <span class="meta-label">{{ __('Reward:') }}</span>
-                    <span class="badge-meta badge-meta-reward text-truncate" title="{{ $q['reward'] }}">
-                      <span>🏆</span> <span class="text-truncate">{{ $q['reward'] }}</span>
+                    <span class="badge-meta badge-meta-reward text-truncate" title="{{ $q['reward'] }}"><i class="icon-base ti tabler-trophy" aria-hidden="true"></i> <span class="text-truncate">{{ $q['reward'] }}</span>
                     </span>
                   </div>
                 @endif
               </div>
 
               <!-- Bottom Row: Status Badge & Admin / Inspect Actions -->
-              <div class="d-flex justify-content-between align-items-center pt-2 mt-auto" style="border-top: 1px solid rgba(140, 100, 50, 0.25);">
+              <div class="d-flex justify-content-between align-items-center pt-2 mt-auto quest-card-footer" style="border-top: 1px solid rgba(140, 100, 50, 0.25);">
                 <div class="d-flex align-items-center gap-1.5">
                   <span class="badge {{ $statusBadge }} rounded-pill font-monospace">
                     {{ $statusText }}
@@ -829,16 +976,16 @@
                       </button>
                       <ul class="dropdown-menu dropdown-menu-dark shadow-sm py-1" style="font-size: 0.8rem; min-width: 130px;">
                         <li><h6 class="dropdown-header py-1 text-muted" style="font-size: 0.72rem;">{{ __('Durum Değiştir') }}</h6></li>
-                        <li><a class="dropdown-item py-1 cursor-pointer btn-quick-status" data-id="{{ $q['id'] }}" data-status="active"><span class="badge bg-success me-1">●</span> {{ __('Aktif') }}</a></li>
-                        <li><a class="dropdown-item py-1 cursor-pointer btn-quick-status" data-id="{{ $q['id'] }}" data-status="on_hold"><span class="badge bg-info me-1">●</span> {{ __('Askıda') }}</a></li>
-                        <li><a class="dropdown-item py-1 cursor-pointer btn-quick-status" data-id="{{ $q['id'] }}" data-status="completed"><span class="badge bg-danger me-1">●</span> {{ __('Tamamlandı') }}</a></li>
-                        <li><a class="dropdown-item py-1 cursor-pointer btn-quick-status" data-id="{{ $q['id'] }}" data-status="cancelled"><span class="badge bg-secondary me-1">●</span> {{ __('İptal') }}</a></li>
+                        <li><a class="dropdown-item py-1 cursor-pointer btn-quick-status" data-id="{{ $q['id'] }}" data-status="active"><span class="quest-status-dot bg-success me-1" aria-hidden="true"></span> {{ __('Aktif') }}</a></li>
+                        <li><a class="dropdown-item py-1 cursor-pointer btn-quick-status" data-id="{{ $q['id'] }}" data-status="on_hold"><span class="quest-status-dot status-onhold-dot me-1" aria-hidden="true"></span> {{ __('Askıda') }}</a></li>
+                        <li><a class="dropdown-item py-1 cursor-pointer btn-quick-status" data-id="{{ $q['id'] }}" data-status="completed"><span class="quest-status-dot bg-danger me-1" aria-hidden="true"></span> {{ __('Tamamlandı') }}</a></li>
+                        <li><a class="dropdown-item py-1 cursor-pointer btn-quick-status" data-id="{{ $q['id'] }}" data-status="cancelled"><span class="quest-status-dot bg-secondary me-1" aria-hidden="true"></span> {{ __('İptal') }}</a></li>
                       </ul>
                     </div>
                   @endif
                 </div>
 
-                <div class="d-flex align-items-center gap-1">
+                <div class="d-flex align-items-center gap-1 quest-card-actions">
                   @if($isAdmin)
                     <!-- Discord Broadcast Button -->
                     <button type="button" class="btn btn-xs btn-outline-warning rounded-circle p-1 btn-broadcast-discord" 
@@ -965,7 +1112,7 @@
                 <span class="fw-semibold font-monospace">{{ $q['character'] ?? __('Guild') }}</span>
               </td>
               <td class="small text-body-secondary">
-                📍 {{ $q['location'] ?? '—' }}
+                <i class="icon-base ti tabler-map-pin me-1" aria-hidden="true"></i>{{ $q['location'] ?? '—' }}
               </td>
               <td class="text-end font-monospace text-success fw-bold small">
                 {{ $q['reward'] ?? '—' }}
@@ -1453,6 +1600,31 @@ document.addEventListener('DOMContentLoaded', function() {
   let currentSearch = '';
 
   const boardEl = document.getElementById('medievalBoardElement');
+
+  // Refresh roster totals while the board remains open so rank changes appear without a reload.
+  const refreshGuildRoster = async () => {
+    try {
+      const response = await fetch("{{ route('valiant-shade.pages-quest-board.guild-info') }}", {
+        headers: { 'Accept': 'application/json' },
+        cache: 'no-store',
+        credentials: 'same-origin'
+      });
+      if (!response.ok) return;
+      const payload = await response.json();
+      const ranks = payload?.guild_info?.ranks;
+      if (!payload.success || !Array.isArray(ranks)) return;
+
+      ranks.forEach(rank => {
+        const count = document.querySelector(`[data-guild-roster-rank="${rank.key}"] [data-guild-roster-count]`);
+        if (count) count.textContent = Number(rank.count).toLocaleString();
+      });
+    } catch (error) {
+      // Keep the last successful totals visible when temporarily offline.
+    }
+  };
+  window.setInterval(() => {
+    if (!document.hidden) refreshGuildRoster();
+  }, 30000);
   const inputBg = document.getElementById('inputCustomBg');
   const inputText = document.getElementById('inputCustomText');
   const inputUygunluk = document.getElementById('inputCustomUygunluk');
@@ -1740,11 +1912,13 @@ document.addEventListener('DOMContentLoaded', function() {
       );
       const statusEl = document.getElementById('inspectQuestStatus');
       statusEl.textContent = this.dataset.statusLabel || this.dataset.status;
-      statusEl.className = 'badge rounded-pill font-monospace px-3 py-1 ' + (
-        this.dataset.status === 'active' ? 'bg-success' :
-        (this.dataset.status === 'on_hold' ? 'bg-info' :
-        (this.dataset.status === 'completed' ? 'bg-danger' : 'bg-secondary'))
-      );
+      const statusBadgeClasses = {
+        active: 'badge-status-active',
+        on_hold: 'badge-status-onhold',
+        completed: 'badge-status-completed',
+        cancelled: 'badge-status-cancelled'
+      };
+      statusEl.className = 'badge rounded-pill font-monospace px-3 py-1 ' + (statusBadgeClasses[this.dataset.status] || 'badge-status-active');
 
       const eligEl = document.getElementById('inspectQuestEligibility');
       eligEl.textContent = this.dataset.eligibility;
@@ -1984,50 +2158,6 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     });
   });
-
-  // Admin Reset to Master Defaults
-  const btnResetDefaults = document.getElementById('btnResetQuestDefaults');
-  if (btnResetDefaults) {
-    btnResetDefaults.addEventListener('click', function() {
-      Swal.fire({
-        title: '{{ __("Varsayılan Görevlere Sıfırla?") }}',
-        text: '{{ __("Tüm panodaki fermanlar orijinal Görev Listesi verilerine geri döndürülecektir.") }}',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: '{{ __("Evet, Sıfırla!") }}',
-        cancelButtonText: '{{ __("İptal") }}'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          fetch("{{ route('valiant-shade.pages-quest-board.reset-defaults') }}", {
-            method: 'POST',
-            headers: {
-              'X-CSRF-TOKEN': '{{ csrf_token() }}',
-              'Accept': 'application/json'
-            }
-          })
-          .then(res => res.json())
-          .then(data => {
-            if (data.success) {
-              Swal.fire({
-                icon: 'success',
-                title: '{{ __("Sıfırlandı!") }}',
-                text: data.message,
-                timer: 1600,
-                showConfirmButton: false
-              }).then(() => location.reload());
-            } else {
-              Swal.fire({ icon: 'error', title: '{{ __("Hata!") }}', text: data.message });
-            }
-          })
-          .catch(() => {
-            Swal.fire({ icon: 'error', title: '{{ __("Hata!") }}', text: '{{ __("Sunucuya erişilemedi.") }}' });
-          });
-        }
-      });
-    });
-  }
 
   // Admin Discord Settings Form Save
   const formDiscord = document.getElementById('formDiscordSettings');

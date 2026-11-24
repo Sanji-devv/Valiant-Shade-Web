@@ -845,6 +845,23 @@
   #reportsPaginationContainer { background: var(--bs-card-bg); backdrop-filter: none; }
   #reportsPaginationContainer .btn,
   #reportsPaginationList .page-link { min-height: 40px; }
+  .quest-reports-scroll-bottom {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    z-index: 1030;
+    min-height: 48px;
+    padding: 0.65rem 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 999px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+  .quest-reports-scroll-bottom i { font-size: 1.15rem; line-height: 1; }
+  .quest-reports-scroll-bottom:focus-visible { outline: 3px solid rgba(115, 103, 240, 0.5); outline-offset: 3px; }
   #guildRanksTable { min-width: 0; table-layout: fixed; width: 100%; }
   #guildRanksTable th,
   #guildRanksTable td {
@@ -897,6 +914,16 @@
   }
   @media (max-width: 390px) {
     #guildRanksTable tr { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 575.98px) {
+    .quest-reports-scroll-bottom {
+      right: calc(0.75rem + env(safe-area-inset-right));
+      bottom: calc(0.75rem + env(safe-area-inset-bottom));
+      width: 48px;
+      height: 48px;
+      padding: 0;
+      border-radius: 50%;
+    }
   }
 </style>
 @endsection
@@ -2897,6 +2924,11 @@
     <option value="{{ $advName }}"></option>
   @endforeach
 </datalist>
+
+<button type="button" class="btn btn-primary quest-reports-scroll-bottom" id="btnScrollReportsToBottom" title="{{ __('Go to Bottom') }}" aria-label="{{ __('Go to Bottom') }}" onclick="window.scrollTo({ top: Math.max(document.documentElement.scrollHeight, document.body.scrollHeight), behavior: 'smooth' })">
+  <i class="icon-base ti tabler-chevrons-down" aria-hidden="true"></i>
+  <span class="d-none d-sm-inline">{{ __('Go to Bottom') }}</span>
+</button>
 
 @endsection
 

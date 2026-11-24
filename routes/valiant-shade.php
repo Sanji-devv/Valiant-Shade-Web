@@ -164,6 +164,7 @@ Route::post('/pages/maceraci-info/reset-defaults', [AdventurerInfoController::cl
 
 // Medieval Quest Board (Lonca Görev Panosu) Routes
 Route::get('/pages/quest-board', [QuestBoardController::class, 'index'])->name('valiant-shade.pages-quest-board');
+Route::get('/pages/quest-board/guild-info', [QuestBoardController::class, 'guildInfo'])->name('valiant-shade.pages-quest-board.guild-info');
 Route::get('/pages/gorev-listesi', [QuestBoardController::class, 'index'])->name('valiant-shade.pages-gorev-listesi');
 Route::middleware(['throttle:valiant-shade.quest-mutations'])->group(function () {
     Route::post('/pages/quest-board', [QuestBoardController::class, 'store'])->name('valiant-shade.pages-quest-board.store');

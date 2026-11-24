@@ -254,6 +254,328 @@
   .vs-type-picker__icon { display: flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; }
   .vs-type-picker--admin .vs-type-picker__icon i { font-size: 1.35rem; }
   .vs-type-picker__label { font-size: 0.62rem; line-height: 1.15; text-align: center; font-weight: 600; }
+
+  /* News desk: consistent alignment, responsive controls, lighter rendering. */
+  .news-page-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(460px, 0.78fr);
+    align-items: center;
+    gap: clamp(1rem, 2vw, 2rem);
+  }
+  .news-page-intro,
+  .news-page-actions { min-width: 0; }
+  .news-page-eyebrow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .news-page-eyebrow .badge,
+  .news-tag-badge,
+  .news-hero-badges > .badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.38rem;
+    line-height: 1.2;
+  }
+  .news-page-title {
+    font-size: clamp(1.45rem, 2vw, 2rem);
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+  }
+  .news-page-title > i { flex: 0 0 auto; line-height: 1; }
+  .news-page-description { max-width: 58rem; line-height: 1.55; }
+  .news-page-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+  .news-page-actions > :first-child { grid-column: span 2; }
+  .news-page-actions .btn {
+    min-width: 0;
+    min-height: 46px;
+    padding: 0.58rem 0.7rem;
+    border-radius: 12px;
+    text-align: center;
+    line-height: 1.2;
+    font-size: 0.86rem;
+    font-weight: 600;
+    white-space: normal;
+    box-shadow: none !important;
+  }
+  .container-xxl.flex-grow-1 .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.42rem;
+    min-height: 42px;
+    line-height: 1.2;
+  }
+  .container-xxl.flex-grow-1 .btn.btn-sm { min-height: 38px; }
+  .container-xxl.flex-grow-1 .btn > i { margin-inline: 0 !important; }
+  .container-xxl.flex-grow-1 .btn > i,
+  .news-page-eyebrow i,
+  .news-tag-badge i,
+  .news-hero-badges i,
+  .news-stat-counter-card i,
+  .news-card-meta i,
+  .news-card-actions i {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    line-height: 1;
+    vertical-align: middle;
+  }
+  .news-hero-card {
+    min-height: 380px;
+    border-radius: 18px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.32);
+    transition: box-shadow 0.18s ease, border-color 0.18s ease;
+  }
+  .news-hero-card:hover {
+    transform: none;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.38);
+  }
+  .news-hero-content { padding: clamp(1.15rem, 2.5vw, 2.35rem); }
+  .news-hero-badges { row-gap: 0.55rem !important; }
+  .news-stat-counter-card,
+  .news-feed-card {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background: rgba(26, 32, 50, 0.96);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  .news-stat-counter-card {
+    min-height: 92px;
+    border-radius: 14px;
+    transition: border-color 0.16s ease, background-color 0.16s ease;
+  }
+  .news-stat-counter-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+  }
+  .news-stat-counter-card .card-body { min-height: 90px; }
+  .news-stat-counter-card .avatar {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    padding: 0 !important;
+    flex: 0 0 48px;
+  }
+  .news-stat-counter-card .avatar i { font-size: 1.35rem; }
+  .news-stat-counter-card h5 { font-size: 1.25rem; }
+  .news-stat-counter-card small { display: block; line-height: 1.35; }
+  .news-filter-toolbar {
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 16px;
+    background: rgba(30, 35, 54, 0.96);
+  }
+  .news-filter-toolbar > .card-body { padding: 1rem; }
+  .news-filter-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(270px, 0.42fr);
+    align-items: center;
+    gap: 1rem;
+  }
+  .news-filter-categories {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+    min-width: 0;
+  }
+  .category-filter-btn {
+    min-width: 0;
+    min-height: 42px;
+    padding: 0.52rem 0.7rem;
+    border-radius: 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    text-align: center;
+    line-height: 1.2;
+    white-space: normal;
+    transition: color 0.14s ease, background-color 0.14s ease, border-color 0.14s ease;
+  }
+  .news-filter-search {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-width: 0;
+  }
+  .news-filter-search .input-group {
+    min-width: 0;
+    min-height: 44px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(17, 22, 38, 0.62);
+  }
+  .news-filter-search .input-group-text,
+  .news-filter-search .form-control,
+  .news-filter-search .btn {
+    min-height: 42px;
+    border: 0;
+    box-shadow: none;
+  }
+  .news-filter-search .form-control { min-width: 0; background: transparent; }
+  .news-filter-search .input-group-text { padding-inline: 0.8rem; }
+  .news-filter-search #clearSearchBtn { width: 42px; padding: 0; }
+  #gazetteSlotFilterGroup {
+    align-items: center;
+    row-gap: 0.55rem;
+  }
+  #gazetteSlotFilterGroup > .category-filter-btn { min-width: 126px; }
+  .news-feed-card {
+    width: 100%;
+    min-height: 500px;
+    border-radius: 16px;
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.16);
+    transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+  }
+  .news-feed-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25);
+  }
+  .news-feed-card:hover .news-thumb-box { transform: none; }
+  .news-thumb-box { height: 205px; background: #151a29; }
+  .news-thumb-badges {
+    right: auto;
+    display: flex;
+    align-content: flex-start;
+    flex-wrap: wrap;
+    gap: 0.4rem !important;
+  }
+  .news-thumb-icon-badge {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 0 !important;
+    display: inline-grid !important;
+    place-items: center;
+    border-radius: 50% !important;
+  }
+  .news-thumb-icon-badge > i { margin: 0 !important; font-size: 1rem; }
+  .news-thumb-location { display: none !important; }
+  .news-thumb-read-time { width: max-content; max-width: none; }
+  .news-thumb-read-time .badge { display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; white-space: nowrap; }
+  .news-thumb-image {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transition: transform 0.2s ease;
+  }
+  .news-feed-card:hover .news-thumb-image { transform: scale(1.025); }
+  .news-tag-badge {
+    min-height: 28px;
+    padding: 0.3rem 0.62rem;
+    border-radius: 999px;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .news-feed-card .news-thumb-box .badge { min-height: 28px; display: inline-flex; align-items: center; gap: 0.35rem; border-radius: 999px; }
+  .news-feed-card .card-body { gap: 1rem; padding: 1.15rem !important; }
+  .news-card-meta { gap: 0.75rem; min-height: 24px; }
+  .news-card-meta > span { min-width: 0; gap: 0.35rem; }
+  .news-card-meta > span:last-child { justify-content: flex-end; text-align: right; }
+  .news-card-title {
+    display: -webkit-box;
+    min-height: 2.8rem;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-height: 1.35;
+    font-size: 1.08rem;
+  }
+  .news-card-description {
+    display: -webkit-box;
+    min-height: 4.45rem;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-height: 1.5;
+  }
+  .news-stat-pill { min-height: 58px; padding: 0.5rem 0.65rem; }
+  .news-card-footer { align-items: center; gap: 0.75rem; }
+  .guild-seal-stamp { min-height: 36px; align-items: center; justify-content: center; gap: 0.42rem; white-space: nowrap; }
+  .news-card-actions { min-width: 0; gap: 0.45rem !important; }
+  .news-card-actions .btn { min-height: 40px; border-radius: 10px; padding: 0.45rem 0.65rem; }
+  .news-card-actions .news-card-icon-btn { width: 40px; min-width: 40px; padding: 0; }
+  .news-card-actions .news-card-read-btn { flex: 1 1 auto; min-width: 96px; white-space: nowrap; }
+  .news-card-actions .news-card-read-btn > i { font-size: 1rem; }
+  .news-card-actions .news-card-icon-btn > i { width: 1.1em; height: 1.1em; }
+  .news-item-col { display: flex; }
+  .news-item-col--dragging { opacity: 0.55; }
+  .news-item-col--drag-over { outline-offset: 3px; border-radius: 14px; }
+  .guild-seal-stamp i { font-size: 1rem; }
+  .vs-type-picker__btn { display: flex; align-items: center; justify-content: center; text-align: center; }
+  .vs-type-picker__icon { display: grid; place-items: center; flex: 0 0 2rem; }
+  .vs-type-picker__label { width: 100%; }
+  .container-xxl.flex-grow-1 .btn:focus-visible,
+  .news-stat-counter-card:focus-visible {
+    outline: 2px solid rgba(var(--bs-primary-rgb), 0.9);
+    outline-offset: 3px;
+    box-shadow: 0 0 0 4px rgba(var(--bs-primary-rgb), 0.18);
+  }
+  @media (max-width: 1399.98px) {
+    .news-page-header { grid-template-columns: minmax(0, 1fr); gap: 1.15rem; }
+    .news-page-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .news-filter-row { grid-template-columns: minmax(0, 1fr) minmax(250px, 0.45fr); }
+  }
+  @media (max-width: 991.98px) {
+    .news-filter-row { grid-template-columns: minmax(0, 1fr); }
+    .news-filter-search { max-width: none; }
+    .news-filter-categories { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .news-card-footer { align-items: stretch; flex-direction: column; }
+    .guild-seal-stamp { align-self: flex-start; }
+    .news-card-actions { width: 100%; margin-left: 0 !important; }
+  }
+  @media (max-width: 767.98px) {
+    .container-xxl.flex-grow-1.container-p-y { padding-top: 1.1rem; }
+    .news-page-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .news-page-actions > :first-child { grid-column: 1 / -1; }
+    .news-page-actions .btn { min-height: 48px; font-size: 0.82rem; }
+    .news-hero-card { min-height: 350px; }
+    .news-hero-content { padding: 1.2rem; }
+    .news-stat-counter-card { min-height: 84px; }
+    .news-stat-counter-card .card-body { min-height: 82px; gap: 0.7rem !important; padding: 0.8rem !important; }
+    .news-stat-counter-card .avatar { width: 42px; height: 42px; flex-basis: 42px; }
+    .news-filter-toolbar > .card-body { padding: 0.85rem; }
+    .news-filter-categories { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .category-filter-btn { min-height: 46px; padding-inline: 0.45rem; font-size: 0.78rem; }
+    #gazetteSlotFilterGroup > .category-filter-btn { flex: 1 1 calc(50% - 0.5rem); min-width: 0; }
+    #gazetteSlotFilterGroup > .text-body-secondary { flex: 1 0 100%; margin-left: 0 !important; }
+    .news-thumb-box { height: 190px; }
+    .news-thumb-badges { gap: 0.35rem !important; padding: 0.65rem !important; }
+    .news-thumb-icon-badge { width: 34px; height: 34px; min-width: 34px; min-height: 34px; }
+    .news-thumb-read-time { padding: 0.65rem !important; }
+    .news-feed-card { min-height: 0; }
+  }
+  @media (max-width: 479.98px) {
+    .news-page-eyebrow .badge { font-size: 0.68rem; }
+    .news-page-actions { grid-template-columns: minmax(0, 1fr); }
+    .news-page-actions > :first-child { grid-column: auto; }
+    .news-filter-categories { grid-template-columns: minmax(0, 1fr); }
+    .category-filter-btn { justify-content: center; }
+    .news-card-meta { align-items: flex-start !important; flex-direction: column; gap: 0.25rem; }
+    .news-card-meta > span:last-child { justify-content: flex-start; text-align: left; }
+    .news-card-actions .news-card-read-btn { min-width: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .news-hero-card,
+    .news-stat-counter-card,
+    .news-feed-card,
+    .news-thumb-image,
+    .category-filter-btn { transition-duration: 0.01ms !important; }
+  }
 </style>
 @endsection
 
@@ -267,41 +589,41 @@
 <div class="container-xxl flex-grow-1 container-p-y">
 
   <!-- Page Header & Action Bar -->
-  <div class="row align-items-center mb-4 g-3">
-    <div class="col-lg-7 col-md-6">
-      <div class="d-flex align-items-center gap-2 mb-1">
+  <div class="news-page-header mb-4">
+    <div class="news-page-intro">
+      <div class="news-page-eyebrow mb-2">
         <span class="badge bg-label-primary px-2 py-1"><i class="icon-base ti tabler-file-text me-1"></i> {{ __('Valiant Shade Gazette') }}</span>
         <span class="badge bg-label-info px-2 py-1"><i class="icon-base ti tabler-speakerphone me-1"></i> Lonca Haberleri &amp; Duyuru Yönetimi</span>
         <span class="badge bg-label-danger px-2 py-1"><i class="icon-base ti tabler-flame me-1"></i> {{ __('Live Bulletin') }}</span>
       </div>
-      <h3 class="fw-bold mb-1 d-flex align-items-center gap-2">
+      <h3 class="news-page-title fw-bold mb-2 d-flex align-items-center gap-2">
         <i class="icon-base ti tabler-news fs-2 text-warning"></i>
         <span>{{ __('News, Whispers & Expedition Bulletin') }}</span>
       </h3>
-      <p class="text-body-secondary mb-0">
+      <p class="news-page-description text-body-secondary mb-0">
         {{ __('Tavern whispers, eerie rumors, memorial notices for our fallen heroes, dungeon expedition reports, and High Court decrees.') }}
       </p>
     </div>
-    <div class="col-lg-5 col-md-6 text-md-end d-flex gap-2 justify-content-md-end flex-wrap">
-      <a href="{{ \App\Support\PublicSiteUrls::gazette('/son-sayi') }}" class="btn btn-warning d-inline-flex align-items-center gap-1 shadow-sm">
+    <div class="news-page-actions">
+      <a href="{{ \App\Support\PublicSiteUrls::gazette('/son-sayi') }}" class="btn btn-warning">
         <i class="icon-base ti tabler-news"></i>
         <span>{{ __('Read Latest Newspaper Issue') }}</span>
       </a>
       @if($canManageNews ?? false)
-      <button type="button" class="btn btn-success d-inline-flex align-items-center gap-1 shadow-sm" onclick="openEditNewsModal(null)">
+      <button type="button" class="btn btn-success" onclick="openEditNewsModal(null)">
         <i class="icon-base ti tabler-plus"></i>
         <span>{{ __('Add News') }}</span>
       </button>
       @endif
-      <a href="{{ route('valiant-shade.dashboard-analytics') }}" class="btn btn-label-secondary d-inline-flex align-items-center gap-1">
+      <a href="{{ route('valiant-shade.dashboard-analytics') }}" class="btn btn-label-secondary">
         <i class="icon-base ti tabler-home"></i>
         <span>{{ __('Main Dashboard') }}</span>
       </a>
-      <button type="button" class="btn btn-outline-warning d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#whisperTipModal">
+      <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#whisperTipModal">
         <i class="icon-base ti tabler-message-2-share"></i>
         <span>{{ __('Send Tavern Whisper') }}</span>
       </button>
-      <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-1 shadow-sm" onclick="window.scrollTo({ top: document.getElementById('newsFeedGrid').offsetTop - 80, behavior: 'smooth' })">
+      <button type="button" class="btn btn-primary" onclick="window.scrollTo({ top: document.getElementById('newsFeedGrid').offsetTop - 80, behavior: 'smooth' })">
         <i class="icon-base ti tabler-book-2"></i>
         <span>{{ __('Explore News') }}</span>
       </button>
@@ -406,9 +728,9 @@
     <div class="news-hero-card" style="background-image: url('{{ $featuredNews->image_asset }}');">
       <div class="news-hero-overlay"></div>
       <div class="news-hero-content">
-        <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+        <div class="news-hero-badges d-flex align-items-center gap-2 mb-3 flex-wrap">
           <span class="badge bg-{{ $featuredNews->badge_color ?? 'danger' }} text-white px-3 py-2 fs-6 fw-bold">
-            <i class="{{ $featuredNews->category_icon ?: 'icon-base ti tabler-skull' }} me-1"></i> {{ $featuredNews->category }}
+            <i class="{{ str_replace('tabler-dagger', 'tabler-swords', $featuredNews->category_icon ?: 'icon-base ti tabler-skull') }} me-1"></i> {{ $featuredNews->category }}
           </span>
           @if($featuredNews->tag)
           <span class="news-tag-badge">
@@ -461,7 +783,7 @@
 
           <div class="d-flex align-items-center gap-2">
             <button type="button" class="btn btn-{{ $featuredNews->button_color ?? 'danger' }} px-4 py-2 fw-medium d-inline-flex align-items-center gap-2 shadow" data-bs-toggle="modal" data-bs-target="#newsDetailModal" onclick="openNewsDetail({{ $featuredNews->id }})">
-              <i class="{{ $featuredNews->button_icon ?: 'icon-base ti tabler-book-2' }}"></i>
+              <i class="{{ str_replace('tabler-shield-alert', 'tabler-alert-triangle', $featuredNews->button_icon ?: 'icon-base ti tabler-book-2') }}"></i>
               <span>{{ __('Read Full Story') }}</span>
             </button>
           </div>
@@ -540,12 +862,11 @@
   </div>
 
   <!-- Filter & Search Toolbar -->
-  <div class="card border-0 shadow-sm mb-4" id="newsFeedGrid">
+  <div class="card news-filter-toolbar border-0 shadow-sm mb-4" id="newsFeedGrid">
     <div class="card-body py-3">
-      <div class="row align-items-center g-3">
+      <div class="news-filter-row">
         <!-- Categories Tabs -->
-        <div class="col-lg-8 col-12">
-          <div class="d-flex align-items-center gap-2 flex-wrap" id="categoryFilterGroup">
+        <div class="news-filter-categories" id="categoryFilterGroup">
             <button type="button" class="btn btn-sm category-filter-btn active" data-bs-toggle="tab" data-cat="all">
               <i class="icon-base ti tabler-layout-grid me-1"></i> {{ __('All Bulletins') }} ({{ $allNews->count() }})
             </button>
@@ -556,7 +877,7 @@
               <i class="icon-base ti tabler-flame me-1"></i> {{ __('Rumors & Whispers') }}
             </button>
             <button type="button" class="btn btn-sm category-filter-btn btn-outline-dark" data-bs-toggle="tab" data-cat="assassination">
-              <i class="icon-base ti tabler-dagger me-1"></i> {{ __('Assassination & Treason') }}
+              <i class="icon-base ti tabler-swords me-1"></i> {{ __('Assassination & Treason') }}
             </button>
             <button type="button" class="btn btn-sm category-filter-btn btn-outline-success" data-bs-toggle="tab" data-cat="expedition">
               <i class="icon-base ti tabler-trophy me-1"></i> {{ __('Expedition Reports') }}
@@ -565,11 +886,8 @@
               <i class="icon-base ti tabler-gavel me-1"></i> {{ __('Guild Council') }}
             </button>
           </div>
-        </div>
-
         <!-- Live Search Input & Result Pill -->
-        <div class="col-lg-4 col-12">
-          <div class="d-flex align-items-center gap-2">
+        <div class="news-filter-search">
             <div class="input-group">
               <span class="input-group-text bg-transparent border-end-0">
                 <i class="icon-base ti tabler-search text-body-secondary"></i>
@@ -580,7 +898,6 @@
               </button>
             </div>
             <span id="newsResultsCount" class="badge bg-label-secondary small flex-shrink-0" style="display: none;"></span>
-          </div>
         </div>
       </div>
       @if($usesDatabaseNews ?? false)
@@ -649,29 +966,29 @@
         </div>
         @endif
         <!-- Thumbnail with Badges -->
-        <div class="news-thumb-box" style="background-image: url('{{ $item->image_asset }}');">
+        <div class="news-thumb-box">
+          <img class="news-thumb-image" src="{{ $item->image_asset }}" alt="" loading="lazy" decoding="async" aria-hidden="true">
           <div class="news-thumb-overlay"></div>
 
           <!-- Top Category & Tag Badges -->
-          <div class="position-absolute top-0 start-0 p-3 d-flex align-items-center gap-1 flex-wrap" style="z-index: 2;">
-            <span class="badge bg-{{ $item->badge_color ?? 'primary' }} text-white fw-bold shadow-sm">
-              <i class="{{ $item->category_icon ?: 'icon-base ti tabler-shield' }} me-1"></i> {{ $item->category }}
+          <div class="news-thumb-badges position-absolute top-0 start-0 p-3" style="z-index: 2;">
+            <span class="badge news-thumb-icon-badge bg-{{ $item->badge_color ?? 'primary' }} text-white fw-bold shadow-sm" aria-label="{{ $item->category }}">
+              <i class="{{ str_replace('tabler-dagger', 'tabler-swords', $item->category_icon ?: 'icon-base ti tabler-shield') }}"></i>
             </span>
             @if($item->tag)
-            <span class="news-tag-badge shadow-sm">
-              <i class="{{ $item->tag_icon ?: 'icon-base ti tabler-sparkles' }} me-1 text-{{ $item->badge_color ?? 'warning' }}"></i>
-              {{ $item->tag }}
+            <span class="news-tag-badge news-thumb-icon-badge shadow-sm" aria-label="{{ $item->tag }}">
+              <i class="{{ $item->tag_icon ?: 'icon-base ti tabler-sparkles' }} text-{{ $item->badge_color ?? 'warning' }}"></i>
             </span>
             @endif
             @if($gazetteBadge)
-            <span class="news-tag-badge border-warning border-opacity-50 shadow-sm">
-              <i class="icon-base ti tabler-news me-1 text-warning"></i> {{ $gazetteBadge }}
+            <span class="news-tag-badge news-thumb-icon-badge border-warning border-opacity-50 shadow-sm" aria-label="{{ $gazetteBadge }}">
+              <i class="icon-base ti tabler-news text-warning"></i>
             </span>
             @endif
           </div>
 
           <!-- Top Right Read Time -->
-          <div class="position-absolute top-0 end-0 p-3" style="z-index: 2;">
+          <div class="news-thumb-read-time position-absolute top-0 end-0 p-3" style="z-index: 2;">
             <span class="badge bg-dark bg-opacity-75 text-white-50 border border-secondary border-opacity-25" style="font-size: 0.72rem;">
               <i class="icon-base ti tabler-book me-1"></i> {{ $item->read_time }}
             </span>
@@ -679,7 +996,7 @@
 
           <!-- Bottom Location -->
           @if(!empty($item->location_badge))
-          <div class="position-absolute bottom-0 start-0 p-3" style="z-index: 2;">
+          <div class="news-thumb-location position-absolute bottom-0 start-0 p-3" style="z-index: 2;" aria-hidden="true">
             <span class="text-white-50 small d-flex align-items-center">
               <i class="icon-base ti tabler-map-pin me-1 text-{{ $item->badge_color ?? 'warning' }}"></i>
               {{ $item->location_badge }}
@@ -692,7 +1009,7 @@
         <div class="card-body d-flex flex-column justify-content-between p-4">
           <div>
             <!-- Date & Author Row -->
-            <div class="d-flex align-items-center justify-content-between mb-2 pb-1 text-body-secondary small">
+            <div class="news-card-meta d-flex align-items-center justify-content-between mb-2 pb-1 text-body-secondary small">
               <span class="d-flex align-items-center">
                 <i class="icon-base ti tabler-calendar-event me-1"></i> {{ $item->date_text }}
               </span>
@@ -702,12 +1019,12 @@
             </div>
 
             <!-- Title -->
-            <h5 class="fw-bold mb-2 text-white" style="line-height: 1.4; min-height: 48px;">
+            <h5 class="news-card-title fw-bold mb-2 text-white">
               {{ $item->title }}
             </h5>
 
             <!-- Description -->
-            <p class="text-body-secondary small mb-3" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.6;">
+            <p class="news-card-description text-body-secondary small mb-3">
               {{ $item->description }}
             </p>
 
@@ -738,25 +1055,25 @@
           </div>
 
           <!-- Card Footer Action -->
-          <div class="pt-3 border-top border-white border-opacity-10 d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <div class="news-card-footer pt-3 border-top border-white border-opacity-10 d-flex align-items-center justify-content-between flex-wrap gap-2">
             <span class="guild-seal-stamp">
               <i class="icon-base ti tabler-shield-check text-{{ $item->badge_color ?? 'primary' }}"></i>
               <span>{{ __('Verified') }}</span>
             </span>
 
-            <div class="d-flex align-items-center gap-2 ms-auto">
+            <div class="news-card-actions d-flex align-items-center gap-2 ms-auto">
               @if(($canUpdateNews ?? false) && ($item instanceof \App\Models\News))
-              <button type="button" class="btn btn-outline-warning btn-sm px-2" title="{{ __('Edit') }}" onclick="openEditNewsModal({{ $item->id }})">
+              <button type="button" class="btn btn-outline-warning btn-sm news-card-icon-btn" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}" onclick="openEditNewsModal({{ $item->id }})">
                 <i class="icon-base ti tabler-edit"></i>
               </button>
               @endif
               @if(($canDeleteNews ?? false) && ($item instanceof \App\Models\News))
-              <button type="button" class="btn btn-outline-danger btn-sm px-2 js-delete-news-btn" title="{{ __('Delete') }}" data-news-id="{{ $item->id }}">
+              <button type="button" class="btn btn-outline-danger btn-sm news-card-icon-btn js-delete-news-btn" title="{{ __('Delete') }}" aria-label="{{ __('Delete') }}" data-news-id="{{ $item->id }}">
                 <i class="icon-base ti tabler-trash"></i>
               </button>
               @endif
-              <button type="button" class="btn btn-outline-{{ $item->button_color ?? 'primary' }} btn-sm px-3 d-inline-flex align-items-center gap-1 shadow-sm" data-bs-toggle="modal" data-bs-target="#newsDetailModal" onclick="openNewsDetail({{ $item->id }})">
-                <i class="{{ $item->button_icon ?: 'icon-base ti tabler-book-2' }}"></i>
+              <button type="button" class="btn btn-outline-{{ $item->button_color ?? 'primary' }} btn-sm news-card-read-btn" data-bs-toggle="modal" data-bs-target="#newsDetailModal" onclick="openNewsDetail({{ $item->id }})">
+                <i class="{{ str_replace('tabler-shield-alert', 'tabler-alert-triangle', $item->button_icon ?: 'icon-base ti tabler-book-2') }}"></i>
                 <span>{{ __('Read More') }}</span>
               </button>
             </div>
@@ -1203,7 +1520,8 @@
 
     const catBadge = document.getElementById('modalCategoryBadge');
     catBadge.className = `badge bg-${item.badge_color || 'primary'} text-white fw-bold px-3 py-2`;
-    catBadge.innerHTML = `<i class="${item.category_icon || 'icon-base ti tabler-shield'} me-1"></i> ${item.category}`;
+    const categoryIcon = (item.category_icon || 'icon-base ti tabler-shield').replace('tabler-dagger', 'tabler-swords');
+    catBadge.innerHTML = `<i class="${categoryIcon} me-1"></i> ${item.category}`;
 
     const tagBadge = document.getElementById('modalTagBadge');
     if (item.tag) {
