@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasColumn('npcs', 'corrects_npc_id')) {
+            return;
+        }
+
         Schema::table('npcs', function (Blueprint $table) {
             $table->foreignId('corrects_npc_id')
                 ->nullable()
@@ -20,6 +24,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (! Schema::hasColumn('npcs', 'corrects_npc_id')) {
+            return;
+        }
+
         Schema::table('npcs', function (Blueprint $table) {
             $table->dropConstrainedForeignId('corrects_npc_id');
         });
