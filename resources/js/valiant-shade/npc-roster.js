@@ -71,6 +71,237 @@ function setStatus(message, isError = false) {
   el.classList.toggle('vs-npc-status--error', Boolean(isError));
 }
 
+const NPC_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+const NPC_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+
+const NPC_SUBMIT_FIELD_IDS = {
+  first_name: 'npc-sub-first',
+  mid_name: 'npc-sub-mid',
+  last_name: 'npc-sub-last',
+  status: 'npc-sub-status',
+  profession: 'npc-sub-profession',
+  race: 'npc-sub-race',
+  faction: 'npc-sub-faction',
+  location: 'npc-sub-location',
+  summary: 'npc-sub-summary',
+  background: 'npc-sub-background',
+  image: 'npc-sub-image',
+};
+
+const NPC_CORRECTION_FIELD_IDS = {
+  first_name: 'npc-cor-first',
+  mid_name: 'npc-cor-mid',
+  last_name: 'npc-cor-last',
+  status: 'npc-cor-status',
+  profession: 'npc-cor-profession',
+  race: 'npc-cor-race',
+  faction: 'npc-cor-faction',
+  location: 'npc-cor-location',
+  summary: 'npc-cor-summary',
+  background: 'npc-cor-background',
+  notes: 'npc-cor-notes',
+  image: 'npc-cor-image',
+};
+
+function readNpcFormMessages(source) {
+  const d = source?.dataset || {};
+  return {
+    sending: d.msgSending || 'Gönderiliyor…',
+    imageTooLarge: d.msgImageTooLarge || 'Portre en fazla 5 MB olmalı.',
+    imageType: d.msgImageType || 'JPEG, PNG veya WebP seçin.',
+    imageOk: d.msgImageOk || 'Dosya uygun.',
+    nameRequired: d.msgNameRequired || 'En az ad veya soyad gereklidir.',
+    fixFields: d.msgFixFields || 'Lütfen işaretli alanları düzeltin.',
+    success: d.msgSuccess || 'Kayıt arşivcilere ulaştı.',
+    network: d.msgNetwork || 'Gönderilemedi.',
+  };
+}
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+function clearFormFieldErrors(form) {
+  if (!form) return;
+  form.querySelectorAll('.vs-form-field--error').forEach((node) => {
+    node.classList.remove('vs-form-field--error');
+  });
+}
+
+function applyFormErrors(form, errors, fieldIds) {
+  if (!form || !errors) return;
+  Object.keys(errors).forEach((key) => {
+    const fieldId = fieldIds[key];
+    if (!fieldId) return;
+    const input = form.querySelector(`#${CSS.escape(fieldId)}`);
+    const wrap = input?.closest('.vs-form-field');
+    wrap?.classList.add('vs-form-field--error');
+  });
+}
+
+function setFormFeedback(el, message, variant = 'info', errors = null) {
+  if (!el) return;
+  if (!message && !errors) {
+    el.hidden = true;
+    el.innerHTML = '';
+    el.className = 'vs-npc-form-feedback vs-rumor-form__span';
+    return;
+  }
+  el.hidden = false;
+  el.className = `vs-npc-form-feedback vs-rumor-form__span vs-npc-form-feedback--${variant}`;
+  let html = message ? esc(message) : '';
+  if (errors) {
+    const lines = Object.values(errors)
+      .flat()
+      .map((line) => String(line ?? '').trim())
+      .filter(Boolean);
+    if (lines.length) {
+      html += `<ul class="vs-npc-form-feedback__list">${lines.map((line) => `<li>${esc(line)}</li>`).join('')}</ul>`;
+    }
+  }
+  el.innerHTML = html;
+  el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+function displayNameFromForm(form, fieldIds) {
+  return [
+    form.querySelector(`#${fieldIds.first_name}`)?.value,
+    form.querySelector(`#${fieldIds.mid_name}`)?.value,
+    form.querySelector(`#${fieldIds.last_name}`)?.value,
+  ]
+    .map((v) => String(v ?? '').trim())
+    .filter(Boolean)
+    .join(' ');
+}
+
+function validateNpcNameAndImage(form, fieldIds, messages) {
+  const errors = {};
+  if (!displayNameFromForm(form, fieldIds)) {
+    errors.first_name = [messages.nameRequired];
+  }
+  const imageId = fieldIds.image;
+  const file = imageId ? form.querySelector(`#${CSS.escape(imageId)}`)?.files?.[0] : null;
+  if (file) {
+    if (!NPC_IMAGE_TYPES.has(file.type)) {
+      errors.image = [messages.imageType];
+    } else if (file.size > NPC_IMAGE_MAX_BYTES) {
+      errors.image = [messages.imageTooLarge];
+    }
+  }
+  return errors;
+}
+
+function bindImageFileMeta(inputId, metaId, messageSource) {
+  const input = qs(inputId);
+  const meta = qs(metaId);
+  if (!input || !meta) return;
+  const messages = readNpcFormMessages(messageSource);
+
+  const refresh = () => {
+    const file = input.files?.[0];
+    meta.className = 'vs-npc-image-meta';
+    if (!file) {
+      meta.textContent = '';
+      return;
+    }
+    let text = `${file.name} · ${formatFileSize(file.size)}`;
+    if (!NPC_IMAGE_TYPES.has(file.type)) {
+      text += ` — ${messages.imageType}`;
+      meta.classList.add('vs-npc-image-meta--warn');
+    } else if (file.size > NPC_IMAGE_MAX_BYTES) {
+      text += ` — ${messages.imageTooLarge}`;
+      meta.classList.add('vs-npc-image-meta--warn');
+    } else {
+      text += ` — ${messages.imageOk}`;
+      meta.classList.add('vs-npc-image-meta--ok');
+    }
+    meta.textContent = text;
+  };
+
+  input.addEventListener('change', refresh);
+  refresh();
+}
+
+function setSubmitBusy(btn, busy) {
+  if (!btn) return;
+  btn.disabled = busy;
+  btn.setAttribute('aria-busy', busy ? 'true' : 'false');
+}
+
+async function postNpcForm({
+  form,
+  url,
+  feedbackEl,
+  submitBtn,
+  messages,
+  fieldIds,
+  beforeReset,
+  afterSuccess,
+}) {
+  clearFormFieldErrors(form);
+  const clientErrors = validateNpcNameAndImage(form, fieldIds, messages);
+  if (Object.keys(clientErrors).length) {
+    setFormFeedback(feedbackEl, messages.fixFields, 'error', clientErrors);
+    applyFormErrors(form, clientErrors, fieldIds);
+    return;
+  }
+
+  const fd = new FormData(form);
+  const titlesRaw = form.querySelector('[data-npc-title-hidden]')?.value;
+  if (titlesRaw) fd.set('titles', titlesRaw);
+  fd.delete('npc_id');
+
+  setSubmitBusy(submitBtn, true);
+  setFormFeedback(feedbackEl, messages.sending, 'info');
+
+  try {
+    const token = document.querySelector('meta[name="csrf-token"]')?.content;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: token ? { 'X-CSRF-TOKEN': token, Accept: 'application/json' } : { Accept: 'application/json' },
+      body: fd,
+    });
+    let payload = {};
+    try {
+      payload = await res.json();
+    } catch {
+      payload = {};
+    }
+
+    if (!res.ok || !payload.success) {
+      if (payload.errors && typeof payload.errors === 'object') {
+        setFormFeedback(feedbackEl, payload.message || messages.fixFields, 'error', payload.errors);
+        applyFormErrors(form, payload.errors, fieldIds);
+        return;
+      }
+      if (res.status === 429) {
+        setFormFeedback(feedbackEl, payload.message || 'Çok fazla deneme. Lütfen bekleyin.', 'error');
+        return;
+      }
+      setFormFeedback(feedbackEl, payload.message || messages.network, 'error');
+      return;
+    }
+
+    const successMsg = payload.message || messages.success;
+    setFormFeedback(feedbackEl, successMsg, 'success');
+    setStatus(successMsg, false);
+    await new Promise((r) => setTimeout(r, 1500));
+    beforeReset?.();
+    form.reset();
+    setFormFeedback(feedbackEl, '', 'info');
+    afterSuccess?.();
+    return payload;
+  } catch {
+    setFormFeedback(feedbackEl, messages.network, 'error');
+    setStatus(messages.network, true);
+    return null;
+  } finally {
+    setSubmitBusy(submitBtn, false);
+  }
+}
+
 function updateViewToggle() {
   const listMode = state.view === 'list';
   const listLabel = els.toggleView?.dataset.labelList || 'Liste görünümü';
@@ -384,6 +615,8 @@ function openCorrectionPanel() {
   if (!state.detailNpc) return;
   if (els.detailView) els.detailView.hidden = true;
   if (els.correctionPanel) els.correctionPanel.hidden = false;
+  setFormFeedback(els.correctionFeedback, '', 'info');
+  clearFormFieldErrors(els.correctionForm);
   prefillCorrectionForm(state.detailNpc);
   mountCorrectionRaceSelect();
   const tagsRoot = document.querySelector('[data-npc-correction-titles]');
@@ -461,6 +694,9 @@ async function openDetail(id) {
 
 function openSubmitModal() {
   if (!els.submitModal) return;
+  setFormFeedback(els.submitFeedback, '', 'info');
+  if (els.submitImageMeta) els.submitImageMeta.textContent = '';
+  clearFormFieldErrors(els.submitForm);
   openModal(els.submitModal);
   document.querySelectorAll('[data-npc-title-tags]').forEach(mountNpcTitleTags);
   mountSubmitRaceSelect();
@@ -486,59 +722,41 @@ async function submitCorrection(event) {
   const form = event.currentTarget;
   const npcId = state.detailNpc?.id || qs('npc-cor-id')?.value;
   if (!npcId) return;
-  const fd = new FormData(form);
-  const titlesRaw = form.querySelector('[data-npc-title-hidden]')?.value;
-  if (titlesRaw) fd.set('titles', titlesRaw);
-  fd.delete('npc_id');
-  setStatus('Düzeltme gönderiliyor…');
-  try {
-    const token = document.querySelector('meta[name="csrf-token"]')?.content;
-    const res = await fetch(`${API_BASE}/${npcId}/corrections`, {
-      method: 'POST',
-      headers: token ? { 'X-CSRF-TOKEN': token, Accept: 'application/json' } : { Accept: 'application/json' },
-      body: fd,
-    });
-    const payload = await res.json();
-    if (!res.ok || !payload.success) {
-      const firstError = payload.errors ? Object.values(payload.errors).flat()[0] : null;
-      throw new Error(firstError || payload.message || 'Gönderilemedi');
-    }
-    form.reset();
-    if (state.detailNpc) prefillCorrectionForm(state.detailNpc);
-    closeDetail();
-    setStatus(payload.message || 'Düzeltme arşivcilere ulaştı.');
-  } catch (err) {
-    setStatus(err.message || 'Gönderilemedi.', true);
-  }
+  const messages = readNpcFormMessages(form);
+  const payload = await postNpcForm({
+    form,
+    url: `${API_BASE}/${npcId}/corrections`,
+    feedbackEl: els.correctionFeedback,
+    submitBtn: els.correctionSubmitBtn,
+    messages,
+    fieldIds: NPC_CORRECTION_FIELD_IDS,
+    afterSuccess: () => {
+      if (els.correctionImageMeta) els.correctionImageMeta.textContent = '';
+      closeDetail();
+    },
+  });
 }
 
 async function submitNpc(event) {
   event.preventDefault();
   const form = event.currentTarget;
-  const fd = new FormData(form);
-  const titlesRaw = form.querySelector('[data-npc-title-hidden]')?.value;
-  if (titlesRaw) fd.set('titles', titlesRaw);
-  setStatus('Gönderiliyor…');
-  try {
-    const token = document.querySelector('meta[name="csrf-token"]')?.content;
-    const res = await fetch(`${API_BASE}/submissions`, {
-      method: 'POST',
-      headers: token ? { 'X-CSRF-TOKEN': token, Accept: 'application/json' } : { Accept: 'application/json' },
-      body: fd,
-    });
-    const payload = await res.json();
-    if (!res.ok || !payload.success) {
-      const firstError = payload.errors ? Object.values(payload.errors).flat()[0] : null;
-      throw new Error(firstError || payload.message || 'Gönderilemedi');
-    }
-    form.reset();
-    form.removeAttribute('data-submit-preview-mounted');
-    $('#npc-sub-race').val(null).trigger('change');
-    closeSubmitModal();
-    setStatus(payload.message || 'Kayıt arşivcilere ulaştı.');
-  } catch (err) {
-    setStatus(err.message || 'Gönderilemedi.', true);
-  }
+  const messages = readNpcFormMessages(els.submitModal);
+  const payload = await postNpcForm({
+    form,
+    url: `${API_BASE}/submissions`,
+    feedbackEl: els.submitFeedback,
+    submitBtn: els.submitBtn,
+    messages,
+    fieldIds: NPC_SUBMIT_FIELD_IDS,
+    beforeReset: () => {
+      form.removeAttribute('data-submit-preview-mounted');
+    },
+    afterSuccess: () => {
+      $('#npc-sub-race').val(null).trigger('change');
+      if (els.submitImageMeta) els.submitImageMeta.textContent = '';
+      closeSubmitModal();
+    },
+  });
 }
 
 function clearFilters() {
@@ -578,6 +796,9 @@ function init() {
   els.openSubmit = qs('openNpcSubmitModal');
   els.submitModal = qs('npcSubmitModal');
   els.submitForm = qs('npcSubmitForm');
+  els.submitFeedback = qs('npcSubmitFormFeedback');
+  els.submitBtn = qs('npcSubmitBtn');
+  els.submitImageMeta = qs('npcSubmitImageMeta');
   els.closeSubmit = qs('npcSubmitClose');
   els.detailModal = qs('npcDetailModal');
   els.detailTitle = qs('npcDetailTitle');
@@ -588,6 +809,9 @@ function init() {
   els.detailPortraitWrap = qs('npcDetailPortraitWrap');
   els.correctionPanel = qs('npcCorrectionPanel');
   els.correctionForm = qs('npcCorrectionForm');
+  els.correctionFeedback = qs('npcCorrectionFormFeedback');
+  els.correctionSubmitBtn = qs('npcCorrectionSubmitBtn');
+  els.correctionImageMeta = qs('npcCorrectionImageMeta');
   els.openCorrection = qs('npcOpenCorrectionBtn');
   els.correctionBack = qs('npcCorrectionBackBtn');
   els.corFirst = qs('npc-cor-first');
@@ -681,6 +905,9 @@ function init() {
       loadBootstrap(false);
     }
   });
+
+  bindImageFileMeta('npc-sub-image', 'npcSubmitImageMeta', els.submitModal);
+  bindImageFileMeta('npc-cor-image', 'npcCorrectionImageMeta', els.correctionForm);
 
   loadBootstrap(true);
 }

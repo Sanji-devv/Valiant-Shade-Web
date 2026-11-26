@@ -10,13 +10,11 @@
     $imgMonster = asset('static/valiant-shade/assets/img/news/guild_dragon_quest.jpg');
     $imgMap = asset('static/valiant-shade/world/feldan-kralligi-preview.webp');
     $imgRecords = asset('static/valiant-shade/assets/img/news/guild_treasury_vault.jpg');
-    $imgMineria = asset('static/valiant-shade/assets/img/news/guild_mystic_forest.jpg');
     $imgRules = asset('static/valiant-shade/assets/img/news/guild_arcane_academy.jpg');
     $imgGods = asset('static/valiant-shade/assets/img/news/guild_celestial_sanctuary.jpg');
     $imgArchive = asset('static/valiant-shade/assets/img/gazette/news/pf1/pf1_stone_archives_labyrinth.jpg');
     $imgNpcs = asset('static/valiant-shade/assets/img/news/guild_hall_council.jpg');
 
-    $mineriaUrl = 'https://mineria.fandom.com/tr/wiki/Mineria_Wiki';
     $rulesUrl = 'https://www.d20pfsrd.com/';
 
     $monsterTitleParts = explode(' ', (string) __('Monster Database'), 2);
@@ -185,13 +183,22 @@
 
         .vs-quad__cell--gazette .vs-quad__title { color: #f5e6c8; }
         .vs-quad__cell--map .vs-quad__title { color: #b8d4e8; }
-        .vs-quad__cell--mineria .vs-quad__title { color: #c8e8f5; }
         .vs-quad__cell--rules .vs-quad__title { color: #e8dcc8; }
         .vs-quad__cell--archive .vs-quad__title { color: #f0dfb8; }
         .vs-quad__cell--monster .vs-quad__title { color: #ffd4d4; }
         .vs-quad__cell--records .vs-quad__title { color: #d4e8d0; }
         .vs-quad__cell--gods .vs-quad__title { color: #e7d0ff; }
         .vs-quad__cell--npcs .vs-quad__title { color: #f4d8c8; }
+
+        .vs-quad__cell--empty {
+            cursor: default;
+            pointer-events: none;
+            background: #141018;
+        }
+
+        .vs-quad__cell--empty::before {
+            opacity: 0.35;
+        }
 
         .vs-quad__title--long {
             font-size: clamp(1.35rem, 4.2vw, 2.65rem);
@@ -341,6 +348,7 @@
     <h1 class="vs-sr-only">{{ $pageTitle }}</h1>
     <p class="vs-sr-only">{{ $pageDescription }}</p>
     <main class="vs-quad" role="navigation" aria-label="{{ __('Portals') }}">
+        {{-- 1. satır: Gazete → Harita → NPC --}}
         <a href="{{ $gazetteUrl }}" class="vs-quad__cell vs-quad__cell--gazette" rel="noopener">
             <div class="vs-quad__bg" style="background-image: url('{{ $imgGazette }}');" aria-hidden="true"></div>
             <span class="vs-quad__corner vs-quad__corner--tl" aria-hidden="true"></span>
@@ -359,15 +367,16 @@
             <h2 class="vs-quad__title">{{ __('Map') }}</h2>
         </a>
 
-        <a href="{{ $mineriaUrl }}" class="vs-quad__cell vs-quad__cell--mineria" rel="noopener noreferrer" target="_blank">
-            <div class="vs-quad__bg" style="background-image: url('{{ $imgMineria }}');" aria-hidden="true"></div>
+        <a href="{{ $npcRosterUrl }}" class="vs-quad__cell vs-quad__cell--npcs" rel="noopener">
+            <div class="vs-quad__bg" style="background-image: url('{{ $imgNpcs }}');" aria-hidden="true"></div>
             <span class="vs-quad__corner vs-quad__corner--tl" aria-hidden="true"></span>
             <span class="vs-quad__corner vs-quad__corner--tr" aria-hidden="true"></span>
             <span class="vs-quad__corner vs-quad__corner--bl" aria-hidden="true"></span>
             <span class="vs-quad__corner vs-quad__corner--br" aria-hidden="true"></span>
-            <h2 class="vs-quad__title vs-quad__title--long">{{ __('Mineria Fandom') }}</h2>
+            <h2 class="vs-quad__title">{{ __('NPCs') }}</h2>
         </a>
 
+        {{-- 2. satır: D20 → Arşiv → Tanrılar --}}
         <a href="{{ $rulesUrl }}" class="vs-quad__cell vs-quad__cell--rules" rel="noopener noreferrer" target="_blank">
             <div class="vs-quad__bg" style="background-image: url('{{ $imgRules }}');" aria-hidden="true"></div>
             <span class="vs-quad__corner vs-quad__corner--tl" aria-hidden="true"></span>
@@ -386,6 +395,16 @@
             <h2 class="vs-quad__title">{{ __('Archive') }}</h2>
         </a>
 
+        <a href="{{ route('valiant-shade.gods.index') }}" class="vs-quad__cell vs-quad__cell--gods">
+            <div class="vs-quad__bg" style="background-image: url('{{ $imgGods }}');" aria-hidden="true"></div>
+            <span class="vs-quad__corner vs-quad__corner--tl" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--tr" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--bl" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--br" aria-hidden="true"></span>
+            <h1 class="vs-quad__title">{{ __('Tanrılar') }}</h1>
+        </a>
+
+        {{-- 3. satır: Lonca kayıtları → boş → Canavar VT --}}
         <a href="/valiant-shade" class="vs-quad__cell vs-quad__cell--records vs-quad__cell--dimmed">
             <div class="vs-quad__bg" style="background-image: url('{{ $imgRecords }}');" aria-hidden="true"></div>
             <div class="vs-quad__lock-overlay" aria-hidden="true"></div>
@@ -397,23 +416,7 @@
             <h2 class="vs-quad__title">{{ __('Guild Records') }}</h2>
         </a>
 
-        <a href="{{ route('valiant-shade.gods.index') }}" class="vs-quad__cell vs-quad__cell--gods">
-            <div class="vs-quad__bg" style="background-image: url('{{ $imgGods }}');" aria-hidden="true"></div>
-            <span class="vs-quad__corner vs-quad__corner--tl" aria-hidden="true"></span>
-            <span class="vs-quad__corner vs-quad__corner--tr" aria-hidden="true"></span>
-            <span class="vs-quad__corner vs-quad__corner--bl" aria-hidden="true"></span>
-            <span class="vs-quad__corner vs-quad__corner--br" aria-hidden="true"></span>
-            <h1 class="vs-quad__title">{{ __('Tanrılar') }}</h1>
-        </a>
-
-        <a href="{{ $npcRosterUrl }}" class="vs-quad__cell vs-quad__cell--npcs" rel="noopener">
-            <div class="vs-quad__bg" style="background-image: url('{{ $imgNpcs }}');" aria-hidden="true"></div>
-            <span class="vs-quad__corner vs-quad__corner--tl" aria-hidden="true"></span>
-            <span class="vs-quad__corner vs-quad__corner--tr" aria-hidden="true"></span>
-            <span class="vs-quad__corner vs-quad__corner--bl" aria-hidden="true"></span>
-            <span class="vs-quad__corner vs-quad__corner--br" aria-hidden="true"></span>
-            <h2 class="vs-quad__title">{{ __('NPCs') }}</h2>
-        </a>
+        <div class="vs-quad__cell vs-quad__cell--empty" aria-hidden="true"></div>
 
         <a href="{{ $monsterDbUrl }}" class="vs-quad__cell vs-quad__cell--monster" rel="noopener">
             <div class="vs-quad__bg" style="background-image: url('{{ $imgMonster }}');" aria-hidden="true"></div>

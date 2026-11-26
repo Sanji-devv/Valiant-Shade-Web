@@ -1765,5 +1765,13 @@
     "This submission corrects the published roster entry :name.": "Bu gönderi yayındaki :name kaydını düzeltiyor.",
     "Correction proposal for :name": ":name için düzeltme önerisi",
     "Notes": "Notlar",
-    "Portrait": "Portre"
+    "Portrait": "Portre",
+    "Sending…": "Gönderiliyor…",
+    "Sending correction…": "Düzeltme gönderiliyor…",
+    "Portrait must be 5 MB or smaller (JPEG, PNG, or WebP).": "Portre en fazla 5 MB olmalı (JPEG, PNG veya WebP).",
+    "Use a JPEG, PNG, or WebP image.": "JPEG, PNG veya WebP görsel seçin.",
+    "File looks good for upload.": "Dosya yükleme için uygun görünüyor.",
+    "Could not send. Check your connection and try again.": "Gönderilemedi. Bağlantınızı kontrol edip tekrar deneyin.",
+    "JPEG, PNG or WebP · max 5 MB": "JPEG, PNG veya WebP · en fazla 5 MB",
+    "Leave empty to keep the current portrait.": "Mevcut portreyi korumak için boş bırakın."
 }

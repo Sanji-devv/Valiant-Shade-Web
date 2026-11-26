@@ -1651,5 +1651,13 @@
     "This submission corrects the published roster entry :name.": "This submission corrects the published roster entry :name.",
     "Correction proposal for :name": "Correction proposal for :name",
     "Notes": "Notes",
-    "Portrait": "Portrait"
+    "Portrait": "Portrait",
+    "Sending…": "Sending…",
+    "Sending correction…": "Sending correction…",
+    "Portrait must be 5 MB or smaller (JPEG, PNG, or WebP).": "Portrait must be 5 MB or smaller (JPEG, PNG, or WebP).",
+    "Use a JPEG, PNG, or WebP image.": "Use a JPEG, PNG, or WebP image.",
+    "File looks good for upload.": "File looks good for upload.",
+    "Could not send. Check your connection and try again.": "Could not send. Check your connection and try again.",
+    "JPEG, PNG or WebP · max 5 MB": "JPEG, PNG or WebP · max 5 MB",
+    "Leave empty to keep the current portrait.": "Leave empty to keep the current portrait."
 }

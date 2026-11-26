@@ -52,7 +52,21 @@
                     <button type="button" class="vs-npc-correction-back" id="npcCorrectionBackBtn" aria-label="{{ __('Back') }}">← {{ __('Back to detail') }}</button>
                     <p class="vs-npc-correction-panel__lead">{{ __('Propose changes to this roster entry. Archivists will review before anything goes live.') }}</p>
                 </div>
-                <form id="npcCorrectionForm" class="vs-form-grid vs-form-grid--rumor vs-npc-correction-form" enctype="multipart/form-data" novalidate>
+                <form
+                    id="npcCorrectionForm"
+                    class="vs-form-grid vs-form-grid--rumor vs-npc-correction-form"
+                    enctype="multipart/form-data"
+                    novalidate
+                    data-msg-sending="{{ __('Sending correction…') }}"
+                    data-msg-image-too-large="{{ __('Portrait must be 5 MB or smaller (JPEG, PNG, or WebP).') }}"
+                    data-msg-image-type="{{ __('Use a JPEG, PNG, or WebP image.') }}"
+                    data-msg-image-ok="{{ __('File looks good for upload.') }}"
+                    data-msg-name-required="{{ __('At least a first or last name is required.') }}"
+                    data-msg-fix-fields="{{ __('Please fix the highlighted fields.') }}"
+                    data-msg-success="{{ __('Your correction reached the archivists. It will apply after approval.') }}"
+                    data-msg-network="{{ __('Could not send. Check your connection and try again.') }}"
+                >
+                    <div id="npcCorrectionFormFeedback" class="vs-npc-form-feedback vs-rumor-form__span" role="alert" hidden></div>
                     <input type="hidden" name="npc_id" id="npc-cor-id" value="">
                     <div class="vs-rumor-form__meta-grid vs-rumor-form__meta-grid--three vs-rumor-form__span">
                         <label class="vs-form-field">
@@ -131,7 +145,8 @@
                     <label class="vs-form-field vs-rumor-form__span">
                         <span class="vs-form-field__label">{{ __('Portrait image') }}</span>
                         <input id="npc-cor-image" type="file" name="image" accept="image/jpeg,image/png,image/webp">
-                        <p class="vs-rumor-upload-hint">{{ __('Leave empty to keep the current portrait; upload only if you are replacing it.') }}</p>
+                        <p class="vs-rumor-upload-hint">{{ __('JPEG, PNG or WebP · max 5 MB') }}. {{ __('Leave empty to keep the current portrait.') }}</p>
+                        <p id="npcCorrectionImageMeta" class="vs-npc-image-meta" aria-live="polite"></p>
                     </label>
 
                     <div class="vs-rumor-form__actions vs-rumor-form__span">
@@ -143,7 +158,22 @@
     </section>
 </div>
 
-<div id="npcSubmitModal" class="vs-rumor-modal" hidden role="dialog" aria-modal="true" aria-labelledby="npcSubmitTitle">
+<div
+    id="npcSubmitModal"
+    class="vs-rumor-modal"
+    hidden
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="npcSubmitTitle"
+    data-msg-sending="{{ __('Sending…') }}"
+    data-msg-image-too-large="{{ __('Portrait must be 5 MB or smaller (JPEG, PNG, or WebP).') }}"
+    data-msg-image-type="{{ __('Use a JPEG, PNG, or WebP image.') }}"
+    data-msg-image-ok="{{ __('File looks good for upload.') }}"
+    data-msg-name-required="{{ __('At least a first or last name is required.') }}"
+    data-msg-fix-fields="{{ __('Please fix the highlighted fields.') }}"
+    data-msg-success="{{ __('Your NPC record reached the archivists. It will appear after approval.') }}"
+    data-msg-network="{{ __('Could not send. Check your connection and try again.') }}"
+>
     <div class="vs-rumor-modal__backdrop" data-close-npc-submit tabindex="-1" aria-hidden="true"></div>
     <section class="vs-rumor-modal__panel vs-modal vs-modal--rumor-gazette vs-modal--rumor-gazette--active vs-npc-modal__panel vs-npc-modal__panel--submit">
         <header class="vs-rumor-toolbar" aria-label="{{ __('Submit NPC') }}">
@@ -153,6 +183,7 @@
         <div class="vs-modal__body vs-modal__body--rumor">
             <div class="vs-npc-submit-layout">
             <form id="npcSubmitForm" class="vs-form-grid vs-form-grid--rumor vs-npc-submit-form" enctype="multipart/form-data" novalidate>
+                <div id="npcSubmitFormFeedback" class="vs-npc-form-feedback vs-rumor-form__span" role="alert" hidden></div>
                 <div class="vs-rumor-form__meta-grid vs-rumor-form__meta-grid--three vs-rumor-form__span">
                     <label class="vs-form-field">
                         <span class="vs-form-field__label">{{ __('First name') }}</span>
@@ -225,7 +256,8 @@
                 <label class="vs-form-field vs-rumor-form__span">
                     <span class="vs-form-field__label">{{ __('Portrait image') }}</span>
                     <input id="npc-sub-image" type="file" name="image" accept="image/jpeg,image/png,image/webp">
-                    <p class="vs-rumor-upload-hint">JPEG, PNG veya WebP · en fazla 5 MB</p>
+                    <p class="vs-rumor-upload-hint">{{ __('JPEG, PNG or WebP · max 5 MB') }}</p>
+                    <p id="npcSubmitImageMeta" class="vs-npc-image-meta" aria-live="polite"></p>
                 </label>
 
                 <div class="vs-rumor-form__actions vs-rumor-form__span">
