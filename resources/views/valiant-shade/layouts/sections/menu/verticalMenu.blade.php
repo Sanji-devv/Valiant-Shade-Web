@@ -60,6 +60,7 @@ $configData = \App\ValiantShade\Helpers\Helpers::appClasses();
       $isLoginSlug = ($menu->slug === 'auth-login-basic');
       $isRegisterSlug = ($menu->slug === 'auth-register-basic');
       $isAdminOnlyItem = (
+        !empty($menu->adminOnly) ||
         $menu->slug === 'app-roles' ||
         $menu->slug === 'app-audit-logs' ||
         $menu->slug === 'app-health' ||

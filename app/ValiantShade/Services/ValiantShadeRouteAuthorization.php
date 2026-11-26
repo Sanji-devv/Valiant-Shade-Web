@@ -80,6 +80,7 @@ class ValiantShadeRouteAuthorization
     /** @var list<string> */
     private const MEMBER_ROUTE_PREFIXES = [
         'valiant-shade.pages-archive',
+        'valiant-shade.pages-npcs',
         'valiant-shade.pages-profile',
         'valiant-shade.character',
         'valiant-shade.pages-account-settings-account',

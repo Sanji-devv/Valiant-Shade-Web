@@ -72,6 +72,16 @@
                     "slug": "pages-quest-reports"
                 },
                 {
+                    "url": "/valiant-shade/pages/archive",
+                    "name": "Quest Archive",
+                    "slug": "pages-archive"
+                },
+                {
+                    "url": "/valiant-shade/pages/npcs",
+                    "name": "NPC Archive",
+                    "slug": "pages-npcs"
+                },
+                {
                     "url": "/valiant-shade/pages/featntrait",
                     "name": "Feat and Traits",
                     "slug": ["pages-featntrait", "pages-feats-list"]

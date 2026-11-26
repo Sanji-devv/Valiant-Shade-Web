@@ -13,6 +13,7 @@
     $imgRules = asset('static/valiant-shade/assets/img/news/guild_arcane_academy.jpg');
     $imgGods = asset('static/valiant-shade/assets/img/news/guild_celestial_sanctuary.jpg');
     $imgArchive = asset('static/valiant-shade/assets/img/gazette/news/pf1/pf1_stone_archives_labyrinth.jpg');
+    $imgNpcs = asset('static/valiant-shade/assets/img/news/guild_hall_council.jpg');
 
     $mineriaUrl = 'https://mineria.fandom.com/tr/wiki/Mineria_Wiki';
     $rulesUrl = 'https://www.d20pfsrd.com/';
@@ -189,6 +190,7 @@
         .vs-quad__cell--monster .vs-quad__title { color: #ffd4d4; }
         .vs-quad__cell--records .vs-quad__title { color: #d4e8d0; }
         .vs-quad__cell--gods .vs-quad__title { color: #e7d0ff; }
+        .vs-quad__cell--npcs .vs-quad__title { color: #f4d8c8; }
 
         .vs-quad__title--long {
             font-size: clamp(1.35rem, 4.2vw, 2.65rem);
@@ -403,7 +405,14 @@
             <h1 class="vs-quad__title">{{ __('Tanrılar') }}</h1>
         </a>
 
-        <div class="vs-quad__cell vs-quad__cell--locked" aria-hidden="true"></div>
+        <a href="{{ route('valiant-shade.pages-npcs') }}" class="vs-quad__cell vs-quad__cell--npcs">
+            <div class="vs-quad__bg" style="background-image: url('{{ $imgNpcs }}');" aria-hidden="true"></div>
+            <span class="vs-quad__corner vs-quad__corner--tl" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--tr" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--bl" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--br" aria-hidden="true"></span>
+            <h2 class="vs-quad__title">{{ __('NPCs') }}</h2>
+        </a>
 
         <a href="{{ $monsterDbUrl }}" class="vs-quad__cell vs-quad__cell--monster" rel="noopener">
             <div class="vs-quad__bg" style="background-image: url('{{ $imgMonster }}');" aria-hidden="true"></div>

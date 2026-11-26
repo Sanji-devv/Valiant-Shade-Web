@@ -9,7 +9,10 @@
       <h3 class="mb-1"><i class="icon-base ti tabler-books me-2 text-warning"></i>{{ __('Quest Archive') }}</h3>
       <p class="text-body-secondary mb-0">{{ __('Record adventures and search their titles and contents.') }}</p>
     </div>
-    <a href="{{ route('web.home') }}" class="btn btn-label-secondary">{{ __('Main page') }}</a>
+    <div class="d-flex flex-wrap gap-2">
+      <a href="{{ route('valiant-shade.pages-npcs') }}" class="btn btn-label-primary">{{ __('NPC Archive') }}</a>
+      <a href="{{ route('web.home') }}" class="btn btn-label-secondary">{{ __('Main page') }}</a>
+    </div>
   </div>
 
   <div class="card mb-4">

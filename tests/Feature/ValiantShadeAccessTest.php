@@ -90,4 +90,34 @@ class ValiantShadeAccessTest extends TestCase
                 ->assertOk();
         }
     }
+
+    public function test_sidebar_hides_collapsible_admin_menu_from_members_and_shows_it_to_admins(): void
+    {
+        $member = User::factory()->create([
+            'role' => 'PLAYER',
+            'status' => 1,
+        ]);
+
+        $this->actingAs($member)
+            ->get('/valiant-shade/pages/archive')
+            ->assertOk()
+            ->assertSee('/valiant-shade/pages/npcs', false)
+            ->assertSee('/valiant-shade/pages/archive', false)
+            ->assertDontSee('/valiant-shade/app/roles', false)
+            ->assertDontSee('/valiant-shade/app/audit-logs', false)
+            ->assertDontSee('/valiant-shade/app/health', false);
+
+        $admin = User::factory()->create([
+            'role' => 'ADMIN',
+            'status' => 1,
+        ]);
+
+        $this->actingAs($admin)
+            ->get('/valiant-shade/app/roles')
+            ->assertOk()
+            ->assertSee('menu-link menu-toggle', false)
+            ->assertSee('/valiant-shade/app/roles', false)
+            ->assertSee('/valiant-shade/app/audit-logs', false)
+            ->assertSee('/valiant-shade/app/health', false);
+    }
 }

@@ -16,24 +16,6 @@
             "url": "/valiant-shade/app/user/list"
         },
         {
-            "name": "Roles & Permissions",
-            "icon": "menu-icon icon-base ti tabler-shield-lock",
-            "slug": "app-roles",
-            "url": "/valiant-shade/app/roles"
-        },
-        {
-            "name": "Audit Logs",
-            "icon": "menu-icon icon-base ti tabler-history-toggle",
-            "slug": "app-audit-logs",
-            "url": "/valiant-shade/app/audit-logs"
-        },
-        {
-            "name": "Health",
-            "icon": "menu-icon icon-base ti tabler-heartbeat",
-            "slug": "app-health",
-            "url": "/valiant-shade/app/health"
-        },
-        {
             "name": "User Profile",
             "icon": "menu-icon icon-base ti tabler-user",
             "slug": "pages-profile-user",
@@ -82,6 +64,18 @@
             "url": "/valiant-shade/pages/quest-reports"
         },
         {
+            "name": "Quest Archive",
+            "icon": "menu-icon icon-base ti tabler-books",
+            "slug": "pages-archive",
+            "url": "/valiant-shade/pages/archive"
+        },
+        {
+            "name": "NPC Archive",
+            "icon": "menu-icon icon-base ti tabler-users-group",
+            "slug": "pages-npcs",
+            "url": "/valiant-shade/pages/npcs"
+        },
+        {
             "name": "Feats and Traits",
             "icon": "menu-icon icon-base ti tabler-swords",
             "slug": [
@@ -95,6 +89,36 @@
             "icon": "menu-icon icon-base ti tabler-settings",
             "slug": "pages-account-settings",
             "url": "/valiant-shade/pages/account-settings-account"
+        },
+        {
+            "name": "Admin",
+            "icon": "menu-icon icon-base ti tabler-shield-lock",
+            "slug": [
+                "app-roles",
+                "app-audit-logs",
+                "app-health"
+            ],
+            "adminOnly": true,
+            "submenu": [
+                {
+                    "name": "Roles & Permissions",
+                    "icon": "menu-icon icon-base ti tabler-shield-lock",
+                    "slug": "app-roles",
+                    "url": "/valiant-shade/app/roles"
+                },
+                {
+                    "name": "Audit Logs",
+                    "icon": "menu-icon icon-base ti tabler-history-toggle",
+                    "slug": "app-audit-logs",
+                    "url": "/valiant-shade/app/audit-logs"
+                },
+                {
+                    "name": "Health",
+                    "icon": "menu-icon icon-base ti tabler-heartbeat",
+                    "slug": "app-health",
+                    "url": "/valiant-shade/app/health"
+                }
+            ]
         },
         {
             "menuHeader": "Authentication"
