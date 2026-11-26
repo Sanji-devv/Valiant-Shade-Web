@@ -739,6 +739,7 @@ body.vs-layout-gazette .vs-newspaper-nav__item--print:hover {
     line-height: 1.05;
     text-align: center;
     max-width: none;
+    white-space: nowrap;
   }
 
   .vs-newspaper-nav__item--icon-only {

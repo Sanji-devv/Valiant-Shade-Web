@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Web\NpcRosterController;
 use App\Http\Controllers\Web\PublicSeoController;
 use App\Support\PublicSiteUrls;
 use App\ValiantShade\Http\Controllers\authentications\LogoutController;
@@ -27,6 +28,9 @@ Route::get('/llms-full.txt', [PublicSeoController::class, 'llmsFull'])->name('we
 Route::get('/newspaper', fn () => redirect(PublicSiteUrls::gazette(), 301));
 
 Route::get('/gazette', fn () => redirect(PublicSiteUrls::gazette(), 301));
+
+Route::get('/npcs', fn () => redirect(PublicSiteUrls::npcRoster(), 301))->name('web.npcs.redirect');
+Route::get('/npc-roster', [NpcRosterController::class, 'index'])->name('web.npc-roster');
 
 Route::get('/login', function () {
     return redirect()->route('valiant-shade.auth-login-basic');

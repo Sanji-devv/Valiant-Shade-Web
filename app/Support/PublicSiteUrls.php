@@ -61,6 +61,24 @@ class PublicSiteUrls
     }
 
     /**
+     * Halka açık NPC sicili (giriş gerekmez; gönderiler onay kuyruğuna düşer).
+     */
+    public static function npcRoster(string $path = '/'): string
+    {
+        $domain = (string) config('npc.domain');
+        if ($domain === '') {
+            return self::main($path === '/' ? '/npc-roster' : '/npc-roster/'.ltrim($path, '/'));
+        }
+
+        return self::hostUrl($domain, $path === '/' ? '/' : '/'.ltrim($path, '/'));
+    }
+
+    public static function isNpcSubdomainRequest(): bool
+    {
+        return in_array(request()->getHost(), (array) config('npc.domains', []), true);
+    }
+
+    /**
      * @return list<string>
      */
     public static function publicSubdomainHosts(): array
@@ -70,6 +88,7 @@ class PublicSiteUrls
         return array_values(array_unique(array_filter([
             ...config('gazette.domains', []),
             ...config('map.domains', []),
+            ...config('npc.domains', []),
             'md.'.$appHost,
         ])));
     }

@@ -184,11 +184,14 @@ Route::post('/pages/archive', [QuestArchiveController::class, 'store'])->name('v
 Route::get('/pages/archive/{report}', [QuestArchiveController::class, 'show'])->name('valiant-shade.pages-archive.show');
 
 // NPC Directory / Archive Routes
+Route::get('/pages/npcs/title-suggestions', [NpcArchiveController::class, 'titleSuggestions'])->name('valiant-shade.pages-npcs.title-suggestions');
 Route::get('/pages/npcs', [NpcArchiveController::class, 'index'])->name('valiant-shade.pages-npcs');
 Route::post('/pages/npcs', [NpcArchiveController::class, 'store'])->name('valiant-shade.pages-npcs.store');
 Route::get('/pages/npcs/{npc}', [NpcArchiveController::class, 'show'])->name('valiant-shade.pages-npcs.show');
 Route::put('/pages/npcs/{npc}', [NpcArchiveController::class, 'update'])->name('valiant-shade.pages-npcs.update');
 Route::delete('/pages/npcs/{npc}', [NpcArchiveController::class, 'destroy'])->name('valiant-shade.pages-npcs.destroy');
+Route::post('/pages/npcs/{npc}/approve', [NpcArchiveController::class, 'approve'])->name('valiant-shade.pages-npcs.approve');
+Route::post('/pages/npcs/{npc}/reject', [NpcArchiveController::class, 'reject'])->name('valiant-shade.pages-npcs.reject');
 
 Route::get('/pages/quest-reports', [QuestReportsController::class, 'index'])->name('valiant-shade.pages-quest-reports');
 Route::get('/pages/gorev-raporlari', [QuestReportsController::class, 'index'])->name('valiant-shade.pages-gorev-raporlari');

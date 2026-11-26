@@ -125,12 +125,17 @@
             <a href="{{ $mainSiteUrl }}" class="vs-newspaper-nav__item" aria-label="Ana Sayfa">
                 <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V9.5z"/></svg>
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">Ana Sayfa</span>
-                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">Ana Sayfa</span>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">{{ __('Main page (nav short)') }}</span>
             </a>
             <a href="{{ PublicSiteUrls::map('/feldan') }}" class="vs-newspaper-nav__item" aria-label="Harita — Feldan Krallığı">
                 <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2V6z"/><path d="M9 4v14M15 6v14"/></svg>
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">Harita</span>
                 <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">Harita</span>
+            </a>
+            <a href="{{ PublicSiteUrls::npcRoster('/') }}" class="vs-newspaper-nav__item" aria-label="{{ __('NPC Roster') }}">
+                <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 11a4 4 0 1 0-8 0"/><path d="M12 14v7"/><path d="M8 21h8"/><circle cx="12" cy="7" r="3"/></svg>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">{{ __('NPC Roster') }}</span>
+                <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">NPC</span>
             </a>
             <button type="button" class="vs-newspaper-nav__item vs-newspaper-nav__item--print" id="printGazetteBtn" @if (! $isGazetteView) hidden @endif aria-label="PDF İndir">
                 <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>

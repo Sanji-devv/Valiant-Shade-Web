@@ -3,6 +3,7 @@
 use App\Support\PublicSiteUrls;
 use App\Http\Controllers\Api\BuildingTypeController;
 use App\Http\Controllers\Api\PublicNewsController;
+use App\Http\Controllers\Api\PublicNpcController;
 use App\Http\Controllers\Api\MapBuildingController;
 use App\Http\Controllers\Api\MapEditorController;
 use App\Http\Controllers\Api\MapTerrainController;
@@ -50,6 +51,21 @@ Route::prefix('world')->group(function () {
 });
 
 Route::prefix('api')->group(function () {
+    Route::prefix('public/npcs')->group(function () {
+        Route::get('/bootstrap', [PublicNpcController::class, 'bootstrap'])->name('api.public.npcs.bootstrap');
+        Route::get('/title-suggestions', [PublicNpcController::class, 'titleSuggestions'])->name('api.public.npcs.title-suggestions');
+        Route::get('/facet-suggestions', [PublicNpcController::class, 'facetSuggestions'])->name('api.public.npcs.facet-suggestions');
+        Route::get('/', [PublicNpcController::class, 'index'])->name('api.public.npcs.index');
+        Route::get('/{id}', [PublicNpcController::class, 'show'])->whereNumber('id')->name('api.public.npcs.show');
+        Route::post('/submissions', [PublicNpcController::class, 'submit'])
+            ->middleware('throttle:public.npc.submissions')
+            ->name('api.public.npcs.submit');
+        Route::post('/{id}/corrections', [PublicNpcController::class, 'submitCorrection'])
+            ->whereNumber('id')
+            ->middleware('throttle:public.npc.submissions')
+            ->name('api.public.npcs.corrections');
+    });
+
     Route::prefix('public/news')->group(function () {
         Route::get('/bootstrap', [PublicNewsController::class, 'bootstrap'])->name('api.public.news.bootstrap');
         Route::get('/featured', [PublicNewsController::class, 'featured'])->name('api.public.news.featured');

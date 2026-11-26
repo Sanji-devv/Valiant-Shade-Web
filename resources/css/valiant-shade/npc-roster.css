@@ -1,0 +1,1016 @@
+@import './newspaper.css';
+
+body.vs-npc-roster-page {
+  --vs-npc-card-min: min(100%, 260px);
+}
+
+body.vs-npc-roster-page .vs-npc-roster-main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 0.75rem 2.5rem;
+}
+
+.vs-npc-roster-brand {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.vs-npc-roster-brand__crest img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border: 2px solid rgba(42, 31, 20, 0.25);
+  border-radius: 4px;
+}
+
+.vs-npc-roster-brand__motto {
+  margin: 0;
+  font-family: 'IM Fell English', serif;
+  font-style: italic;
+  font-size: 0.82rem;
+  color: var(--gz-ink-muted, #4a3d2e);
+}
+
+.vs-npc-roster-brand__title {
+  margin: 0.1rem 0 0;
+  font-family: Cinzel, serif;
+  font-size: clamp(1.35rem, 3vw, 1.85rem);
+  line-height: 1.15;
+  letter-spacing: 0.04em;
+}
+
+body.vs-layout-gazette .vs-newspaper-nav__item--active {
+  border-color: rgba(107, 58, 18, 0.65);
+  box-shadow: inset 0 0 0 1px rgba(107, 58, 18, 0.35);
+  font-weight: 600;
+}
+
+.vs-npc-toolbar {
+  margin-top: 0.35rem;
+}
+
+.vs-npc-toolbar__bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  width: 100%;
+}
+
+.vs-npc-toolbar__search {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.vs-npc-toolbar__count {
+  margin-left: auto;
+}
+
+body.vs-npc-roster-page .vs-toolbar .vs-filter-panel:not([hidden]) {
+  display: block !important;
+  width: 100%;
+}
+
+body.vs-npc-roster-page .vs-npc-toolbar {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid rgba(42, 31, 20, 0.18);
+  border-radius: 12px;
+  background: rgba(255, 250, 240, 0.97);
+}
+
+.vs-npc-filter-panel--gazette {
+  margin-top: 0.65rem;
+  padding: 0.85rem 0.9rem 0.75rem;
+  border: 1px solid rgba(42, 31, 20, 0.16);
+  border-radius: 10px;
+  background: rgba(255, 252, 245, 0.88);
+}
+
+.vs-npc-filter-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.7rem;
+  width: 100%;
+}
+
+.vs-npc-filter-status {
+  max-width: 100%;
+}
+
+@media (min-width: 768px) {
+  .vs-npc-filter-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.7rem 0.85rem;
+  }
+
+  .vs-npc-filter-status {
+    grid-column: 1 / -1;
+    max-width: 280px;
+  }
+}
+
+.vs-npc-filter-footer {
+  margin-top: 0.65rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid rgba(42, 31, 20, 0.1);
+}
+
+body.vs-npc-roster-page .vs-npc-gazette-input,
+body.vs-npc-roster-page .vs-npc-filter-panel--gazette select.vs-npc-gazette-input {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 0.92rem;
+  line-height: 1.35;
+  padding: 0.52rem 0.7rem;
+  border: 1px solid rgba(42, 31, 20, 0.28);
+  border-radius: 6px;
+  background: rgba(255, 252, 245, 0.95);
+  color: #2a1f14;
+  border-radius: 6px !important;
+  appearance: auto;
+  min-height: 2.65rem;
+}
+
+body.vs-npc-roster-page .vs-modal--rumor-gazette--active .vs-form-grid input,
+body.vs-npc-roster-page .vs-modal--rumor-gazette--active .vs-form-grid textarea,
+body.vs-npc-roster-page .vs-modal--rumor-gazette--active .vs-form-grid select {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 1rem;
+  line-height: 1.45;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgba(42, 31, 20, 0.28);
+  border-radius: 6px;
+  background: rgba(255, 252, 245, 0.95);
+  color: #2a1f14;
+}
+
+body.vs-npc-roster-page .vs-modal--rumor-gazette--active .vs-form-grid input[type='file'] {
+  padding: 0.45rem 0.5rem;
+  font-size: 0.88rem;
+}
+
+body.vs-npc-roster-page .vs-modal--rumor-gazette--active .npc-title-tags__input {
+  width: 100%;
+}
+
+body.vs-npc-roster-page .vs-search.vs-npc-toolbar__search {
+  border-radius: 10px;
+  padding: 0.55rem 0.8rem;
+  font-size: 1rem;
+  border: 1px solid rgba(42, 31, 20, 0.24);
+  background: rgba(255, 252, 245, 0.95);
+  color: #2a1f14;
+}
+
+.vs-npc-filter-clear {
+  margin-top: 0.7rem;
+  border: 1px solid rgba(42, 31, 20, 0.28);
+  border-radius: 6px;
+  background: rgba(255, 252, 245, 0.9);
+  color: #2a1f14;
+  padding: 0.5rem 0.85rem;
+  font-family: Newsreader, Georgia, serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.vs-npc-filter-clear:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(107, 58, 18, 0.4);
+}
+
+.vs-npc-status-banner {
+  text-align: center;
+  padding: 0.5rem 0.75rem;
+  margin: 0.5rem 0;
+  border: 1px dashed rgba(42, 31, 20, 0.25);
+  background: rgba(255, 250, 240, 0.85);
+}
+
+.vs-npc-status-banner.vs-npc-status--error {
+  border-color: #b45309;
+  color: #7c2d12;
+}
+
+.vs-npc-grid {
+  list-style: none;
+  margin: 0.75rem 0 1.25rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--vs-npc-card-min), 1fr));
+  gap: 1rem;
+}
+
+.vs-npc-grid--list {
+  grid-template-columns: 1fr;
+  gap: 0;
+  border: 1px solid rgba(42, 31, 20, 0.16);
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255, 252, 245, 0.72);
+}
+
+.vs-npc-grid--list .vs-npc-card {
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  border-bottom: 1px solid rgba(42, 31, 20, 0.1);
+}
+
+.vs-npc-grid--list .vs-npc-card:last-child {
+  border-bottom: 0;
+}
+
+.vs-npc-grid--list .vs-npc-card:hover,
+.vs-npc-grid--list .vs-npc-card:focus-visible {
+  background: rgba(255, 255, 255, 0.52);
+  transform: none;
+  box-shadow: inset 3px 0 0 rgba(107, 58, 18, 0.45);
+}
+
+.vs-npc-grid--list .vs-npc-card__media {
+  width: 96px;
+  min-height: 108px;
+  border-right: 1px solid rgba(42, 31, 20, 0.08);
+}
+
+.vs-npc-grid--list .vs-npc-card__excerpt {
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.vs-npc-grid__item {
+  margin: 0;
+  padding: 0;
+}
+
+.vs-npc-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 1px solid rgba(42, 31, 20, 0.22);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 250, 240, 0.2)),
+    var(--gz-paper, #f3e6cc);
+  box-shadow: 0 2px 0 rgba(42, 31, 20, 0.08);
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  padding: 0;
+  overflow: hidden;
+}
+
+.vs-npc-card:hover,
+.vs-npc-card:focus-visible {
+  box-shadow: 0 8px 18px rgba(42, 31, 20, 0.14);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.vs-npc-card--list {
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.vs-npc-card__media {
+  flex-shrink: 0;
+  background: #dbcbb5;
+}
+
+.vs-npc-card:not(.vs-npc-card--list) .vs-npc-card__media {
+  aspect-ratio: 4 / 5;
+  width: 100%;
+}
+
+.vs-npc-card--list .vs-npc-card__media {
+  width: 108px;
+  min-height: 132px;
+}
+
+.vs-npc-card__portrait {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  object-fit: cover;
+}
+
+.vs-npc-card__portrait--empty {
+  width: 100%;
+  height: 100%;
+  min-height: 140px;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.5), transparent 50%),
+    #d4c4a8;
+}
+
+.vs-npc-card--list .vs-npc-card__portrait--empty {
+  min-height: 132px;
+}
+
+.vs-npc-card__body {
+  padding: 0.75rem 0.85rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.vs-npc-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.vs-npc-card__name {
+  font-family: Cinzel, serif;
+  font-size: 1.02rem;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.vs-npc-card__titles {
+  color: #7a4e14;
+  font-size: 0.9rem;
+  font-family: 'IM Fell English', serif;
+  font-style: italic;
+}
+
+.vs-npc-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.vs-npc-badge {
+  font-size: 0.72rem;
+  padding: 0.14rem 0.48rem;
+  border: 1px solid rgba(42, 31, 20, 0.28);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.vs-npc-card__excerpt {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--gz-ink-muted, #4a3d2e);
+}
+
+.vs-npc-empty {
+  grid-column: 1 / -1;
+  padding: 2rem 1rem;
+  text-align: center;
+  font-family: 'IM Fell English', serif;
+  font-style: italic;
+}
+
+.vs-npc-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.vs-npc-modal__panel {
+  max-width: 720px;
+}
+
+.vs-npc-submit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.65rem;
+}
+
+.vs-npc-submit-grid--names {
+  margin-bottom: 0.35rem;
+}
+
+.npc-title-tags {
+  position: relative;
+}
+
+.npc-title-tags__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.45rem;
+}
+
+.npc-title-tags__chip {
+  border: 1px solid #b8893e;
+  background: rgba(184, 137, 62, 0.12);
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.84rem;
+}
+
+.npc-title-tags__suggestions {
+  position: absolute;
+  z-index: 30;
+  left: 0;
+  right: 0;
+  top: calc(100% + 2px);
+  max-height: 220px;
+  overflow: auto;
+  border: 1px solid #c9b38c;
+  background: #fffdf8;
+  padding: 0;
+}
+
+.npc-title-tags__suggestion {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 0.45rem 0.65rem;
+}
+
+.vs-npc-modal__panel--detail {
+  height: auto;
+}
+
+.vs-npc-modal__panel--detail .vs-modal__body--rumor.vs-npc-detail-body {
+  flex: 0 1 auto;
+  overflow: auto;
+  max-height: calc(min(90vh, 880px) - 3.25rem);
+}
+
+.vs-npc-detail-body {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: #2a1f14;
+}
+
+.vs-npc-detail-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  align-items: stretch;
+}
+
+.vs-npc-detail-main {
+  min-width: 0;
+}
+
+.vs-npc-detail-aside {
+  margin: 0;
+  align-self: stretch;
+  width: 100%;
+}
+
+.vs-npc-detail-portrait-wrap {
+  margin: 0;
+  border: 1px solid rgba(42, 31, 20, 0.18);
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255, 252, 245, 0.65);
+  width: 100%;
+  height: fit-content;
+  line-height: 0;
+}
+
+.vs-npc-detail-portrait-wrap.is-empty {
+  min-height: 8.5rem;
+  aspect-ratio: 16 / 10;
+  max-height: min(38vw, 200px);
+  background:
+    radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.5), transparent 50%),
+    #d4c4a8;
+}
+
+.vs-npc-detail-portrait {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: min(38vw, 220px);
+  object-fit: cover;
+  vertical-align: middle;
+}
+
+.vs-npc-detail-portrait[hidden] {
+  display: none !important;
+}
+
+.vs-npc-detail-facts {
+  margin: 0;
+  display: grid;
+  gap: 0.55rem 1rem;
+}
+
+.vs-npc-detail-facts__row {
+  display: grid;
+  grid-template-columns: minmax(7.5rem, 38%) minmax(0, 1fr);
+  gap: 0.35rem 0.75rem;
+  align-items: baseline;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px dashed rgba(42, 31, 20, 0.12);
+}
+
+.vs-npc-detail-facts__row--titles dd {
+  font-weight: 600;
+  color: #6b3a12;
+}
+
+.vs-npc-detail-facts dt {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-family: Cinzel, serif;
+  color: #5c4a38;
+}
+
+.vs-npc-detail-facts dd {
+  margin: 0;
+}
+
+.vs-npc-detail-sections {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.vs-npc-detail-section h3 {
+  margin: 0 0 0.35rem;
+  font-family: Cinzel, serif;
+  font-size: 0.92rem;
+  letter-spacing: 0.03em;
+}
+
+.vs-npc-detail-section p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.vs-npc-detail-actions {
+  margin-top: 1.15rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(42, 31, 20, 0.12);
+}
+
+@media (max-width: 899px) {
+  .vs-npc-modal__panel--detail {
+    width: min(100%, calc(100vw - 1.25rem)) !important;
+    max-height: min(92vh, 900px);
+  }
+
+  .vs-npc-modal__panel--detail .vs-modal__body--rumor.vs-npc-detail-body {
+    max-height: calc(min(92vh, 900px) - 3rem);
+    padding: 0.85rem 1rem 1rem;
+  }
+
+  .vs-npc-detail-sections {
+    margin-top: 0.65rem;
+    gap: 0.65rem;
+  }
+
+  .vs-npc-detail-actions {
+    margin-top: 0.85rem;
+    padding-top: 0.65rem;
+  }
+}
+
+.vs-rumor-submit--ghost {
+  background: transparent;
+  border: 1px solid rgba(107, 58, 18, 0.35);
+  color: #4a3218;
+  box-shadow: none;
+}
+
+.vs-rumor-submit--ghost:hover:not(:disabled) {
+  background: rgba(107, 58, 18, 0.08);
+}
+
+.vs-npc-correction-panel[hidden],
+.vs-npc-detail-layout[hidden] {
+  display: none !important;
+}
+
+.vs-npc-correction-panel__header {
+  margin-bottom: 0.85rem;
+}
+
+.vs-npc-correction-back {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  color: #6b3a12;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.vs-npc-correction-panel__lead {
+  margin: 0.45rem 0 0;
+  font-size: 0.88rem;
+  color: var(--gz-ink-muted, #4a3d2e);
+  font-style: italic;
+}
+
+@media (max-width: 767px) {
+  body.vs-npc-roster-page.vs-layout-gazette:not(.vs-layout-stream) .vs-newspaper-header {
+    padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
+  }
+
+  body.vs-npc-roster-page .vs-newspaper-header__mast {
+    display: none;
+  }
+
+  body.vs-npc-roster-page .vs-newspaper-nav {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: 0.35rem;
+    width: 100%;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid rgba(42, 31, 20, 0.14);
+  }
+
+  body.vs-npc-roster-page .vs-newspaper-nav__cluster--main {
+    grid-column: 1;
+    justify-self: start;
+    display: flex;
+    gap: 0.35rem;
+    width: auto;
+    margin: 0;
+  }
+
+  body.vs-npc-roster-page .vs-newspaper-nav__cluster--actions {
+    grid-column: 3;
+    justify-self: end;
+    display: flex;
+    gap: 0.35rem;
+    width: auto;
+    margin: 0;
+  }
+
+  body.vs-npc-roster-page .vs-newspaper-nav__title {
+    grid-column: 2;
+    justify-self: center;
+    margin: 0;
+    font-size: 0.95rem;
+  }
+
+  body.vs-npc-roster-page .vs-npc-roster-main {
+    padding-left: 0.45rem;
+    padding-right: 0.45rem;
+  }
+
+  body.vs-npc-roster-page .vs-filter-panel:not([hidden]) {
+    max-height: none;
+  }
+
+  body.vs-npc-roster-page .vs-npc-toolbar__search {
+    order: 2;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  body.vs-npc-roster-page .vs-toolbar__btn--filters {
+    order: 0;
+  }
+
+  .vs-npc-toolbar__count {
+    order: 3;
+    flex: 0 0 auto;
+    width: auto;
+    margin-left: 0;
+    font-size: 0.78rem;
+    padding: 0.35rem 0.5rem;
+  }
+
+  body.vs-npc-roster-page .vs-npc-grid {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+  }
+
+  body.vs-npc-roster-page .vs-npc-card,
+  body.vs-npc-roster-page .vs-npc-card--list {
+    flex-direction: row;
+    align-items: stretch;
+    min-height: 0;
+  }
+
+  body.vs-npc-roster-page .vs-npc-card__media {
+    width: 76px;
+    min-width: 76px;
+    max-width: 76px;
+    min-height: 0;
+    aspect-ratio: auto;
+  }
+
+  body.vs-npc-roster-page .vs-npc-card:not(.vs-npc-card--list) .vs-npc-card__media {
+    aspect-ratio: auto;
+    width: 76px;
+  }
+
+  body.vs-npc-roster-page .vs-npc-card .vs-npc-card__portrait,
+  body.vs-npc-roster-page .vs-npc-card .vs-npc-card__portrait--empty {
+    min-height: 88px;
+    height: 100%;
+  }
+
+  body.vs-npc-roster-page .vs-npc-card__body {
+    padding: 0.5rem 0.6rem;
+    gap: 0.2rem;
+  }
+
+  body.vs-npc-roster-page .vs-npc-card__name {
+    font-size: 0.92rem;
+  }
+
+  body.vs-npc-roster-page .vs-npc-card__titles {
+    font-size: 0.8rem;
+    line-height: 1.25;
+  }
+
+  body.vs-npc-roster-page .vs-npc-card__meta {
+    gap: 0.25rem;
+  }
+
+  body.vs-npc-roster-page .vs-npc-badge {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.35rem;
+  }
+
+  body.vs-npc-roster-page .vs-npc-card__excerpt {
+    font-size: 0.78rem;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+@media (min-width: 768px) {
+  body.vs-npc-roster-page .vs-toolbar__btn--filters {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 0.35rem;
+    flex: 0 0 auto;
+    width: auto;
+    height: auto;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.86rem;
+  }
+
+  body.vs-npc-roster-page .vs-toolbar__btn--view {
+    display: inline-flex !important;
+  }
+}
+
+body.vs-npc-roster-page .vs-toolbar__btn,
+body.vs-npc-roster-page .vs-pagination .vs-toolbar__btn {
+  border-radius: 10px;
+  padding: 0.48rem 0.9rem;
+  font-family: Newsreader, Georgia, serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border: 1px solid rgba(42, 31, 20, 0.22);
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--gz-ink, #2a1f14);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+}
+
+body.vs-npc-roster-page .vs-toolbar__btn:hover {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(107, 58, 18, 0.38);
+}
+
+body.vs-npc-roster-page .vs-toolbar__btn:active {
+  transform: translateY(1px);
+}
+
+body.vs-npc-roster-page .vs-npc-view-toggle {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  min-width: 2.75rem;
+  padding: 0;
+  margin: 0;
+  border-radius: 10px;
+  flex: 0 0 auto;
+}
+
+body.vs-npc-roster-page .vs-npc-view-toggle svg {
+  display: block;
+}
+
+body.vs-npc-roster-page .vs-npc-view-toggle[aria-pressed='true'] {
+  border-color: rgba(107, 58, 18, 0.45);
+  background: rgba(107, 58, 18, 0.1);
+}
+
+body.vs-npc-roster-page .vs-newspaper-nav__item--primary#openNpcSubmitModal {
+  background: linear-gradient(135deg, #5c3d1e, #8b5a2b);
+  color: #fff8eb;
+  border-color: rgba(92, 61, 30, 0.65);
+}
+
+.vs-npc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border-radius: 10px;
+  border: 1px solid rgba(92, 61, 30, 0.55);
+  padding: 0.55rem 1.1rem;
+  font-family: Newsreader, Georgia, serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.vs-npc-btn--primary {
+  background: linear-gradient(135deg, #5c3d1e, #8b5a2b);
+  color: #fff8eb;
+}
+
+body.vs-npc-roster-page .select2-container {
+  width: 100% !important;
+  max-width: 100%;
+}
+
+body.vs-npc-roster-page .select2-container--default .select2-selection--single,
+body.vs-npc-roster-page .select2-container--default .select2-selection--multiple {
+  border: 1px solid rgba(42, 31, 20, 0.28);
+  border-radius: 6px;
+  background: rgba(255, 252, 245, 0.95);
+  min-height: 2.85rem;
+}
+
+body.vs-npc-roster-page .select2-container--default .select2-selection--single .select2-selection__rendered {
+  line-height: 2.65rem;
+  padding-left: 0.75rem;
+  color: #2a1f14;
+}
+
+body.vs-npc-roster-page .select2-container--default .select2-selection--single .select2-selection__arrow {
+  height: 2.65rem;
+}
+
+body.vs-npc-roster-page .select2-container--default .select2-selection--multiple .select2-selection__rendered {
+  padding: 0.35rem 0.5rem;
+}
+
+body.vs-npc-roster-page .select2-dropdown {
+  border-color: rgba(42, 31, 20, 0.22);
+  background: #fffdf8;
+}
+
+body.vs-npc-roster-page .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+  background: rgba(107, 58, 18, 0.15);
+  color: var(--gz-ink, #2a1f14);
+}
+
+.vs-rumor-modal[hidden] {
+  display: none !important;
+}
+
+.vs-rumor-modal:not([hidden]) {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(0.75rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right))
+    max(0.75rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
+}
+
+.vs-rumor-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(30, 22, 14, 0.58);
+  cursor: pointer;
+}
+
+.vs-rumor-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: min(900px, 100%);
+  max-height: min(94vh, 940px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.vs-rumor-modal__panel .vs-rumor-toolbar__title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+body.vs-rumor-modal-open {
+  overflow: hidden;
+}
+
+.select2-container--open {
+  z-index: 130 !important;
+}
+
+@media (min-width: 900px) {
+  .vs-npc-modal__panel--submit,
+  .vs-npc-modal__panel--detail {
+    width: min(1120px, calc(100vw - 2.5rem)) !important;
+    max-width: 1120px;
+  }
+
+  .vs-npc-detail-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+    grid-template-areas: 'main aside';
+    gap: 1.25rem 1.5rem;
+    align-items: start;
+  }
+
+  .vs-npc-detail-main {
+    grid-area: main;
+  }
+
+  .vs-npc-detail-aside {
+    grid-area: aside;
+    align-self: start;
+    position: sticky;
+    top: 0;
+  }
+
+  .vs-npc-detail-portrait {
+    max-height: min(42vh, 380px);
+  }
+
+  .vs-npc-detail-portrait-wrap.is-empty {
+    max-height: min(42vh, 380px);
+    aspect-ratio: 4 / 5;
+  }
+
+  .vs-npc-submit-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+    gap: 1.25rem 1.5rem;
+    align-items: start;
+  }
+
+  .vs-npc-submit-form {
+    min-width: 0;
+  }
+
+  .vs-npc-submit-preview {
+    position: sticky;
+    top: 0;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid rgba(42, 31, 20, 0.18);
+    border-radius: 12px;
+    background: rgba(255, 252, 245, 0.72);
+  }
+
+  .vs-npc-submit-preview__card {
+    pointer-events: none;
+    cursor: default;
+    margin-top: 0.5rem;
+  }
+
+  .vs-npc-submit-preview__card:hover {
+    transform: none;
+    box-shadow: 0 2px 0 rgba(42, 31, 20, 0.08);
+  }
+}
+
+.vs-npc-submit-preview__kicker {
+  margin: 0;
+  font-family: Cinzel, serif;
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #5c4a38;
+}
+
+.vs-npc-submit-preview__hint {
+  margin: 0.2rem 0 0;
+  font-size: 0.78rem;
+  font-style: italic;
+  color: var(--gz-ink-muted, #4a3d2e);
+}
+
+@media (max-width: 899px) {
+  .vs-npc-submit-preview {
+    display: none;
+  }
+}

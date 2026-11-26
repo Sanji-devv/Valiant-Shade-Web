@@ -19,6 +19,7 @@ class RedirectCanonicalPublicSubdomain
         $aliases = [
             ...(array) config('map.alias_domains', []),
             ...(array) config('gazette.alias_domains', []),
+            ...(array) config('npc.alias_domains', []),
         ];
 
         if (! in_array($host, $aliases, true)) {
@@ -30,6 +31,8 @@ class RedirectCanonicalPublicSubdomain
             $canonical = (string) config('map.domain');
         } elseif (in_array($host, (array) config('gazette.alias_domains', []), true)) {
             $canonical = (string) config('gazette.domain');
+        } elseif (in_array($host, (array) config('npc.alias_domains', []), true)) {
+            $canonical = (string) config('npc.domain');
         }
 
         if ($canonical === '' || $canonical === $host) {

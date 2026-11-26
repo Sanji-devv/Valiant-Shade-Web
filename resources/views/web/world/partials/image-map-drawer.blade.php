@@ -13,6 +13,7 @@
         <nav class="vs-drawer__nav">
             @php use App\Support\PublicSiteUrls; @endphp
             <a class="vs-drawer__nav-link" href="{{ PublicSiteUrls::gazette() }}">Gazete</a>
+            <a class="vs-drawer__nav-link" href="{{ PublicSiteUrls::npcRoster('/') }}">{{ __('NPC Roster') }}</a>
             <a class="vs-drawer__nav-link" href="{{ PublicSiteUrls::main() }}">Ana Sayfa</a>
             @include('web.world.partials.kingdom-switcher', ['currentLocationId' => $config['location_id'] ?? null])
         </nav>

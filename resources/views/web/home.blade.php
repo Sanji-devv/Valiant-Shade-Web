@@ -2,6 +2,7 @@
     use App\Support\PublicSiteUrls;
 
     $gazetteUrl = PublicSiteUrls::gazette();
+    $npcRosterUrl = PublicSiteUrls::npcRoster();
     $mapUrl = PublicSiteUrls::map('/feldan');
     $monsterDbUrl = PublicSiteUrls::monsterDatabase();
 
@@ -405,7 +406,7 @@
             <h1 class="vs-quad__title">{{ __('Tanrılar') }}</h1>
         </a>
 
-        <a href="{{ route('valiant-shade.pages-npcs') }}" class="vs-quad__cell vs-quad__cell--npcs">
+        <a href="{{ $npcRosterUrl }}" class="vs-quad__cell vs-quad__cell--npcs" rel="noopener">
             <div class="vs-quad__bg" style="background-image: url('{{ $imgNpcs }}');" aria-hidden="true"></div>
             <span class="vs-quad__corner vs-quad__corner--tl" aria-hidden="true"></span>
             <span class="vs-quad__corner vs-quad__corner--tr" aria-hidden="true"></span>

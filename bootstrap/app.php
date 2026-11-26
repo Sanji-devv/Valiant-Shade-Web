@@ -21,6 +21,11 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware('web')
                 ->domain((string) config('map.domain'))
                 ->group(static fn () => $registerMap(true));
+
+            $registerNpc = require base_path('routes/npc.php');
+            Route::middleware('web')
+                ->domain((string) config('npc.domain'))
+                ->group(static fn () => $registerNpc(true));
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
