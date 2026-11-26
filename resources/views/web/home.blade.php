@@ -14,8 +14,10 @@
     $imgGods = asset('static/valiant-shade/assets/img/news/guild_celestial_sanctuary.jpg');
     $imgArchive = asset('static/valiant-shade/assets/img/gazette/news/pf1/pf1_stone_archives_labyrinth.jpg');
     $imgNpcs = asset('static/valiant-shade/assets/img/news/guild_hall_council.jpg');
+    $imgMineria = asset('static/valiant-shade/assets/img/news/guild_mystic_forest.jpg');
 
     $rulesUrl = 'https://www.d20pfsrd.com/';
+    $mineriaUrl = 'https://mineria.fandom.com/tr/wiki/Mineria_Wiki';
 
     $monsterTitleParts = explode(' ', (string) __('Monster Database'), 2);
 
@@ -189,6 +191,7 @@
         .vs-quad__cell--records .vs-quad__title { color: #d4e8d0; }
         .vs-quad__cell--gods .vs-quad__title { color: #e7d0ff; }
         .vs-quad__cell--npcs .vs-quad__title { color: #f4d8c8; }
+        .vs-quad__cell--mineria .vs-quad__title { color: #c8e8f5; }
 
         .vs-quad__cell--empty {
             cursor: default;
@@ -404,7 +407,16 @@
             <h1 class="vs-quad__title">{{ __('Tanrılar') }}</h1>
         </a>
 
-        {{-- 3. satır: Lonca kayıtları → boş → Canavar VT --}}
+        {{-- 3. satır: Mineria → Lonca kayıtları → Canavar VT --}}
+        <a href="{{ $mineriaUrl }}" class="vs-quad__cell vs-quad__cell--mineria" rel="noopener noreferrer" target="_blank">
+            <div class="vs-quad__bg" style="background-image: url('{{ $imgMineria }}');" aria-hidden="true"></div>
+            <span class="vs-quad__corner vs-quad__corner--tl" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--tr" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--bl" aria-hidden="true"></span>
+            <span class="vs-quad__corner vs-quad__corner--br" aria-hidden="true"></span>
+            <h2 class="vs-quad__title vs-quad__title--long">{{ __('Mineria Fandom') }}</h2>
+        </a>
+
         <a href="/valiant-shade" class="vs-quad__cell vs-quad__cell--records vs-quad__cell--dimmed">
             <div class="vs-quad__bg" style="background-image: url('{{ $imgRecords }}');" aria-hidden="true"></div>
             <div class="vs-quad__lock-overlay" aria-hidden="true"></div>
@@ -415,8 +427,6 @@
             <span class="vs-quad__corner vs-quad__corner--br" aria-hidden="true"></span>
             <h2 class="vs-quad__title">{{ __('Guild Records') }}</h2>
         </a>
-
-        <div class="vs-quad__cell vs-quad__cell--empty" aria-hidden="true"></div>
 
         <a href="{{ $monsterDbUrl }}" class="vs-quad__cell vs-quad__cell--monster" rel="noopener">
             <div class="vs-quad__bg" style="background-image: url('{{ $imgMonster }}');" aria-hidden="true"></div>

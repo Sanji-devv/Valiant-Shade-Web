@@ -21,6 +21,9 @@ CORE_DOMAINS=(
 OPTIONAL_DOMAINS=(
   npc.valiantshade.com
   npcs.valiantshade.com
+  tanri.valiantshade.com
+  gods.valiantshade.com
+  god.valiantshade.com
 )
 
 dns_resolves() {
@@ -67,8 +70,14 @@ certbot certonly --webroot -w "$WEBROOT_LARAVEL" \
   "${D_ARGS[@]}"
 
 if [[ -f /etc/letsencrypt/renewal/158.51.78.172.conf ]]; then
-  certbot renew --cert-name 158.51.78.172 --quiet || \
-    echo "UYARI: 158.51.78.172 sertifikası yenilenemedi — md.valiantshade.com kullanın." >&2
+  ip_renewal="/etc/letsencrypt/renewal/158.51.78.172.conf"
+  if grep -qE '^\s*ipaddrs\s*=\s*158\.51\.78\.172' "$ip_renewal" 2>/dev/null \
+    || grep -qE '^\s*domains\s*=\s*158\.51\.78\.172' "$ip_renewal" 2>/dev/null; then
+    certbot renew --cert-name 158.51.78.172 --quiet 2>/dev/null || \
+      echo "UYARI: 158.51.78.172 sertifikası yenilenemedi (süre dolmadı veya profil hatası)." >&2
+  else
+    echo "UYARI: 158.51.78.172 renewal profili bozuk — atlandı (MonsterDB: https://md.valiantshade.com)." >&2
+  fi
 else
   echo "IP sertifikası atlandı (yenileme profili yok)." >&2
 fi
