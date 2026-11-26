@@ -7,6 +7,21 @@
   $statusBadges = collect(NpcStatusCatalog::options())
       ->mapWithKeys(fn (array $meta, int $value): array => [(string) $value => 'bg-label-' . ($meta['badge'] ?? 'secondary')])
       ->all();
+  $npcPreviewConfig = [
+      'statusLabels' => $statusLabels,
+      'statusBadges' => $statusBadges,
+      'factLabels' => [
+          'titles' => __('Titles / Epithets'),
+          'profession' => __('Profession / Role'),
+          'race' => __('Race'),
+          'faction' => __('Faction / Affiliation'),
+          'location' => __('Location'),
+          'status' => __('Status'),
+      ],
+      'namePlaceholder' => __('NPC name placeholder'),
+      'excerptPlaceholder' => __('Summary preview will appear here.'),
+      'existingImage' => $previewEditing ? ($npc->imageUrl() ?? '') : '',
+  ];
 @endphp
 <aside class="npc-live-preview" data-npc-preview-panel aria-live="polite" aria-relevant="additions text">
   <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
@@ -69,21 +84,7 @@
     </div>
   </article>
 
-  <script type="application/json" id="npcPreviewConfigJson" class="npc-preview-config-json">@json([
-        'statusLabels' => $statusLabels,
-        'statusBadges' => $statusBadges,
-        'factLabels' => [
-            'titles' => __('Titles / Epithets'),
-            'profession' => __('Profession / Role'),
-            'race' => __('Race'),
-            'faction' => __('Faction / Affiliation'),
-            'location' => __('Location'),
-            'status' => __('Status'),
-        ],
-        'namePlaceholder' => __('NPC name placeholder'),
-        'excerptPlaceholder' => __('Summary preview will appear here.'),
-        'existingImage' => $previewEditing ? ($npc->imageUrl() ?? '') : '',
-    ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)</script>
+  <script type="application/json" id="npcPreviewConfigJson" class="npc-preview-config-json">@json($npcPreviewConfig, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)</script>
 </aside>
 
 <style>
