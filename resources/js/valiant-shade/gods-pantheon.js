@@ -14,6 +14,7 @@ const state = {
   facets: { categories: [], alignments: [], domains: [] },
   pagination: { current_page: 1, last_page: 1, total: 0 },
   detailGod: null,
+  detailLoading: false,
 };
 
 const els = {};
@@ -215,6 +216,8 @@ async function loadBootstrap(reinit = true) {
     if (els.pageIndicator) {
       els.pageIndicator.textContent = `${state.pagination.current_page || 1} / ${state.pagination.last_page || 1}`;
     }
+    if (els.prev) els.prev.disabled = (state.pagination.current_page || 1) <= 1;
+    if (els.next) els.next.disabled = (state.pagination.current_page || 1) >= (state.pagination.last_page || 1);
     setStatus('');
   } catch (err) {
     setStatus(err.message || 'Liste alınamadı.', true);
@@ -258,7 +261,47 @@ function renderDetail(god) {
     els.detailPortrait.hidden = true;
     els.detailPortraitWrap?.classList.add('is-empty');
   }
+  syncDetailNavigation();
   showDetailView();
+}
+
+function syncDetailNavigation() {
+  const index = state.items.findIndex((item) => item.slug === state.detailGod?.slug);
+  const currentPage = state.pagination.current_page || 1;
+  const lastPage = state.pagination.last_page || 1;
+  if (els.detailPrev) {
+    els.detailPrev.disabled = state.detailLoading || (index <= 0 && currentPage <= 1);
+  }
+  if (els.detailNext) {
+    els.detailNext.disabled = state.detailLoading || (index >= state.items.length - 1 && currentPage >= lastPage);
+  }
+}
+
+async function moveDetail(direction) {
+  if (!state.detailGod || state.detailLoading) return;
+  state.detailLoading = true;
+  syncDetailNavigation();
+  try {
+    const index = state.items.findIndex((item) => item.slug === state.detailGod.slug);
+    const neighbor = state.items[index + direction];
+    if (neighbor) {
+      await openDetail(neighbor.slug);
+      return;
+    }
+
+    const page = state.pagination.current_page || state.page || 1;
+    const targetPage = page + direction;
+    if (targetPage < 1 || targetPage > (state.pagination.last_page || 1)) return;
+
+    state.page = targetPage;
+    await loadBootstrap(false);
+    if ((state.pagination.current_page || 1) !== targetPage) return;
+    const target = direction < 0 ? state.items[state.items.length - 1] : state.items[0];
+    if (target) await openDetail(target.slug);
+  } finally {
+    state.detailLoading = false;
+    syncDetailNavigation();
+  }
 }
 
 async function openDetail(slug) {
@@ -393,6 +436,8 @@ function init() {
   els.submitBtn = qs('godSubmitBtn');
   els.detailModal = qs('godDetailModal');
   els.detailTitle = qs('godDetailTitle');
+  els.detailPrev = qs('godDetailPrev');
+  els.detailNext = qs('godDetailNext');
   els.detailView = qs('godDetailView');
   els.detailFacts = qs('godDetailFacts');
   els.detailSections = qs('godDetailSections');
@@ -450,6 +495,8 @@ function init() {
       loadBootstrap(false);
     }
   });
+  els.detailPrev?.addEventListener('click', () => moveDetail(-1));
+  els.detailNext?.addEventListener('click', () => moveDetail(1));
 
   els.openSubmit?.addEventListener('click', () => {
     setFormFeedback(els.submitFeedback, '', 'info');

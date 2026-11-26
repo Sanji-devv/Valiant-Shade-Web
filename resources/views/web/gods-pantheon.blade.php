@@ -104,9 +104,9 @@
     <ul class="vs-npc-grid" id="godGrid" aria-live="polite"></ul>
 
     <nav class="vs-pagination vs-npc-pagination" aria-label="{{ __('Pagination') }}">
-        <button type="button" class="vs-toolbar__btn" id="godPagePrev">{{ __('Previous') }}</button>
-        <span id="godPageIndicator">1 / 1</span>
-        <button type="button" class="vs-toolbar__btn" id="godPageNext">{{ __('Next') }}</button>
+        <button type="button" class="vs-god-page-nav__button" id="godPagePrev" aria-label="{{ __('Previous Page') }}" title="{{ __('Previous Page') }}">←</button>
+        <span id="godPageIndicator" aria-live="polite">1 / 1</span>
+        <button type="button" class="vs-god-page-nav__button" id="godPageNext" aria-label="{{ __('Next Page') }}" title="{{ __('Next Page') }}">→</button>
     </nav>
 </main>
 

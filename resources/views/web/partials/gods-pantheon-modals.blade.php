@@ -30,6 +30,10 @@
                 <div class="vs-npc-detail-main">
                     <dl class="vs-npc-detail-facts" id="godDetailFacts"></dl>
                     <div class="vs-npc-detail-sections" id="godDetailSections"></div>
+                    <nav class="vs-god-detail-navigation" aria-label="{{ __('God navigation') }}">
+                        <button type="button" class="vs-rumor-submit vs-rumor-submit--ghost" id="godDetailPrev" aria-label="{{ __('Previous god') }}">← {{ __('Previous') }}</button>
+                        <button type="button" class="vs-rumor-submit vs-rumor-submit--ghost" id="godDetailNext" aria-label="{{ __('Next god') }}">{{ __('Next') }} →</button>
+                    </nav>
                     <div class="vs-npc-detail-actions">
                         <button type="button" class="vs-rumor-submit vs-rumor-submit--ghost" id="godOpenCorrectionBtn">{{ __('Suggest a correction') }}</button>
                     </div>
