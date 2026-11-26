@@ -4,37 +4,68 @@ set -euo pipefail
 
 APP_ROOT="${APP_ROOT:-/var/www/Valiant-Shade-Web}"
 WEBROOT_LARAVEL="${APP_ROOT}/public"
-WEBROOT_ACME="${WEBROOT_ACME:-/var/www/acme}"
 EMAIL="${CERTBOT_EMAIL:-}"
 
-DOMAINS=(
+# Zorunlu alan adları (DNS yoksa certbot zaten başarısız olur).
+CORE_DOMAINS=(
   valiantshade.com
   www.valiantshade.com
   gazete.valiantshade.com
   gazette.valiantshade.com
   harita.valiantshade.com
   map.valiantshade.com
-  npc.valiantshade.com
-  npcs.valiantshade.com
   md.valiantshade.com
 )
+
+# DNS A/AAAA kaydı yoksa atlanır (NXDOMAIN ile tüm genişletme düşmesin).
+OPTIONAL_DOMAINS=(
+  npc.valiantshade.com
+  npcs.valiantshade.com
+)
+
+dns_resolves() {
+  local host="$1"
+  local ans
+  if command -v dig >/dev/null 2>&1; then
+    ans="$(dig +short A "$host" @8.8.8.8 2>/dev/null | head -1)"
+    [[ -n "$ans" ]] && return 0
+    ans="$(dig +short AAAA "$host" @8.8.8.8 2>/dev/null | head -1)"
+    [[ -n "$ans" ]]
+    return
+  fi
+  if command -v getent >/dev/null 2>&1; then
+    getent ahostsv4 "$host" 2>/dev/null | grep -q .
+    return
+  fi
+  return 0
+}
 
 if [[ -z "${EMAIL}" ]]; then
   EMAIL=$(grep -m1 '^email' /etc/letsencrypt/renewal/valiantshade.com.conf 2>/dev/null | cut -d= -f2 | tr -d ' ' || true)
 fi
 [[ -n "${EMAIL}" ]] || EMAIL="admin@valiantshade.com"
 
+DOMAINS=("${CORE_DOMAINS[@]}")
+for d in "${OPTIONAL_DOMAINS[@]}"; do
+  if dns_resolves "$d"; then
+    DOMAINS+=("$d")
+  else
+    echo "UYARI: $d DNS'te yok — sertifikaya eklenmedi (A/AAAA kaydı ekleyince tekrar çalıştırın)." >&2
+  fi
+done
+
 D_ARGS=()
 for d in "${DOMAINS[@]}"; do
   D_ARGS+=(-d "$d")
 done
+
+echo "==> Certbot SAN: ${DOMAINS[*]}"
 
 certbot certonly --webroot -w "$WEBROOT_LARAVEL" \
   --non-interactive --agree-tos --email "$EMAIL" --expand \
   --cert-name valiantshade.com \
   "${D_ARGS[@]}"
 
-# IP için yeni Let's Encrypt sertifikası çoğu ortamda artık verilmez; mevcut dosya varsa certbot renew dener.
 if [[ -f /etc/letsencrypt/renewal/158.51.78.172.conf ]]; then
   certbot renew --cert-name 158.51.78.172 --quiet || \
     echo "UYARI: 158.51.78.172 sertifikası yenilenemedi — md.valiantshade.com kullanın." >&2
