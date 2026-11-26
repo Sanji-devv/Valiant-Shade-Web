@@ -182,6 +182,7 @@ Route::middleware(['throttle:valiant-shade.quest-mutations'])->group(function ()
 Route::get('/pages/archive', [QuestArchiveController::class, 'index'])->name('valiant-shade.pages-archive');
 Route::post('/pages/archive', [QuestArchiveController::class, 'store'])->name('valiant-shade.pages-archive.store');
 Route::get('/pages/archive/{report}', [QuestArchiveController::class, 'show'])->name('valiant-shade.pages-archive.show');
+Route::put('/pages/archive/{report}', [QuestArchiveController::class, 'update'])->name('valiant-shade.pages-archive.update');
 
 // NPC Directory / Archive Routes
 Route::get('/pages/npcs/title-suggestions', [NpcArchiveController::class, 'titleSuggestions'])->name('valiant-shade.pages-npcs.title-suggestions');

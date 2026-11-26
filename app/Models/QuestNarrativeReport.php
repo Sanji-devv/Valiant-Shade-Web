@@ -8,10 +8,21 @@ use Illuminate\Support\Str;
 class QuestNarrativeReport extends Model
 {
     protected $fillable = [
-        'title', 'quest_date', 'players', 'game_masters', 'loot', 'expenses', 'outcome', 'report',
+        'quest_report_id',
+        'title',
+        'quest_date',
+        'game_master',
+        'reporter',
+        'players',
+        'KIA',
+        'MIA',
+        'loot',
+        'expenses',
+        'report',
     ];
 
     protected $casts = [
+        'quest_report_id' => 'integer',
         'quest_date' => 'date',
     ];
 
@@ -21,11 +32,13 @@ class QuestNarrativeReport extends Model
             $report->search_title = self::normalizeSearch($report->title);
             $report->search_content = self::normalizeSearch(implode("\n", [
                 $report->title,
+                $report->game_master ?? '',
+                $report->reporter ?? '',
                 $report->players ?? '',
-                $report->game_masters ?? '',
+                $report->KIA ?? '',
+                $report->MIA ?? '',
                 $report->loot ?? '',
                 $report->expenses ?? '',
-                $report->outcome ?? '',
                 $report->report,
             ]));
         });
@@ -34,5 +47,21 @@ class QuestNarrativeReport extends Model
     public static function normalizeSearch(string $text): string
     {
         return Str::ascii(mb_strtolower($text, 'UTF-8'));
+    }
+
+    public static function findForQuestReport(int $questReportId, ?string $title = null): ?self
+    {
+        $linked = self::query()->where('quest_report_id', $questReportId)->first();
+        if ($linked) {
+            return $linked;
+        }
+
+        if ($title !== null && trim($title) !== '') {
+            return self::query()
+                ->where('search_title', self::normalizeSearch($title))
+                ->first();
+        }
+
+        return null;
     }
 }

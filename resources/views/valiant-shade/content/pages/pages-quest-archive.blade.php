@@ -10,6 +10,7 @@
       <p class="text-body-secondary mb-0">{{ __('Record adventures and search their titles and contents.') }}</p>
     </div>
     <div class="d-flex flex-wrap gap-2">
+      <a href="{{ route('valiant-shade.pages-quest-reports') }}" class="btn btn-label-info">{{ __('Quest Reports') }}</a>
       <a href="{{ route('valiant-shade.pages-npcs') }}" class="btn btn-label-primary">{{ __('NPC Archive') }}</a>
       <a href="{{ route('web.home') }}" class="btn btn-label-secondary">{{ __('Main page') }}</a>
     </div>
@@ -30,7 +31,7 @@
     </div>
   </div>
 
-  <details class="card mb-4" @if($errors->any()) open @endif>
+  <details class="card mb-4" @if($errors->any() || $prefill) open @endif>
     <summary class="card-header cursor-pointer fw-semibold"><i class="icon-base ti tabler-plus me-2"></i>{{ __('Add quest report') }}</summary>
     <div class="card-body">
       @if($errors->any())
@@ -40,40 +41,7 @@
       @endif
       <form method="post" action="{{ route('valiant-shade.pages-archive.store') }}">
         @csrf
-        <div class="row g-3">
-          <div class="col-md-8">
-            <label class="form-label" for="archive-title">{{ __('Quest title') }} *</label>
-            <input id="archive-title" class="form-control" name="title" value="{{ old('title') }}" maxlength="255" required>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label" for="archive-date">{{ __('Quest date') }}</label>
-            <input id="archive-date" class="form-control" type="date" name="quest_date" value="{{ old('quest_date') }}">
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" for="archive-players">{{ __('Players and reporter') }}</label>
-            <textarea id="archive-players" class="form-control" name="players" rows="4" maxlength="10000">{{ old('players') }}</textarea>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" for="archive-gms">{{ __('Game masters') }}</label>
-            <textarea id="archive-gms" class="form-control" name="game_masters" rows="4" maxlength="2000">{{ old('game_masters') }}</textarea>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" for="archive-loot">{{ __('Loot') }}</label>
-            <textarea id="archive-loot" class="form-control" name="loot" rows="3" maxlength="10000">{{ old('loot') }}</textarea>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" for="archive-expenses">{{ __('Expenses') }}</label>
-            <textarea id="archive-expenses" class="form-control" name="expenses" rows="3" maxlength="10000">{{ old('expenses') }}</textarea>
-          </div>
-          <div class="col-12">
-            <label class="form-label" for="archive-outcome">{{ __('Quest outcome') }}</label>
-            <textarea id="archive-outcome" class="form-control" name="outcome" rows="3" maxlength="10000">{{ old('outcome') }}</textarea>
-          </div>
-          <div class="col-12">
-            <label class="form-label" for="archive-report">{{ __('Quest report') }} *</label>
-            <textarea id="archive-report" class="form-control" name="report" rows="12" maxlength="100000" required>{{ old('report') }}</textarea>
-          </div>
-        </div>
+        @include('valiant-shade.content.pages.partials.quest-archive-form-fields')
         <button class="btn btn-primary mt-3" type="submit">{{ __('Save report') }}</button>
       </form>
     </div>
@@ -88,7 +56,12 @@
       <div class="col-md-6 col-xl-4">
         <article class="card h-100">
           <div class="card-body d-flex flex-column">
-            <h5><a href="{{ route('valiant-shade.pages-archive.show', $report) }}">{{ $report->title }}</a></h5>
+            <div class="d-flex justify-content-between align-items-start gap-2">
+              <h5><a href="{{ route('valiant-shade.pages-archive.show', $report) }}">{{ $report->title }}</a></h5>
+              @if($report->quest_report_id)
+                <span class="badge bg-label-info flex-shrink-0">#{{ $report->quest_report_id }}</span>
+              @endif
+            </div>
             @if($report->quest_date)
               <small class="text-body-secondary mb-2">{{ $report->quest_date->format('d.m.Y') }}</small>
             @endif

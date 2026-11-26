@@ -2,9 +2,11 @@
 
 namespace App\ValiantShade\Http\Controllers;
 
+use App\Models\QuestNarrativeReport;
 use App\ValiantShade\Services\QuestReportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
@@ -32,8 +34,8 @@ class QuestReportsController extends Controller
         $gms = $this->service->getDistinctGms();
         $adventurers = $this->service->getAvailableAdventurers();
         $guildPoolData = $this->service->getGuildPoolData();
-
         $characterLevels = $this->service->getCharacterLevels();
+        $archiveLinks = $this->buildArchiveLinks($reports);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -44,6 +46,7 @@ class QuestReportsController extends Controller
                 'adventurers' => $adventurers,
                 'guildPoolData' => $guildPoolData,
                 'characterLevels' => $characterLevels,
+                'archiveLinks' => $archiveLinks,
             ]);
         }
 
@@ -54,7 +57,8 @@ class QuestReportsController extends Controller
             'adventurers',
             'filters',
             'guildPoolData',
-            'characterLevels'
+            'characterLevels',
+            'archiveLinks'
         ));
     }
 
@@ -412,5 +416,51 @@ class QuestReportsController extends Controller
             'message' => __('Guild XP Pool and Ranks table reset to Google Sheet original values.'),
             'guildPoolData' => $reset,
         ]);
+    }
+
+    /**
+     * Map quest report IDs to matching Quest Archive record IDs.
+     *
+     * @param  Collection<int, array<string, mixed>>  $reports
+     * @return array<int, int>
+     */
+    private function buildArchiveLinks(Collection $reports): array
+    {
+        $archives = QuestNarrativeReport::query()
+            ->select(['id', 'quest_report_id', 'search_title'])
+            ->get();
+
+        $byQuestReportId = [];
+        $byTitle = [];
+
+        foreach ($archives as $archive) {
+            if ($archive->quest_report_id) {
+                $byQuestReportId[(int) $archive->quest_report_id] = (int) $archive->id;
+            }
+            if ($archive->search_title !== '' && ! isset($byTitle[$archive->search_title])) {
+                $byTitle[$archive->search_title] = (int) $archive->id;
+            }
+        }
+
+        $links = [];
+        foreach ($reports as $report) {
+            $reportId = (int) ($report['id'] ?? 0);
+            if ($reportId <= 0) {
+                continue;
+            }
+
+            if (isset($byQuestReportId[$reportId])) {
+                $links[$reportId] = $byQuestReportId[$reportId];
+
+                continue;
+            }
+
+            $normalizedTitle = QuestNarrativeReport::normalizeSearch((string) ($report['title'] ?? ''));
+            if ($normalizedTitle !== '' && isset($byTitle[$normalizedTitle])) {
+                $links[$reportId] = $byTitle[$normalizedTitle];
+            }
+        }
+
+        return $links;
     }
 }

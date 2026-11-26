@@ -1314,11 +1314,22 @@
 
               <!-- 16. İŞLEMLER (ACTIONS) -->
               <td class="text-end">
+                @php
+                  $linkedArchiveId = $archiveLinks[$q['id']] ?? null;
+                  $archiveUrl = $linkedArchiveId
+                    ? route('valiant-shade.pages-archive.show', $linkedArchiveId)
+                    : route('valiant-shade.pages-archive', ['quest_report_id' => $q['id']]);
+                @endphp
                 <div class="d-inline-flex align-items-center gap-1">
                   <!-- Detay -->
                   <button type="button" class="btn btn-icon btn-sm btn-outline-primary btn-open-report" onclick="openReportDetail({{ $q['id'] }})" title="{{ __('Report Details') }}" aria-label="{{ __('Report Details') }}">
                     <i class="icon-base ti tabler-file-text fs-6"></i>
                   </button>
+
+                  <!-- Arşiv -->
+                  <a href="{{ $archiveUrl }}" class="btn btn-icon btn-sm {{ $linkedArchiveId ? 'btn-outline-info' : 'btn-outline-secondary' }}" title="{{ $linkedArchiveId ? __('View in Quest Archive') : __('Create in Quest Archive') }}" aria-label="{{ $linkedArchiveId ? __('View in Quest Archive') : __('Create in Quest Archive') }}">
+                    <i class="icon-base ti tabler-books fs-6"></i>
+                  </a>
 
                   <!-- Düzenle -->
                   <button type="button" class="btn btn-icon btn-sm btn-outline-warning" onclick="openEditReportModal({{ $q['id'] }})" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}">
@@ -2710,10 +2721,15 @@
       </div>
 
       <!-- Modal Footer -->
-      <div class="modal-footer p-3 p-md-4 d-flex align-items-center justify-content-between">
-        <button type="button" class="btn btn-outline-success btn-sm" id="btnModalDistributeXp">
-          <i class="icon-base ti tabler-bolt me-1"></i> {{ __('XP Tracker\'a Aktar') }}
-        </button>
+      <div class="modal-footer p-3 p-md-4 d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+          <button type="button" class="btn btn-outline-success btn-sm" id="btnModalDistributeXp">
+            <i class="icon-base ti tabler-bolt me-1"></i> {{ __('XP Tracker\'a Aktar') }}
+          </button>
+          <a href="{{ route('valiant-shade.pages-archive') }}" class="btn btn-outline-info btn-sm" id="btnModalOpenArchive">
+            <i class="icon-base ti tabler-books me-1"></i> <span id="btnModalOpenArchiveLabel">{{ __('View in Quest Archive') }}</span>
+          </a>
+        </div>
         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
           {{ __('Kapat') }}
         </button>
@@ -2937,7 +2953,14 @@
 document.addEventListener('DOMContentLoaded', function () {
   let reportsData = @json($reports);
   let guildPoolData = @json($guildPoolData);
+  const archiveLinks = @json($archiveLinks ?? []);
+  const archiveBaseUrl = @json(route('valiant-shade.pages-archive'));
   let currentDetailReportId = null;
+
+  function getArchiveUrlForReport(reportId) {
+    const linkedId = archiveLinks[reportId];
+    return linkedId ? `${archiveBaseUrl}/${linkedId}` : `${archiveBaseUrl}?quest_report_id=${reportId}`;
+  }
 
   // Filter Elements
   const searchInput = document.getElementById('reportsSearchInput');
@@ -4092,6 +4115,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
     currentDetailReportId = r.id;
 
+    const modalArchiveLink = document.getElementById('btnModalOpenArchive');
+    const modalArchiveLabel = document.getElementById('btnModalOpenArchiveLabel');
+    if (modalArchiveLink) {
+      modalArchiveLink.href = getArchiveUrlForReport(r.id);
+      const hasLinkedArchive = Boolean(archiveLinks[r.id]);
+      modalArchiveLink.className = hasLinkedArchive
+        ? 'btn btn-outline-info btn-sm'
+        : 'btn btn-outline-secondary btn-sm';
+      if (modalArchiveLabel) {
+        modalArchiveLabel.textContent = hasLinkedArchive
+          ? '{{ __("View in Quest Archive") }}'
+          : '{{ __("Create in Quest Archive") }}';
+      }
+    }
+
     // Header
     const titleEl = document.getElementById('modalReportTitle');
     const dateEl = document.getElementById('modalReportDate');
@@ -4593,6 +4631,9 @@ document.addEventListener('DOMContentLoaded', function () {
               <button type="button" class="btn btn-icon btn-sm btn-outline-primary" onclick="openReportDetail(${q.id})" title="{{ __('Report Details') }}" aria-label="{{ __('Report Details') }}">
                 <i class="icon-base ti tabler-file-text fs-6"></i>
               </button>
+              <a href="${getArchiveUrlForReport(q.id)}" class="btn btn-icon btn-sm ${archiveLinks[q.id] ? 'btn-outline-info' : 'btn-outline-secondary'}" title="${archiveLinks[q.id] ? '{{ __('View in Quest Archive') }}' : '{{ __('Create in Quest Archive') }}'}" aria-label="${archiveLinks[q.id] ? '{{ __('View in Quest Archive') }}' : '{{ __('Create in Quest Archive') }}'}">
+                <i class="icon-base ti tabler-books fs-6"></i>
+              </a>
               <button type="button" class="btn btn-icon btn-sm btn-outline-warning" onclick="openEditReportModal(${q.id})" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}">
                 <i class="icon-base ti tabler-edit fs-6"></i>
               </button>
