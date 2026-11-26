@@ -64,6 +64,14 @@ done
 
 echo "==> Certbot SAN: ${DOMAINS[*]}"
 
+if [[ -x "${APP_ROOT}/deploy/ssl/verify-acme-webroot.sh" ]]; then
+  echo "==> ACME webroot ön kontrolü (tanri/god dahil)..."
+  if ! "${APP_ROOT}/deploy/ssl/verify-acme-webroot.sh"; then
+    echo "HATA: Bazı hostlar http-01 dosyasını okuyamıyor. deploy/nginx/README.md — ACME 404." >&2
+    exit 1
+  fi
+fi
+
 certbot certonly --webroot -w "$WEBROOT_LARAVEL" \
   --non-interactive --agree-tos --email "$EMAIL" --expand \
   --cert-name valiantshade.com \
