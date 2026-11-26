@@ -78,6 +78,21 @@ class PublicSiteUrls
         return in_array(request()->getHost(), (array) config('npc.domains', []), true);
     }
 
+    public static function godsPantheon(string $path = '/'): string
+    {
+        $domain = (string) config('gods_public.domain');
+        if ($domain === '') {
+            return self::main($path === '/' ? '/gods-pantheon' : '/gods-pantheon/'.ltrim($path, '/'));
+        }
+
+        return self::hostUrl($domain, $path === '/' ? '/' : '/'.ltrim($path, '/'));
+    }
+
+    public static function isGodsSubdomainRequest(): bool
+    {
+        return in_array(request()->getHost(), (array) config('gods_public.domains', []), true);
+    }
+
     /**
      * @return list<string>
      */
@@ -89,6 +104,7 @@ class PublicSiteUrls
             ...config('gazette.domains', []),
             ...config('map.domains', []),
             ...config('npc.domains', []),
+            ...config('gods_public.domains', []),
             'md.'.$appHost,
         ])));
     }

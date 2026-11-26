@@ -395,7 +395,7 @@
             <h2 class="vs-quad__title">{{ __('Archive') }}</h2>
         </a>
 
-        <a href="{{ route('valiant-shade.gods.index') }}" class="vs-quad__cell vs-quad__cell--gods">
+        <a href="{{ PublicSiteUrls::godsPantheon('/') }}" class="vs-quad__cell vs-quad__cell--gods">
             <div class="vs-quad__bg" style="background-image: url('{{ $imgGods }}');" aria-hidden="true"></div>
             <span class="vs-quad__corner vs-quad__corner--tl" aria-hidden="true"></span>
             <span class="vs-quad__corner vs-quad__corner--tr" aria-hidden="true"></span>

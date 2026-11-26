@@ -18,6 +18,11 @@
         <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">{{ __('Map') }}</span>
         <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">{{ __('Map') }}</span>
     </a>
+    <a href="{{ PublicSiteUrls::godsPantheon('/') }}" class="vs-newspaper-nav__item{{ $activePortal === 'gods' ? ' vs-newspaper-nav__item--active' : '' }}" aria-label="{{ __('Gods') }}">
+        <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3 4 9v12h16V9l-8-6z"/><path d="M12 11v4M10 21h4"/></svg>
+        <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">{{ __('Gods') }}</span>
+        <span class="vs-newspaper-nav__label vs-newspaper-nav__label--short">{{ __('Gods') }}</span>
+    </a>
     <a href="{{ PublicSiteUrls::npcRoster('/') }}" class="vs-newspaper-nav__item{{ $activePortal === 'npc' ? ' vs-newspaper-nav__item--active' : '' }}" aria-label="{{ __('NPC Roster') }}">
         <svg class="vs-newspaper-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 11a4 4 0 1 0-8 0"/><path d="M12 14v7"/><path d="M8 21h8"/><circle cx="12" cy="7" r="3"/></svg>
         <span class="vs-newspaper-nav__label vs-newspaper-nav__label--full">{{ __('NPC Roster') }}</span>

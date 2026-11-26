@@ -26,6 +26,11 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware('web')
                 ->domain((string) config('npc.domain'))
                 ->group(static fn () => $registerNpc(true));
+
+            $registerGods = require base_path('routes/gods.php');
+            Route::middleware('web')
+                ->domain((string) config('gods_public.domain'))
+                ->group(static fn () => $registerGods(true));
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Web\GodsPantheonController;
 use App\Http\Controllers\Web\NpcRosterController;
 use App\Http\Controllers\Web\PublicSeoController;
 use App\Support\PublicSiteUrls;
@@ -38,8 +39,9 @@ Route::get('/login', function () {
 
 Route::post('/logout', [LogoutController::class, 'logout'])->name('logout.root');
 
-Route::get('/gods', fn () => redirect()->route('valiant-shade.gods.index', [], 301))->name('web.gods.index');
-Route::get('/gods/{slug}', fn (string $slug) => redirect()->route('valiant-shade.gods.show', ['slug' => $slug], 301))
+Route::get('/gods-pantheon', [GodsPantheonController::class, 'index'])->name('web.gods-pantheon');
+Route::get('/gods', fn () => redirect(PublicSiteUrls::godsPantheon('/'), 301))->name('web.gods.index');
+Route::get('/gods/{slug}', fn (string $slug) => redirect(PublicSiteUrls::godsPantheon('/?q='.$slug), 301))
     ->where('slug', '[a-z0-9-]+')
     ->name('web.gods.show');
 

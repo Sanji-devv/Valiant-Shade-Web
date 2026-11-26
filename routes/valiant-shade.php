@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Web\GodsPageController;
+use App\ValiantShade\Http\Controllers\GodSubmissionController;
 use App\ValiantShade\Http\Controllers\AccountSettingsAccount;
 use App\ValiantShade\Http\Controllers\AdventurerInfoController;
 use App\ValiantShade\Http\Controllers\apps\AuditLogController;
@@ -77,6 +78,11 @@ Route::put('/gods/{slug}/profile', [GodsPageController::class, 'updateProfile'])
     ->where('slug', '[a-z0-9-]+')
     ->middleware('throttle:5,1')
     ->name('valiant-shade.gods.profile.update');
+
+Route::post('/god-submissions/{submission}/approve', [GodSubmissionController::class, 'approve'])
+    ->name('valiant-shade.god-submissions.approve');
+Route::post('/god-submissions/{submission}/reject', [GodSubmissionController::class, 'reject'])
+    ->name('valiant-shade.god-submissions.reject');
 
 Route::get('/pages/profile-user', [UserProfile::class, 'index'])->name('valiant-shade.pages-profile-user');
 Route::post('/pages/profile-user/vault-transfer', [UserProfile::class, 'vaultTransfer'])->name('valiant-shade.pages-profile-user.vault-transfer');

@@ -57,6 +57,7 @@ export default defineConfig({
         'resources/js/valiant-shade/newspaper.js',
         'resources/css/valiant-shade/npc-roster.css',
         'resources/js/valiant-shade/npc-roster.js',
+        'resources/js/valiant-shade/gods-pantheon.js',
         'resources/js/valiant-shade/npc-admin-form.js',
         ...pageJsFiles,
         ...vendorJsFiles,

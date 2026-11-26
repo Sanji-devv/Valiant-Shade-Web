@@ -108,6 +108,17 @@ class AppServiceProvider extends ServiceProvider
                 });
         });
 
+        \Illuminate\Support\Facades\RateLimiter::for('public.god.submissions', function (\Illuminate\Http\Request $request) {
+            return \Illuminate\Cache\RateLimiting\Limit::perMinute(6)
+                ->by($request->ip())
+                ->response(function () {
+                    return response()->json([
+                        'success' => false,
+                        'message' => __('Too many god submissions. Please wait before sending another.'),
+                    ], 429);
+                });
+        });
+
         \Illuminate\Support\Facades\RateLimiter::for('valiant-shade.quest-mutations', function (\Illuminate\Http\Request $request) {
             return \Illuminate\Cache\RateLimiting\Limit::perMinute(30)
                 ->by($request->user()?->id ?: $request->ip())

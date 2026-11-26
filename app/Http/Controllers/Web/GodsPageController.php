@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\GodDomainOverride;
+use App\Models\GodSubmission;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -58,8 +59,15 @@ class GodsPageController extends Controller
             $domains->push($selectedDomain);
         }
 
+        $pendingSubmissions = collect();
+        if ($request->user()?->isAdmin()) {
+            $pendingSubmissions = GodSubmission::query()->pendingApproval()->latest()->limit(20)->get();
+        }
+
         return view('valiant-shade.content.pages.pages-gods', [
             'selectedGod' => null,
+            'pendingSubmissions' => $pendingSubmissions,
+            'publicPantheonUrl' => \App\Support\PublicSiteUrls::godsPantheon('/'),
             'godGroups' => $godGroups,
             'visibleGods' => collect($godGroups)
                 ->only($selectedGroups)

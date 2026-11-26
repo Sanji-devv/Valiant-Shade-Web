@@ -3,6 +3,7 @@
 use App\Support\PublicSiteUrls;
 use App\Http\Controllers\Api\BuildingTypeController;
 use App\Http\Controllers\Api\PublicNewsController;
+use App\Http\Controllers\Api\PublicGodController;
 use App\Http\Controllers\Api\PublicNpcController;
 use App\Http\Controllers\Api\MapBuildingController;
 use App\Http\Controllers\Api\MapEditorController;
@@ -51,6 +52,18 @@ Route::prefix('world')->group(function () {
 });
 
 Route::prefix('api')->group(function () {
+    Route::prefix('public/gods')->group(function () {
+        Route::get('/bootstrap', [PublicGodController::class, 'bootstrap'])->name('api.public.gods.bootstrap');
+        Route::get('/{slug}', [PublicGodController::class, 'show'])->where('slug', '[a-z0-9-]+')->name('api.public.gods.show');
+        Route::post('/submissions', [PublicGodController::class, 'submit'])
+            ->middleware('throttle:public.god.submissions')
+            ->name('api.public.gods.submit');
+        Route::post('/{slug}/corrections', [PublicGodController::class, 'submitCorrection'])
+            ->where('slug', '[a-z0-9-]+')
+            ->middleware('throttle:public.god.submissions')
+            ->name('api.public.gods.corrections');
+    });
+
     Route::prefix('public/npcs')->group(function () {
         Route::get('/bootstrap', [PublicNpcController::class, 'bootstrap'])->name('api.public.npcs.bootstrap');
         Route::get('/title-suggestions', [PublicNpcController::class, 'titleSuggestions'])->name('api.public.npcs.title-suggestions');

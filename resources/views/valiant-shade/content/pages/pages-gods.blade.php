@@ -131,6 +131,35 @@
 
 @section('content')
     <div class="gods-page">
+        @if (! $selectedGod && isset($publicPantheonUrl))
+            <p class="mb-3">
+                <a href="{{ $publicPantheonUrl }}" class="btn btn-label-warning" target="_blank" rel="noopener">{{ __('Public pantheon') }}</a>
+            </p>
+        @endif
+        @if (! $selectedGod && isset($pendingSubmissions) && $pendingSubmissions->isNotEmpty())
+            <div class="card border border-warning border-opacity-50 mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0 text-warning">{{ __('Pending god submissions') }} ({{ $pendingSubmissions->count() }})</h5>
+                </div>
+                <ul class="list-group list-group-flush">
+                    @foreach($pendingSubmissions as $pending)
+                        <li class="list-group-item bg-transparent d-flex flex-wrap justify-content-between align-items-center gap-2">
+                            <div>
+                                <strong>{{ $pending->name }}</strong>
+                                @if($pending->corrects_slug)
+                                    <span class="badge bg-label-info ms-1">{{ __('Pantheon correction') }}</span>
+                                    <span class="text-muted small">→ {{ $pending->corrects_slug }}</span>
+                                @endif
+                            </div>
+                            <div class="d-flex gap-2">
+                                <form method="post" action="{{ route('valiant-shade.god-submissions.approve', $pending) }}">@csrf<button type="submit" class="btn btn-sm btn-success">{{ __('Approve') }}</button></form>
+                                <form method="post" action="{{ route('valiant-shade.god-submissions.reject', $pending) }}">@csrf<button type="submit" class="btn btn-sm btn-outline-danger">{{ __('Reject') }}</button></form>
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
         @if ($selectedGod)
             <div class="row g-4 align-items-start">
                 <aside class="col-12 col-lg-3" aria-label="Tanrı listesi">
